@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
 
 const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const navigate = useNavigate(); // Usa useNavigate per la navigazione programmatica
 
     const handleEmailChange = (e) => setEmail(e.target.value);
     const handlePasswordChange = (e) => setPassword(e.target.value);
@@ -17,28 +17,29 @@ const Signup = () => {
 
         if (password !== confirmPassword) {
             alert('Le password non coincidono');
-            Navigate('/signup');
+            return; // Non eseguire ulteriori azioni
         }
 
         const formData = { email, password };
 
         try {
-            const response = await axios.post('http://localhost:8080/api/signup', {
+            const response = await axios.post('http://localhost:8080/api/signup', formData, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.status === 200) {
+                console.log('Signup successful:', response.data);
+                navigate('/login'); // Naviga alla pagina di login
+            } else {
+                console.error('Error:', response.data.msg);
+                alert(response.data.msg); // Mostra il messaggio di errore
             }
-
-            const data = await response.json();
-            console.log('Signup successful:', data);
-            // Aggiungi la logica per il successo del signup, come la redirezione o la visualizzazione di un messaggio
 
         } catch (error) {
             console.error('Error:', error);
+            alert('An error occurred. Please try again.');
         }
     };
 
@@ -96,7 +97,6 @@ const Signup = () => {
                             type="submit"
                             value="Registrati"
                             className="mt-7 font-arial font-semibold text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
-                            onClick={handleSubmit}
                         />
                     </div>
                 </form>

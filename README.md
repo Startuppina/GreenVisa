@@ -31,6 +31,50 @@ Now the folder `nome-cartella` is created
 - **package-lock.json**: Lists all the dependencies and their versions. Ensures consistent installs.
 - **vite.config.js**: Configuration file for Vite, the build tool. Allows adding plugins and dependencies.
 
+## Docker e Docker Compose
+
+Quickstart:
+
+```
+docker-compose down -v && docker-compose up --build
+```
+
+Per creare l'immagine dell'appplicazione:
+
+```
+sudo docker build -t text-learn-app .
+```
+
+Per avviarla:
+
+```
+sudo docker-compose up
+```
+
+Docker si basa su molte dinamiche di caching per creare l'immagine.
+Può essere necessario rimuoverla e ricrearla.
+Per rimuovere tutti le possibili immagini cachate:
+
+```
+sudo docker system prune
+```
+
+Alcuni comandi utili:
+
+```
+docker-compose up --build
+```
+
+ricostruisce e avvia i container.
+
+```
+docker-compose down -v
+docker volume prune
+```
+
+il primo comando ferma ed elimina tutti i volumi e container.
+il secondo comando rimuove tutti i volumi rimasti non utilizzati.
+
 # Publication Pipeline
 
 ### Step 1: Check Current Branch
