@@ -1,0 +1,18 @@
+# Dockerfile per il client
+FROM node:22-alpine
+
+# Crea e imposta la directory di lavoro
+WORKDIR /usr/src/app
+
+# Copia i file del package e installa le dipendenze
+COPY package*.json ./
+RUN npm install
+
+# Copia il resto dell'app
+COPY . .
+
+# Espone la porta su cui il client ascolta
+EXPOSE 3000
+
+# Comando per avviare il client
+CMD [ "npm", "run", "dev" ]

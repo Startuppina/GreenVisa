@@ -1,0 +1,18 @@
+# Dockerfile per il server
+FROM node:22-alpine
+
+# Crea e imposta la directory di lavoro
+WORKDIR /usr/src/app
+
+# Copia i file del package e installa le dipendenze
+COPY package*.json ./
+RUN npm install
+
+# Copia il resto dell'app
+COPY . .
+
+# Espone la porta su cui il server ascolta
+EXPOSE 8080
+
+# Comando per avviare il server
+CMD [ "npm", "run", "dev" ]

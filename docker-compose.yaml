@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - server-data:/usr/src/app/uploads
+    depends_on:
+      - db
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - client-data:/usr/src/app/data
+    depends_on:
+      - server
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: green-visa
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: pass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - green-visa-db:/var/lib/postgresql/data
+      - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  pgweb:
+    image: sosedoff/pgweb
+    environment:
+      PGW_DB_HOST: db
+      PGW_DB_USER: admin
+      PGW_DB_PASS: pass123
+      PGW_DB_NAME: green-visa
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+
+volumes:
+  green-visa-db:
+  server-data:
+  client-data:
