@@ -10,7 +10,7 @@ const port = 8080;
 const app = express();
 
 app.use(cors({
-    origin: '*',
+    origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -18,6 +18,7 @@ app.use(cors({
 
 const secretKey = 'your-secret-key';
 
+/*
 // Session configuration
 app.use(session({
     store: new PgSession({
@@ -28,7 +29,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
-}));
+}));*/
 
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
@@ -47,6 +48,7 @@ const authenticateJWT = (req, res, next) => {
     }
 };
 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -59,10 +61,11 @@ app.get('/api/auth', authenticateJWT, (req, res) => {
 });
 
 app.post('/api/signup', async (req, res) => {
-    const { username,email, password, phone } = req.body;
+    const { username, email, password, phone } = req.body;
 
     console.log('Received signup request:', req.body);
 
+    // Validazione
     if (!email || !password) {
         return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
     } else if (password.length < 8) {
@@ -84,11 +87,11 @@ app.post('/api/signup', async (req, res) => {
 
         await pool.query(
             "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, true, $4)",
-            [username, email, hashedPassword, phone]
+            [username, email, phone, hashedPassword]
         );
 
         const token = jwt.sign({ email }, secretKey, { expiresIn: '7d' });
-        req.session.token = token; // Store the token in the session
+        res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
         return res.status(200).json({ msg: "User registered!", token });
 
     } catch (error) {
@@ -100,26 +103,66 @@ app.post('/api/signup', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     console.log('Received login request:', req.body);
+
     if (!email || !password) {
         return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
     }
+
     try {
         const result = await pool.query(
             "SELECT * FROM users WHERE email = $1", [email]
         );
+
         if (result.rows.length === 0) {
             return res.status(400).json({ msg: "Email non valida" });
         }
-        const user = result.rows[0]; // If there's a user, there will be only one row
+
+        const user = result.rows[0]; // Se c'è un utente, ci sarà solo una riga
         const isMatch = await bcrypt.compare(password, user.password_digest);
+
         if (!isMatch) {
             return res.status(400).json({ msg: "Password errata" });
         }
+
         const token = jwt.sign({ email }, secretKey, { expiresIn: '7d' });
-        req.session.token = token; // Store the token in the session
+        res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
         return res.status(200).json({ msg: "Login effettuato con successo!", token });
+
     } catch (error) {
         console.error('Error during login:', error);
+        return res.status(500).json({ msg: "An error occurred. Please try again." });
+    }
+});
+
+
+app.post('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error during logout:', err);
+            res.status(500).json({ msg: "An error occurred. Please try again." });
+        } else {
+            res.clearCookie('token');
+            res.status(200).json({ msg: "Logout effettuato con successo!" });
+        }
+    });
+});
+
+app.post('/api/delete-account', authenticateJWT, async (req, res) => {
+    try {
+        await pool.query(
+            "DELETE FROM users WHERE email = $1", [req.session.user.email]
+        );
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Error during logout:', err);
+                res.status(500).json({ msg: "An error occurred. Please try again." });
+            } else {
+                res.clearCookie('token');
+                res.status(200).json({ msg: "Account cancellato con successo!" });
+            }
+        });
+    } catch (error) {
+        console.error('Error during deleteaccount:', error);
         return res.status(500).json({ msg: "An error occurred. Please try again." });
     }
 });

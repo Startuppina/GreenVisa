@@ -13,6 +13,8 @@ import EntryPage from './EntryPage.jsx';
 import ProductPage from './ProductPage.jsx';
 import CarrelloPage from './CarrelloPage.jsx';
 import PaymentPage from './paymentPage.jsx';
+import UserPage from './UserPage.jsx';
+
 
 const router = createBrowserRouter([
   {
@@ -58,6 +60,10 @@ const router = createBrowserRouter([
   {
     path: "/payment",
     element: <PaymentPage />, 
+  },
+  {
+    path: "/User",
+    element: <UserPage />,
   },
 ]);
 

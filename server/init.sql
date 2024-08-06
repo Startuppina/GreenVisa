@@ -60,9 +60,11 @@ CREATE TABLE IF NOT EXISTS credit_cards (
     UNIQUE (number)  -- Aggiunto un vincolo di unicità per il numero della carta di credito
 );
 
+/*
 CREATE TABLE if NOT EXISTS session (
     sid varchar NOT NULL COLLATE "default",
     sess json NOT NULL,
     expire timestamp(6) NOT NULL,
     PRIMARY KEY (sid)
-);
+);*/
+

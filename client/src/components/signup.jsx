@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import axios from 'axios';
 
 const Signup = () => {
@@ -11,28 +13,28 @@ const Signup = () => {
     const navigate = useNavigate(); // Usa useNavigate per la navigazione programmatica
 
     const handleUsernameChange = (e) => setUsername(e.target.value);
-    const handlePhoneChange = (e) => setPhone(e.target.value);
+    const handlePhoneChange = (value) => setPhone(value); // `value` già in formato internazionale
     const handleEmailChange = (e) => setEmail(e.target.value);
     const handlePasswordChange = (e) => setPassword(e.target.value);
     const handleConfirmPasswordChange = (e) => setConfirmPassword(e.target.value);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         if (password !== confirmPassword) {
             alert('Le password non coincidono');
             return;
         }
-    
-        const formData = { username, email, password, phone  };
-    
+
+        const formData = { username, email, password, phone };
+
         try {
             const response = await axios.post('http://localhost:8080/api/signup', formData, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-    
+
             if (response.status === 200) {
                 console.log('Signup successful:', response.data);
                 localStorage.setItem('token', response.data.token);
@@ -41,13 +43,12 @@ const Signup = () => {
                 console.error('Error:', response.data.msg);
                 alert(response.data.msg);
             }
-    
+
         } catch (error) {
             console.error('Error:', error);
             alert('An error occurred. Please try again.');
         }
     };
-    
 
     return (
         <div className="bg-[url('/img/login.jpg')] bg-cover bg-center bg-no-repeat m-0 py-10 flex items-center justify-center">
@@ -75,14 +76,17 @@ const Signup = () => {
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
                             <label htmlFor="phone" className='font-arial text-xl font-bold text-start block mb-2'>Telefono</label>
-                            <input
-                                type="text"
-                                name="phone"
-                                id="phone"
-                                value={phone}
-                                onChange={handlePhoneChange}
-                                className='w-full p-2 bg-[#d9d9d9]'
-                            />
+                            <div className='w-full p-2 bg-[#d9d9d9] flex flex-row items-center justify-between'>
+                                <PhoneInput
+                                    country={'it'}
+                                    value={phone}
+                                    onChange={handlePhoneChange}
+                                    buttonClass='w-[45px] p-2 bg-[#d9d9d9]'
+                                    dropdownClass='w-full p-2 bg-[#d9d9d9]'
+                                    inputClass='w-full p-2 bg-[#d9d9d9]'
+                                    preferredCountries={['it']} // Mostra il paese predefinito in cima
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
