@@ -33,18 +33,25 @@ app.use(session({
 
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization; // Access the "Authorization" header
 
-    if (token) {
+    if (authHeader) {
+        const token = authHeader.split(' ')[1]; // Extract the token from the "Authorization" header
+
+        console.log('Token ricevuto:', token); // Log del token ricevuto
+
         jwt.verify(token, secretKey, (err, user) => {
             if (err) {
-                return res.sendStatus(403);
+                console.error('Errore di verifica del token:', err); // Log dell'errore di verifica del token
+                return res.sendStatus(403); // Token non valido
             }
+
             req.user = user;
             next();
         });
     } else {
-        res.sendStatus(401);
+        console.log('Nessun token fornito');
+        res.sendStatus(401); // Nessun token fornito
     }
 };
 
@@ -135,37 +142,34 @@ app.post('/api/login', async (req, res) => {
 });
 
 
-app.post('/api/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            console.error('Error during logout:', err);
-            res.status(500).json({ msg: "An error occurred. Please try again." });
-        } else {
-            res.clearCookie('token');
-            res.status(200).json({ msg: "Logout effettuato con successo!" });
-        }
-    });
+app.post('/api/logout', authenticateJWT, (req, res) => {
+    res.clearCookie('jwt');
+    res.status(200).json({ msg: 'Logout effettuato con successo!' });
 });
 
-app.post('/api/delete-account', authenticateJWT, async (req, res) => {
+app.delete('/api/delete-account', authenticateJWT, async (req, res) => {
     try {
-        await pool.query(
-            "DELETE FROM users WHERE email = $1", [req.session.user.email]
-        );
-        req.session.destroy((err) => {
-            if (err) {
-                console.error('Error during logout:', err);
-                res.status(500).json({ msg: "An error occurred. Please try again." });
-            } else {
-                res.clearCookie('token');
-                res.status(200).json({ msg: "Account cancellato con successo!" });
-            }
-        });
-    } catch (error) {
-        console.error('Error during deleteaccount:', error);
-        return res.status(500).json({ msg: "An error occurred. Please try again." });
+        // Ottieni l'email dell'utente dal token
+        const { email } = req.user;
+
+        // Trova e elimina l'utente dal database
+        const result = await pool.query(
+            "DELETE FROM users WHERE email = $1", [email]
+        )
+
+        if (!result) {
+            return res.status(404).json({ message: 'Account not found' });
+        }
+
+        // Invia una risposta di successo
+        res.status(200).json({ message: 'Account successfully deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
+
+
 
 function emailCheck(email) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;

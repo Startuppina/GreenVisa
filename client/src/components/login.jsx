@@ -25,7 +25,7 @@ const Login = () => {
           if (response.status === 200) {
               console.log('Login successful:', response.data);
               localStorage.setItem('token', response.data.token);
-              navigate('/');
+              navigate('/user');
           } else {
               console.error('Error:', response.data.msg);
               alert(response.data.msg);
