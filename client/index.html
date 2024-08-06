@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #f6f3f3;
+      }
+      #root {
+        width: 100%;
+        height: auto;
+      }
+
+      input[type="date"] {
+        -webkit-appearance: none; /* Disabilita l'aspetto predefinito su Safari */
+        appearance: none; /* Disabilita l'aspetto predefinito su altri browser */
+        width: 100%; /* Imposta la larghezza al 100% del contenitore */
+        height: 5vh; /* Imposta la lunghezza al 100% del contenitore */
+        padding: 8px; /* Aggiusta il padding per migliorare la visibilità */
+        background-color: #d9d9d9; /* Colore di sfondo per coerenza con Tailwind */
+        border: 1px solid #ccc; /* Aggiungi un bordo per una visualizzazione migliore */
+        border-radius: 4px; /* Aggiusta il bordo per il design */
+      }
+
+      /* Per i browser WebKit come Chrome e Safari */
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      /* Per Firefox */
+      input[type="number"] {
+        -moz-appearance: textfield;
+      }
+    </style>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/public/img/logo.png" />
+    <link rel="stylesheet" href="/src/index.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Green Visa</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
