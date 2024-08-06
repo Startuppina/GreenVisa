@@ -21,7 +21,11 @@ function Navbar() {
 
     const fetchAuth = async () => {
         try {
-            const response = await axios.get('http://localhost:8080/api/auth');
+            const response = await axios.get('http://localhost:8080/api/auth', {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
             return response.data;
         } catch (error) {
             console.error(error);

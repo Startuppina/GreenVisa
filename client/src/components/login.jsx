@@ -1,7 +1,40 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate(); // Usa useNavigate per la navigazione programmatica
+
+  const handleEmailChange = (e) => setEmail(e.target.value);
+  const handlePasswordChange = (e) => setPassword(e.target.value);
+
+  const handleSubmit = async (e) => {
+      e.preventDefault();
+  
+      const formData = { email, password };
+  
+      try {
+          const response = await axios.post('http://localhost:8080/api/login', formData, {
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+          });
+  
+          if (response.status === 200) {
+              console.log('Login successful:', response.data);
+              navigate('/');
+          } else {
+              console.error('Error:', response.data.msg);
+              alert(response.data.msg);
+          }
+  
+      } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred. Please try again.');
+      }
+  };
 
   return (
     <div className="w-screen h-screen bg-[url('/img/login.jpg')] bg-cover bg-center bg-no-repeat m-0 p-0 flex items-center justify-center">
@@ -18,17 +51,17 @@ const Login = () => {
           </p>
         </div>
 
-        <form action="" className='w-full'>
+        <form onSubmit={handleSubmit} className='w-full'>
           <div className='flex flex-col items-center justify-center mb-5'>
             <div className='w-[70%] lg:w-[60%]'>
               <label htmlFor="email" className='font-arial text-xl font-bold text-start block mb-2'>Email</label>
-              <input type="email" name="email" id="email" className='w-full p-2 bg-[#d9d9d9]' />
+              <input type="email" name="email" id="email" className='w-full p-2 bg-[#d9d9d9]' onChange={handleEmailChange}/>
             </div>
           </div>
           <div className='flex flex-col items-center justify-center mb-5'>
             <div className='w-[70%] lg:w-[60%]'>
               <label htmlFor="password" className='font-arial text-xl font-bold text-start block mb-2'>Password</label>
-              <input type="password" name="password" id="password" className='w-full p-2 bg-[#d9d9d9]' />
+              <input type="password" name="password" id="password" className='w-full p-2 bg-[#d9d9d9]' onChange={handlePasswordChange}/>
             </div>
           </div>
           <div className='flex justify-center'>
