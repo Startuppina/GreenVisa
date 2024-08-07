@@ -18,19 +18,6 @@ app.use(cors({
 
 const secretKey = 'your-secret-key';
 
-/*
-// Session configuration
-app.use(session({
-    store: new PgSession({
-        pool: pool,                // Connection pool
-        tableName: 'session'       // Use the "session" table created in the database
-    }),
-    secret: 'your-session-secret', // Replace with a secret for signing session ID cookies
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
-}));*/
-
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
     const authHeader = req.headers.authorization; // Access the "Authorization" header
@@ -59,26 +46,20 @@ const authenticateJWT = (req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/api/auth', authenticateJWT, (req, res) => {
-    if (req.user) {
-        res.json({ isAuthenticated: true, user: req.user });
-    } else {
-        res.json({ isAuthenticated: false });
-    }
-});
-
 app.post('/api/signup', async (req, res) => {
     const { username, email, password, phone } = req.body;
 
     console.log('Received signup request:', req.body);
 
     // Validazione
-    if (!email || !password) {
+    if (!email || !password || !username || !phone) {
         return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
     } else if (password.length < 8) {
         return res.status(400).json({ msg: "La password deve essere di almeno 8 caratteri" });
     } else if (!emailCheck(email)) {
         return res.status(400).json({ msg: "Email non valida" });
+    } else if (!phoneCheck(phone)) {
+        return res.status(400).json({ msg: "Numero di telefono non valido" });
     }
 
     try {
@@ -90,15 +71,17 @@ app.post('/api/signup', async (req, res) => {
             return res.status(400).json({ msg: "Email già in uso" });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 8);
+        const hashedPassword = await bcrypt.hash(password, 12);
+        const intPrefix = phone.slice(0, 2);
+        const intSuffix = phone.slice(2);
+        const newPhone = `+${intPrefix} ${intSuffix}`;
 
         await pool.query(
             "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, true, $4)",
-            [username, email, phone, hashedPassword]
+            [username, email, newPhone, hashedPassword]
         );
 
         const token = jwt.sign({ email }, secretKey, { expiresIn: '7d' });
-        res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
         return res.status(200).json({ msg: "User registered!", token });
 
     } catch (error) {
@@ -169,11 +152,38 @@ app.delete('/api/delete-account', authenticateJWT, async (req, res) => {
     }
 });
 
+app.get('/api/user-info', authenticateJWT, async (req, res) => {
+    try {
+        // Ottieni l'email dell'utente dal token
+        const { email } = req.user; 
+
+        // Trova l'utente dal database
+        const result = await pool.query(
+            "SELECT * FROM users WHERE email = $1", [email]
+        );  
+    
+        if (!result) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Invia la risposta con l'utente trovato
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 
 
 function emailCheck(email) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
+}
+
+function phoneCheck(phone) {
+    const re = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+    return re.test(String(phone).toLowerCase());
 }
 
 app.use((err, req, res, next) => {

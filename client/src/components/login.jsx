@@ -32,8 +32,7 @@ const Login = () => {
           }
   
       } catch (error) {
-          console.error('Error:', error);
-          alert('An error occurred. Please try again.');
+          alert(error.response?.data?.msg || error.message);
       }
   };
 

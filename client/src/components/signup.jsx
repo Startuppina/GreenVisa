@@ -26,6 +26,8 @@ const Signup = () => {
             return;
         }
 
+        setPhone(`+${phone}`);
+
         const formData = { username, email, password, phone };
 
         try {
@@ -36,17 +38,12 @@ const Signup = () => {
             });
 
             if (response.status === 200) {
-                console.log('Signup successful:', response.data);
                 localStorage.setItem('token', response.data.token);
                 navigate('/login');
-            } else {
-                console.error('Error:', response.data.msg);
-                alert(response.data.msg);
-            }
+            } 
 
         } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            alert(error.response?.data?.msg || error.message);
         }
     };
 

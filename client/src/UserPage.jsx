@@ -1,13 +1,39 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './components/navbar';
 import Footer from './components/footer';
 import ScrollToTop from './components/scrollToTop';
-import { Link, useNavigate } from 'react-router-dom';
+import {useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const UserPage = () => {
+    const [userInfo, setUserInfo] = useState({});
     const navigate = useNavigate();
+
     
+    useEffect(() => {
+        const fetchInfo = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/api/user-info', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if(response.status === 200) {
+                    setUserInfo(response.data);
+                    return;
+                }
+
+            } catch (error) {
+                alert(error.response?.data?.msg || error.message);
+            }
+        }
+
+    fetchInfo();
+    }, []);
+
+
     const handleLogOut = async () => {
         // Chiedi conferma all'utente
         const confirmation = window.confirm('Sei sicuro di voler effettuare il logout?');
@@ -77,13 +103,13 @@ const UserPage = () => {
         <ScrollToTop />
         <Navbar />
         <div className='items-center justify-center text-arial text-xl p-4'>
-            <h1 className="text-3xl font-bold text-black text-center pb-10">Ciao Daniel</h1>
+            <h1 className="text-3xl font-bold text-black text-center pb-10">Ciao {userInfo ? userInfo.username : ''}</h1>
             <div className='flex flex-wrap md:flex-row items-center justify-center gap-3'>
                 <div className='w-full h-[25vh] md:w-[40%] bg-[#d9d9d9] p-4 rounded-lg'>
                     <h1 className='text-2xl font-bold'>Informazioni personali</h1>
-                    <p>Username: Daniel</p>
-                    <p>Email: danielchionne@gmail.com</p>
-                    <p>Telefono: 123456789</p>
+                    <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
+                    <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
+                    <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
                 </div>
                 <div className='w-full h-[25vh] md:w-[40%] bg-[#d9d9d9] p-4 rounded-lg'>
                     <h1 className='text-2xl font-bold'>Certificazioni acquistate</h1>
@@ -106,6 +132,7 @@ const UserPage = () => {
 
             
         </div>
+        <Footer />
     </div>
   );
 };

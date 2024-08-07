@@ -19,28 +19,13 @@ function Navbar() {
         };
     }, []);
 
-    const fetchAuth = async () => {
-        try {
-            const response = await axios.get('http://localhost:8080/api/auth', {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            return response.data;
-        } catch (error) {
-            console.error(error);
-            return null;
-        }
-    };
-
     const handleUserIconClick = async () => {
-        const data = await fetchAuth();
-        if (data && data.isAuth) {
-            console.log("Utente autenticato");
-            navigate("/News");
-        } else {
-            console.log("Utente non autenticato");
+        const token = localStorage.getItem("token");
+        console.log(token);
+        if (token === null) {
             navigate("/login");
+        } else {
+            navigate("/user");
         }
     };
 
