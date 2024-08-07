@@ -1,9 +1,9 @@
 const express = require('express');
 const session = require('express-session');
 const jwt = require('jsonwebtoken');
-const pool = require('./db'); // Your database connection
-const PgSession = require('connect-pg-simple')(session);
+const pool = require('./db'); // Your database connection pool
 const bcrypt = require("bcryptjs");
+const crypto = require('crypto');
 const cors = require('cors');
 const port = 8080;
 
@@ -16,7 +16,8 @@ app.use(cors({
     credentials: true,
 }));
 
-const secretKey = 'your-secret-key';
+const secretKey = crypto.randomBytes(64).toString('hex');
+console.log('Secret key:', secretKey);
 
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
@@ -203,6 +204,39 @@ app.post('/api/update-username', authenticateJWT, async (req, res) => {
     }
 });
 
+app.post ('/api/update-phone', authenticateJWT, async (req, res) => {
+    try {
+        // Ottieni l'email dell'utente dal token
+        const { email } = req.user;
+        const { phone_number } = req.body;
+
+        // Trova l'utente dal database
+        const result = await pool.query(
+            "SELECT * FROM users WHERE email = $1", [email]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const intPrefix = phone_number.slice(0, 2);
+        const intSuffix = phone_number.slice(2);
+        const newPhone = `+${intPrefix} ${intSuffix}`;
+
+        // Aggiorna il numero di telefono nel database
+        await pool.query(
+            "UPDATE users SET phone_number = $1 WHERE email = $2",
+            [newPhone, email]
+        );
+
+        // Invia una risposta di successo
+        res.status(200).json({ message: 'Phone number updated successfully', newPhone });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 
 function emailCheck(email) {
