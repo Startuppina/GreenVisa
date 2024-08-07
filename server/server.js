@@ -174,6 +174,35 @@ app.get('/api/user-info', authenticateJWT, async (req, res) => {
     }
 });
 
+app.post('/api/update-username', authenticateJWT, async (req, res) => {
+    try {
+        // Ottieni l'email dell'utente dal token
+        const { email } = req.user;
+        const { username } = req.body;
+
+        // Trova l'utente dal database
+        const result = await pool.query(
+            "SELECT * FROM users WHERE email = $1", [email]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Aggiorna il nome utente nel database
+        await pool.query(
+            "UPDATE users SET username = $1 WHERE email = $2",
+            [username, email]
+        );
+
+        // Invia una risposta di successo
+        res.status(200).json({ message: 'Username updated successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 
 
 function emailCheck(email) {
