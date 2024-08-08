@@ -326,6 +326,29 @@ function sendEmail({ recipient_email, OTP }) {
         res.status(500).json(error);
       });
   });
+
+  app.post("/api/change-password", authenticateJWT, async (req, res) => {
+    try {
+      const { password } = req.body;
+      const { email } = req.user;
+  
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      // Prepare the SQL query
+      const query = "UPDATE users SET password_digest = $1 WHERE email = $2";
+      const values = [hashedPassword, email];
+  
+      // Execute the query
+      await pool.query(query, values);
+  
+      res.status(200).json({ message: "Password modificata con successo" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
   
 
 function emailCheck(email) {

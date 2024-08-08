@@ -15,6 +15,9 @@ import CarrelloPage from './CarrelloPage.jsx';
 import PaymentPage from './paymentPage.jsx';
 import UserPage from './UserPage.jsx';
 import OTPInput from './components/OTPInput.jsx';
+import Reset from './components/reset.jsx';
+import Recovered from './components/recovered.jsx';
+import { RecoveryContextProvider } from './provider/provider.jsx'
 
 
 const router = createBrowserRouter([
@@ -67,13 +70,23 @@ const router = createBrowserRouter([
     element: <UserPage />,
   },
   {
-    path: "/OTP",
+    path: "/Verification",
     element: <OTPInput />,
+  },
+  {
+    path: "/Reset",
+    element: <Reset />,
+  },
+  {
+    path: "/Recovered",
+    element: <Recovered />,
   },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <RecoveryContextProvider>
+      <RouterProvider router={router} />
+    </RecoveryContextProvider>
   </React.StrictMode>,
 )
