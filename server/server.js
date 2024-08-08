@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 const pool = require('./db'); // Your database connection pool
 const bcrypt = require("bcryptjs");
 const crypto = require('crypto');
@@ -238,6 +239,94 @@ app.post ('/api/update-phone', authenticateJWT, async (req, res) => {
     }
 });
 
+app.get('/api/request-email', authenticateJWT, async (req, res) => {
+    try {
+        // Ottieni l'email dell'utente dal token
+        const { email } = req.user;
+        const result = await pool.query( //si verifica se l'email esiste nel db per una questione di sicurezza
+            "SELECT * FROM users WHERE email = $1", [email]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).send(result.rows[0].email);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+function sendEmail({ recipient_email, OTP }) {
+    return new Promise((resolve, reject) => {
+      var transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+        //PER RAGIONI DI SICUREZZA LE CREDENZIALI DEVONO STARE NEL .ENV
+          user: "danielchionne@gmail.com",
+          pass: "nqip rhkk bdhi ewsv",
+        },
+      });
+  
+      const mail_configs = {
+        from: "danielchionne@gmail.com",
+        to: recipient_email,
+        subject: "KODING 101 PASSWORD RECOVERY",
+        html: `<!DOCTYPE html>
+        <html lang="en" >
+        <head>
+            <meta charset="UTF-8">
+            <title>CodePen - OTP Email Template</title>
+            
+        
+        </head>
+        <body>
+        <!-- partial:index.partial.html -->
+        <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
+            <div style="margin:50px auto;width:70%;padding:20px 0">
+            <img src="img/logo.png" alt="Green Visa" style="width: 70px; border-radius: 50%"/>
+            <div style="border-bottom:1px solid #eee">
+                <a href="" style="font-size:1.4em;color: #2d7044;text-decoration:none;font-weight:600">Green Visa</a>
+            </div>
+            <p style="font-size:1.1em">Ciao</p>
+            <p>Grazie per aver utilizzato Green Visa. Usa il seguente codice OTP per recuperare la tua password. Il codice è valido per 5 minuti</p>
+            <h2 style="background: #2d7044;margin: 0 auto;width: max-content;padding: 0 10px;color: white;border-radius: 4px;">${OTP}</h2>
+            <p style="font-size:0.9em;">Saluti,<br />Green Visa</p>
+            <hr style="border:none;border-top:1px solid #eee" />
+            <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
+                <p>Green Visa</p>
+                <p>La sostenibilità con un click!</p>
+            </div>
+            </div>
+        </div>
+        <!-- partial -->
+            
+        </body>
+        </html>`,
+      };
+      transporter.sendMail(mail_configs, function (error, info) {
+        if (error) {
+          console.error('Errore nell\'invio dell\'email:', error);
+          return reject({ message: `Errore durante l'invio dell'email: ${error.message}` });
+        }
+        return resolve({ message: "Email inviata con successo" });
+      });
+    });
+  }  
+  
+
+  app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
+    const { email, OTP } = req.body;
+    sendEmail({ recipient_email: email, OTP })
+      .then((response) => {
+        res.status(200).json(response);
+      })
+      .catch((error) => {
+        console.error('Errore nell\'invio dell\'email:', error);
+        res.status(500).json(error);
+      });
+  });
+  
 
 function emailCheck(email) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;

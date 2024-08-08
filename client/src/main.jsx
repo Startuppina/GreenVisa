@@ -14,6 +14,7 @@ import ProductPage from './ProductPage.jsx';
 import CarrelloPage from './CarrelloPage.jsx';
 import PaymentPage from './paymentPage.jsx';
 import UserPage from './UserPage.jsx';
+import OTPInput from './components/OTPInput.jsx';
 
 
 const router = createBrowserRouter([
@@ -64,6 +65,10 @@ const router = createBrowserRouter([
   {
     path: "/User",
     element: <UserPage />,
+  },
+  {
+    path: "/OTP",
+    element: <OTPInput />,
   },
 ]);
 
