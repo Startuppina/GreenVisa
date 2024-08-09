@@ -33,14 +33,14 @@ export default function Reset() {
       return;
     }
 
-    const token = localStorage.getItem("token");
+    const recoveryToken = localStorage.getItem("recoveryToken");
 
     try {
       const response = await axios.post("http://localhost:8080/api/change-password", {
         password
       }, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${recoveryToken}`
         }
       });
 

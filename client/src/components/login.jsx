@@ -5,7 +5,7 @@ import { useRecoveryContext } from '../provider/provider';
 import MessagePopUp from './messagePopUp';
 
 const Login = () => {
-    const { email, setEmail, OTP, setOTP } = useRecoveryContext(); // Corretto uso del contesto
+    const { email, setEmail } = useRecoveryContext(); // Corretto uso del contesto
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
@@ -16,53 +16,7 @@ const Login = () => {
     const handlePasswordChange = (e) => setPassword(e.target.value);
 
     const navigateToOtp = async (e) => {
-        e.preventDefault();
-
-        const token = localStorage.getItem('token');
-
-        try {
-            const response = await axios.get('http://localhost:8080/api/request-email', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.status === 200) {
-                console.log('Email sent successfully');
-                setEmail(response.data.email);
-                console.log(email);
-
-                if (email) {
-                    const OTP = Math.floor(Math.random() * 9000 + 1000);
-                    console.log(OTP);
-                    setOTP(OTP);
-
-                    try {
-                        const response2 = await axios.post('http://localhost:8080/api/send_recovery_email', { email, OTP }, {
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
-
-                        if (response2.status === 200) {
-                            console.log('Email sent successfully');
-                            navigate('/Verification');
-                        }
-
-                    } catch (error) {
-                        //alert(error.response?.data?.msg || error.message);
-                        setMessagePopup(error.response?.data?.msg || error.message);
-                        setButtonPopup(true);
-                    }
-
-                }
-            }
-
-        } catch (error) {
-            //alert(error.response?.data?.msg || error.message);
-            setMessagePopup(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
-        }
+        navigate('/InsertEmail');
     };
 
     const handleSubmit = async (e) => {

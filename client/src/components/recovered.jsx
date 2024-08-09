@@ -4,6 +4,11 @@ import { useNavigate } from 'react-router-dom';
 export default function Recovered() {
   const navigate = useNavigate();
 
+  const returnToLogin = () => {
+    localStorage.removeItem('recoveryToken');
+    navigate('/login');
+  };
+
   return (
     <div className="text-arial">
       <div className="w-full min-h-screen flex flex-col items-center justify-center">
@@ -16,7 +21,7 @@ export default function Recovered() {
         <div className="w-full flex items-center justify-center p-8">
           <button
             className="font-bold w-[60%] md:w-[40%] flex justify-center items-center border-2 border-transparent rounded-xl py-4 bg-[#2d7044] text-white hover:bg-white hover:text-[#2d7044] hover:border-[#2d7044] transition-colors duration-300 ease-in-out text-xl"
-            onClick={() => navigate('/Login')}
+            onClick={returnToLogin}
           >
             Torna a login
           </button>

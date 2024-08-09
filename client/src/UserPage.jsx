@@ -8,6 +8,7 @@ import ScrollToTop from './components/scrollToTop';
 import {useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import MessagePopUp from './components/messagePopUp';
+import ConfirmPopUp from './components/confirmPopUp';
 
 const UserPage = () => {
     const [userInfo, setUserInfo] = useState({});
@@ -18,6 +19,10 @@ const UserPage = () => {
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
+
+    const [popupConfirm, setPopupConfirm] = useState(false);
+    const [messageConfirm, setMessageConfirm] = useState('');
+
 
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
     const handlePhoneChange = (value) => setNewPhone(value);
@@ -47,79 +52,83 @@ const UserPage = () => {
     fetchInfo();
     }, []);
 
-
-    const handleLogOut = async () => {
-        // Chiedi conferma all'utente
-        const confirmation = window.confirm('Sei sicuro di voler effettuare il logout?');
-        
-        if (confirmation) {
-            try {
-                // Effettua una richiesta di logout al server per invalidare il token
-                const response = await axios.post('http://localhost:8080/api/logout', {}, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-    
-                if (response.status === 200) {
-                    console.log('Logout effettuato con successo');
-                } else {
-                    setMessagePopup(`Errore durante l'invio della richiesta di logout: ${response.statusText}`);
-                    setButtonPopup(true);
+    const logout = async () => {
+        try {
+            // Effettua una richiesta di logout al server per invalidare il token
+            const response = await axios.post('http://localhost:8080/api/logout', {}, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                setMessagePopup(`Errore durante l'invio della richiesta di logout: ${error.message}`);
+            });
+
+            if (response.status === 200) {
+                console.log('Logout effettuato con successo');
+            } else {
+                setMessagePopup(`Errore durante l'invio della richiesta di logout: ${response.statusText}`);
                 setButtonPopup(true);
             }
-    
-            // Rimuovi il token dal localStorage e reindirizza
-            localStorage.removeItem('token');
-            navigate('/login');
+        } catch (error) {
+            console.error('Error:', error);
+            setMessagePopup(`Errore durante l'invio della richiesta di logout: ${error.message}`);
+            setButtonPopup(true);
+        }
+
+        // Rimuovi il token dal localStorage e reindirizza
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
+
+
+    const handleLogOut = async () => {
+        setMessageConfirm('Sei sicuro di voler uscire?');
+        setPopupConfirm(true);
+    };
+
+    const deleteAccount = async () => {
+        
+        try {
+            const token = localStorage.getItem('token');
+            console.log('Token:', token); // Debugging: stampa il token
+
+            // Effettua una richiesta di delete al server
+            const response = await axios.delete('http://localhost:8080/api/delete-account', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                console.log('Account cancellato con successo');
+                localStorage.removeItem('token');
+                navigate('/');
+            } else {
+                console.error('Error:', response.statusText);
+                setMessagePopup(`Errore durante la cancellazione dell'account: ${response.statusText}`);
+                setButtonPopup(true);
+            }
+        } catch (error) {
+            console.error('An error occurred during account deletion:', error);
+            setMessagePopup(`Errore durante la cancellazione dell'account: ${error.message}`);
+            setButtonPopup(true);
+
+            if (error.response && error.response.status === 403) {
+                console.error('Forbidden error');
+                setMessagePopup('Non sei autorizzato a cancellare questo account');
+                setButtonPopup(true);
+            } else {
+                console.error(`Errore durante la cancellazione dell'account: ${error.message}`);
+                setMessagePopup(`Errore durante la cancellazione dell'account: ${error.message}`);
+                setButtonPopup(true);
+            }
         }
     };
 
     const handleDeleteAccount = async () => {
-        // Chiedi conferma all'utente
-        const confirmation = window.confirm('Sei sicuro di voler cancellare il tuo account?');
+        //const confirmation = window.confirm('Sei sicuro di voler cancellare il tuo account?');
+        setMessageConfirm('Sei sicuro di voler cancellare il tuo account?');
+        setPopupConfirm(true);
         
-        if (confirmation) {
-            try {
-                const token = localStorage.getItem('token');
-                console.log('Token:', token); // Debugging: stampa il token
-    
-                // Effettua una richiesta di delete al server
-                const response = await axios.delete('http://localhost:8080/api/delete-account', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-    
-                if (response.status === 200) {
-                    console.log('Account cancellato con successo');
-                    localStorage.removeItem('token');
-                    navigate('/');
-                } else {
-                    console.error('Error:', response.statusText);
-                    setMessagePopup(`Errore durante la cancellazione dell'account: ${response.statusText}`);
-                    setButtonPopup(true);
-                }
-            } catch (error) {
-                console.error('An error occurred during account deletion:', error);
-                setMessagePopup(`Errore durante la cancellazione dell'account: ${error.message}`);
-                setButtonPopup(true);
 
-                if (error.response && error.response.status === 403) {
-                    console.error('Forbidden error');
-                    setMessagePopup('Non sei autorizzato a cancellare questo account');
-                    setButtonPopup(true);
-                } else {
-                    console.error(`Errore durante la cancellazione dell'account: ${error.message}`);
-                    setMessagePopup(`Errore durante la cancellazione dell'account: ${error.message}`);
-                    setButtonPopup(true);
-                }
-            }
-        }
     };
 
     const handleUsernameModifier = async (e) => {
@@ -189,11 +198,24 @@ const UserPage = () => {
         <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
             {messagePopup}
         </MessagePopUp>
+        <ConfirmPopUp 
+            trigger={popupConfirm} 
+            setTrigger={setPopupConfirm} 
+            onButtonClick={deleteAccount}>
+            {messageConfirm}
+        </ConfirmPopUp>
+        <ConfirmPopUp 
+            trigger={popupConfirm} 
+            setTrigger={setPopupConfirm} 
+            onButtonClick={logout}>
+            {messageConfirm}
+        </ConfirmPopUp>
+
 
         <div className='text-arial text-xl p-4'>
             <h1 className="text-3xl font-bold text-black text-center pb-10">Ciao {userInfo ? userInfo.username : ''}</h1>
             
-            <div className='flex flex-col md:flex-row items-center justify-center gap-4 mb-[100px]'>
+            <div className='flex flex-col md:flex-row items-center justify-center gap-4 mb-[10%]'>
                 <div className='w-full md:w-[45%] bg-[#d9d9d9] p-4 rounded-lg'>
                     <h2 className='text-2xl font-bold'>Informazioni personali</h2>
                     <div className='pb-5'>
@@ -202,7 +224,7 @@ const UserPage = () => {
                         <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
                     </div>
                     <div className='flex justify-center'>
-                        <button className='p-2 w-[150px] bg-[#2d7044] text-black rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]' onClick={() => setShowModifier(!showModifier)}>Modifica</button>
+                        <button className='p-2 w-[150px] z-10 bg-[#2d7044] text-black rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]' onClick={() => setShowModifier(!showModifier)}>Modifica</button>
                     </div>
                 </div>
                 <div className='w-full md:w-[45%] bg-[#d9d9d9] p-4 rounded-lg'>
@@ -211,7 +233,7 @@ const UserPage = () => {
                 </div>
             </div>
 
-            <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 mt-4 ${showModifier ? '' : 'hidden'}`}>
+            <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 ${showModifier ? '' : 'hidden'}`}>
                 <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
                 
                 <form className='mx-auto md:w-[40%] mb-4' onSubmit={handleUsernameModifier}>
@@ -249,12 +271,12 @@ const UserPage = () => {
 
             <div className='flex flex-col md:flex-row gap-3 mt-10 mb-6 justify-center'>
                 <div className="w-full md:w-[20%] flex justify-center">
-                    <button className='p-2 w-full bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>
+                    <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>
                         Logout
                     </button>
                 </div>
                 <div className="w-full md:w-[20%] flex justify-center">
-                    <button className='p-2 w-full bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleDeleteAccount}>
+                    <button className='p-2 w-full z-10 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleDeleteAccount}>
                         Delete account
                     </button>
                 </div>

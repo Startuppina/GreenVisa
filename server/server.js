@@ -119,8 +119,7 @@ app.post("/api/signup", async (req, res) => {
       [username, email, newPhone, hashedPassword]
     );
 
-    const token = jwt.sign({ email }, secretKey, { expiresIn: "7d" });
-    return res.status(200).json({ msg: "User registered!", token });
+    return res.status(200).json({ msg: "User registered!" });
   } catch (error) {
     console.error("Error during signup:", error);
     return res
@@ -170,7 +169,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.post("/api/logout", authenticateJWT, (req, res) => {
-  res.clearCookie("jwt");
+
   res.status(200).json({ msg: "Logout effettuato con successo!" });
 });
 
@@ -188,6 +187,7 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
       return res.status(404).json({ message: "Account not found" });
     }
 
+    res.clearCookie("jwt");
     // Invia una risposta di successo
     res.status(200).json({ message: "Account successfully deleted" });
   } catch (err) {
@@ -282,19 +282,24 @@ app.post("/api/update-phone", authenticateJWT, async (req, res) => {
   }
 });
 
-app.get("/api/request-email", authenticateJWT, async (req, res) => {
+app.post("/api/send_email", async (req, res) => {
   try {
-    // Ottieni l'email dell'utente dal token
-    const { email } = req.user;
+    //verifica se l'email esiste nel database
     const result = await pool.query(
-      //si verifica se l'email esiste nel db per una questione di sicurezza
-      "SELECT * FROM users WHERE email = $1",
-      [email]
+      "SELECT email FROM users WHERE email = $1",
+      [req.body.email]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+    if (result.rows.length > 0) {
+      const recoveryToken = jwt.sign(
+        { email: req.body.email },
+        secretKey,
+        { expiresIn: "1h" }
+      )
+      console.log(recoveryToken);
+      res.status(200).json({ exist: true, token: recoveryToken });
+    } else {
+      res.status(200).json({ exist: false });
     }
-    res.status(200).send(result.rows[0].email);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal server error" });
@@ -362,6 +367,7 @@ function sendEmail({ recipient_email, OTP }) {
 
 app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
   const { email, OTP } = req.body;
+  console.log(OTP)
   sendEmail({ recipient_email: email, OTP })
     .then((response) => {
       res.status(200).json(response);

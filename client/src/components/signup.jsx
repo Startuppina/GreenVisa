@@ -5,6 +5,7 @@ import 'react-phone-input-2/lib/style.css';
 import axios from 'axios';
 import MessagePopUp from './messagePopUp';
 
+
 const Signup = () => {
     const [username, setUsername] = useState('');
     const [phone, setPhone] = useState('');
@@ -15,7 +16,6 @@ const Signup = () => {
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
-
 
     const handleUsernameChange = (e) => setUsername(e.target.value);
     const handlePhoneChange = (value) => setPhone(value); // `value` già in formato internazionale
@@ -44,7 +44,6 @@ const Signup = () => {
             });
 
             if (response.status === 200) {
-                localStorage.setItem('token', response.data.token);
                 navigate('/login');
             } 
 

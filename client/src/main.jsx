@@ -17,6 +17,7 @@ import UserPage from './UserPage.jsx';
 import OTPInput from './components/OTPInput.jsx';
 import Reset from './components/reset.jsx';
 import Recovered from './components/recovered.jsx';
+import InsertEmail from './components/insertEmail.jsx';
 import { RecoveryContextProvider } from './provider/provider.jsx'
 
 
@@ -68,6 +69,10 @@ const router = createBrowserRouter([
   {
     path: "/User",
     element: <UserPage />,
+  },
+  {
+    path: "/InsertEmail",
+    element: <InsertEmail />,
   },
   {
     path: "/Verification",

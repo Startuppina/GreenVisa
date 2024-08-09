@@ -17,10 +17,16 @@ export default function OTPInput() {
 
   function resendOTP() {
     if (disable) return;
+
+    const recoveryToken = localStorage.getItem("recoveryToken");
     axios
       .post("http://localhost:5000/send_recovery_email", {
         OTP: OTP,
         recipient_email: email,
+      }, {
+        headers: {
+          "Authorization": `Bearer ${recoveryToken}`,
+        },
       })
       .then(() => setDisable(true))
       .then(() => alert("A new OTP has successfully been sent to your email."))
