@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useRecoveryContext } from '../provider/provider';
+import MessagePopUp from './messagePopUp';
 
 const Login = () => {
     const { email, setEmail, OTP, setOTP } = useRecoveryContext(); // Corretto uso del contesto
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
+
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState(false);
 
     const handleEmailChange = (e) => setEmail(e.target.value);
     const handlePasswordChange = (e) => setPassword(e.target.value);
@@ -46,14 +50,18 @@ const Login = () => {
                         }
 
                     } catch (error) {
-                        alert(error.response?.data?.msg || error.message);
+                        //alert(error.response?.data?.msg || error.message);
+                        setMessagePopup(error.response?.data?.msg || error.message);
+                        setButtonPopup(true);
                     }
 
                 }
             }
 
         } catch (error) {
-            alert(error.response?.data?.msg || error.message);
+            //alert(error.response?.data?.msg || error.message);
+            setMessagePopup(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
         }
     };
 
@@ -75,16 +83,23 @@ const Login = () => {
                 navigate('/User');
             } else {
                 console.error('Error:', response.data.msg);
-                alert(response.data.msg);
+                //alert(response.data.msg);
+                setMessagePopup(response.data.msg);
+                setButtonPopup(true);
             }
 
         } catch (error) {
-            alert(error.response?.data?.msg || error.message);
+            //alert(error.response?.data?.msg || error.message);
+            setMessagePopup(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
         }
     };
 
     return (
         <div className="w-screen h-screen bg-[url('/img/login.jpg')] bg-cover bg-center bg-no-repeat m-0 p-0 flex items-center justify-center">
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
             <div className='w-full md:w-[60%] lg:w-[60%] h-auto flex flex-col items-center justify-center pb-10 bg-white rounded-lg'>
                 
                 <div className='relative top-2 left-3 text-arial w-full text-left text-[#2d7044] font-bold text-xl cursor-pointer'>
@@ -111,9 +126,9 @@ const Login = () => {
                             <input type="password" name="password" id="password" className='w-full p-2 bg-[#d9d9d9]' onChange={handlePasswordChange}/>
                         </div>
                     </div>
-                    <p className='font-arial text-xl w-full text-center'>Password dimenticata? <span className='text-[#2d7044]'><a onClick={navigateToOtp}>Clicca qui</a></span></p>
+                    <p className='font-arial text-xl w-full text-center'>Password dimenticata? <span className='text-[#2d7044]'><a onClick={navigateToOtp} className='cursor-pointer'>Clicca qui</a></span></p>
                     <div className='flex justify-center'>
-                        <input type="submit" value="Accedi" className="mt-7 font-arial font-semibold text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                        <input type="submit" value="Accedi" className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                     </div>
                 </form>
             </div>

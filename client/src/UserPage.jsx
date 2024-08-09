@@ -7,6 +7,7 @@ import 'react-phone-input-2/lib/style.css';
 import ScrollToTop from './components/scrollToTop';
 import {useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import MessagePopUp from './components/messagePopUp';
 
 const UserPage = () => {
     const [userInfo, setUserInfo] = useState({});
@@ -15,9 +16,13 @@ const UserPage = () => {
     const [showModifier, setShowModifier] = useState(false);
     const navigate = useNavigate();
 
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState("");
+
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
     const handlePhoneChange = (value) => setNewPhone(value);
 
+    
     useEffect(() => {
         const fetchInfo = async () => {
             try {
@@ -33,7 +38,9 @@ const UserPage = () => {
                 }
 
             } catch (error) {
-                alert(error.response?.data?.msg || error.message);
+                //alert(error.response?.data?.msg || error.message);
+                setMessagePopup(error.response?.data?.msg || error.message);
+                setButtonPopup(true);
             }
         }
 
@@ -55,12 +62,15 @@ const UserPage = () => {
                 });
     
                 if (response.status === 200) {
-                    console.log('Logout successful');
+                    console.log('Logout effettuato con successo');
                 } else {
-                    console.error(`Logout failed with status: ${response.status}`);
+                    setMessagePopup(`Errore durante l'invio della richiesta di logout: ${response.statusText}`);
+                    setButtonPopup(true);
                 }
             } catch (error) {
-                console.error('An error occurred during logout:', error);
+                console.error('Error:', error);
+                setMessagePopup(`Errore durante l'invio della richiesta di logout: ${error.message}`);
+                setButtonPopup(true);
             }
     
             // Rimuovi il token dal localStorage e reindirizza
@@ -86,18 +96,27 @@ const UserPage = () => {
                 });
     
                 if (response.status === 200) {
-                    console.log('Account deleted successfully');
+                    console.log('Account cancellato con successo');
                     localStorage.removeItem('token');
                     navigate('/');
                 } else {
-                    console.error(`Account deletion failed with status: ${response.status}`);
+                    console.error('Error:', response.statusText);
+                    setMessagePopup(`Errore durante la cancellazione dell'account: ${response.statusText}`);
+                    setButtonPopup(true);
                 }
             } catch (error) {
                 console.error('An error occurred during account deletion:', error);
+                setMessagePopup(`Errore durante la cancellazione dell'account: ${error.message}`);
+                setButtonPopup(true);
+
                 if (error.response && error.response.status === 403) {
-                    alert('You are not authorized to delete this account.');
+                    console.error('Forbidden error');
+                    setMessagePopup('Non sei autorizzato a cancellare questo account');
+                    setButtonPopup(true);
                 } else {
-                    alert('An error occurred. Please try again.');
+                    console.error(`Errore durante la cancellazione dell'account: ${error.message}`);
+                    setMessagePopup(`Errore durante la cancellazione dell'account: ${error.message}`);
+                    setButtonPopup(true);
                 }
             }
         }
@@ -119,12 +138,14 @@ const UserPage = () => {
     
             if (response.status === 200) {
                 console.log('Username updated successfully');
+                setMessagePopup("Username aggiornato con successo");
+                setButtonPopup(true);
                 setUserInfo({ ...userInfo, username: newUsername });
-                // Esegui ulteriori azioni se necessario, ad esempio aggiornare lo stato
-                // setSomething(); // Completa questa parte secondo le tue necessità
             } 
         } catch (error) {
-            alert(error.response?.data?.message || error.message); // Cambia `msg` in `message` per coerenza con il backend
+            console.error(`Errore durante l'aggiornamento del nome utente: ${error.message}`);
+            setMessagePopup(`Errore durante l'aggiornamento del nome utente: ${error.message}`);
+            setButtonPopup(true);
         }
     };
 
@@ -144,13 +165,18 @@ const UserPage = () => {
             );
     
             if (response.status === 200) {
-                console.log('Phone number updated successfully');
+                
+                setMessagePopup("Telefono aggiornato con successo");
+                setButtonPopup(true);
                 setUserInfo({ ...userInfo, phone_number: response.data.newPhone });
                 // Esegui ulteriori azioni se necessario, ad esempio aggiornare lo stato
                 // setSomething(); // Completa questa parte secondo le tue necessità
             }
         } catch (error) {
-            alert(error.response?.data?.message || error.message); // Cambia `msg` in `message` per coerenza con il backend
+            console.error(`Errore durante l\'aggiornamento del numero di telefono: ${error.message}`);
+            setMessagePopup(`Errore durante l'aggiornamento del numero di telefono: ${error.message}`);
+            setButtonPopup(true);
+            //alert(error.response?.data?.message || error.message); // Cambia `msg` in `message` per coerenza con il backend
         }
     };
     
@@ -160,6 +186,10 @@ const UserPage = () => {
     <div className='w-full'>
         <ScrollToTop />
         <Navbar />
+        <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+            {messagePopup}
+        </MessagePopUp>
+
         <div className='text-arial text-xl p-4'>
             <h1 className="text-3xl font-bold text-black text-center pb-10">Ciao {userInfo ? userInfo.username : ''}</h1>
             
@@ -217,7 +247,7 @@ const UserPage = () => {
                 </form>
             </div>
 
-            <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
+            <div className='flex flex-col md:flex-row gap-3 mt-10 mb-6 justify-center'>
                 <div className="w-full md:w-[20%] flex justify-center">
                     <button className='p-2 w-full bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>
                         Logout

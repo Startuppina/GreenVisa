@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import axios from 'axios';
+import MessagePopUp from './messagePopUp';
 
 const Signup = () => {
     const [username, setUsername] = useState('');
@@ -11,6 +12,10 @@ const Signup = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const navigate = useNavigate(); // Usa useNavigate per la navigazione programmatica
+
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState('');
+
 
     const handleUsernameChange = (e) => setUsername(e.target.value);
     const handlePhoneChange = (value) => setPhone(value); // `value` già in formato internazionale
@@ -22,7 +27,8 @@ const Signup = () => {
         e.preventDefault();
 
         if (password !== confirmPassword) {
-            alert('Le password non coincidono');
+            setMessagePopup('Le password non corrispondono');
+            setButtonPopup(true);
             return;
         }
 
@@ -43,12 +49,17 @@ const Signup = () => {
             } 
 
         } catch (error) {
-            alert(error.response?.data?.msg || error.message);
+            //alert(error.response?.data?.msg || error.message);
+            setMessagePopup(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
         }
     };
 
     return (
         <div className="bg-[url('/img/login.jpg')] bg-cover bg-center bg-no-repeat m-0 py-10 flex items-center justify-center">
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
             <div className='w-full md:w-[60%] lg:w-[60%] h-auto flex flex-col items-center justify-center bg-white pb-10 rounded-lg'>
                 <div className='relative top-2 left-3 text-arial w-full text-left text-[#2d7044] font-bold text-xl cursor-pointer'>
                     <Link to="/">Home</Link>
@@ -129,7 +140,7 @@ const Signup = () => {
                         <input
                             type="submit"
                             value="Registrati"
-                            className="mt-7 font-arial font-semibold text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                            className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                         />
                     </div>
                 </form>

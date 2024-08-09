@@ -2,6 +2,7 @@ import { useState } from "react";
 import React from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import MessagePopUp from "./messagePopUp";
 
 export default function Reset() {
   const [password, setPassword] = useState('');
@@ -12,18 +13,23 @@ export default function Reset() {
   const handlePasswordConfirmChange = (e) => setPasswordConfirm(e.target.value);
   const handleTermsChange = (e) => setAcceptedTerms(e.target.checked);
 
+  const [buttonPopup, setButtonPopup] = useState(false);
+  const [messagePopup, setMessagePopup] = useState("");
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (password !== passwordConfirm) {
-      alert("Passwords do not match");
+      setMessagePopup("Le password non corrispondono");
+      setButtonPopup(true);
       return;
     }
 
     if (!acceptedTerms) {
-      alert("You must accept the Terms and Conditions");
+      setMessagePopup("Devi accettare i termini e le condizioni");
+      setButtonPopup(true);
       return;
     }
 
@@ -43,93 +49,99 @@ export default function Reset() {
       }
     } catch (error) {
       console.log(error);
-      alert("An error occurred while changing the password.");
+      setMessagePopup(error.response?.data?.msg || error.message);
+      setButtonPopup(true);
     }
   };
 
   return (
-    <div className="flex flex-col justify-center items-center w-screen h-screen bg-gray-50">
-      <div className="text-center mb-6">
-        <img
-          src="img/logo.png"
-          alt="logo"
-          className="w-[200px] h-[200px] mx-auto"
-        />
-      </div>
-      <div className="bg-white px-6 pt-10 pb-9 shadow-xl mx-auto w-full max-w-lg rounded-2xl text-arial">
-        <div className="mx-auto flex w-full max-w-md flex-col space-y-6">
-          <div className="flex flex-col items-center justify-center text-center space-y-2">
-            <div className="font-semibold text-3xl">
-              <p>Cambia la tua password</p>
-            </div>
-          </div>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="flex flex-col space-y-4">
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-xl"
-                >
-                  Nuova Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                  required
-                  onChange={handlePasswordChange}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="confirm-password"
-                  className="block text-xl"
-                >
-                  Conferma Password
-                </label>
-                <input
-                  type="password"
-                  name="confirm-password"
-                  id="confirm-password"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                  required
-                  onChange={handlePasswordConfirmChange}
-                />
+    <>
+      <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+        {messagePopup}
+      </MessagePopUp>
+      <div className="flex flex-col justify-center items-center w-screen h-screen bg-gray-50">
+        <div className="text-center mb-6">
+          <img
+            src="img/logo.png"
+            alt="logo"
+            className="w-[200px] h-[200px] mx-auto"
+          />
+        </div>
+        <div className="bg-white px-6 pt-10 pb-9 shadow-xl mx-auto w-full max-w-lg rounded-2xl text-arial">
+          <div className="mx-auto flex w-full max-w-md flex-col space-y-6">
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
+              <div className="font-semibold text-3xl">
+                <p>Cambia la tua password</p>
               </div>
             </div>
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input
-                  id="terms"
-                  aria-describedby="terms"
-                  type="checkbox"
-                  className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300"
-                  required
-                  onChange={handleTermsChange}
-                />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="terms" className="text-gray-500">
-                  Accetto i{" "}
-                  <a
-                    className="text-[#2d7044] hover:underline"
-                    href="#"
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="flex flex-col space-y-4">
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-xl"
                   >
-                    Termini e Condizioni
-                  </a>
-                </label>
+                    Nuova Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    required
+                    onChange={handlePasswordChange}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="confirm-password"
+                    className="block text-xl"
+                  >
+                    Conferma Password
+                  </label>
+                  <input
+                    type="password"
+                    name="confirm-password"
+                    id="confirm-password"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    required
+                    onChange={handlePasswordConfirmChange}
+                  />
+                </div>
               </div>
-            </div>
-            <button
-              type="submit"
-              className="font-bold flex justify-center items-center w-full border rounded-xl py-4 bg-[#2d7044] text-white hover:bg-white hover:text-[#2d7044] hover:border-2 hover:border-[#2d7044] transition-colors duration-300 ease-in-out text-xl"
-            >
-              Cambia Password
-            </button>
-          </form>
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="terms"
+                    aria-describedby="terms"
+                    type="checkbox"
+                    className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300"
+                    required
+                    onChange={handleTermsChange}
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="terms" className="text-gray-500">
+                    Accetto i{" "}
+                    <a
+                      className="text-[#2d7044] hover:underline"
+                      href="#"
+                    >
+                      Termini e Condizioni
+                    </a>
+                  </label>
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="font-bold flex justify-center items-center w-full border rounded-xl py-4 bg-[#2d7044] text-white hover:bg-white hover:text-[#2d7044] hover:border-2 hover:border-[#2d7044] transition-colors duration-300 ease-in-out text-xl"
+              >
+                Cambia Password
+              </button>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,278 +1,322 @@
-const express = require('express');
-const session = require('express-session');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const pool = require('./db'); // Your database connection pool
+const express = require("express");
+const session = require("express-session");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const pool = require("./db"); // Your database connection pool
 const bcrypt = require("bcryptjs");
-const crypto = require('crypto');
-const cors = require('cors');
+const crypto = require("crypto");
+const cors = require("cors");
+require("dotenv").config();
 const port = 8080;
+
+const email_sender = process.env.EMAIL_SENDER;
+const pass_sender = process.env.PASS_SENDER;
 
 const app = express();
 
-app.use(cors({
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-}));
+app.use(express.static("img"));
 
-const secretKey = crypto.randomBytes(64).toString('hex');
-console.log('Secret key:', secretKey);
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+const secretKey = crypto.randomBytes(64).toString("hex");
+console.log("Secret key:", secretKey);
 
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
-    const authHeader = req.headers.authorization; // Access the "Authorization" header
+  const authHeader = req.headers.authorization; // Access the "Authorization" header
 
-    if (authHeader) {
-        const token = authHeader.split(' ')[1]; // Extract the token from the "Authorization" header
+  if (authHeader) {
+    const token = authHeader.split(" ")[1]; // Extract the token from the "Authorization" header
 
-        console.log('Token ricevuto:', token); // Log del token ricevuto
+    console.log("Token ricevuto:", token); // Log del token ricevuto
 
-        jwt.verify(token, secretKey, (err, user) => {
-            if (err) {
-                console.error('Errore di verifica del token:', err); // Log dell'errore di verifica del token
-                return res.sendStatus(403); // Token non valido
-            }
+    jwt.verify(token, secretKey, (err, user) => {
+      if (err) {
+        console.error("Errore di verifica del token:", err); // Log dell'errore di verifica del token
+        return res.sendStatus(403); // Token non valido
+      }
 
-            req.user = user;
-            next();
-        });
-    } else {
-        console.log('Nessun token fornito');
-        res.sendStatus(401); // Nessun token fornito
-    }
+      req.user = user;
+      next();
+    });
+  } else {
+    console.log("Nessun token fornito");
+    res.sendStatus(401); // Nessun token fornito
+  }
 };
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.post('/api/signup', async (req, res) => {
-    const { username, email, password, phone } = req.body;
-
-    console.log('Received signup request:', req.body);
-
-    // Validazione
-    if (!email || !password || !username || !phone) {
-        return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
-    } else if (password.length < 8) {
-        return res.status(400).json({ msg: "La password deve essere di almeno 8 caratteri" });
-    } else if (!emailCheck(email)) {
-        return res.status(400).json({ msg: "Email non valida" });
-    } else if (!phoneCheck(phone)) {
-        return res.status(400).json({ msg: "Numero di telefono non valido" });
-    }
-
+/*const initializeAdminUser = async () => {
     try {
-        const result = await pool.query(
-            "SELECT email FROM users WHERE email = $1", [email]
-        );
+        console.log('Initializing admin user...');
+        const result = await pool.query("SELECT * FROM users WHERE administrator = true");
 
         if (result.rows.length > 0) {
-            return res.status(400).json({ msg: "Email già in uso" });
+            console.log('Admin user already exists');
+            return;
         }
 
-        const hashedPassword = await bcrypt.hash(password, 12);
-        const intPrefix = phone.slice(0, 2);
-        const intSuffix = phone.slice(2);
-        const newPhone = `+${intPrefix} ${intSuffix}`;
+        const adminUsername = 'admin';
+        const adminEmail = 'danielchionne@gmail.com';
+        const adminPassword = 'adminpassword';
+        const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
         await pool.query(
             "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, true, $4)",
-            [username, email, newPhone, hashedPassword]
+            [adminUsername, adminEmail, '+000 0000000', hashedPassword]
         );
 
-        const token = jwt.sign({ email }, secretKey, { expiresIn: '7d' });
-        return res.status(200).json({ msg: "User registered!", token });
-
+        console.log('Admin user created successfully');
     } catch (error) {
-        console.error('Error during signup:', error);
-        return res.status(500).json({ msg: "An error occurred. Please try again." });
+        console.error('Error initializing admin user:', error);
     }
+};*/
+
+app.post("/api/signup", async (req, res) => {
+  const { username, email, password, phone } = req.body;
+
+  console.log("Received signup request:", req.body);
+
+  // Validazione
+  if (!email || !password || !username || !phone) {
+    return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
+  } else if (password.length < 8) {
+    return res
+      .status(400)
+      .json({ msg: "La password deve essere di almeno 8 caratteri" });
+  } else if (!emailCheck(email)) {
+    return res.status(400).json({ msg: "Email non valida" });
+  } else if (!phoneCheck(phone)) {
+    return res.status(400).json({ msg: "Numero di telefono non valido" });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT email FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (result.rows.length > 0) {
+      return res.status(400).json({ msg: "Email già in uso" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const intPrefix = phone.slice(0, 2);
+    const intSuffix = phone.slice(2);
+    const newPhone = `+${intPrefix} ${intSuffix}`;
+
+    await pool.query(
+      "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, true, $4)",
+      [username, email, newPhone, hashedPassword]
+    );
+
+    const token = jwt.sign({ email }, secretKey, { expiresIn: "7d" });
+    return res.status(200).json({ msg: "User registered!", token });
+  } catch (error) {
+    console.error("Error during signup:", error);
+    return res
+      .status(500)
+      .json({ msg: "An error occurred. Please try again." });
+  }
 });
 
-app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
-    console.log('Received login request:', req.body);
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  console.log("Received login request:", req.body);
 
-    if (!email || !password) {
-        return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
+  if (!email || !password) {
+    return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
+  }
+
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ msg: "Email non valida" });
     }
 
-    try {
-        const result = await pool.query(
-            "SELECT * FROM users WHERE email = $1", [email]
-        );
+    const user = result.rows[0]; // Se c'è un utente, ci sarà solo una riga
+    const isMatch = await bcrypt.compare(password, user.password_digest);
 
-        if (result.rows.length === 0) {
-            return res.status(400).json({ msg: "Email non valida" });
-        }
-
-        const user = result.rows[0]; // Se c'è un utente, ci sarà solo una riga
-        const isMatch = await bcrypt.compare(password, user.password_digest);
-
-        if (!isMatch) {
-            return res.status(400).json({ msg: "Password errata" });
-        }
-
-        const token = jwt.sign({ email }, secretKey, { expiresIn: '7d' });
-        res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 days
-        return res.status(200).json({ msg: "Login effettuato con successo!", token });
-
-    } catch (error) {
-        console.error('Error during login:', error);
-        return res.status(500).json({ msg: "An error occurred. Please try again." });
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Password errata" });
     }
+
+    const token = jwt.sign({ email }, secretKey, { expiresIn: "7d" });
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    }); // 7 days
+    return res
+      .status(200)
+      .json({ msg: "Login effettuato con successo!", token });
+  } catch (error) {
+    console.error("Error during login:", error);
+    return res
+      .status(500)
+      .json({ msg: "An error occurred. Please try again." });
+  }
 });
 
-
-app.post('/api/logout', authenticateJWT, (req, res) => {
-    res.clearCookie('jwt');
-    res.status(200).json({ msg: 'Logout effettuato con successo!' });
+app.post("/api/logout", authenticateJWT, (req, res) => {
+  res.clearCookie("jwt");
+  res.status(200).json({ msg: "Logout effettuato con successo!" });
 });
 
-app.delete('/api/delete-account', authenticateJWT, async (req, res) => {
-    try {
-        // Ottieni l'email dell'utente dal token
-        const { email } = req.user;
+app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
+  try {
+    // Ottieni l'email dell'utente dal token
+    const { email } = req.user;
 
-        // Trova e elimina l'utente dal database
-        const result = await pool.query(
-            "DELETE FROM users WHERE email = $1", [email]
-        )
+    // Trova e elimina l'utente dal database
+    const result = await pool.query("DELETE FROM users WHERE email = $1", [
+      email,
+    ]);
 
-        if (!result) {
-            return res.status(404).json({ message: 'Account not found' });
-        }
-
-        // Invia una risposta di successo
-        res.status(200).json({ message: 'Account successfully deleted' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+    if (!result) {
+      return res.status(404).json({ message: "Account not found" });
     }
+
+    // Invia una risposta di successo
+    res.status(200).json({ message: "Account successfully deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
-app.get('/api/user-info', authenticateJWT, async (req, res) => {
-    try {
-        // Ottieni l'email dell'utente dal token
-        const { email } = req.user; 
+app.get("/api/user-info", authenticateJWT, async (req, res) => {
+  try {
+    // Ottieni l'email dell'utente dal token
+    const { email } = req.user;
 
-        // Trova l'utente dal database
-        const result = await pool.query(
-            "SELECT * FROM users WHERE email = $1", [email]
-        );  
-    
-        if (!result) {
-            return res.status(404).json({ message: 'User not found' });
-        }
+    // Trova l'utente dal database
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
 
-        // Invia la risposta con l'utente trovato
-        res.status(200).json(result.rows[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+    if (!result) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    // Invia la risposta con l'utente trovato
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
-app.post('/api/update-username', authenticateJWT, async (req, res) => {
-    try {
-        // Ottieni l'email dell'utente dal token
-        const { email } = req.user;
-        const { username } = req.body;
+app.post("/api/update-username", authenticateJWT, async (req, res) => {
+  try {
+    // Ottieni l'email dell'utente dal token
+    const { email } = req.user;
+    const { username } = req.body;
 
-        // Trova l'utente dal database
-        const result = await pool.query(
-            "SELECT * FROM users WHERE email = $1", [email]
-        );
+    // Trova l'utente dal database
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Aggiorna il nome utente nel database
-        await pool.query(
-            "UPDATE users SET username = $1 WHERE email = $2",
-            [username, email]
-        );
-
-        // Invia una risposta di successo
-        res.status(200).json({ message: 'Username updated successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    // Aggiorna il nome utente nel database
+    await pool.query("UPDATE users SET username = $1 WHERE email = $2", [
+      username,
+      email,
+    ]);
+
+    // Invia una risposta di successo
+    res.status(200).json({ message: "Username updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
-app.post ('/api/update-phone', authenticateJWT, async (req, res) => {
-    try {
-        // Ottieni l'email dell'utente dal token
-        const { email } = req.user;
-        const { phone_number } = req.body;
+app.post("/api/update-phone", authenticateJWT, async (req, res) => {
+  try {
+    // Ottieni l'email dell'utente dal token
+    const { email } = req.user;
+    const { phone_number } = req.body;
 
-        // Trova l'utente dal database
-        const result = await pool.query(
-            "SELECT * FROM users WHERE email = $1", [email]
-        );
+    // Trova l'utente dal database
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        const intPrefix = phone_number.slice(0, 2);
-        const intSuffix = phone_number.slice(2);
-        const newPhone = `+${intPrefix} ${intSuffix}`;
-
-        // Aggiorna il numero di telefono nel database
-        await pool.query(
-            "UPDATE users SET phone_number = $1 WHERE email = $2",
-            [newPhone, email]
-        );
-
-        // Invia una risposta di successo
-        res.status(200).json({ message: 'Phone number updated successfully', newPhone });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    const intPrefix = phone_number.slice(0, 2);
+    const intSuffix = phone_number.slice(2);
+    const newPhone = `+${intPrefix} ${intSuffix}`;
+
+    // Aggiorna il numero di telefono nel database
+    await pool.query("UPDATE users SET phone_number = $1 WHERE email = $2", [
+      newPhone,
+      email,
+    ]);
+
+    // Invia una risposta di successo
+    res
+      .status(200)
+      .json({ message: "Phone number updated successfully", newPhone });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
-app.get('/api/request-email', authenticateJWT, async (req, res) => {
-    try {
-        // Ottieni l'email dell'utente dal token
-        const { email } = req.user;
-        const result = await pool.query( //si verifica se l'email esiste nel db per una questione di sicurezza
-            "SELECT * FROM users WHERE email = $1", [email]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).send(result.rows[0].email);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+app.get("/api/request-email", authenticateJWT, async (req, res) => {
+  try {
+    // Ottieni l'email dell'utente dal token
+    const { email } = req.user;
+    const result = await pool.query(
+      //si verifica se l'email esiste nel db per una questione di sicurezza
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
     }
+    res.status(200).send(result.rows[0].email);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
-
 
 function sendEmail({ recipient_email, OTP }) {
-    return new Promise((resolve, reject) => {
-      var transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
+  return new Promise((resolve, reject) => {
+    var transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
         //PER RAGIONI DI SICUREZZA LE CREDENZIALI DEVONO STARE NEL .ENV
-          user: "danielchionne@gmail.com",
-          pass: "nqip rhkk bdhi ewsv",
-        },
-      });
-  
-      const mail_configs = {
-        from: "danielchionne@gmail.com",
-        to: recipient_email,
-        subject: "KODING 101 PASSWORD RECOVERY",
-        html: `<!DOCTYPE html>
+        user: "danielchionne@gmail.com",
+        pass: "nqip rhkk bdhi ewsv",
+      },
+    });
+
+    const mail_configs = {
+      from: "danielchionne@gmail.com",
+      to: recipient_email,
+      subject: "Green Visa Codice di verifica",
+      html: `<!DOCTYPE html>
         <html lang="en" >
         <head>
             <meta charset="UTF-8">
@@ -284,7 +328,7 @@ function sendEmail({ recipient_email, OTP }) {
         <!-- partial:index.partial.html -->
         <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
             <div style="margin:50px auto;width:70%;padding:20px 0">
-            <img src="img/logo.png" alt="Green Visa" style="width: 70px; border-radius: 50%"/>
+            <img src="http://localhost:8080/logo2.png" alt="Green Visa" style="width: 150px"/>
             <div style="border-bottom:1px solid #eee">
                 <a href="" style="font-size:1.4em;color: #2d7044;text-decoration:none;font-weight:600">Green Visa</a>
             </div>
@@ -303,67 +347,69 @@ function sendEmail({ recipient_email, OTP }) {
             
         </body>
         </html>`,
-      };
-      transporter.sendMail(mail_configs, function (error, info) {
-        if (error) {
-          console.error('Errore nell\'invio dell\'email:', error);
-          return reject({ message: `Errore durante l'invio dell'email: ${error.message}` });
-        }
-        return resolve({ message: "Email inviata con successo" });
-      });
+    };
+    transporter.sendMail(mail_configs, function (error, info) {
+      if (error) {
+        console.error("Errore nell'invio dell'email:", error);
+        return reject({
+          message: `Errore durante l'invio dell'email: ${error.message}`,
+        });
+      }
+      return resolve({ message: "Email inviata con successo" });
     });
-  }  
-  
-
-  app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
-    const { email, OTP } = req.body;
-    sendEmail({ recipient_email: email, OTP })
-      .then((response) => {
-        res.status(200).json(response);
-      })
-      .catch((error) => {
-        console.error('Errore nell\'invio dell\'email:', error);
-        res.status(500).json(error);
-      });
   });
+}
 
-  app.post("/api/change-password", authenticateJWT, async (req, res) => {
-    try {
-      const { password } = req.body;
-      const { email } = req.user;
-  
-      // Hash the new password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Prepare the SQL query
-      const query = "UPDATE users SET password_digest = $1 WHERE email = $2";
-      const values = [hashedPassword, email];
-  
-      // Execute the query
-      await pool.query(query, values);
-  
-      res.status(200).json({ message: "Password modificata con successo" });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-  
-  
+app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
+  const { email, OTP } = req.body;
+  sendEmail({ recipient_email: email, OTP })
+    .then((response) => {
+      res.status(200).json(response);
+    })
+    .catch((error) => {
+      console.error("Errore nell'invio dell'email:", error);
+      res.status(500).json(error);
+    });
+});
+
+app.post("/api/change-password", authenticateJWT, async (req, res) => {
+  try {
+    const { password } = req.body;
+    const { email } = req.user;
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Prepare the SQL query
+    const query = "UPDATE users SET password_digest = $1 WHERE email = $2";
+    const values = [hashedPassword, email];
+
+    // Execute the query
+    await pool.query(query, values);
+
+    res.status(200).json({ message: "Password modificata con successo" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 function emailCheck(email) {
-    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(String(email).toLowerCase());
+  const re =
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(email).toLowerCase());
 }
 
 function phoneCheck(phone) {
-    const re = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
-    return re.test(String(phone).toLowerCase());
+  const re = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+  return re.test(String(phone).toLowerCase());
 }
 
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Qualcosa è andato storto!' });
+  console.error(err.stack);
+  res.status(500).json({ error: "Qualcosa è andato storto!" });
 });
 
-app.listen(port, () => console.log(`Server is running on port ${port}`));
+app.listen(port, async () => {
+  console.log(`Server in ascolto sulla porta ${port}`);
+});
