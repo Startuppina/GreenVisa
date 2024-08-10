@@ -8,7 +8,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - server-data:/usr/src/app/uploads
+      - ./server/uploaded_img:/usr/src/app/uploaded_img
     depends_on:
       - db
 

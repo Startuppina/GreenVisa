@@ -5,6 +5,9 @@ const pool = require("./db"); // Your database connection pool
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const cors = require("cors");
+const multer = require("multer");
+const fs = require('fs');
+const path = require("path");
 require("dotenv").config();
 const port = 8080;
 
@@ -23,6 +26,23 @@ app.use(
     credentials: true,
   })
 );
+
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, 'uploaded_img');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+
+const upload = multer({ storage: storage});
 
 const secretKey = process.env.SECRET_KEY;
 console.log("Secret key:", secretKey);
@@ -396,6 +416,38 @@ app.post("/api/change-password", authenticateJWT, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req, res) => {
+  try {
+    const image = req.file;
+    const { title, content } = req.body;
+
+    if (!req.user || !req.user.id) {
+      return res.status(400).json({ msg: "ID utente mancante" });
+    }
+
+    if (!title || !content) {
+      return res.status(400).json({ msg: "Titolo e contenuto mancanti" });
+    }
+
+    if (!image) {
+      return res.status(400).json({ msg: "Immagine mancante" });
+    }
+
+    const query = "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4)";
+    const values = [req.user.id, title, content, image.path];
+
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Image uploaded successfully" });
+
+    console.log("Image uploaded successfully");
+    
+  } catch (error) {
+    console.error("Error during file upload:", error);
+    res.status(500).json({ msg: "Error uploading image" });
+  }
+});
+
 
 function emailCheck(email) {
   const re =
