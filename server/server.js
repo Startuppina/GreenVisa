@@ -169,7 +169,7 @@ app.post("/api/login", async (req, res) => {
       return res.status(400).json({ msg: "Password errata" });
     }
 
-    const token = jwt.sign({ email }, secretKey, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user.id }, secretKey, { expiresIn: "7d" });
     res.cookie("jwt", token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -423,6 +423,7 @@ app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req
     const { title, content } = req.body;
 
     if (!req.user || !req.user.id) {
+      console.log("ID utente mancante:", req.user);
       return res.status(400).json({ msg: "ID utente mancante" });
     }
 
@@ -435,7 +436,7 @@ app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req
     }
 
     const query = "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4)";
-    const values = [req.user.id, title, content, image.path];
+    const values = [req.user.id, title, content, image.filename];
 
     await pool.query(query, values);
     res.status(200).json({ msg: "Image uploaded successfully" });

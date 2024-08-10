@@ -21,6 +21,10 @@ const CourseUploadForm = () => {
             return;
         }
 
+        console.log('Title:', title);
+        console.log('Content:', content);
+        console.log('Image:', image);
+
         const token = localStorage.getItem('token');
         if (!token) {
             alert('Please log in first.');
@@ -29,7 +33,7 @@ const CourseUploadForm = () => {
     
         const formData = new FormData();
         formData.append('title', title);
-        formData.append('description', content);
+        formData.append('content', content);
         formData.append('image', image); // Assicurati che questa riga non sia commentata
 
         console.log('FormData:', formData);
