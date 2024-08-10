@@ -48,41 +48,43 @@ const CourseUploadForm = () => {
     
 
     return (
-        <div className="w-[80%] mx-auto my-10">
-            <h2 className="text-2xl font-bold text-center mb-4">Upload News</h2>
+        <div className="w-[80%] mx-auto my-10 font-arial text-xl">
+            <h2 className="text-3xl font-bold text-center mb-4">Pubblica una notizia</h2>
             <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
                 <label className="flex flex-col">
-                    <span className="font-bold mb-2">Title:</span>
+                    <span className="block mb-2">Titolo</span>
                     <input
                         type="text"
                         value={title}
                         onChange={handleTitleChange}
-                        className="border rounded-lg p-2"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                     />
                 </label>
                 <label className="flex flex-col">
-                    <span className="font-bold mb-2">Description:</span>
+                    <span className="block mb-2">Contenuto:</span>
                     <textarea
                         value={description}
                         onChange={handleDescriptionChange}
                         rows="4"
-                        className="border rounded-lg p-2"
+                        className="decoration-none bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                     />
                 </label>
                 <label className="flex flex-col">
-                    <span className="font-bold mb-2">Image:</span>
+                    <span className="block mb-2">Immagine</span>
                     <input
                         type="file"
                         onChange={handleImageChange}
-                        className="border rounded-lg p-2"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                     />
                 </label>
-                <button
-                    type="submit"
-                    className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600"
-                >
-                    Submit
-                </button>
+                <div className='flex justify-center'>
+                    <button
+                        type="submit"
+                        className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                    >
+                        Submit
+                    </button>
+                </div>
             </form>
         </div>
     );

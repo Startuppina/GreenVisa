@@ -162,13 +162,13 @@ function Payment() {
                     <div className="flex flex-col justify-center md:flex-row md:justify-between z-10">
                         <div className="text-2xl font-bold">Informazioni di contatto</div>
                         <div className='md:text-right'>
-                            Non hai fatto l'accesso? <span className='text-[#2d7044] font-bold hover:text-red-500'><Link to="/Login">Accedi</Link></span>
+                            Non hai fatto l'accesso? <span className='text-[#2d7044] font-bold'><Link to="/Login">Accedi</Link></span>
                         </div>
                     </div>
                     <p className="mt-5 mb-5">Utilizzeremo questa email per inviare i dettagli e gli aggiornamenti relativi al tuo ordine.</p>
 
                     <form className="w-full z-10 ">
-                        <input type="email" name="email" id="email" className=" w-full p-2 bg-[#d9d9d9] mb-4" placeholder="Email" />
+                        <input type="email" name="email" id="email" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 mb-3" placeholder="Email" />
 
                         <div className="flex items-center justify-between mb-5">
                             <input
@@ -190,7 +190,7 @@ function Payment() {
                                     name="nome"
                                     id="nome"
                                     placeholder="Nome"
-                                    className="w-full p-2 mb-3 md:mb-0 bg-[#d9d9d9]"
+                                    className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 mb-3 md:mb-0"
                                     value={state.nome}
                                     onChange={handleInputChange}
                                     onFocus={handleInputFocus}
@@ -200,23 +200,23 @@ function Payment() {
                                     name="cognome"
                                     id="cognome"
                                     placeholder="Cognome"
-                                    className="w-full p-2 bg-[#d9d9d9]"
+                                    className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                     value={state.cognome}
                                     onChange={handleInputChange}
                                     onFocus={handleInputFocus}
                                 />
                             </div>
-                            <input type="text" name="societa" id="societa" placeholder="Societa" className="w-full p-2 mb-3 bg-[#d9d9d9]" />
-                            <input type="text" name="indirizzo" id="indirizzo" placeholder="Indirizzo" className="w-full p-2 mb-3 bg-[#d9d9d9]" />
+                            <input type="text" name="societa" id="societa" placeholder="Societa" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 mb-3" />
+                            <input type="text" name="indirizzo" id="indirizzo" placeholder="Indirizzo" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 mb-3" />
                             <div className="flex flex-col md:flex-row md:gap-3 mb-3">
-                                <input type="text" name="Paese_regione" id="Paese_regione" placeholder="Paese/Regione" className="w-full p-2 mb-3 md:mb-0 bg-[#d9d9d9]" />
-                                <input type="text" name="Cap" id="Cap" placeholder="Cap" className="w-full p-2 bg-[#d9d9d9]" />
+                                <input type="text" name="Paese_regione" id="Paese_regione" placeholder="Paese/Regione" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 mb-3 md:mb-0" />
+                                <input type="text" name="Cap" id="Cap" placeholder="Cap" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5" />
                             </div>
                             <div className="flex flex-col md:flex-row md:gap-3 mb-3">
-                                <input type="text" name="Provincia" id="Provincia" placeholder="Provincia" className="w-full p-2 mb-3 md:mb-0 bg-[#d9d9d9]" />
-                                <input type="text" name="Citta" id="Citta" placeholder="Citta" className="w-full p-2 bg-[#d9d9d9]" />
+                                <input type="text" name="Provincia" id="Provincia" placeholder="Provincia" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 mb-3 md:mb-0" />
+                                <input type="text" name="Citta" id="Citta" placeholder="Citta" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5" />
                             </div>
-                            <input type="tel" name="telefono" id="telefono" placeholder="Telefono" className="w-full p-2 bg-[#d9d9d9]" />
+                            <input type="tel" name="telefono" id="telefono" placeholder="Telefono" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5" />
                         </div>
 
                         <div className="mb-4">
@@ -240,7 +240,7 @@ function Payment() {
                                             inputMode="numeric"
                                             pattern="[0-9\s]{13,19}"
                                             maxLength={19}
-                                            className="w-full p-2 bg-[#d9d9d9]"
+                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                             value={state.number}
                                             onChange={handleInputChange}
                                             onFocus={handleInputFocus}
@@ -255,7 +255,7 @@ function Payment() {
                                             inputMode="numeric"
                                             pattern="[0-9/]{5}"
                                             maxLength={7}
-                                            className="w-full p-2 bg-[#d9d9d9]"
+                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                             value={state.expiry}
                                             onChange={handleInputChange}
                                             onFocus={handleInputFocus}
@@ -267,7 +267,7 @@ function Payment() {
                                             inputMode="numeric"
                                             pattern="[0-9]{3,4}"
                                             maxLength={3}
-                                            className="w-full p-2 bg-[#d9d9d9]"
+                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                             value={state.cvc}
                                             onChange={handleInputChange}
                                             onFocus={handleInputFocus}
@@ -279,7 +279,7 @@ function Payment() {
 
                         <div className="mb-4">
                             <h1 className="text-2xl font-bold mb-3">Aggiungi nota all'ordine</h1>
-                            <textarea name="note" id="note" className="w-full h-32 p-2 bg-[#d9d9d9] resize-none" placeholder="Nota" />
+                            <textarea name="note" id="note" className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 resize-none h-[200px]" placeholder="Nota" />
                         </div>
 
                         <div className="flex items-center justify-between mb-5">

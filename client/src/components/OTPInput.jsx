@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRecoveryContext } from "../provider/provider";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -8,12 +7,35 @@ import MessagePopUp from "./messagePopUp";
 export default function OTPInput() {
   const { email, OTP } = useRecoveryContext();
   const [timerCount, setTimer] = useState(300);
-  const [OTPinput, setOTPinput] = useState([0, 0, 0, 0]);
+  const [OTPinput, setOTPinput] = useState(["", "", "", ""]);
   const [disable, setDisable] = useState(true);
   const navigate = useNavigate();
-
   const [buttonPopup, setButtonPopup] = useState(false);
   const [messagePopup, setMessagePopup] = useState("");
+
+  // Refs for inputs
+  const inputRefs = useRef([]);
+
+  useEffect(() => {
+    // Focus the first input field on load
+    inputRefs.current[0]?.focus();
+  }, []);
+
+  useEffect(() => {
+    // Timer logic
+    let interval = setInterval(() => {
+      setTimer((lastTimerCount) => {
+        if (lastTimerCount <= 1) {
+          clearInterval(interval);
+          setDisable(false);
+          return lastTimerCount;
+        }
+        return lastTimerCount - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [disable]);
 
   function resendOTP() {
     if (disable) return;
@@ -28,34 +50,50 @@ export default function OTPInput() {
           "Authorization": `Bearer ${recoveryToken}`,
         },
       })
-      .then(() => setDisable(true))
-      .then(() => alert("A new OTP has successfully been sent to your email."))
-      .then(() => setTimer(60))
-      .catch(setMessagePopup("OTP non corretto") && setButtonPopup(true));
+      .then(() => {
+        setDisable(true);
+        setTimer(60);
+        setMessagePopup("A new OTP has successfully been sent to your email.");
+        setButtonPopup(true);
+      })
+      .catch(() => {
+        setMessagePopup("Failed to resend OTP");
+        setButtonPopup(true);
+      });
   }
 
   function verifyOTP() {
     if (parseInt(OTPinput.join("")) === OTP) {
       navigate("/Reset");
-      return;
+    } else {
+      setMessagePopup("OTP non corretto");
+      setButtonPopup(true);
     }
-    setMessagePopup("OTP non corretto");
-    setButtonPopup(true);
-    return;
   }
 
-  React.useEffect(() => {
-    let interval = setInterval(() => {
-      setTimer((lastTimerCount) => {
-        lastTimerCount <= 1 && clearInterval(interval);
-        if (lastTimerCount <= 1) setDisable(false);
-        if (lastTimerCount <= 0) return lastTimerCount;
-        return lastTimerCount - 1;
-      });
-    }, 1000); // each count lasts for a second
-    // cleanup the interval on complete
-    return () => clearInterval(interval);
-  }, [disable]);
+  function handleChange(e, index) {
+    const { value } = e.target;
+
+    if (value.length > 1) return; // Allow only single character input
+
+    const newOTP = [...OTPinput];
+    newOTP[index] = value;
+
+    setOTPinput(newOTP);
+
+    // Move to the next input field if the current field is filled
+    if (value && index < 3) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  }
+
+  function handleKeyDown(e, index) {
+    if (e.key === "Backspace" && !OTPinput[index]) {
+      if (index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      }
+    }
+  }
 
   return (
     <>
@@ -79,7 +117,7 @@ export default function OTPInput() {
                 <p>Verifica la tua email</p>
               </div>
               <div className="flex flex-row text-xl text-gray-400">
-                <p>Abbiamo invitato un codice di 4 cifre alla tua email</p>
+                <p>Abbiamo inviato un codice di 4 cifre alla tua email</p>
               </div>
             </div>
 
@@ -87,66 +125,19 @@ export default function OTPInput() {
               <form>
                 <div className="flex flex-col space-y-16">
                   <div className="flex flex-row items-center justify-between mx-auto w-full max-w-xs">
-                    <div className="w-16 h-16">
-                      <input
-                        maxLength="1"
-                        className="w-full h-full flex flex-col items-center justify-center text-center px-5 outline-none rounded-xl border border-gray-200 text-lg bg-white focus:bg-gray-50 focus:ring-1 ring-blue-700"
-                        type="text"
-                        onChange={(e) =>
-                          setOTPinput([
-                            e.target.value,
-                            OTPinput[1],
-                            OTPinput[2],
-                            OTPinput[3],
-                          ])
-                        }
-                      ></input>
-                    </div>
-                    <div className="w-16 h-16">
-                      <input
-                        maxLength="1"
-                        className="w-full h-full flex flex-col items-center justify-center text-center px-5 outline-none rounded-xl border border-gray-200 text-lg bg-white focus:bg-gray-50 focus:ring-1 ring-blue-700"
-                        type="text"
-                        onChange={(e) =>
-                          setOTPinput([
-                            OTPinput[0],
-                            e.target.value,
-                            OTPinput[2],
-                            OTPinput[3],
-                          ])
-                        }
-                      ></input>
-                    </div>
-                    <div className="w-16 h-16">
-                      <input
-                        maxLength="1"
-                        className="w-full h-full flex flex-col items-center justify-center text-center px-5 outline-none rounded-xl border border-gray-200 text-lg bg-white focus:bg-gray-50 focus:ring-1 ring-blue-700"
-                        type="text"
-                        onChange={(e) =>
-                          setOTPinput([
-                            OTPinput[0],
-                            OTPinput[1],
-                            e.target.value,
-                            OTPinput[3],
-                          ])
-                        }
-                      ></input>
-                    </div>
-                    <div className="w-16 h-16">
-                      <input
-                        maxLength="1"
-                        className="w-full h-full flex flex-col items-center justify-center text-center px-5 outline-none rounded-xl border border-gray-200 text-lg bg-white focus:bg-gray-50 focus:ring-1 ring-blue-700"
-                        type="text"
-                        onChange={(e) =>
-                          setOTPinput([
-                            OTPinput[0],
-                            OTPinput[1],
-                            OTPinput[2],
-                            e.target.value,
-                          ])
-                        }
-                      ></input>
-                    </div>
+                    {OTPinput.map((value, index) => (
+                      <div key={index} className="w-16 h-16">
+                        <input
+                          ref={(el) => inputRefs.current[index] = el}
+                          maxLength="1"
+                          className="w-full h-full flex flex-col items-center justify-center text-center px-5 outline-none rounded-xl border border-gray-200 text-lg bg-white focus:bg-gray-50 focus:ring-1 ring-blue-700"
+                          type="text"
+                          value={value}
+                          onChange={(e) => handleChange(e, index)}
+                          onKeyDown={(e) => handleKeyDown(e, index)}
+                        />
+                      </div>
+                    ))}
                   </div>
 
                   <div className="flex flex-col space-y-5">

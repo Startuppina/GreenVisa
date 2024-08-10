@@ -70,14 +70,14 @@ const Login = () => {
                 <form onSubmit={handleSubmit} className='w-full'>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="email" className='font-arial text-xl font-bold text-start block mb-2'>Email</label>
-                            <input type="email" name="email" id="email" className='w-full p-2 bg-[#d9d9d9]' onChange={handleEmailChange}/>
+                            <label htmlFor="email" className='block text-xl'>Email</label>
+                            <input type="email" name="email" id="email" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handleEmailChange}/>
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="password" className='font-arial text-xl font-bold text-start block mb-2'>Password</label>
-                            <input type="password" name="password" id="password" className='w-full p-2 bg-[#d9d9d9]' onChange={handlePasswordChange}/>
+                            <label htmlFor="password" className='block text-xl' >Password</label>
+                            <input type="password" name="password" id="password" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handlePasswordChange}/>
                         </div>
                     </div>
                     <p className='font-arial text-xl w-full text-center'>Password dimenticata? <span className='text-[#2d7044]'><a onClick={navigateToOtp} className='cursor-pointer'>Clicca qui</a></span></p>

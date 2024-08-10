@@ -60,7 +60,7 @@ const Signup = () => {
                 {messagePopup}
             </MessagePopUp>
             <div className='w-full md:w-[60%] lg:w-[60%] h-auto flex flex-col items-center justify-center bg-white pb-10 rounded-lg'>
-                <div className='relative top-2 left-3 text-arial w-full text-left text-[#2d7044] font-bold text-xl cursor-pointer'>
+                <div className='relative top-2 left-3 text-arial w-full text-left text-[#2d7044]  text-xl cursor-pointer'>
                     <Link to="/">Home</Link>
                 </div>
                 <div className='flex flex-col items-center justify-center mb-10 mt-5'>
@@ -69,28 +69,27 @@ const Signup = () => {
                 <form onSubmit={handleSubmit} className='w-full'>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="username" className='font-arial text-xl font-bold text-start block mb-2'>Username</label>
+                            <label htmlFor="username" className='block text-xl'>Username</label>
                             <input
                                 type="text"
                                 name="username"
                                 id="username"
                                 value={username}
                                 onChange={handleUsernameChange}
-                                className='w-full p-2 bg-[#d9d9d9]'
+                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'
                             />
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="phone" className='font-arial text-xl font-bold text-start block mb-2'>Telefono</label>
-                            <div className='w-full p-2 bg-[#d9d9d9] flex flex-row items-center justify-between'>
+                            <label htmlFor="phone" className='block text-xl'>Telefono</label>
+                            <div className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'>
                                 <PhoneInput
                                     country={'it'}
                                     value={phone}
                                     onChange={handlePhoneChange}
-                                    buttonClass='w-[45px] p-2 bg-[#d9d9d9]'
-                                    dropdownClass='w-full p-2 bg-[#d9d9d9]'
-                                    inputClass='w-full p-2 bg-[#d9d9d9]'
+                                    buttonClass='w-[45px] p-2 bg-gray-50'
+                                    dropdownClass='w-full p-2 bg-gray-50'
                                     preferredCountries={['it']} // Mostra il paese predefinito in cima
                                 />
                             </div>
@@ -98,40 +97,40 @@ const Signup = () => {
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="email" className='font-arial text-xl font-bold text-start block mb-2'>Email</label>
+                            <label htmlFor="email" className='block text-xl'>Email</label>
                             <input
                                 type="email"
                                 name="email"
                                 id="email"
                                 value={email}
                                 onChange={handleEmailChange}
-                                className='w-full p-2 bg-[#d9d9d9]'
+                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'
                             />
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="password" className='font-arial text-xl font-bold text-start block mb-2'>Password</label>
+                            <label htmlFor="password" className='block text-xl'>Password</label>
                             <input
                                 type="password"
                                 name="password"
                                 id="password"
                                 value={password}
                                 onChange={handlePasswordChange}
-                                className='w-full p-2 bg-[#d9d9d9]'
+                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'
                             />
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="confirm" className='font-arial text-xl font-bold text-start block mb-2'>Conferma password</label>
+                            <label htmlFor="confirm" className='block text-xl'>Conferma password</label>
                             <input
                                 type="password"
                                 name="confirm"
                                 id="confirm"
                                 value={confirmPassword}
                                 onChange={handleConfirmPasswordChange}
-                                className='w-full p-2 bg-[#d9d9d9]'
+                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'
                             />
                         </div>
                     </div>

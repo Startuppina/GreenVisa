@@ -53,7 +53,7 @@ function Products() {
                 <div className="flex flex-col gap-5 md:flex-row items-center justify-center pb-10 md:justify-between">
                     <div className="text-arial text-xl text-white">3 risultati</div>
                     <div className="text-arial text-xl text-black w-full md:w-auto">
-                        <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 translate-x-[-50%]" name="sorting" id="sorting">
+                        <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 translate-x-[-50%] text-center" name="sorting" id="sorting">
                             <option value="default">Ordinamento predefinito</option>
                             <option value="price-asc">Prezzo crescente</option>
                             <option value="price-desc">Prezzo decrescente</option>

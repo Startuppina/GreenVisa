@@ -1,5 +1,4 @@
 const express = require("express");
-const session = require("express-session");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const pool = require("./db"); // Your database connection pool
@@ -25,7 +24,7 @@ app.use(
   })
 );
 
-const secretKey = crypto.randomBytes(64).toString("hex");
+const secretKey = process.env.SECRET_KEY;
 console.log("Secret key:", secretKey);
 
 // Middleware to verify JWT token
@@ -34,8 +33,6 @@ const authenticateJWT = (req, res, next) => {
 
   if (authHeader) {
     const token = authHeader.split(" ")[1]; // Extract the token from the "Authorization" header
-
-    console.log("Token ricevuto:", token); // Log del token ricevuto
 
     jwt.verify(token, secretKey, (err, user) => {
       if (err) {
@@ -312,13 +309,13 @@ function sendEmail({ recipient_email, OTP }) {
       service: "gmail",
       auth: {
         //PER RAGIONI DI SICUREZZA LE CREDENZIALI DEVONO STARE NEL .ENV
-        user: "danielchionne@gmail.com",
-        pass: "nqip rhkk bdhi ewsv",
+        user: email_sender,
+        pass: pass_sender
       },
     });
 
     const mail_configs = {
-      from: "danielchionne@gmail.com",
+      from: email_sender,
       to: recipient_email,
       subject: "Green Visa Codice di verifica",
       html: `<!DOCTYPE html>
@@ -332,7 +329,7 @@ function sendEmail({ recipient_email, OTP }) {
         <body>
         <!-- partial:index.partial.html -->
         <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
-            <div style="margin:50px auto;width:70%;padding:20px 0">
+            <div style="margin:50px auto;width:70%;padding:20px 0; text-align:center">
             <img src="http://localhost:8080/logo2.png" alt="Green Visa" style="width: 150px"/>
             <div style="border-bottom:1px solid #eee">
                 <a href="" style="font-size:1.4em;color: #2d7044;text-decoration:none;font-weight:600">Green Visa</a>
@@ -384,7 +381,7 @@ app.post("/api/change-password", authenticateJWT, async (req, res) => {
     const { email } = req.user;
 
     // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Prepare the SQL query
     const query = "UPDATE users SET password_digest = $1 WHERE email = $2";

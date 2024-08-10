@@ -22,6 +22,12 @@ const InsertEmail = () => {
   
       console.log(response.data);
 
+      if(response.data.exist === false) {
+        setMessagePopup("L'email inserita non esiste");
+        setButtonPopup(true);
+        return;
+      }
+
       if (response.status === 200) {
         const recoveryToken = response.data.token;
         localStorage.setItem('recoveryToken', recoveryToken);
@@ -39,6 +45,8 @@ const InsertEmail = () => {
                 'Authorization': `Bearer ${recoveryToken}`
               }
             });
+
+            console.log(response2.data);
   
             if (response2.status === 200) {
               navigate('/Verification');
