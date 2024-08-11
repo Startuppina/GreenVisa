@@ -1,29 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import Slider from "react-slick";
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import Navbar from "./navbar";
-import Footer from "./footer";
 import { Link } from "react-router-dom";
-
-const News = [
-
-    {
-        id: 1,
-        title: "Un nuovo AI ci ha dato la possibilità di imparare a lavorare con un computer",
-        img: "/img/AI.jpg"
-    },
-    {
-        id: 2,
-        title: "L’importanza della Compensazione delle Emissioni di CO2",
-        img: "/img/CO2.png"
-    },
-    {
-        id: 3,
-        title: " Elettrificazione delle strutture ricettive: un passo avanti verso un ...",
-        img: "/img/struttura.png"
-    },
-]
+import axios from 'axios';
 
 const NextArrow = (props) => {
     const { onClick } = props;
@@ -56,44 +36,80 @@ const PrevArrow = (props) => {
 };
 
 const News_carousel = () => {
+    const [News, setNews] = useState([]);
+    const [slidesToShow, setSlidesToShow] = useState(1);
+
+    useEffect(() => {
+        const fetchNews = async () => {
+            try {
+                const response = await axios.get("http://localhost:8080/api/news");
+                if (response.status === 200) {
+                    setNews(response.data);
+                    const screenWidth = document.body.clientWidth;
+
+                    // Determina il numero di slides da mostrare in base alla larghezza dello schermo
+                    let newSlidesToShow;
+                    if (response.data.length === 1) {
+                        newSlidesToShow = 1; // Se c'è solo una card, mostra solo una
+                    } else {
+                        newSlidesToShow = Math.min(response.data.length, screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3);
+                    }
+                    setSlidesToShow(newSlidesToShow);
+                } else {
+                    console.error("Error fetching news");
+                }
+            } catch (error) {
+                console.error("Error fetching news:", error);
+            }
+        };
+
+        fetchNews();
+    }, []);
+
     const Settings = {
         dots: true,
-        infinite: true,
+        infinite: slidesToShow !== 1, // Se c'è solo una card, non rendere il carosello infinito
         speed: 500,
-        slidesToShow: document.body.clientWidth <= 1380 ? document.body.clientWidth <= 700 ? 1 : 2 : 3,
+        slidesToShow: slidesToShow,
         slidesToScroll: 1,
-        nextArrow: <NextArrow />,
-        prevArrow: <PrevArrow />,
+        nextArrow: slidesToShow !== 1 ? <NextArrow /> : null, // Nascondi le frecce se c'è solo una card
+        prevArrow: slidesToShow !== 1 ? <PrevArrow /> : null,
+        centerMode: slidesToShow < News.length, // Abilita il centering solo se ci sono più news che slides visibili
+        centerPadding: '0px',
     };
 
-  return (
-    <>
-    <div className='items-center w-[99%] mx-auto'>
-        <div className='text-3xl font-bold text-center mb-3'><span className='text-[#2d7044]'>GREEN </span>NEWS</div>
+    return (
+        <div className='w-full mx-auto'>
+            <div className='text-3xl font-bold text-center mb-3'>
+                <span className='text-[#2d7044]'>GREEN </span>NEWS
+            </div>
 
-        <div className="w-full h-auto p-8">
-            <Slider {...Settings}>
-                {News.map((item) => (
-                    <Link to="/Article" key={item.id}>
-                        <div className='p-6'>
-                            <div className="w-full bg-[#d9d9d9] rounded-lg flex flex-col items-center justify-center hover:transform hover:scale-105 transition-transform duration-300">
-                                <div className="w-full h-[30vh] lg:h-[50vh]">
-                                    <img src={item.img} alt={item.title} className="w-full h-full object-fill rounded-lg" />
-                                </div>
-                                <div className="text-arial text-xl text-black font-bold text-center p-3 h-[12vh] overflow-hidden">
-                                    <p style={{ textOverflow: 'ellipsis', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical' }}>
-                                        {item.title}
-                                    </p>
+            <div className="w-full h-auto p-8">
+                <Slider {...Settings}>
+                    {News.map((item) => (
+                        <Link to="/Article" key={item.id}>
+                            <div className='p-6 mx-auto'>
+                                <div className="mx-auto bg-[#d9d9d9] rounded-lg flex flex-col items-center justify-center hover:transform hover:scale-105 transition-transform duration-300"
+                                    style={{
+                                        width: slidesToShow === 1 ? '40%' : slidesToShow === 2 ? '80%' : '100%',
+                                        margin: slidesToShow === 1 ? '0 auto' : slidesToShow === 2 ? '0 auto' : '0 auto',
+                                    }}>
+                                    <div className="w-full h-[30vh] lg:h-[50vh]">
+                                        <img src={`http://localhost:8080/uploaded_img/${item.image}`} alt={item.title} className="w-full h-full object-fill rounded-lg" />
+                                    </div>
+                                    <div className="text-arial text-xl text-black font-bold text-center p-3 h-[12vh] overflow-hidden">
+                                        <p style={{ textOverflow: 'ellipsis', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical' }}>
+                                            {item.title}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </Link>
-                ))}
-            </Slider>
+                        </Link>
+                    ))}
+                </Slider>
+            </div>
         </div>
-    </div>
-    </>
-  )
-}
+    );
+};
 
-export default News_carousel
+export default News_carousel;

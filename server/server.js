@@ -44,6 +44,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage});
 
+app.use('/uploaded_img', express.static(path.join(__dirname, 'uploaded_img')));
+
 const secretKey = process.env.SECRET_KEY;
 console.log("Secret key:", secretKey);
 
@@ -448,6 +450,18 @@ app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req
   } catch (error) {
     console.error("Error during file upload:", error);
     res.status(500).json({ msg: "Error uploading image" });
+  }
+});
+
+app.get("/api/news", async (req, res) => {
+  try {
+    const query = "SELECT * FROM news";
+    const result = await pool.query(query);
+    console.log(result.rows);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching news:", error);
+    res.status(500).json({ msg: "Error fetching news" });
   }
 });
 
