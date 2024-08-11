@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import TextEditor from './textEditor';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 
 const CourseUploadForm = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [image, setImage] = useState(null);
+    const navigate = useNavigate();
 
     //const [value, setValue] = useState(''); // Per ReactQuill
 
@@ -47,7 +49,7 @@ const CourseUploadForm = () => {
             })
 
             if (response.status == 200) {
-                alert('News uploaded successfully!');
+                navigate('/News');
             }
     
             const contentType = response.headers.get('Content-Type');

@@ -87,7 +87,7 @@ const News_carousel = () => {
             <div className="w-full h-auto p-8">
                 <Slider {...Settings}>
                     {News.map((item) => (
-                        <Link to="/Article" key={item.id}>
+                        <Link to={`/Article/${item.id}`} key={item.id}>
                             <div className='p-6 mx-auto'>
                                 <div className="mx-auto bg-[#d9d9d9] rounded-lg flex flex-col items-center justify-center hover:transform hover:scale-105 transition-transform duration-300"
                                     style={{

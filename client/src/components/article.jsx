@@ -1,9 +1,36 @@
-import React from 'react'
-import Navbar from './navbar'
-import Footer from './footer'
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+import { useParams } from 'react-router-dom';
 
 
 function Article() {
+
+    const { id } = useParams();
+
+    const [article, setArticle] = useState([]);
+
+    useEffect(() => {
+        const getArticle = async () => {
+            
+            try {
+                const response = await axios.get(`http://localhost:8080/api/article/${id}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.status === 200) {
+                    console.log("response: ", response.data);
+                    setArticle(response.data);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        getArticle();
+    }, []);
+
   return (
     <div>
       <div className='flex flex-col items-center justify-center'>
@@ -13,10 +40,15 @@ function Article() {
         </div>
         <div className='mt-4 w-[100px] p-1 bg-red-600 text-arial text-center font-bold text-xl text-white rounded-lg xl:absolute xl:top-[265px] xl:left-[230px] animate-blink'>NEWS</div>
         <div className='w-full mt-8 mb-5'>
-            <h1 className='font-arial text-xl md:text-3xl w-[50%] mx-auto font-bold text-center'>Il ruolo dell’Intelligienza Artificiale nella Transizione Ecologica</h1>
+            <h1 className='font-arial text-xl md:text-3xl w-[50%] mx-auto font-bold text-center'>{article.title}</h1>
         </div>
-        <img src="/img/AI.jpg" alt="AI" className='w-[50%] h-[50%] md:w-[40%] md:h-[40%]  lg:w-[20%] lg:h-[20%] mx-auto rounded-lg mt-5'/>
+        <img src={`http://localhost:8080/uploaded_img/${article.image}`} alt={article.title} className='w-[50%] h-[50%] md:w-[40%] md:h-[40%]  lg:w-[20%] lg:h-[20%] mx-auto rounded-lg mt-5'/>
         
+        <div className='w-[80%] mt-5 mb-5 text-arial text-justify text-xl p-0'>
+            <div dangerouslySetInnerHTML={{ __html: article.content }}></div>
+        </div>
+
+        {/*
         <div className='w-[80%] mt-5 mb-5 text-arial text-justify text-xl p-0'>
             Negli ultimi decenni, l’umanità ha riconosciuto l’urgenza di affrontare il cambiamento climatico e di avviare una transizione ecologica verso un futuro sostenibile. La decarbonizzazione, ovvero la riduzione delle emissioni di anidride carbonica e di altri gas serra, è un elemento cruciale di questa transizione. In questo contesto, l’intelligenza artificiale sta emergendo come uno strumento potente e indispensabile per accelerare il progresso verso un’economia a basse emissioni di carbonio.
 
@@ -79,8 +111,8 @@ function Article() {
                 </ul>
             </li>
         </ul>
+        </div>*/}
         </div>
-      </div>
     </div>
 )
 }

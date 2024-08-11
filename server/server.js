@@ -4,29 +4,34 @@ const nodemailer = require("nodemailer");
 const pool = require("./db"); // Your database connection pool
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const cors = require("cors");
 const multer = require("multer");
 const fs = require('fs');
 const path = require("path");
 require("dotenv").config();
+
+const { JSDOM } = require('jsdom');
+const createDOMPurify = require('dompurify');
+
 const port = 8080;
+
 
 const email_sender = process.env.EMAIL_SENDER;
 const pass_sender = process.env.PASS_SENDER;
 
 const app = express();
 
+// Middleware per il CORS
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000'); // Il dominio del frontend
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Aggiungi 'Authorization' se stai usando un token JWT
+  next();
+});
+
+DOMPurify = createDOMPurify(new JSDOM().window);
+
+
 app.use(express.static("img"));
-
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
-
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -71,34 +76,9 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
+//const purify = DOMPurify(window);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-/*const initializeAdminUser = async () => {
-    try {
-        console.log('Initializing admin user...');
-        const result = await pool.query("SELECT * FROM users WHERE administrator = true");
-
-        if (result.rows.length > 0) {
-            console.log('Admin user already exists');
-            return;
-        }
-
-        const adminUsername = 'admin';
-        const adminEmail = 'danielchionne@gmail.com';
-        const adminPassword = 'adminpassword';
-        const hashedPassword = await bcrypt.hash(adminPassword, 12);
-
-        await pool.query(
-            "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, true, $4)",
-            [adminUsername, adminEmail, '+000 0000000', hashedPassword]
-        );
-
-        console.log('Admin user created successfully');
-    } catch (error) {
-        console.error('Error initializing admin user:', error);
-    }
-};*/
 
 app.post("/api/signup", async (req, res) => {
   const { username, email, password, phone } = req.body;
@@ -188,7 +168,6 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.post("/api/logout", authenticateJWT, (req, res) => {
-
   res.status(200).json({ msg: "Logout effettuato con successo!" });
 });
 
@@ -421,6 +400,7 @@ app.post("/api/change-password", authenticateJWT, async (req, res) => {
   }
 });
 
+
 app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req, res) => {
   try {
     const image = req.file;
@@ -439,8 +419,9 @@ app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req
       return res.status(400).json({ msg: "Immagine mancante" });
     }
 
+    const sanitizedContent = DOMPurify.sanitize(content);
     const query = "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4)";
-    const values = [req.user.id, title, content, image.filename];
+    const values = [req.user.id, title, sanitizedContent, image.filename];
 
     await pool.query(query, values);
     res.status(200).json({ msg: "Image uploaded successfully" });
@@ -465,6 +446,23 @@ app.get("/api/news", async (req, res) => {
   }
 });
 
+app.get("/api/article/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = "SELECT * FROM news WHERE id = $1";
+    const values = [id];
+    const result = await pool.query(query, values);
+
+    console.log(result.rows[0]);
+    //sanitize content with DOMPurify
+    result.rows[0].content = DOMPurify.sanitize(result.rows[0].content);
+    res.status(200).json(result.rows[0]); // Send the first article
+  } catch (error) {
+    console.error("Error fetching article:", error);
+    res.status(500).json({ msg: "Error fetching article" });
+  }
+});
+
 
 function emailCheck(email) {
   const re =
@@ -485,3 +483,4 @@ app.use((err, req, res, next) => {
 app.listen(port, async () => {
   console.log(`Server in ascolto sulla porta ${port}`);
 });
+
