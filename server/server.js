@@ -193,14 +193,16 @@ app.post("/api/logout", authenticateJWT, (req, res) => {
 app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
-    const { email } = req.user;
+    const { id } = req.user;
+    console.log("ID dell'utente:", id);
 
     // Trova e elimina l'utente dal database
-    const result = await pool.query("DELETE FROM users WHERE email = $1", [
-      email,
+    const result = await pool.query("DELETE FROM users WHERE id = $1", [
+      id,
     ]);
+    console.log("Risultato:", result);
 
-    if (!result) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: "Account not found" });
     }
 
@@ -216,11 +218,11 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
 app.get("/api/user-info", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
-    const { email } = req.user;
+    const { id } = req.user;
 
     // Trova l'utente dal database
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      id,
     ]);
 
     if (!result) {
@@ -238,12 +240,12 @@ app.get("/api/user-info", authenticateJWT, async (req, res) => {
 app.post("/api/update-username", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
-    const { email } = req.user;
+    const { id } = req.user;
     const { username } = req.body;
 
     // Trova l'utente dal database
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      id,
     ]);
 
     if (result.rows.length === 0) {
@@ -251,9 +253,9 @@ app.post("/api/update-username", authenticateJWT, async (req, res) => {
     }
 
     // Aggiorna il nome utente nel database
-    await pool.query("UPDATE users SET username = $1 WHERE email = $2", [
+    await pool.query("UPDATE users SET username = $1 WHERE id = $2", [
       username,
-      email,
+      id,
     ]);
 
     // Invia una risposta di successo
@@ -267,12 +269,12 @@ app.post("/api/update-username", authenticateJWT, async (req, res) => {
 app.post("/api/update-phone", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
-    const { email } = req.user;
+    const { id } = req.user;
     const { phone_number } = req.body;
 
     // Trova l'utente dal database
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      id,
     ]);
 
     if (result.rows.length === 0) {
@@ -284,9 +286,9 @@ app.post("/api/update-phone", authenticateJWT, async (req, res) => {
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
     // Aggiorna il numero di telefono nel database
-    await pool.query("UPDATE users SET phone_number = $1 WHERE email = $2", [
+    await pool.query("UPDATE users SET phone_number = $1 WHERE id = $2", [
       newPhone,
-      email,
+      id,
     ]);
 
     // Invia una risposta di successo
@@ -303,12 +305,12 @@ app.post("/api/send_email", async (req, res) => {
   try {
     //verifica se l'email esiste nel database
     const result = await pool.query(
-      "SELECT email FROM users WHERE email = $1",
+      "SELECT id, email FROM users WHERE email = $1",
       [req.body.email]
     );
     if (result.rows.length > 0) {
       const recoveryToken = jwt.sign(
-        { email: req.body.email },
+        { id: result.rows[0].id},
         secretKey,
         { expiresIn: "1h" }
       )
@@ -398,14 +400,14 @@ app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
 app.post("/api/change-password", authenticateJWT, async (req, res) => {
   try {
     const { password } = req.body;
-    const { email } = req.user;
+    const { id } = req.user;
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Prepare the SQL query
-    const query = "UPDATE users SET password_digest = $1 WHERE email = $2";
-    const values = [hashedPassword, email];
+    const query = "UPDATE users SET password_digest = $1 WHERE id = $2";
+    const values = [hashedPassword, id];
 
     // Execute the query
     await pool.query(query, values);

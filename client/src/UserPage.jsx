@@ -19,7 +19,8 @@ const UserPage = () => {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
-    const [popupConfirm, setPopupConfirm] = useState(false);
+    const [popupConfirmLogout, setPopupConfirmLogout] = useState(false);
+    const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
 
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
@@ -74,7 +75,7 @@ const UserPage = () => {
 
     const handleLogOut = async () => {
         setMessageConfirm('Sei sicuro di voler uscire?');
-        setPopupConfirm(true);
+        setPopupConfirmLogout(true);
     };
 
     const deleteAccount = async () => {
@@ -113,7 +114,7 @@ const UserPage = () => {
 
     const handleDeleteAccount = async () => {
         setMessageConfirm('Sei sicuro di voler cancellare il tuo account?');
-        setPopupConfirm(true);
+        setPopupConfirmDelete(true);
     };
 
     const handleUsernameModifier = async (e) => {
@@ -171,14 +172,14 @@ const UserPage = () => {
                 {messagePopup}
             </MessagePopUp>
             <ConfirmPopUp
-                trigger={popupConfirm}
-                setTrigger={setPopupConfirm}
+                trigger={popupConfirmDelete}
+                setTrigger={setPopupConfirmDelete}
                 onButtonClick={deleteAccount}>
                 {messageConfirm}
             </ConfirmPopUp>
             <ConfirmPopUp
-                trigger={popupConfirm}
-                setTrigger={setPopupConfirm}
+                trigger={popupConfirmLogout}
+                setTrigger={setPopupConfirmLogout}
                 onButtonClick={logout}>
                 {messageConfirm}
             </ConfirmPopUp>
