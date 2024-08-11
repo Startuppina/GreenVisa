@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 
 function Article() {
@@ -31,6 +32,7 @@ function Article() {
         getArticle();
     }, []);
 
+
   return (
     <div>
       <div className='flex flex-col items-center justify-center'>
@@ -44,8 +46,8 @@ function Article() {
         </div>
         <img src={`http://localhost:8080/uploaded_img/${article.image}`} alt={article.title} className='w-[50%] h-[50%] md:w-[40%] md:h-[40%]  lg:w-[20%] lg:h-[20%] mx-auto rounded-lg mt-5'/>
         
-        <div className='w-[80%] mt-5 mb-5 text-arial text-justify text-xl p-0'>
-            <div dangerouslySetInnerHTML={{ __html: article.content }}></div>
+        <div className='w-full mt-5 mb-5 text-arial text-justify text-xl p-0 mx-0'>
+            <div className="prose lg:prose-xl prose-h1:text-3xl prose-h2:text-2xl prose-p:text-xl prose-ul:pl-5 prose-ul:list-disc w-[90%] mx-auto" dangerouslySetInnerHTML={{ __html: article.content }}></div>
         </div>
 
         {/*

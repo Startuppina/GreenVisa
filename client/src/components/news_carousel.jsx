@@ -35,8 +35,8 @@ const PrevArrow = (props) => {
     );
 };
 
-const News_carousel = () => {
-    const [News, setNews] = useState([]);
+const NewsCarousel = () => {
+    const [news, setNews] = useState([]);
     const [slidesToShow, setSlidesToShow] = useState(1);
 
     useEffect(() => {
@@ -45,15 +45,9 @@ const News_carousel = () => {
                 const response = await axios.get("http://localhost:8080/api/news");
                 if (response.status === 200) {
                     setNews(response.data);
-                    const screenWidth = document.body.clientWidth;
 
-                    // Determina il numero di slides da mostrare in base alla larghezza dello schermo
-                    let newSlidesToShow;
-                    if (response.data.length === 1) {
-                        newSlidesToShow = 1; // Se c'è solo una card, mostra solo una
-                    } else {
-                        newSlidesToShow = Math.min(response.data.length, screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3);
-                    }
+                    const screenWidth = window.innerWidth;
+                    let newSlidesToShow = screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3;
                     setSlidesToShow(newSlidesToShow);
                 } else {
                     console.error("Error fetching news");
@@ -64,17 +58,29 @@ const News_carousel = () => {
         };
 
         fetchNews();
+
+        const handleResize = () => {
+            const screenWidth = window.innerWidth;
+            let newSlidesToShow = screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3;
+            setSlidesToShow(newSlidesToShow);
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
-    const Settings = {
+    const settings = {
         dots: true,
-        infinite: slidesToShow !== 1, // Se c'è solo una card, non rendere il carosello infinito
+        infinite: news.length > slidesToShow,
         speed: 500,
         slidesToShow: slidesToShow,
         slidesToScroll: 1,
-        nextArrow: slidesToShow !== 1 ? <NextArrow /> : null, // Nascondi le frecce se c'è solo una card
-        prevArrow: slidesToShow !== 1 ? <PrevArrow /> : null,
-        centerMode: slidesToShow < News.length, // Abilita il centering solo se ci sono più news che slides visibili
+        nextArrow: <NextArrow />,
+        prevArrow: <PrevArrow />,
+        centerMode: slidesToShow < news.length,
         centerPadding: '0px',
     };
 
@@ -85,20 +91,28 @@ const News_carousel = () => {
             </div>
 
             <div className="w-full h-auto p-8">
-                <Slider {...Settings}>
-                    {News.map((item) => (
+                <Slider {...settings}>
+                    {news.map((item) => (
                         <Link to={`/Article/${item.id}`} key={item.id}>
                             <div className='p-6 mx-auto'>
-                                <div className="mx-auto bg-[#d9d9d9] rounded-lg flex flex-col items-center justify-center hover:transform hover:scale-105 transition-transform duration-300"
+                            <div className={`mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
                                     style={{
-                                        width: slidesToShow === 1 ? '40%' : slidesToShow === 2 ? '80%' : '100%',
-                                        margin: slidesToShow === 1 ? '0 auto' : slidesToShow === 2 ? '0 auto' : '0 auto',
+                                        width: slidesToShow === 1 ? '90%' : slidesToShow === 2 ? '90%' : '100%',
+                                        maxWidth: '800px',
+                                        height: '450px',
+                                        margin: '0 auto',
                                     }}>
-                                    <div className="w-full h-[30vh] lg:h-[50vh]">
-                                        <img src={`http://localhost:8080/uploaded_img/${item.image}`} alt={item.title} className="w-full h-full object-fill rounded-lg" />
+                                    <div className="relative w-full h-[80%]">
+                                        <div className="absolute inset-0">
+                                            <img 
+                                                src={`http://localhost:8080/uploaded_img/${item.image}`} 
+                                                alt={item.title} 
+                                                className="w-full h-full object-cover rounded-t-lg" // Arrotonda solo la parte superiore
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="text-arial text-xl text-black font-bold text-center p-3 h-[12vh] overflow-hidden">
-                                        <p style={{ textOverflow: 'ellipsis', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical' }}>
+                                    <div className="w-full h-[20%] text-arial text-2xl text-black font-bold text-center p-4 flex items-center justify-center overflow-hidden">
+                                        <p className="overflow-ellipsis whitespace-nowrap overflow-hidden text-center">
                                             {item.title}
                                         </p>
                                     </div>
@@ -112,4 +126,4 @@ const News_carousel = () => {
     );
 };
 
-export default News_carousel;
+export default NewsCarousel;

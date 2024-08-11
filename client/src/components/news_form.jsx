@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 
+
 const CourseUploadForm = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -16,9 +17,19 @@ const CourseUploadForm = () => {
     const handleContentChange = (value) => setContent(value);
     const handleImageChange = (e) => setImage(e.target.files[0]);
 
+    const sanitizeContent = (html) => { // removes all HTML tags from content
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        const text = div.textContent || div.innerText || '';
+        return text.trim();
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!title || !content || !image) {
+        
+        const sanitizedContent = sanitizeContent(content);
+
+        if (!title || sanitizedContent === '' || !image) {
             alert('Please fill out all fields.');
             return;
         }
@@ -49,7 +60,7 @@ const CourseUploadForm = () => {
             })
 
             if (response.status == 200) {
-                navigate('/News');
+                navigate(0);
             }
     
             const contentType = response.headers.get('Content-Type');
@@ -77,7 +88,7 @@ const CourseUploadForm = () => {
                             type="text"
                             value={title}
                             onChange={handleTitleChange}
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px]"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
                         />
                     </label>
                     <label className="flex flex-col w-full">
@@ -86,11 +97,11 @@ const CourseUploadForm = () => {
                             type="file"
                             onChange={handleImageChange}
                             name='image'
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 z-10"
                         />
                     </label>
                 </div>
-                {<label className="flex flex-col w-full">
+                {<label className="flex flex-col w-full z-10">
                     <span className="block mb-2">Contenuto:</span>
                     <TextEditor theme="snow" value={content} onChange={handleContentChange}/>
                 </label>}

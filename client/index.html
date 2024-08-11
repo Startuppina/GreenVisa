@@ -15,6 +15,28 @@
         min-height: 100vh;
       }
 
+      /* index.css o App.css */
+      .slick-slide {
+        display: flex; /* Assicurati che le card siano in una sola riga */
+        align-items: center;
+      }
+
+      .card-carousel {
+        overflow: hidden; /* Nascondi qualsiasi overflow indesiderato */
+      }
+
+      .card-carousel .slick-slide {
+        /* Imposta un’altezza minima se necessario */
+        min-height: 300px;
+      }
+
+      /* Adatta lo stile per le card */
+      .card-carousel .card {
+        /* Evita che le card si allarghino troppo */
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+
       input:focus {
         outline: none;
         ring-color: #2d7044; /* se usi tailwind */
