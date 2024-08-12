@@ -38,6 +38,7 @@ const PrevArrow = (props) => {
 const NewsCarousel = () => {
     const [news, setNews] = useState([]);
     const [slidesToShow, setSlidesToShow] = useState(1);
+    const [haveNews, setHaveNews] = useState(false);
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -45,6 +46,9 @@ const NewsCarousel = () => {
                 const response = await axios.get("http://localhost:8080/api/news");
                 if (response.status === 200) {
                     setNews(response.data);
+                    if (response.data.length > 0) {
+                        setHaveNews(true);
+                    }
 
                     const screenWidth = window.innerWidth;
                     let newSlidesToShow = screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3;
@@ -90,7 +94,10 @@ const NewsCarousel = () => {
                 <span className='text-[#2d7044]'>GREEN </span>NEWS
             </div>
 
-            <div className="w-full h-auto p-8">
+            {haveNews === false ? (
+                <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center"><p>Nessuna notizia disponibile</p> <svg width="200" height="200" xmlns='http://www.w3.org/2000/svg'><image href="./public/sad.svg" width="200" height="200"/></svg></div>
+            ) : (
+                <div className="w-full h-auto p-8">
                 <Slider {...settings}>
                     {news.map((item) => (
                         <Link to={`/Article/${item.id}`} key={item.id}>
@@ -122,6 +129,7 @@ const NewsCarousel = () => {
                     ))}
                 </Slider>
             </div>
+            )}
         </div>
     );
 };
