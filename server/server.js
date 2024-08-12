@@ -70,7 +70,7 @@ const authenticateJWT = (req, res, next) => {
       next();
     });
   } else {
-    console.log("Nessun token fornito");
+    console.error("Nessun token fornito");
     res.sendStatus(401); // Nessun token fornito
   }
 };
@@ -87,15 +87,15 @@ app.post("/api/signup", async (req, res) => {
   // Validazione
   if (!email || !password || !username || !phone) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
-  } else if (password.length < 8) {
+  } else if (password.length < 8) { //implement password check defined below
     return res
       .status(400)
-      .json({ msg: "La password deve essere di almeno 8 caratteri" });
+      .json({ msg: "La password deve essere di almeno 8 caratteri" }); 
   } else if (!emailCheck(email)) {
     return res.status(400).json({ msg: "Email non valida" });
   } else if (!phoneCheck(phone)) {
     return res.status(400).json({ msg: "Numero di telefono non valido" });
-  }
+  } 
 
   try {
     const result = await pool.query(
@@ -174,19 +174,16 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
     const { id } = req.user;
-    console.log("ID dell'utente:", id);
 
     // Trova e elimina l'utente dal database
     const result = await pool.query("DELETE FROM users WHERE id = $1", [
       id,
     ]);
-    console.log("Risultato:", result);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: "Account not found" });
     }
 
-    res.clearCookie("jwt");
     // Invia una risposta di successo
     res.status(200).json({ message: "Account successfully deleted" });
   } catch (err) {
@@ -321,37 +318,102 @@ function sendEmail({ recipient_email, OTP }) {
       to: recipient_email,
       subject: "Green Visa Codice di verifica",
       html: `<!DOCTYPE html>
-        <html lang="en" >
+        <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <title>CodePen - OTP Email Template</title>
-            
-        
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Green Visa - OTP Verification</title>
+            <style>
+                body {
+                    font-family: Helvetica, Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 50px auto;
+                    background-color: #ffffff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .logo {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .logo img {
+                    width: 150px;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content h1 {
+                    font-size: 1.4em;
+                    color: #2d7044;
+                    font-weight: 600;
+                }
+                .content p {
+                    font-size: 1.1em;
+                    color: #333333;
+                }
+                .otp {
+                    background: #2d7044;
+                    color: white;
+                    display: inline-block;
+                    padding: 10px 20px;
+                    border-radius: 4px;
+                    font-size: 1.5em;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }
+                .footer {
+                    text-align: right;
+                    padding-top: 20px;
+                    color: #aaa;
+                    font-size: 0.8em;
+                    line-height: 1.5;
+                }
+                @media screen and (max-width: 600px) {
+                    .container {
+                        width: 100%;
+                        padding: 10px;
+                    }
+                    .content h1 {
+                        font-size: 1.2em;
+                    }
+                    .content p {
+                        font-size: 1em;
+                    }
+                    .otp {
+                        font-size: 1.2em;
+                        padding: 8px 16px;
+                    }
+                }
+            </style>
         </head>
         <body>
-        <!-- partial:index.partial.html -->
-        <div style="font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2">
-            <div style="margin:50px auto;width:70%;padding:20px 0; text-align:center">
-            <img src="http://localhost:8080/logo2.png" alt="Green Visa" style="width: 150px"/>
-            <div style="border-bottom:1px solid #eee">
-                <a href="" style="font-size:1.4em;color: #2d7044;text-decoration:none;font-weight:600">Green Visa</a>
+            <div class="container">
+                <div class="logo">
+                    <img src="http://localhost:8080/logo2.png" alt="Green Visa">
+                </div>
+                <div class="content">
+                    <h1>Green Visa</h1>
+                    <p>Ciao,</p>
+                    <p>Grazie per aver utilizzato Green Visa. Usa il seguente codice OTP per recuperare la tua password. Il codice è valido per 5 minuti:</p>
+                    <div class="otp">${OTP}</div>
+                    <p>Saluti,<br />Green Visa</p>
+                </div>
+                <div class="footer">
+                    <p>Green Visa</p>
+                    <p>La sostenibilità con un click!</p>
+                </div>
             </div>
-            <p style="font-size:1.1em">Ciao</p>
-            <p>Grazie per aver utilizzato Green Visa. Usa il seguente codice OTP per recuperare la tua password. Il codice è valido per 5 minuti</p>
-            <h2 style="background: #2d7044;margin: 0 auto;width: max-content;padding: 0 10px;color: white;border-radius: 4px;">${OTP}</h2>
-            <p style="font-size:0.9em;">Saluti,<br />Green Visa</p>
-            <hr style="border:none;border-top:1px solid #eee" />
-            <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
-                <p>Green Visa</p>
-                <p>La sostenibilità con un click!</p>
-            </div>
-            </div>
-        </div>
-        <!-- partial -->
-            
         </body>
         </html>`,
     };
+    
+    
     transporter.sendMail(mail_configs, function (error, info) {
       if (error) {
         console.error("Errore nell'invio dell'email:", error);
@@ -366,7 +428,6 @@ function sendEmail({ recipient_email, OTP }) {
 
 app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
   const { email, OTP } = req.body;
-  console.log(OTP)
   sendEmail({ recipient_email: email, OTP })
     .then((response) => {
       res.status(200).json(response);
@@ -424,8 +485,6 @@ app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req
 
     await pool.query(query, values);
     res.status(200).json({ msg: "Image uploaded successfully" });
-
-    console.log("Image uploaded successfully");
     
   } catch (error) {
     console.error("Error during file upload:", error);
@@ -448,12 +507,10 @@ app.get("/api/article/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-
     // Verifica se l'id è definito e se è un numero intero
     if (isNaN(parseInt(id))) {
       return res.status(400).json({ msg: "Invalid article ID" });
     }
-
         
     const query = "SELECT * FROM news WHERE id = $1";
     const values = [id];
@@ -464,9 +521,7 @@ app.get("/api/article/:id", async (req, res) => {
     }
 
     const countNews = await pool.query("SELECT COUNT(*) FROM news");
-    console.log(countNews.rows[0].count);
 
-    console.log(result.rows[0]);
     //sanitize content with DOMPurify
     result.rows[0].content = DOMPurify.sanitize(result.rows[0].content);
 
@@ -509,6 +564,11 @@ function emailCheck(email) {
   const re =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(String(email).toLowerCase());
+}
+
+function passwordCheck(password) {
+  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/; // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
+  return re.test(String(password));
 }
 
 function phoneCheck(phone) {

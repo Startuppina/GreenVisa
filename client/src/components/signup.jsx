@@ -4,7 +4,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import axios from 'axios';
 import MessagePopUp from './messagePopUp';
-
+import PassInfo from './passInfo';
 
 const Signup = () => {
     const [username, setUsername] = useState('');
@@ -12,16 +12,19 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const navigate = useNavigate(); // Usa useNavigate per la navigazione programmatica
-
+    const [showPassword, setShowPassword] = useState(false);
+    const [passInfo, setPassInfo] = useState(false);
+    const navigate = useNavigate();
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
 
     const handleUsernameChange = (e) => setUsername(e.target.value);
-    const handlePhoneChange = (value) => setPhone(value); // `value` già in formato internazionale
+    const handlePhoneChange = (value) => setPhone(value);
     const handleEmailChange = (e) => setEmail(e.target.value);
     const handlePasswordChange = (e) => setPassword(e.target.value);
     const handleConfirmPasswordChange = (e) => setConfirmPassword(e.target.value);
+    const toggleShowPassword = () => setShowPassword(!showPassword);
+    const togglePassInfo = () => setPassInfo(!passInfo);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -48,8 +51,7 @@ const Signup = () => {
             } 
 
         } catch (error) {
-            //alert(error.response?.data?.msg || error.message);
-            setMessagePopup(error.response?.data?.msg || error.message); // Se il messaggio di errore è presente nel body della risposta, lo usa, altrimenti usa il messaggio di errore generico
+            setMessagePopup(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
     };
@@ -60,7 +62,7 @@ const Signup = () => {
                 {messagePopup}
             </MessagePopUp>
             <div className='w-full md:w-[60%] lg:w-[60%] h-auto flex flex-col items-center justify-center bg-white pb-10 rounded-lg'>
-                <div className='relative top-2 left-3 text-arial w-full text-left text-[#2d7044]  text-xl cursor-pointer'>
+                <div className='relative top-2 left-3 text-arial w-full text-left text-[#2d7044] text-xl cursor-pointer'>
                     <Link to="/">Home</Link>
                 </div>
                 <div className='flex flex-col items-center justify-center mb-10 mt-5'>
@@ -76,23 +78,8 @@ const Signup = () => {
                                 id="username"
                                 value={username}
                                 onChange={handleUsernameChange}
-                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'
+                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5'
                             />
-                        </div>
-                    </div>
-                    <div className='flex flex-col items-center justify-center mb-5'>
-                        <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="phone" className='block text-xl'>Telefono</label>
-                            <div className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'>
-                                <PhoneInput
-                                    country={'it'}
-                                    value={phone}
-                                    onChange={handlePhoneChange}
-                                    buttonClass='w-[45px] p-2 bg-gray-50'
-                                    dropdownClass='w-full p-2 bg-gray-50'
-                                    preferredCountries={['it']} // Mostra il paese predefinito in cima
-                                />
-                            </div>
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
@@ -104,21 +91,67 @@ const Signup = () => {
                                 id="email"
                                 value={email}
                                 onChange={handleEmailChange}
-                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'
+                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5'
                             />
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[70%] lg:w-[60%]'>
-                            <label htmlFor="password" className='block text-xl'>Password</label>
-                            <input
-                                type="password"
-                                name="password"
-                                id="password"
-                                value={password}
-                                onChange={handlePasswordChange}
-                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'
-                            />
+                            <label htmlFor="phone" className='block text-xl'>Telefono</label>
+                            <div className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5'>
+                                <PhoneInput
+                                    country={'it'}
+                                    value={phone}
+                                    onChange={handlePhoneChange}
+                                    buttonClass='w-[45px] p-2 bg-gray-50'
+                                    dropdownClass='w-full p-2 bg-gray-50'
+                                    preferredCountries={['it']}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className='flex flex-col items-center justify-center mb-5 relative'>
+                        <div className='w-[70%] lg:w-[60%]'>
+                            <div className='flex items-center justify-between'>
+                                <div className='flex items-center gap-1'>
+                                    <label htmlFor="password" className='block text-xl'>Password</label>
+                                    <svg 
+                                        className='cursor-pointer ml-2' 
+                                        onClick={togglePassInfo} 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        width="24" 
+                                        height="24" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="2" 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round"
+                                    >
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                    </svg>
+                                    
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                        <span className='text-black'>Mostra password</span>
+                                        <input type="checkbox" name="showPassword" id="showPassword" onClick={toggleShowPassword} className='cursor-pointer' />
+                                    </div>
+                            </div>
+                            <div className='relative'>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    id="password"
+                                    value={password}
+                                    onChange={handlePasswordChange}
+                                    className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5'
+                                />
+                                {passInfo && (
+                                    <PassInfo onClose={() => setPassInfo(false)} />
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
@@ -130,7 +163,7 @@ const Signup = () => {
                                 id="confirm"
                                 value={confirmPassword}
                                 onChange={handleConfirmPasswordChange}
-                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5'
+                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5'
                             />
                         </div>
                     </div>
