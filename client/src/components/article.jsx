@@ -53,23 +53,27 @@ function Article() {
     return (
         <div>
             <div className='flex flex-col items-center justify-center'>
-                <div className='flex space-between gap-20 md:gap-[45%] w-full items-center justify-center mt-20 font-arial text-xl md:text-2xl font-bold text-[#2d7044]'>
-                    <div
-                        className='hover:cursor-pointer'
-                        onClick={() => previousArticle(id)} // Passa l'id corrente alla funzione
-                    >
-                        {"<< precedente"}
+                <div className='w-full flex flex-col items-center justify-center'>
+                    <div className='flex flex-col gap-3 md:flex-row w-[80%] items-center justify-center mt-20 mb-6 font-arial text-xl md:text-2xl font-bold text-[#2d7044]'>
+                        <div
+                            className='text-center px-4 py-2 mx-2 w-[180px] md:w-[250px] rounded-md bg-[#d9d9d9] text-[#2d7044] hover:bg-[#d0d0d0] transition-colors cursor-pointer'
+                            onClick={() => previousArticle(id)} // Passa l'id corrente alla funzione
+                        >
+                            {"<< precedente"}
+                        </div>
+                        <div className='text-center px-4 py-2 mx-2 w-[180px] md:w-[250px] rounded-md bg-[#d9d9d9] text-[#2d7044] hover:bg-[#d0d0d0] transition-colors cursor-pointer' onClick={() => navigate('/News')}>Torna alle news</div>
+                        <div
+                            className='text-center px-4 py-2 mx-2 w-[180px] md:w-[250px] rounded-md bg-[#d9d9d9] text-[#2d7044] hover:bg-[#d0d0d0] transition-colors cursor-pointer'
+                            onClick={() => nextArticle(id)} // Passa l'id corrente alla funzione
+                        >
+                            {"successivo >>"}
+                        </div>
                     </div>
-                    <div
-                        className='hover:cursor-pointer'
-                        onClick={() => nextArticle(id)} // Passa l'id corrente alla funzione
-                    >
-                        {"successivo >>"}
+                    <div className='w-[100px] p-1 bg-red-600 text-arial text-center font-bold text-xl text-white rounded-lg animate-blink'>
+                        NEWS
                     </div>
                 </div>
-                <div className='mt-4 w-[100px] p-1 bg-red-600 text-arial text-center font-bold text-xl text-white rounded-lg xl:absolute xl:top-[265px] xl:left-[230px] animate-blink'>
-                    NEWS
-                </div>
+
                 <div className='w-full mt-8 mb-5'>
                     <h1 className='font-arial text-xl md:text-3xl w-[50%] mx-auto font-bold text-center'>{article.title}</h1>
                 </div>

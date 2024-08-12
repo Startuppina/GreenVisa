@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,13 +7,18 @@ export default {
   theme: {
     extend: {
       keyframes: {
-        blink: {
-          '0%, 100%': { opacity: 1 },
-          '50%': { opacity: 0 },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        scaleUp: {
+          '0%': { transform: 'scale(0.9)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
         },
       },
       animation: {
-        blink: 'blink 1.5s infinite',
+        fadeIn: 'fadeIn 0.3s ease-out',
+        scaleUp: 'scaleUp 0.3s ease-out',
       },
     },
   },
@@ -21,4 +26,3 @@ export default {
     require('@tailwindcss/typography'),
   ],
 }
-

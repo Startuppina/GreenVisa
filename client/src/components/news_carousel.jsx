@@ -165,7 +165,7 @@ const NewsCarousel = () => {
                                         style={{
                                             width: slidesToShow === 1 ? '90%' : slidesToShow === 2 ? '90%' : '100%',
                                             maxWidth: '800px',
-                                            height: '450px',
+                                            height: '470px',
                                             margin: '0 auto',
                                         }}>
                                         <div className="relative w-full h-[80%]">
@@ -182,7 +182,7 @@ const NewsCarousel = () => {
                                         </div>
                                     </div>
                                 </Link>
-                                <div className="flex items-center justify-center hover:cursor-pointer hover:transform hover:scale-150 transition-transform duration-300 mt-5" onClick={() => handleDeleteNews(item.id)}>
+                                <div className="flex items-center w-auto h-auto justify-center hover:cursor-pointer hover:transform hover:scale-150 transition-transform duration-300 mt-5" onClick={() => handleDeleteNews(item.id)}>
                                     <svg width="50" height="50" xmlns='http://www.w3.org/2000/svg' >
                                         <image href="./public/delete.svg" width="50" height="50"/>
                                     </svg>

@@ -30,15 +30,24 @@ function MessagePopUp(props) {
 
   return (props.trigger) ? (
     <div
-      className="absolute transform -translate-x-1/2 -translate-y-1/2 z-50 w-[420px] h-[30vh] flex flex-col items-center justify-center rounded-lg shadow-lg text-arial text-xl bg-[#d9d9d9]"
-      style={{ top: `${position.top}px`, left: `${position.left}px` }} // Applica lo stile direttamente
+      className={` bg-black bg-opacity-25 fixed inset-0 flex items-center justify-center z-50 `}
     >
-      <h1 className="text-arial text-xl text-center font-bold pb-5 w-[70%]">{props.children}</h1>
-      <div className="w-full h-auto flex items-center justify-center">
-        <button className="w-[40%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" onClick={() => props.setTrigger(false)}>Ok</button>
+      <div
+        className={`w-[420px] h-[30vh] flex flex-col items-center justify-center rounded-lg shadow-lg text-arial text-xl bg-white transition-opacity duration-300 ease-out ${props.trigger ? 'animate-fadeIn animate-scaleUp' : 'opacity-0'}`}
+      >
+        <h1 className="text-arial text-xl text-center font-bold pb-5 w-[70%]">{props.children}</h1>
+        <div className="w-full h-auto flex items-center justify-center">
+          <button
+            className="w-[40%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+            onClick={() => props.setTrigger(false)}
+          >
+            Ok
+          </button>
+        </div>
       </div>
     </div>
   ) : null;
 }
+
 
 export default MessagePopUp;

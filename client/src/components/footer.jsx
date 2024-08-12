@@ -17,10 +17,10 @@ function Footer({ styleProp }) {
             </div>
 
             <div className="w-full items-center justify-center md:justify-end md:w-[60%] flex flex-row flex-wrap gap-5 pt-2">
-                <a href="https://www.facebook.com/greenvisanetwork" target="_blank" rel="noreferrer"><img src="/public/img/facebook.png" alt="facebook" className="w-14"/></a> 
-                <a href="https://www.linkedin.com/company/greenvisanetwork/" target="_blank" rel="noreferrer"><img src="/public/img/linkedin.png" alt="linkedin" className="w-14"/></a>
-                <a href="https://www.instagram.com/greenvisanetwork/" target="_blank" rel="noreferrer"><img src="/public/img/insta.png" alt="instagram" className="w-14"/></a>
-                <a href="https://www.youtube.com/@emiengineeringtv610" target="_blank" rel="noreferrer"><img src="/public/img/yt.png" alt="youtube" className="w-14"/></a>
+                <a href="https://www.facebook.com/greenvisanetwork" target="_blank" rel="noreferrer"><img src="/img/facebook.png" alt="facebook" className="w-14"/></a> 
+                <a href="https://www.linkedin.com/company/greenvisanetwork/" target="_blank" rel="noreferrer"><img src="/img/linkedin.png" alt="linkedin" className="w-14"/></a>
+                <a href="https://www.instagram.com/greenvisanetwork/" target="_blank" rel="noreferrer"><img src="/img/insta.png" alt="instagram" className="w-14"/></a>
+                <a href="https://www.youtube.com/@emiengineeringtv610" target="_blank" rel="noreferrer"><img src="/img/yt.png" alt="youtube" className="w-14"/></a>
             </div>
 
         </div>
