@@ -481,9 +481,22 @@ app.get("/api/article/:id", async (req, res) => {
 app.delete("/api/delete-news/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
-    const query = "DELETE FROM news WHERE id = $1";
+
+    const query = "SELECT * FROM news WHERE id = $1";
     const values = [id];
-    await pool.query(query, values);
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: "Nessun Articolo trovato" });
+    }
+    // delte image from uploaded folder
+    const image = result.rows[0].image;
+    const path = `./uploaded_img/${image}`;
+    fs.unlinkSync(path);
+
+    //delete article
+    const query2 = "DELETE FROM news WHERE id = $1";
+    await pool.query(query2, values);
     res.status(200).json({ msg: "Article deleted successfully" });
   } catch (error) {
     console.error("Error deleting article:", error);
