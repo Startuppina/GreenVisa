@@ -95,7 +95,7 @@ const NewsCarousel = () => {
             </div>
 
             {haveNews === false ? (
-                <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center"><p>Nessuna notizia disponibile</p> <svg width="200" height="200" xmlns='http://www.w3.org/2000/svg'><image href="./public/sad.svg" width="200" height="200"/></svg></div>
+                <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center"><p>Nessuna notizia disponibile </p><svg width="200" height="200" xmlns='http://www.w3.org/2000/svg'><image href="./public/sad.svg" width="200" height="200"/></svg></div>
             ) : (
                 <div className="w-full h-auto p-8">
                 <Slider {...settings}>

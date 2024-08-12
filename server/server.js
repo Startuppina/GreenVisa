@@ -447,14 +447,31 @@ app.get("/api/news", async (req, res) => {
 app.get("/api/article/:id", async (req, res) => {
   try {
     const { id } = req.params;
+
+
+    // Verifica se l'id è definito e se è un numero intero
+    if (isNaN(parseInt(id))) {
+      return res.status(400).json({ msg: "Invalid article ID" });
+    }
+
+        
     const query = "SELECT * FROM news WHERE id = $1";
     const values = [id];
     const result = await pool.query(query, values);
 
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: "Article not found" });
+    }
+
+    const countNews = await pool.query("SELECT COUNT(*) FROM news");
+    console.log(countNews.rows[0].count);
+
     console.log(result.rows[0]);
     //sanitize content with DOMPurify
     result.rows[0].content = DOMPurify.sanitize(result.rows[0].content);
-    res.status(200).json(result.rows[0]); // Send the first article
+
+    //send data and countnews
+    res.status(200).json({ article: result.rows[0], countnews: countNews.rows[0].count });
   } catch (error) {
     console.error("Error fetching article:", error);
     res.status(500).json({ msg: "Error fetching article" });
