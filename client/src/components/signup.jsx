@@ -49,7 +49,7 @@ const Signup = () => {
 
         } catch (error) {
             //alert(error.response?.data?.msg || error.message);
-            setMessagePopup(error.response?.data?.msg || error.message);
+            setMessagePopup(error.response?.data?.msg || error.message); // Se il messaggio di errore è presente nel body della risposta, lo usa, altrimenti usa il messaggio di errore generico
             setButtonPopup(true);
         }
     };

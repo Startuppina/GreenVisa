@@ -478,6 +478,19 @@ app.get("/api/article/:id", async (req, res) => {
   }
 });
 
+app.delete("/api/delete-news/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = "DELETE FROM news WHERE id = $1";
+    const values = [id];
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Article deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting article:", error);
+    res.status(500).json({ msg: "Error deleting article" });
+  }
+});
+
 
 function emailCheck(email) {
   const re =

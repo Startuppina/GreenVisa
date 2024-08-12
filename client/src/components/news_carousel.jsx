@@ -4,6 +4,9 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { Link } from "react-router-dom";
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import MessagePopUp from './messagePopUp';
+import ConfirmPopUp from './confirmPopUp';
 
 const NextArrow = (props) => {
     const { onClick } = props;
@@ -39,6 +42,14 @@ const NewsCarousel = () => {
     const [news, setNews] = useState([]);
     const [slidesToShow, setSlidesToShow] = useState(1);
     const [haveNews, setHaveNews] = useState(false);
+    const [newToDelete, setNewToDelete] = useState(null);
+    const navigate = useNavigate();
+
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState("");
+
+    const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
+    const [messageConfirm, setMessageConfirm] = useState('');
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -53,11 +64,10 @@ const NewsCarousel = () => {
                     const screenWidth = window.innerWidth;
                     let newSlidesToShow = screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3;
                     setSlidesToShow(newSlidesToShow);
-                } else {
-                    console.error("Error fetching news");
-                }
+                } 
             } catch (error) {
-                console.error("Error fetching news:", error);
+                setMessagePopup("Errore durante il recupero delle notizie");
+                setButtonPopup(true);
             }
         };
 
@@ -88,47 +98,99 @@ const NewsCarousel = () => {
         centerPadding: '0px',
     };
 
+    const handleDeleteNews = (id) => {
+        setNewToDelete(id);
+        setMessageConfirm('Sei sicuro di voler eliminare la news?');
+        setPopupConfirmDelete(true);
+    }; 
+
+
+    const deleteNews = async () => {
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setMessagePopup('Token non trovato');
+            setButtonPopup(true);
+            return;
+        }
+
+        try {
+            const response = await axios.delete(`http://localhost:8080/api/delete-news/${newToDelete}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            if (response.status === 200) {
+                navigate(0);
+            } 
+
+        } catch (error) {
+            setMessagePopup(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+        
+    };
+
     return (
         <div className='w-full mx-auto'>
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
+            <ConfirmPopUp
+                trigger={popupConfirmDelete}
+                setTrigger={setPopupConfirmDelete}
+                onButtonClick={deleteNews}>
+                {messageConfirm }
+            </ConfirmPopUp>
             <div className='text-3xl font-bold text-center mb-3'>
                 <span className='text-[#2d7044]'>GREEN </span>NEWS
             </div>
 
             {haveNews === false ? (
-                <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center"><p>Nessuna notizia disponibile </p><svg width="200" height="200" xmlns='http://www.w3.org/2000/svg'><image href="./public/sad.svg" width="200" height="200"/></svg></div>
+                <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center">
+                    <p>Nessuna notizia disponibile</p>
+                    <svg width="200" height="200" xmlns='http://www.w3.org/2000/svg'>
+                        <image href="./public/sad.svg" width="200" height="200"/>
+                    </svg>
+                </div>
             ) : (
                 <div className="w-full h-auto p-8">
-                <Slider {...settings}>
-                    {news.map((item) => (
-                        <Link to={`/Article/${item.id}`} key={item.id}>
-                            <div className='p-6 mx-auto'>
-                            <div className={`mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
-                                    style={{
-                                        width: slidesToShow === 1 ? '90%' : slidesToShow === 2 ? '90%' : '100%',
-                                        maxWidth: '800px',
-                                        height: '450px',
-                                        margin: '0 auto',
-                                    }}>
-                                    <div className="relative w-full h-[80%]">
-                                        <div className="absolute inset-0">
+                    <Slider {...settings}>
+                        {news.map((item) => (        
+                            <div className='p-6 mx-auto z-10'>
+                                <Link to={`/Article/${item.id}`} key={item.id}>
+                                    <div className={`relative mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
+                                        style={{
+                                            width: slidesToShow === 1 ? '90%' : slidesToShow === 2 ? '90%' : '100%',
+                                            maxWidth: '800px',
+                                            height: '450px',
+                                            margin: '0 auto',
+                                        }}>
+                                        <div className="relative w-full h-[80%]">
                                             <img 
                                                 src={`http://localhost:8080/uploaded_img/${item.image}`} 
                                                 alt={item.title} 
                                                 className="w-full h-full object-cover rounded-t-lg" // Arrotonda solo la parte superiore
                                             />
                                         </div>
+                                        <div className="w-full h-[20%] text-arial text-2xl text-black font-bold text-center p-4 flex items-center justify-center overflow-hidden">
+                                            <p className="overflow-ellipsis whitespace-nowrap overflow-hidden text-center">
+                                                {item.title}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="w-full h-[20%] text-arial text-2xl text-black font-bold text-center p-4 flex items-center justify-center overflow-hidden">
-                                        <p className="overflow-ellipsis whitespace-nowrap overflow-hidden text-center">
-                                            {item.title}
-                                        </p>
-                                    </div>
+                                </Link>
+                                <div className="flex items-center justify-center hover:cursor-pointer hover:transform hover:scale-150 transition-transform duration-300 mt-5" onClick={() => handleDeleteNews(item.id)}>
+                                    <svg width="50" height="50" xmlns='http://www.w3.org/2000/svg' >
+                                        <image href="./public/delete.svg" width="50" height="50"/>
+                                    </svg>
                                 </div>
                             </div>
-                        </Link>
-                    ))}
-                </Slider>
-            </div>
+                        ))}
+                    </Slider>
+                </div>
             )}
         </div>
     );
