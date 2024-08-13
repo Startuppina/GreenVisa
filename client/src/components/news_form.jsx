@@ -78,7 +78,7 @@ const CourseUploadForm = () => {
     
 
     return (
-        <div className="w-[80%] mx-auto my-10 font-arial text-xl">
+        <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-20 py-6">
             <h2 className="text-3xl font-bold text-center mb-4">Pubblica una notizia</h2>
             <form onSubmit={handleSubmit} className="flex flex-col ">
                 <div className="flex flex-col md:flex-row md:gap-3 mb-4">

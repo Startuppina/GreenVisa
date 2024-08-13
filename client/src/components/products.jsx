@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
+import ConfirmPopUp from "./confirmPopUp";
 
 const NextArrow = (props) => {
     const { onClick } = props;
@@ -44,6 +45,9 @@ function Products(){
     const [slidesToShow, setSlidesToShow] = useState(1);
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState("");
+    const [messageConfirm, setMessageConfirm] = useState("");
+    const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
+    const [productToDelete, setProductToDelete] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -87,6 +91,40 @@ function Products(){
         };
     }, []);
 
+    const handleDeleteProduct = (id) => {
+        setProductToDelete(id);
+        setMessageConfirm('Sei sicuro di voler eliminare la certificazione?');
+        setPopupConfirmDelete(true);
+    }; 
+
+    const deleteProduct = async () => {
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setMessagePopUp('Token non trovato');
+            setButtonPopup(true);
+            return;
+        }
+
+        try {
+            const response = await axios.delete(`http://localhost:8080/api/delete-product/${productToDelete}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            if (response.status === 200) {
+                navigate(0);
+            } 
+
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+        
+    };
+
     const settings = {
         dots: true,
         infinite: products.length > slidesToShow,
@@ -104,6 +142,12 @@ function Products(){
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
+            <ConfirmPopUp
+                trigger={popupConfirmDelete}
+                setTrigger={setPopupConfirmDelete}
+                onButtonClick={deleteProduct}>
+                {messageConfirm }
+            </ConfirmPopUp>
             <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-10 pb-16 md:rounded-lg md:m-4">
                 {haveProducts === false ? (
                     <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center">
@@ -129,15 +173,22 @@ function Products(){
                         <div className="">
                             <Slider {...settings}>
                                 {products.map((item) => (
-                                    <Link to="/ProductDetails" key={item.id}>
-                                        <div className="w-full bg-[#2d7044] rounded-lg p-4 hover:transform hover:scale-105 duration-300">
-                                            <div className="h-[35vh]">
-                                                <img src={`http://localhost:8080/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
+                                    <div className='p-6 mx-auto z-10' key={item.id}>
+                                        <Link to="/ProductDetails">
+                                            <div className="w-full bg-[#2d7044] rounded-lg p-4 hover:transform hover:scale-105 duration-300">
+                                                <div className="h-[40vh]">
+                                                    <img src={`http://localhost:8080/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
+                                                </div>
+                                                <div className="text-arial text-xl text-white font-bold text-center pt-3">{item.name}</div>
+                                                <div className="text-arial text-xl text-white text-center pt-2">Da {item.price} €</div>
                                             </div>
-                                            <div className="text-arial text-xl text-white font-bold text-center pt-3">{item.name}</div>
-                                            <div className="text-arial text-xl text-white text-center pt-2">Da {item.price} €</div>
+                                        </Link>
+                                        <div className="flex items-center w-auto h-auto z-50 justify-center hover:cursor-pointer hover:transform hover:scale-150 transition-transform duration-300 mt-5" onClick={() => handleDeleteProduct(item.id)}>
+                                            <svg width="50" height="50" xmlns='http://www.w3.org/2000/svg' >
+                                                <image href="./public/delete.svg" width="50" height="50"/>
+                                            </svg>
                                         </div>
-                                    </Link>
+                                    </div>
                                 ))}
                             </Slider>
                         </div>

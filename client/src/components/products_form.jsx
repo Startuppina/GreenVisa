@@ -70,23 +70,23 @@ function ProductsForm() {
             });
 
             if (response.status === 200) {
-                navigate('/Products');
+                navigate(0);
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
                 setButtonPopup(true);
             }
         } catch (error) {
-            setMessagePopup("Errore durante il caricamento del prodotto");
+            setMessagePopup(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
     };
 
     return (
-        <div className="w-[80%] mx-auto my-10 font-arial text-xl">
+        <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-20 py-6 border border-gray-300 shadow-xl">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
-            <h2 className="text-3xl font-bold text-center mb-4">Carica un nuovo prodotto</h2>
+            <h2 className="text-3xl font-bold text-center mb-4">Carica una nuova certificazione</h2>
             <form onSubmit={handleSubmit} className="flex flex-col">
                 <div className="flex flex-col md:flex-row md:gap-3 mb-4">
                     <label className="flex flex-col w-full">
