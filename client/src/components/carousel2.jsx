@@ -53,7 +53,7 @@ function Carousel() {
             <Slide {...properties}>
                 {descItems.map((item, index) => (
                     <div
-                        className="w-full h-auto flex flex-col lg:flex-row items-center justify-center p-4"
+                        className="w-full h-auto flex flex-col lg:flex-row items-center justify-center p-4 lg:p-0"
                         key={index}
                     >
                         <div className="w-full lg:w-[65%] h-auto lg:h-[40vh] px-4 flex flex-col items-center justify-center">
@@ -64,7 +64,7 @@ function Carousel() {
                                 {item.text}
                             </p>
                         </div>
-                        <div className="w-[90%] lg:w-[30%] lg:h-[250px] hidden lg:block">
+                        <div className="w-[90%] lg:w-[30%] lg:h-[300px] hidden lg:block">
                             <img
                                 className="w-full h-full object-cover rounded-lg"
                                 src={item.image}

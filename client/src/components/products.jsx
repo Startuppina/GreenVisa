@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Slider from "react-slick/lib/slider";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Link } from "react-router-dom";
 import { swipeMove } from "react-slick/lib/utils/innerSliderUtils";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import MessagePopUp from "./messagePopUp";
 
 const NextArrow = (props) => {
     const { onClick } = props;
@@ -35,7 +38,12 @@ const PrevArrow = (props) => {
     );
 };
 
-function Products() {
+function Products(){
+    const [numProducts, setNumProducts] = useState(0); // number of products available on the database
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopUp, setMessagePopUp] = useState("");
+    const navigate = useNavigate();
+
     const Settings = {
         dots: true,
         infinite: true,
@@ -46,12 +54,46 @@ function Products() {
         prevArrow: <PrevArrow />,
     };
 
+    useEffect(() => {
+
+        const getProductsInfo = async () => {
+
+            const token = localStorage.getItem("token");
+            
+            try {
+                const response = await axios.get("http://localhost:8080/api/products-info", {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                }
+
+                });
+                console.log(response.data);
+                if (response.status === 200) {
+                    setNumProducts(response.data.numProducts);
+                
+                }
+            } catch (error) {
+                setMessagePopUp(error.response?.data?.msg || error.message);
+                setShowPopUp(true);
+            }
+
+        };
+
+        getProductsInfo();
+
+    }, []);
+
+
 
     return (
         <div className="mt-5">
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopUp}
+            </MessagePopUp>
             <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-10 pb-16  md:rounded-lg md:m-4">
                 <div className="flex flex-col gap-5 md:flex-row items-center justify-center pb-10 md:justify-between">
-                    <div className="text-arial text-xl text-white">3 risultati</div>
+                    <div className="text-arial text-xl text-white">{numProducts} {numProducts === 1 ? "risultato" : "risultati"}</div>
                     <div className="text-arial text-xl text-black w-full md:w-auto">
                         <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 translate-x-[-50%] text-center" name="sorting" id="sorting">
                             <option value="default">Ordinamento predefinito</option>

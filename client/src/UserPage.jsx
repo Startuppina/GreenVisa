@@ -224,17 +224,15 @@ const UserPage = () => {
 
                     <form className='mx-auto md:w-[40%]' onSubmit={handlePhoneModifier}>
                         <label htmlFor="phone" className="block mb-2">Telefono</label>
-                        <div className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5'>
-                            <PhoneInput
-                                country={'it'}
-                                value={newPhone}
-                                onChange={handlePhoneChange}
-                                buttonClass='w-[45px] p-2 bg-[#d9d9d9]'
-                                dropdownClass='w-full p-2 bg-[#d9d9d9]'
-                                inputClass='w-full p-2 bg-[#d9d9d9]'
-                                preferredCountries={['it']}
-                            />
-                        </div>
+                        <PhoneInput
+                            country={'it'}
+                            value={newPhone}
+                            onChange={handlePhoneChange}
+                            buttonClass='w-[45px] p-2 bg-gray-50'
+                            dropdownClass='w-full p-2 bg-gray-50'
+                            inputStyle={{ width: '100%', height : '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                            preferredCountries={['it']}
+                        />
                         <div className='flex justify-center'>
                             <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-black rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                         </div>

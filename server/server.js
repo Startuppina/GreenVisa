@@ -22,7 +22,8 @@ const app = express();
 
 // Middleware per il CORS
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000'); // Il dominio del frontend
+  // everyone 
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Aggiungi 'Authorization' se stai usando un token JWT
   next();
@@ -82,15 +83,13 @@ app.use(express.urlencoded({ extended: true }));
 app.post("/api/signup", async (req, res) => {
   const { username, email, password, phone } = req.body;
 
-  console.log("Received signup request:", req.body);
-
   // Validazione
   if (!email || !password || !username || !phone) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
-  } else if (password.length < 8) { //implement password check defined below
+  } else if (!passwordCheck(password)) { //implement password check defined below
     return res
       .status(400)
-      .json({ msg: "La password deve essere di almeno 8 caratteri" }); 
+      .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" }); 
   } else if (!emailCheck(email)) {
     return res.status(400).json({ msg: "Email non valida" });
   } else if (!phoneCheck(phone)) {
@@ -128,7 +127,6 @@ app.post("/api/signup", async (req, res) => {
 
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log("Received login request:", req.body);
 
   if (!email || !password) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
@@ -151,10 +149,6 @@ app.post("/api/login", async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id }, secretKey, { expiresIn: "7d" });
-    res.cookie("jwt", token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    }); // 7 days
     return res
       .status(200)
       .json({ msg: "Login effettuato con successo!", token });
@@ -443,6 +437,12 @@ app.post("/api/change-password", authenticateJWT, async (req, res) => {
     const { password } = req.body;
     const { id } = req.user;
 
+    if(!passwordCheck(password)) {
+      return res
+        .status(400)
+        .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" });
+    }
+
     // Hash the new password
     const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -559,6 +559,20 @@ app.delete("/api/delete-news/:id", authenticateJWT, async (req, res) => {
   }
 });
 
+app.get("/api/products-info", authenticateJWT, async (req, res) => {
+  try {
+
+    const query = "SELECT COUNT(*) FROM products";
+    const result = await pool.query(query);
+    console.log(result.rows[0].count);
+    res.status(200).json({numProducts: result.rows[0].count});
+
+  } catch (error) {
+    console.error("Error fetching product info:", error);
+    res.status(500).json({ msg: "Error fetching product info" });
+  }
+});
+
 
 function emailCheck(email) {
   const re =
@@ -581,7 +595,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Qualcosa è andato storto!" });
 });
 
-app.listen(port, async () => {
+app.listen(port, '0.0.0.0', async () => {
   console.log(`Server in ascolto sulla porta ${port}`);
 });
 

@@ -69,20 +69,20 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className='w-full'>
                     <div className='flex flex-col items-center justify-center mb-5'>
-                        <div className='w-[70%] lg:w-[60%]'>
+                        <div className='w-[80%] lg:w-[60%]'>
                             <label htmlFor="email" className='block text-xl'>Email</label>
                             <input type="email" name="email" id="email" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handleEmailChange}/>
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
-                        <div className='w-[70%] lg:w-[60%]'>
+                        <div className='w-[80%] lg:w-[60%]'>
                             <label htmlFor="password" className='block text-xl' >Password</label>
                             <input type="password" name="password" id="password" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handlePasswordChange}/>
                         </div>
                     </div>
                     <p className='font-arial text-xl w-full text-center'>Password dimenticata? <span className='text-[#2d7044]'><a onClick={navigateToOtp} className='cursor-pointer'>Clicca qui</a></span></p>
                     <div className='flex justify-center'>
-                        <input type="submit" value="Accedi" className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                        <input type="submit" value="Accedi" className="mt-7 font-arial font-bold text-xl w-[40%] md:w-[30%] lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                     </div>
                 </form>
             </div>
