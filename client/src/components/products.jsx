@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import Slider from "react-slick/lib/slider";
+import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Link } from "react-router-dom";
-import { swipeMove } from "react-slick/lib/utils/innerSliderUtils";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
@@ -39,105 +38,114 @@ const PrevArrow = (props) => {
 };
 
 function Products(){
-    const [numProducts, setNumProducts] = useState(0); // number of products available on the database
+    const [numProducts, setNumProducts] = useState(0);
+    const [products, setProducts] = useState([]);
+    const [haveProducts, setHaveProducts] = useState(false);
+    const [slidesToShow, setSlidesToShow] = useState(1);
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState("");
     const navigate = useNavigate();
 
-    const Settings = {
-        dots: true,
-        infinite: true,
-        speed: 500,
-        slidesToShow: document.body.clientWidth <= 1380 ? document.body.clientWidth <= 600 ? 1 : 2 : 3,
-        slidesToScroll: 1,
-        nextArrow: <NextArrow />,
-        prevArrow: <PrevArrow />,
-    };
-
     useEffect(() => {
-
         const getProductsInfo = async () => {
-
             const token = localStorage.getItem("token");
-            
+
             try {
                 const response = await axios.get("http://localhost:8080/api/products-info", {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
-                }
-
+                    }
                 });
-                console.log(response.data);
+                
                 if (response.status === 200) {
                     setNumProducts(response.data.numProducts);
-                
+                    if (response.data.numProducts > 0) {
+                        setHaveProducts(true);
+                    }
+                    setProducts(response.data.products);
                 }
             } catch (error) {
                 setMessagePopUp(error.response?.data?.msg || error.message);
-                setShowPopUp(true);
+                setButtonPopup(true);
             }
-
         };
 
         getProductsInfo();
 
+        const handleResize = () => {
+            const screenWidth = window.innerWidth;
+            let newSlidesToShow = screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3;
+            setSlidesToShow(newSlidesToShow);
+        };
+
+        handleResize(); // Call once to set the initial state
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
-
+    const settings = {
+        dots: true,
+        infinite: products.length > slidesToShow,
+        speed: 500,
+        slidesToShow: slidesToShow,
+        slidesToScroll: 1,
+        nextArrow: <NextArrow />,
+        prevArrow: <PrevArrow />,
+        centerMode: slidesToShow < products.length,
+        centerPadding: '0px',
+    };
 
     return (
         <div className="mt-5">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
-            <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-10 pb-16  md:rounded-lg md:m-4">
-                <div className="flex flex-col gap-5 md:flex-row items-center justify-center pb-10 md:justify-between">
-                    <div className="text-arial text-xl text-white">{numProducts} {numProducts === 1 ? "risultato" : "risultati"}</div>
-                    <div className="text-arial text-xl text-black w-full md:w-auto">
-                        <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 translate-x-[-50%] text-center" name="sorting" id="sorting">
-                            <option value="default">Ordinamento predefinito</option>
-                            <option value="price-asc">Prezzo crescente</option>
-                            <option value="price-desc">Prezzo decrescente</option>
-                        </select>
+            <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-10 pb-16 md:rounded-lg md:m-4">
+                {haveProducts === false ? (
+                    <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center">
+                        <p>Nessuna certificazione ancora disponibile</p>
+                        <svg width="200" height="200" xmlns='http://www.w3.org/2000/svg'>
+                            <image href="./public/sad.svg" width="200" height="200"/>
+                        </svg>
                     </div>
-                </div>
-
-                <div className="">
-                    <Slider {...Settings}>
-                        <Link to="/ProductDetails">
-                            <div className="w-full bg-[#2d7044] rounded-lg p-4 hover:transform hover:scale-105 duration-300">
-                                <div className="h-[35vh]">
-                                    <img src="/img/hospitality-certificate.png" alt="img" className="w-full h-full object-cover rounded-lg" />
-                                </div>
-                                <div className="text-arial text-xl text-white font-bold text-center pt-3">Green Visa Protocollo Hospitality</div>
-                                <div className="text-arial text-xl text-white text-center pt-2">350,00 € – 1.180,00 €</div>
+                ) : (
+                    <>
+                        <div className="flex flex-col gap-5 md:flex-row items-center justify-center pb-10 md:justify-between">
+                            <div className="text-arial text-xl text-white">
+                                {numProducts} {numProducts === 1 ? "risultato" : "risultati"}
                             </div>
-                        </Link>
-                        <Link to="/ProductDetails">
-                            <div className="w-full bg-[#2d7044] rounded-lg p-4 hover:transform hover:scale-105 duration-300">
-                                <div className="h-[35vh]">
-                                    <img src="/img/hospitality-certificate.png" alt="img" className="w-full h-full object-cover rounded-lg" />
-                                </div>
-                                <div className="text-arial text-xl text-white font-bold text-center pt-3">Green Visa Protocollo Hospitality</div>
-                                <div className="text-arial text-xl text-white text-center pt-2">350,00 € – 1.180,00 €</div>
+                            <div className="text-arial text-xl text-black w-full md:w-auto">
+                                <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 translate-x-[-50%] text-center" name="sorting" id="sorting">
+                                    <option value="default">Ordinamento predefinito</option>
+                                    <option value="price-asc">Prezzo crescente</option>
+                                    <option value="price-desc">Prezzo decrescente</option>
+                                </select>
                             </div>
-                        </Link>
-                        <Link to="/ProductDetails">
-                            <div className="w-full bg-[#2d7044] rounded-lg p-4 hover:transform hover:scale-105 duration-300">
-                                <div className="h-[35vh]">
-                                    <img src="/img/hospitality-certificate.png" alt="img" className="w-full h-full object-cover rounded-lg" />
-                                </div>
-                                <div className="text-arial text-xl text-white font-bold text-center pt-3">Green Visa Protocollo Hospitality</div>
-                                <div className="text-arial text-xl text-white text-center pt-2">350,00 € – 1.180,00 €</div>
-                            </div>
-                        </Link>
-                    </Slider>
-                </div>
+                        </div>
+                        <div className="">
+                            <Slider {...settings}>
+                                {products.map((item) => (
+                                    <Link to="/ProductDetails" key={item.id}>
+                                        <div className="w-full bg-[#2d7044] rounded-lg p-4 hover:transform hover:scale-105 duration-300">
+                                            <div className="h-[35vh]">
+                                                <img src={`http://localhost:8080/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
+                                            </div>
+                                            <div className="text-arial text-xl text-white font-bold text-center pt-3">{item.name}</div>
+                                            <div className="text-arial text-xl text-white text-center pt-2">Da {item.price} €</div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </Slider>
+                        </div>
+                    </>
+                )}
             </div>
-
         </div>
     );
 }
 
-export default Products
+export default Products;

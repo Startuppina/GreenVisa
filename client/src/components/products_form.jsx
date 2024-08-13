@@ -1,0 +1,176 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import MessagePopUp from './messagePopUp';
+
+function ProductsForm() {
+    const [name, setName] = useState('');
+    const [price, setPrice] = useState('');
+    const [image, setImage] = useState(null);
+    const [info, setInfo] = useState('');
+    const [cod, setCod] = useState('');
+    const [category, setCategory] = useState('');
+    const [tag, setTag] = useState('');
+    const [categories, setCategories] = useState([]);
+    const navigate = useNavigate();
+
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState('');
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/api/categories');
+                setCategories(response.data);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                setCategories(['Category 1', 'Category 2', 'Category 3']);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
+    const handleTitleChange = (e) => setName(e.target.value);
+    const handlePriceChange = (e) => setPrice(e.target.value);
+    const handleImageChange = (e) => setImage(e.target.files[0]);
+    const handleInfoChange = (e) => setInfo(e.target.value);
+    const handleCodeChange = (e) => setCod(e.target.value);
+    const handleCategoryChange = (e) => setCategory(e.target.value);
+    const handleTagChange = (e) => setTag(e.target.value);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const token = localStorage.getItem("token");
+
+        if (!name || !price || !image || !info || !cod || !category || !tag) {
+            setMessagePopup("Please fill out all fields.");
+            setButtonPopup(true);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('price', price);
+        formData.append('image', image);
+        formData.append('info', info);
+        formData.append('cod', cod);
+        formData.append('category', category);
+        formData.append('tag', tag);
+
+        console.log('Form data:', formData);
+
+        try {
+            const response = await axios.post('http://localhost:8080/api/upload-product', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                navigate('/Products');
+            } else if (response.status === 400) {
+                setMessagePopup(response.data.msg);
+                setButtonPopup(true);
+            }
+        } catch (error) {
+            setMessagePopup("Errore durante il caricamento del prodotto");
+            setButtonPopup(true);
+        }
+    };
+
+    return (
+        <div className="w-[80%] mx-auto my-10 font-arial text-xl">
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
+            <h2 className="text-3xl font-bold text-center mb-4">Carica un nuovo prodotto</h2>
+            <form onSubmit={handleSubmit} className="flex flex-col">
+                <div className="flex flex-col md:flex-row md:gap-3 mb-4">
+                    <label className="flex flex-col w-full">
+                        <span className="block mb-2">Titolo</span>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={handleTitleChange}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
+                        />
+                    </label>
+                    <label className="flex flex-col w-full">
+                        <span className="block mb-2">Prezzo</span>
+                        <input
+                            type="text"
+                            value={price}
+                            onChange={handlePriceChange}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
+                        />
+                    </label>
+                    <label className="flex flex-col w-full">
+                        <span className="block mb-2">Immagine</span>
+                        <input
+                            type="file"
+                            onChange={handleImageChange}
+                            name='image'
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 z-10"
+                        />
+                    </label>
+                </div>
+                <div className="flex flex-col md:flex-row md:gap-3 mb-4">
+                    <label className="flex flex-col w-full">
+                        <span className="block mb-2">Codice</span>
+                        <input
+                            type="number"
+                            value={cod}
+                            onChange={handleCodeChange}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
+                        />
+                    </label>
+                    <label className="flex flex-col w-full">
+                        <span className="block mb-2">Tag</span>
+                        <input
+                            type="text"
+                            value={tag}
+                            onChange={handleTagChange}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
+                        />
+                    </label>
+                    <label className="flex flex-col w-full">
+                        <span className="block mb-2">Categoria</span>
+                        <select
+                            value={category}
+                            onChange={handleCategoryChange}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
+                        >
+                            <option value="" disabled>Seleziona una categoria</option>
+                            {categories.map((cat, index) => (
+                                <option key={index} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+                <div className="flex flex-col mb-4">
+                    <label className="flex flex-col w-full">
+                        <span className="block mb-2">Info</span>
+                        <textarea
+                            value={info}
+                            onChange={handleInfoChange}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 z-10 h-[150px]"
+                        />
+                    </label>
+                </div>
+                <div className='flex justify-center'>
+                    <button
+                        type="submit"
+                        className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                    >
+                        Carica
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+}
+
+export default ProductsForm;

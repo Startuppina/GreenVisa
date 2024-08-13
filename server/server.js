@@ -559,13 +559,82 @@ app.delete("/api/delete-news/:id", authenticateJWT, async (req, res) => {
   }
 });
 
+// create api to apload categriues of a product. categories is an enum
+app.get('/api/categories', async (req, res) => {
+  try {
+      const query = `
+          SELECT unnest(enum_range(NULL::category_type)) AS category
+      `;
+      const result = await pool.query(query);
+      const categories = result.rows.map(row => row.category);
+      res.json(categories);
+  } catch (error) {
+      console.error('Error fetching categories:', error);
+      res.status(500).send('Server Error');
+  }
+});
+
+app.post("/api/upload-product", authenticateJWT, upload.single("image"), async (req, res) => {
+  try {
+    const image = req.file;
+    const { name, price, category, tag, info, cod } = req.body;
+    const { id } = req.user;
+
+    console.log(name, price, category, tag, info, cod, id, image);
+
+    // Controllo che tutti i campi siano compilati
+    if (!name || !price || !category || !tag || !info || !cod) {
+      return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
+    }
+
+    // Controllo che il codice sia unico
+    const checkCodQuery = "SELECT * FROM products WHERE cod = $1";
+    const checkCodValues = [cod];
+    const checkCodResult = await pool.query(checkCodQuery, checkCodValues);
+    if (checkCodResult.rows.length > 0) {
+      return res.status(400).json({ msg: "Codice prodotto già esistente. Inserisci un codice diverso" });
+    }
+
+    // Controllo che il prezzo sia un numero valido
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      return res.status(400).json({ msg: "Prezzo non valido" });
+    }
+
+    // Controllo che l'immagine sia presente
+    if (!image) {
+      return res.status(400).json({ msg: "Immagine mancante" });
+    }
+
+    // Inserisco il prodotto nel database
+    const query = `
+      INSERT INTO products (user_id, name, price, image, info, cod, category, tag) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `;
+    const values = [id, name, parsedPrice, image.filename, info, cod, category, tag];
+
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Prodotto caricato con successo" });
+  } catch (error) {
+    console.error("Errore durante il caricamento del prodotto:", error);
+    res.status(500).json({ msg: "Errore durante il caricamento dell'immagine" });
+  }
+});
+
+
 app.get("/api/products-info", authenticateJWT, async (req, res) => {
   try {
 
+    // Get the total number of products
     const query = "SELECT COUNT(*) FROM products";
     const result = await pool.query(query);
     console.log(result.rows[0].count);
-    res.status(200).json({numProducts: result.rows[0].count});
+
+    // Get all products
+    const query2 = "SELECT * FROM products";
+    const result2 = await pool.query(query2);
+    console.log(result2.rows);
+    res.status(200).json({numProducts: result.rows[0].count, products: result2.rows});
 
   } catch (error) {
     console.error("Error fetching product info:", error);
