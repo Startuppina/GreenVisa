@@ -747,6 +747,21 @@ app.put("/api/update-quantity/:id", authenticateJWT, async (req, res) => {
   }
 })
 
+app.delete("/api/remove-from-cart/:id", authenticateJWT, async (req, res) => {
+  
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    const query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
+    const values = [user_id, id];
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
+  } catch (error) {
+    console.error("Errore nel rimuovere il prodotto dal carrello:", error);
+    res.status(500).json({ msg: "Errore nel rimuovere il prodotto dal carrello" });
+  }
+})
+
 
 
 

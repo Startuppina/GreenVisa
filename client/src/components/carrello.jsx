@@ -9,6 +9,9 @@ function Carrello() {
     const [messagePopUp, setMessagePopUp] = useState('');
     const [cartProducts, setCartProducts] = useState([]);
     const [quantities, setQuantities] = useState({});
+    const [removingProductId, setRemovingProductId] = useState(null);
+
+
     useEffect(() => {
         const getCartProducts = async () => {
             const token = localStorage.getItem('token');
@@ -63,27 +66,35 @@ function Carrello() {
     }
 
     const handleRemoveProduct = async (productId) => {
-        const token = localStorage.getItem('token');
-
-        try {
-            const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.status === 200) {
-                setCartProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
-                setQuantities(prevQuantities => {
-                    const { [productId]: _, ...rest } = prevQuantities;
-                    return rest;
+        setRemovingProductId(productId);
+        
+        // Attendi il completamento dell'animazione
+        setTimeout(async () => {
+            const token = localStorage.getItem('token');
+    
+            try {
+                const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
+                if (response.status === 200) {
+                    setCartProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+                    setQuantities(prevQuantities => {
+                        const { [productId]: _, ...rest } = prevQuantities;
+                        return rest;
+                    });
+                }
+            } catch (error) {
+                setMessagePopUp(error.response?.data?.msg || error.message);
+                setButtonPopup(true);
+            } finally {
+                setRemovingProductId(null);
             }
-        } catch (error) {
-            setMessagePopUp(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
-        }
+        }, 300); // Durata dell'animazione in millisecondi
     }
+    
 
     const calculateSubtotal = () => {
         return cartProducts.reduce((total, product) => total + (product.price * (quantities[product.id] || 1)), 0);
@@ -118,7 +129,7 @@ function Carrello() {
                                         onValueChange={(newQuantity) => handleQuantityChange(product.id, newQuantity)}
                                     />
                                 </div>
-                                <a href="#" onClick={() => handleRemoveProduct(product.id)} className="underline text-[#2d7044] hover:text-red-500 cursor-pointer z-10 transition-colors duration-300 ease-in-out">Rimuovi articolo</a>
+                                <div onClick={() => handleRemoveProduct(product.id)} className="underline text-[#2d7044] hover:text-red-500 cursor-pointer z-10 transition-colors duration-300 ease-in-out">Rimuovi articolo</div>
                             </div>
                         </div>
                         <hr className="w-full md:w-[80%] border-b-2 border-black mx-auto"/>
