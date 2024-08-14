@@ -39,6 +39,19 @@ CREATE TABLE IF NOT EXISTS products (
     UNIQUE (cod)  -- Aggiunto un vincolo di unicità per il codice prodotto
 );
 
+CREATE TABLE IF NOT EXISTS cart (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    image VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),  -- Assicurati che la quantità sia positiva
+    price INTEGER NOT NULL,  -- Prezzo dell'articolo (al momento dell'aggiunta al carrello)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     quantity INTEGER NOT NULL,

@@ -38,7 +38,7 @@ const PrevArrow = (props) => {
     );
 };
 
-function Products(){
+function Products() {
     const [numProducts, setNumProducts] = useState(0);
     const [products, setProducts] = useState([]);
     const [haveProducts, setHaveProducts] = useState(false);
@@ -138,7 +138,7 @@ function Products(){
     };
 
     return (
-        <div className="mt-5">
+        <div className="mt-5 flex justify-center items-center w-full">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
@@ -148,7 +148,7 @@ function Products(){
                 onButtonClick={deleteProduct}>
                 {messageConfirm }
             </ConfirmPopUp>
-            <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-10 pb-16 md:rounded-lg md:m-4">
+            <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-8 pb-12 md:rounded-lg md:m-4">  {/* Adjusted padding */}
                 {haveProducts === false ? (
                     <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center">
                         <p>Nessuna certificazione ancora disponibile</p>
@@ -163,7 +163,7 @@ function Products(){
                                 {numProducts} {numProducts === 1 ? "risultato" : "risultati"}
                             </div>
                             <div className="text-arial text-xl text-black w-full md:w-auto">
-                                <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 translate-x-[-50%] text-center" name="sorting" id="sorting">
+                                <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 md:left-0 translate-x-[-50%] md:translate-x-0 text-center" name="sorting" id="sorting">
                                     <option value="default">Ordinamento predefinito</option>
                                     <option value="price-asc">Prezzo crescente</option>
                                     <option value="price-desc">Prezzo decrescente</option>
@@ -173,10 +173,10 @@ function Products(){
                         <div className="">
                             <Slider {...settings}>
                                 {products.map((item) => (
-                                    <div className='p-6 mx-auto z-10' key={item.id}>
-                                        <Link to="/ProductDetails">
-                                            <div className="w-full bg-[#2d7044] rounded-lg p-4 hover:transform hover:scale-105 duration-300">
-                                                <div className="h-[40vh]">
+                                    <div className='p-4 mx-auto z-10' key={item.id}> {/* Adjusted padding */}
+                                        <Link to={`/ProductDetails/${item.id}`}>
+                                            <div className="w-full bg-[#2d7044] rounded-lg p-2 hover:transform hover:scale-105 duration-300">
+                                                <div className="h-[35vh]"> {/* Adjusted height */}
                                                     <img src={`http://localhost:8080/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
                                                 </div>
                                                 <div className="text-arial text-xl text-white font-bold text-center pt-3">{item.name}</div>

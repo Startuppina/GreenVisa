@@ -1,14 +1,19 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
-function QuantitySelector() {
+function QuantitySelector({ onValueChange }) {
     const [quantity, setQuantity] = useState(1);
-    
+
     useEffect(() => {
+        // Verifica che onValueChange sia una funzione prima di chiamarla
+        if (typeof onValueChange === 'function') {
+            onValueChange(quantity);
+        }
+
+        // Restrizione: quantità non deve superare 99
         if (quantity > 99) {
             setQuantity(99);
         }
-    }, [quantity] /*quantity is a dependency, the effect is executed when quantity changes*/); 
+    }, [quantity, onValueChange]); // Assicurati che onValueChange sia incluso nelle dipendenze
 
     function decrementQuantity() {
         if (quantity > 1) {
@@ -17,11 +22,13 @@ function QuantitySelector() {
     }
 
     function incrementQuantity() {
-        setQuantity(quantity + 1);
+        if (quantity < 99) {
+            setQuantity(quantity + 1);
+        }
     }
 
     function handleChange(event) {
-        const value = parseInt(event.target.value, 10); //convert the value in a number. Input type text is always a string
+        const value = parseInt(event.target.value, 10);
         if (!isNaN(value) && value >= 1 && value <= 99) {
             setQuantity(value);
         } else if (event.target.value === '') {
@@ -42,7 +49,7 @@ function QuantitySelector() {
                 type="text"
                 value={quantity}
                 onChange={handleChange}
-                onBlur={handleBlur} // handleBlur() is called when the input loses focus to input. The user remove pointer to the input area
+                onBlur={handleBlur}
                 className="w-[30%] text-center cursor-pointer"
             />
             <button onClick={incrementQuantity} className="cursor-pointer">+</button>

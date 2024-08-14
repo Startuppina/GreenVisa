@@ -148,7 +148,7 @@ app.post("/api/login", async (req, res) => {
       return res.status(400).json({ msg: "Password errata" });
     }
 
-    const token = jwt.sign({ id: user.id }, secretKey, { expiresIn: "7d" });
+    const token = jwt.sign({ user_id: user.id }, secretKey, { expiresIn: "7d" });
     return res
       .status(200)
       .json({ msg: "Login effettuato con successo!", token });
@@ -167,11 +167,11 @@ app.post("/api/logout", authenticateJWT, (req, res) => {
 app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
-    const { id } = req.user;
+    const { user_id } = req.user;
 
     // Trova e elimina l'utente dal database
     const result = await pool.query("DELETE FROM users WHERE id = $1", [
-      id,
+      user_id,
     ]);
 
     if (result.rowCount === 0) {
@@ -189,11 +189,11 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
 app.get("/api/user-info", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
-    const { id } = req.user;
+    const { user_id } = req.user;
 
     // Trova l'utente dal database
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
-      id,
+      user_id,
     ]);
 
     if (!result) {
@@ -211,12 +211,12 @@ app.get("/api/user-info", authenticateJWT, async (req, res) => {
 app.post("/api/update-username", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
-    const { id } = req.user;
+    const { user_id } = req.user;
     const { username } = req.body;
 
     // Trova l'utente dal database
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
-      id,
+      user_id,
     ]);
 
     if (result.rows.length === 0) {
@@ -226,7 +226,7 @@ app.post("/api/update-username", authenticateJWT, async (req, res) => {
     // Aggiorna il nome utente nel database
     await pool.query("UPDATE users SET username = $1 WHERE id = $2", [
       username,
-      id,
+      user_id,
     ]);
 
     // Invia una risposta di successo
@@ -240,12 +240,12 @@ app.post("/api/update-username", authenticateJWT, async (req, res) => {
 app.post("/api/update-phone", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
-    const { id } = req.user;
+    const { user_id } = req.user;
     const { phone_number } = req.body;
 
     // Trova l'utente dal database
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
-      id,
+      user_id,
     ]);
 
     if (result.rows.length === 0) {
@@ -435,7 +435,7 @@ app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
 app.post("/api/change-password", authenticateJWT, async (req, res) => {
   try {
     const { password } = req.body;
-    const { id } = req.user;
+    const { user_id } = req.user;
 
     if(!passwordCheck(password)) {
       return res
@@ -448,7 +448,7 @@ app.post("/api/change-password", authenticateJWT, async (req, res) => {
 
     // Prepare the SQL query
     const query = "UPDATE users SET password_digest = $1 WHERE id = $2";
-    const values = [hashedPassword, id];
+    const values = [hashedPassword, user_id];
 
     // Execute the query
     await pool.query(query, values);
@@ -466,7 +466,7 @@ app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req
     const image = req.file;
     const { title, content } = req.body;
 
-    if (!req.user || !req.user.id) {
+    if (!req.user || !req.user.user_id) {
       console.log("ID utente mancante:", req.user);
       return res.status(400).json({ msg: "ID utente mancante" });
     }
@@ -481,7 +481,7 @@ app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req
 
     const sanitizedContent = DOMPurify.sanitize(content);
     const query = "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4)";
-    const values = [req.user.id, title, sanitizedContent, image.filename];
+    const values = [req.user.user_id, title, sanitizedContent, image.filename];
 
     await pool.query(query, values);
     res.status(200).json({ msg: "Image uploaded successfully" });
@@ -578,9 +578,9 @@ app.post("/api/upload-product", authenticateJWT, upload.single("image"), async (
   try {
     const image = req.file;
     const { name, price, category, tag, info, cod } = req.body;
-    const { id } = req.user;
+    const { user_id } = req.user;
 
-    console.log(name, price, category, tag, info, cod, id, image);
+    console.log(name, price, category, tag, info, cod, user_id, image);
 
     // Controllo che tutti i campi siano compilati
     if (!name || !price || !category || !tag || !info || !cod) {
@@ -606,12 +606,16 @@ app.post("/api/upload-product", authenticateJWT, upload.single("image"), async (
       return res.status(400).json({ msg: "Immagine mancante" });
     }
 
+    if(info.length > 100) {
+      return res.status(400).json({ msg: "La descrizione è troppo lunga. Max 100 caratteri" });
+    }
+
     // Inserisco il prodotto nel database
     const query = `
       INSERT INTO products (user_id, name, price, image, info, cod, category, tag) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
-    const values = [id, name, parsedPrice, image.filename, info, cod, category, tag];
+    const values = [user_id, name, parsedPrice, image.filename, info, cod, category, tag];
 
     await pool.query(query, values);
     res.status(200).json({ msg: "Prodotto caricato con successo" });
@@ -642,6 +646,23 @@ app.get("/api/products-info", authenticateJWT, async (req, res) => {
   }
 });
 
+app.get("/api/product-details/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const query = "SELECT * FROM products WHERE id = $1";
+    const values = [id];
+    const result = await pool.query(query, values);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: "Nessuna certificazione trovata" });
+    }
+    res.status(200).json({ product: result.rows[0] });
+  } catch (error) {
+    console.error("Errore nel recupero della certificazione", error);
+    res.status(500).json({ msg: "Errore nel recupero della certificazione" });
+  }
+})
+
 app.delete("/api/delete-product/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
@@ -667,6 +688,51 @@ app.delete("/api/delete-product/:id", authenticateJWT, async (req, res) => {
     res.status(500).json({ msg: "Errore nel cancellamento" });
   }
 });
+
+app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
+  try {
+      const { id } = req.params; // ID del prodotto
+      const { user_id } = req.user;
+      const { name, image, price, quantity } = req.body;
+
+      // Controlla se il prodotto esiste
+      const query = "SELECT * FROM products WHERE id = $1";
+      const values = [id];
+      const result = await pool.query(query, values);
+
+      if (result.rows.length === 0) {
+          return res.status(404).json({ msg: "Prodotto non trovato" });
+      }
+
+      // Aggiungi il prodotto al carrello
+      const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, price) VALUES ($1, $2, $3, $4, $5, $6)";
+      const values2 = [user_id, id, name, image, quantity, price];
+      await pool.query(query2, values2);
+      res.status(200).json({ msg: "Prodotto aggiunto al carrello con successo" });
+  } catch (error) {
+      console.error("Errore nell'aggiungere il prodotto al carrello:", error);
+      res.status(500).json({ msg: "Errore nell'aggiungere il prodotto al carrello" });
+  }
+});
+
+app.get("/api/fetch-user-cart", authenticateJWT, async (req, res) => {
+  
+  try {
+    const { user_id } = req.user;
+
+    const query = "SELECT * FROM cart WHERE user_id = $1";
+    const values = [user_id];
+    const result = await pool.query(query, values);
+    console.log(result.rows);
+    res.status(200).json({ cart: result.rows });
+
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    res.status(500).json({ msg: "Error fetching cart" });
+  }
+})
+
+
 
 
 function emailCheck(email) {

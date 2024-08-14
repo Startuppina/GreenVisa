@@ -121,7 +121,7 @@ function ProductsForm() {
                     <label className="flex flex-col w-full">
                         <span className="block mb-2">Codice</span>
                         <input
-                            type="number"
+                            type="text"
                             value={cod}
                             onChange={handleCodeChange}
                             className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"

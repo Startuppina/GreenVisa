@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 function Footer({ styleProp }) {
+
     return (
         <div className="p-5 flex flex-col md:flex-row justify-between bg-[#e6e6e6]" style={styleProp}>
             <div className="w-full md:w-[40%] items-center md:items-start justify-center flex flex-col">
