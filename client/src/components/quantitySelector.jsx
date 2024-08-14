@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
-function QuantitySelector({ onValueChange }) {
-    const [quantity, setQuantity] = useState(1);
+function QuantitySelector({ onValueChange, value }) {
+    const [quantity, setQuantity] = useState(value);
 
     useEffect(() => {
         // Verifica che onValueChange sia una funzione prima di chiamarla

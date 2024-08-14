@@ -105,7 +105,7 @@ const handleCartInsertion = async () => {
                     </div>
                 </div>
                 <div className="flex flex-row items-center justify-center gap-5">
-                    <QuantitySelector onValueChange={handleQuantityChange}/>
+                    <QuantitySelector onValueChange={handleQuantityChange} value={quantity}/>
                     <button className="m-3 font-arial font-semibold text-xl w-auto p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" 
                         onClick={handleCartInsertion}
                     >Aggiungi al carrello</button>

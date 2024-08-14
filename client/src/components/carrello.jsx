@@ -58,7 +58,7 @@ function Carrello() {
                                 </div>
                                 <p>Stanze: 1 – 24</p>
                                 <div className="z-10">
-                                    <QuantitySelector/>
+                                    <QuantitySelector value={product.quantity}/>
                                 </div>
                                 <a href="#" className="underline text-[#2d7044] hover:text-red-500 cursor-pointer z-10 transition-colors duration-300 ease-in-out">Rimuovi articolo</a>
                             </div>
