@@ -122,7 +122,7 @@ const UserPage = () => {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.post('http://localhost:8080/api/update-username', { username: newUsername }, {
+            const response = await axios.put('http://localhost:8080/api/update-username', { username: newUsername }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -146,7 +146,7 @@ const UserPage = () => {
 
         setNewPhone(`+${newPhone}`);
         try {
-            const response = await axios.post('http://localhost:8080/api/update-phone', { phone_number: newPhone }, {
+            const response = await axios.put('http://localhost:8080/api/update-phone', { phone_number: newPhone }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

@@ -1,19 +1,15 @@
 import React, { useEffect, useState } from "react";
 import QuantitySelector from "./quantitySelector";
 import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import axios from "axios";
-import ConfirmPopUp from "./confirmPopUp";
 
 function Carrello() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState('');
-    const [CartProducts, setCartProducts] = useState([]);
-    const navigate = useNavigate();
-
+    const [cartProducts, setCartProducts] = useState([]);
+    const [quantities, setQuantities] = useState({});
     useEffect(() => {
-        
         const getCartProducts = async () => {
             const token = localStorage.getItem('token');
 
@@ -27,6 +23,12 @@ function Carrello() {
 
                 if (response.status === 200) {
                     setCartProducts(response.data.cart);
+                    // Initialize quantities
+                    const initialQuantities = response.data.cart.reduce((acc, product) => {
+                        acc[product.id] = product.quantity; // Assuming each product has a unique id
+                        return acc;
+                    }, {});
+                    setQuantities(initialQuantities);
                 }
 
             } catch (error) {
@@ -38,6 +40,59 @@ function Carrello() {
         getCartProducts();
     }, []);
 
+    const handleQuantityChange = async (productId, newQuantity) => {
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await axios.put(`http://localhost:8080/api/update-quantity/${productId}`, { quantity: newQuantity }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 200) {
+                setQuantities(prevQuantities => ({
+                    ...prevQuantities,
+                    [productId]: newQuantity
+                }));
+            }
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+    }
+
+    const handleRemoveProduct = async (productId) => {
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 200) {
+                setCartProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+                setQuantities(prevQuantities => {
+                    const { [productId]: _, ...rest } = prevQuantities;
+                    return rest;
+                });
+            }
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+    }
+
+    const calculateSubtotal = () => {
+        return cartProducts.reduce((total, product) => total + (product.price * (quantities[product.id] || 1)), 0);
+    }
+
+    const calculateTotal = () => {
+        return calculateSubtotal(); // Add additional charges (like taxes) if applicable
+    }
+
     return (
         <div className="w-full min-h-screen">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
@@ -45,8 +100,8 @@ function Carrello() {
             </MessagePopUp>
             <div className="w-full p-5">
                 <h1 className="text-arial text-3xl text-center font-bold pb-5">CARRELLO</h1>
-                {CartProducts.map((product) => (
-                    <>
+                {cartProducts.map((product) => (
+                    <React.Fragment key={product.id}>
                         <div className="w-full h-auto flex flex-col md:flex-row items-center justify-center px-5 mx-auto gap-5">
                             <div className="w-[250px]">
                                 <img src={`http://localhost:8080/uploaded_img/${product.image}`} alt={product.name} className="rounded-lg"/>
@@ -58,15 +113,17 @@ function Carrello() {
                                 </div>
                                 <p>Stanze: 1 – 24</p>
                                 <div className="z-10">
-                                    <QuantitySelector value={product.quantity}/>
+                                    <QuantitySelector
+                                        value={quantities[product.id] || 1}
+                                        onValueChange={(newQuantity) => handleQuantityChange(product.id, newQuantity)}
+                                    />
                                 </div>
-                                <a href="#" className="underline text-[#2d7044] hover:text-red-500 cursor-pointer z-10 transition-colors duration-300 ease-in-out">Rimuovi articolo</a>
+                                <a href="#" onClick={() => handleRemoveProduct(product.id)} className="underline text-[#2d7044] hover:text-red-500 cursor-pointer z-10 transition-colors duration-300 ease-in-out">Rimuovi articolo</a>
                             </div>
                         </div>
                         <hr className="w-full md:w-[80%] border-b-2 border-black mx-auto"/>
-                    </>
+                    </React.Fragment>
                 ))}
-
             </div>
 
             <div className="w-[90%] md:w-[70%] h-auto p-5 text-arial text-xl mx-auto">
@@ -77,11 +134,11 @@ function Carrello() {
                 </div>
                 <div className="w-full h-auto flex flex-row items-center justify-between">
                     <p>Subtotale</p>
-                    <p>350,00 €</p>
+                    <p>{calculateSubtotal().toFixed(2)} €</p>
                 </div>
                 <div className="w-full h-auto flex flex-row items-center justify-between font-bold">
                     <p>Totale</p>
-                    <p>350,00 €</p>
+                    <p>{calculateTotal().toFixed(2)} €</p>
                 </div>
                 <button type="submit" className="relative left-[50%] translate-x-[-50%] w-full md:w-[30%] mt-5 p-1 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black"><Link to="/Payment">Concludi il pagamento</Link></button>
             </div>

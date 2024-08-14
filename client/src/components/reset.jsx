@@ -42,7 +42,7 @@ export default function Reset() {
     const recoveryToken = localStorage.getItem("recoveryToken");
 
     try {
-      const response = await axios.post("http://localhost:8080/api/change-password", {
+      const response = await axios.put("http://localhost:8080/api/change-password", {
         password
       }, {
         headers: {
