@@ -496,6 +496,9 @@ app.get("/api/news", async (req, res) => {
   try {
     const query = "SELECT * FROM news";
     const result = await pool.query(query);
+
+    const countNews = await pool.query("SELECT COUNT(*) FROM news");
+    
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Errore nel recupero delle notizie:", error);
@@ -580,8 +583,6 @@ app.post("/api/upload-product", authenticateJWT, upload.single("image"), async (
     const { name, price, category, tag, info, cod } = req.body;
     const { user_id } = req.user;
 
-    console.log(name, price, category, tag, info, cod, user_id, image);
-
     // Controllo che tutti i campi siano compilati
     if (!name || !price || !category || !tag || !info || !cod) {
       return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
@@ -632,7 +633,6 @@ app.get("/api/products-info", authenticateJWT, async (req, res) => {
     // Get the total number of products
     const query = "SELECT COUNT(*) FROM products";
     const result = await pool.query(query);
-    console.log(result.rows[0].count);
 
     // Get all products
     const query2 = "SELECT * FROM products";
@@ -704,6 +704,14 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
           return res.status(404).json({ msg: "Prodotto non trovato" });
       }
 
+      //constrolla se il prodotto e' gia nel carrello dell'utente
+      const query1 = "SELECT * FROM cart WHERE user_id = $1 AND product_id = $2";
+      const values1 = [user_id, id];
+      const result1 = await pool.query(query1, values1);
+      if (result1.rows.length > 0) {
+          return res.status(400).json({ msg: "Prodotto già presente nel carrello" });
+      }
+
       // Aggiungi il prodotto al carrello
       const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, price) VALUES ($1, $2, $3, $4, $5, $6)";
       const values2 = [user_id, id, name, image, quantity, price];
@@ -723,8 +731,11 @@ app.get("/api/fetch-user-cart", authenticateJWT, async (req, res) => {
     const query = "SELECT * FROM cart WHERE user_id = $1";
     const values = [user_id];
     const result = await pool.query(query, values);
-    console.log(result.rows);
-    res.status(200).json({ cart: result.rows });
+
+    const query2 = "SELECT COUNT(*) FROM cart WHERE user_id = $1";
+    const values2 = [user_id];
+    const result2 = await pool.query(query2, values2);
+    res.status(200).json({ cart: result.rows, count: result2.rows[0].count });
 
   } catch (error) {
     console.error("Errore nel recupero del carrello:", error);
@@ -748,19 +759,20 @@ app.put("/api/update-quantity/:id", authenticateJWT, async (req, res) => {
 })
 
 app.delete("/api/remove-from-cart/:id", authenticateJWT, async (req, res) => {
-  
   try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-    const query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
-    const values = [user_id, id];
-    await pool.query(query, values);
-    res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
+      const { id } = req.params;
+      console.log('ID dai parametri della richiesta:', id);
+      const { user_id } = req.user;
+      const query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
+      const values = [user_id, id];
+      await pool.query(query, values);
+      res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
   } catch (error) {
-    console.error("Errore nel rimuovere il prodotto dal carrello:", error);
-    res.status(500).json({ msg: "Errore nel rimuovere il prodotto dal carrello" });
+      console.error("Errore nel rimuovere il prodotto dal carrello:", error);
+      res.status(500).json({ msg: "Errore nel rimuovere il prodotto dal carrello" });
   }
-})
+});
+
 
 
 
@@ -777,7 +789,8 @@ function passwordCheck(password) {
 }
 
 function phoneCheck(phone) {
-  const re = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+  // max 15 characters, digits only, no spaces, no leading zeros, no special characters, allowed +, (, ), -, ., /,
+  const re = /^[\+]?[(]?[0-9]{3,5}[)]?[-\s\.]?[0-9]{3,5}[-\s\.]?[0-9]{4,10}$/im; 
   return re.test(String(phone).toLowerCase());
 }
 

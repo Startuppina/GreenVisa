@@ -86,8 +86,8 @@ const handleCartInsertion = async () => {
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
-            <div className="w-[400px]">
-                <img src={`http://localhost:8080/uploaded_img/${product.image}`} alt={product.name} className="rounded-lg"/>
+            <div className="w-[400px] h-[300px] overflow-hidden">
+                <img src={`http://localhost:8080/uploaded_img/${product.image}`} alt={product.name} className="w-full h-full object-cover rounded-lg"/>
             </div>
             <div className="w-full md:w-[50%] p-4 lg:pl-20 flex flex-col items-center text-arial text-xl text-center">
                 <h1 className="text-arial text-2xl text-center font-bold pb-5 w-full">{product.name}</h1>

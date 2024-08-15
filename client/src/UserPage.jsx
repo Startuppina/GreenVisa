@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import MessagePopUp from './components/messagePopUp';
 import ConfirmPopUp from './components/confirmPopUp';
+import Dashboard from './components/content_dashboard';
 
 const UserPage = () => {
     const [userInfo, setUserInfo] = useState({});
@@ -238,7 +239,7 @@ const UserPage = () => {
                         </div>
                     </form>
                 </div>
-
+                <Dashboard />
                 <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
                     <div className="w-full md:w-[20%] flex justify-center">
                         <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>

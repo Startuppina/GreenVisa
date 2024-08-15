@@ -24,5 +24,16 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/typography'),
+    function({ addUtilities }) {
+      addUtilities({
+        '.fade-out': {
+          '@apply opacity-0 transition-opacity duration-[2000ms] ease-out': {},
+          height: '0',
+          overflow: 'hidden',
+          padding: '0',
+          margin: '0',
+        },
+      }, ['responsive', 'hover'])
+    }
   ],
 }
