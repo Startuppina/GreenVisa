@@ -116,12 +116,12 @@ app.post("/api/signup", async (req, res) => {
       [username, email, newPhone, hashedPassword]
     );
 
-    return res.status(200).json({ msg: "User registered!" });
+    return res.status(200).json({ msg: "Utente registrato" });
   } catch (error) {
-    console.error("Error during signup:", error);
+    console.error("Errore durante la registrazione dell'utente:", error);
     return res
       .status(500)
-      .json({ msg: "An error occurred. Please try again." });
+      .json({ msg: "Errore durante la registrazione dell'utente" });
   }
 });
 
@@ -153,10 +153,10 @@ app.post("/api/login", async (req, res) => {
       .status(200)
       .json({ msg: "Login effettuato con successo!", token });
   } catch (error) {
-    console.error("Error during login:", error);
+    console.error("Errore durante il login:", error);
     return res
       .status(500)
-      .json({ msg: "An error occurred. Please try again." });
+      .json({ msg: "Errore durante il login. Riprova" });
   }
 });
 
@@ -175,14 +175,14 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
     ]);
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Account not found" });
+      return res.status(404).json({ message: "Account non trovato" });
     }
 
     // Invia una risposta di successo
-    res.status(200).json({ message: "Account successfully deleted" });
+    res.status(200).json({ message: "Account eliminato con successo" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Errore interno del server" });
   }
 });
 
@@ -197,18 +197,18 @@ app.get("/api/user-info", authenticateJWT, async (req, res) => {
     ]);
 
     if (!result) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Utente non trovato" });
     }
 
     // Invia la risposta con l'utente trovato
     res.status(200).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Errore interno del server" });
   }
 });
 
-app.post("/api/update-username", authenticateJWT, async (req, res) => {
+app.put("/api/update-username", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
     const { user_id } = req.user;
@@ -220,7 +220,7 @@ app.post("/api/update-username", authenticateJWT, async (req, res) => {
     ]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Utente non trovato" });
     }
 
     // Aggiorna il nome utente nel database
@@ -230,14 +230,14 @@ app.post("/api/update-username", authenticateJWT, async (req, res) => {
     ]);
 
     // Invia una risposta di successo
-    res.status(200).json({ message: "Username updated successfully" });
+    res.status(200).json({ message: "Username aggiornato con successo" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Errore interno del server" });
   }
 });
 
-app.post("/api/update-phone", authenticateJWT, async (req, res) => {
+app.put("/api/update-phone", authenticateJWT, async (req, res) => {
   try {
     // Ottieni l'email dell'utente dal token
     const { user_id } = req.user;
@@ -249,7 +249,7 @@ app.post("/api/update-phone", authenticateJWT, async (req, res) => {
     ]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Utente non trovato" });
     }
 
     const intPrefix = phone_number.slice(0, 2);
@@ -259,16 +259,16 @@ app.post("/api/update-phone", authenticateJWT, async (req, res) => {
     // Aggiorna il numero di telefono nel database
     await pool.query("UPDATE users SET phone_number = $1 WHERE id = $2", [
       newPhone,
-      id,
+      user_id,
     ]);
 
     // Invia una risposta di successo
     res
       .status(200)
-      .json({ message: "Phone number updated successfully", newPhone });
+      .json({ message: "Numero di telefono aggiornato con successo", newPhone });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Errore interno del server" });
   }
 });
 
@@ -292,7 +292,7 @@ app.post("/api/send_email", async (req, res) => {
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Errore interno del server" });
   }
 });
 
@@ -432,10 +432,10 @@ app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
     });
 });
 
-app.post("/api/change-password", authenticateJWT, async (req, res) => {
+app.put("/api/change-password", authenticateJWT, async (req, res) => {
   try {
     const { password } = req.body;
-    const { user_id } = req.user;
+    const { id } = req.user;
 
     if(!passwordCheck(password)) {
       return res
@@ -448,7 +448,7 @@ app.post("/api/change-password", authenticateJWT, async (req, res) => {
 
     // Prepare the SQL query
     const query = "UPDATE users SET password_digest = $1 WHERE id = $2";
-    const values = [hashedPassword, user_id];
+    const values = [hashedPassword, id];
 
     // Execute the query
     await pool.query(query, values);
@@ -456,7 +456,7 @@ app.post("/api/change-password", authenticateJWT, async (req, res) => {
     res.status(200).json({ message: "Password modificata con successo" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Errore interno del server" });
   }
 });
 
@@ -484,11 +484,11 @@ app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req
     const values = [req.user.user_id, title, sanitizedContent, image.filename];
 
     await pool.query(query, values);
-    res.status(200).json({ msg: "Image uploaded successfully" });
+    res.status(200).json({ msg: "Notizia caricata con successo" });
     
   } catch (error) {
-    console.error("Error during file upload:", error);
-    res.status(500).json({ msg: "Error uploading image" });
+    console.error("Errore nel caricamento della notizia:", error);
+    res.status(500).json({ msg: "Errore nel caricamento della notizia" });
   }
 });
 
@@ -496,10 +496,13 @@ app.get("/api/news", async (req, res) => {
   try {
     const query = "SELECT * FROM news";
     const result = await pool.query(query);
+
+    const countNews = await pool.query("SELECT COUNT(*) FROM news");
+    
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error("Error fetching news:", error);
-    res.status(500).json({ msg: "Error fetching news" });
+    console.error("Errore nel recupero delle notizie:", error);
+    res.status(500).json({ msg: "Errore nel recupero delle notizie" });
   }
 });
 
@@ -528,8 +531,8 @@ app.get("/api/article/:id", async (req, res) => {
     //send data and countnews
     res.status(200).json({ article: result.rows[0], countnews: countNews.rows[0].count });
   } catch (error) {
-    console.error("Error fetching article:", error);
-    res.status(500).json({ msg: "Error fetching article" });
+    console.error("Errore nel recupero dell'articolo:", error);
+    res.status(500).json({ msg: "Errore nel recupero dell'articolo" });
   }
 });
 
@@ -552,10 +555,10 @@ app.delete("/api/delete-news/:id", authenticateJWT, async (req, res) => {
     //delete article
     const query2 = "DELETE FROM news WHERE id = $1";
     await pool.query(query2, values);
-    res.status(200).json({ msg: "Article deleted successfully" });
+    res.status(200).json({ msg: "Articolo eliminato con successo" });
   } catch (error) {
-    console.error("Error deleting article:", error);
-    res.status(500).json({ msg: "Error deleting article" });
+    console.error("Errore nel cancellamento", error);
+    res.status(500).json({ msg: "Errore nel cancellamento" });
   }
 });
 
@@ -579,8 +582,6 @@ app.post("/api/upload-product", authenticateJWT, upload.single("image"), async (
     const image = req.file;
     const { name, price, category, tag, info, cod } = req.body;
     const { user_id } = req.user;
-
-    console.log(name, price, category, tag, info, cod, user_id, image);
 
     // Controllo che tutti i campi siano compilati
     if (!name || !price || !category || !tag || !info || !cod) {
@@ -628,23 +629,34 @@ app.post("/api/upload-product", authenticateJWT, upload.single("image"), async (
 
 app.get("/api/products-info", authenticateJWT, async (req, res) => {
   try {
+      const { order = "default" } = req.query;  // Aggiungi un valore di default per evitare errori
+      // Get the total number of products
+      const query = "SELECT COUNT(*) FROM products";
+      const result = await pool.query(query);
 
-    // Get the total number of products
-    const query = "SELECT COUNT(*) FROM products";
-    const result = await pool.query(query);
-    console.log(result.rows[0].count);
+      // if count is 0, return an empty array
+      if (result.rows[0].count === 0) {
+          return res.status(200).json({ numProducts: 0, products: [] });
+      }
 
-    // Get all products
-    const query2 = "SELECT * FROM products";
-    const result2 = await pool.query(query2);
-    console.log(result2.rows);
-    res.status(200).json({numProducts: result.rows[0].count, products: result2.rows});
+      let query2;
+      if (order === "desc") {
+          query2 = "SELECT * FROM products ORDER BY price DESC";
+      } else if (order === "asc") {
+          query2 = "SELECT * FROM products ORDER BY price ASC";
+      } else {
+          query2 = "SELECT * FROM products"; // Default case
+      }
+      
+      const result2 = await pool.query(query2);
+      res.status(200).json({ numProducts: result.rows[0].count, products: result2.rows });
 
   } catch (error) {
-    console.error("Error fetching product info:", error);
-    res.status(500).json({ msg: "Error fetching product info" });
+      console.error("Errore nel recupero dei prodotti", error);
+      res.status(500).json({ msg: "Errore nel recupero dei prodotti" });
   }
 });
+
 
 app.get("/api/product-details/:id", authenticateJWT, async (req, res) => {
   try {
@@ -704,6 +716,14 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
           return res.status(404).json({ msg: "Prodotto non trovato" });
       }
 
+      //constrolla se il prodotto e' gia nel carrello dell'utente
+      const query1 = "SELECT * FROM cart WHERE user_id = $1 AND product_id = $2";
+      const values1 = [user_id, id];
+      const result1 = await pool.query(query1, values1);
+      if (result1.rows.length > 0) {
+          return res.status(400).json({ msg: "Prodotto già presente nel carrello" });
+      }
+
       // Aggiungi il prodotto al carrello
       const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, price) VALUES ($1, $2, $3, $4, $5, $6)";
       const values2 = [user_id, id, name, image, quantity, price];
@@ -723,17 +743,96 @@ app.get("/api/fetch-user-cart", authenticateJWT, async (req, res) => {
     const query = "SELECT * FROM cart WHERE user_id = $1";
     const values = [user_id];
     const result = await pool.query(query, values);
-    console.log(result.rows);
-    res.status(200).json({ cart: result.rows });
+
+    const query2 = "SELECT COUNT(*) FROM cart WHERE user_id = $1";
+    const values2 = [user_id];
+    const result2 = await pool.query(query2, values2);
+    res.status(200).json({ cart: result.rows, count: result2.rows[0].count });
 
   } catch (error) {
-    console.error("Error fetching cart:", error);
-    res.status(500).json({ msg: "Error fetching cart" });
+    console.error("Errore nel recupero del carrello:", error);
+    res.status(500).json({ msg: "Errore nel recupero del carrello" });
   }
 })
 
+app.put("/api/update-quantity/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
+    const { user_id } = req.user;
+    const query = "UPDATE cart SET quantity = $1 WHERE user_id = $2 AND product_id = $3";
+    const values = [quantity, user_id, id];
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Quantità aggiornata correttamente" });
+  } catch (error) {
+    console.error("Errore nell'aggiornare la quantità:", error);
+    res.status(500).json({ msg: "Errore nell'aggiornare la quantità" });
+  }
+})
 
+app.delete("/api/remove-from-cart/:id", authenticateJWT, async (req, res) => {
+  try {
+      const { id } = req.params;
+      console.log('ID dai parametri della richiesta:', id);
+      const { user_id } = req.user;
+      const query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
+      const values = [user_id, id];
+      await pool.query(query, values);
+      res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
+  } catch (error) {
+      console.error("Errore nel rimuovere il prodotto dal carrello:", error);
+      res.status(500).json({ msg: "Errore nel rimuovere il prodotto dal carrello" });
+  }
+});
 
+app.post("/api/send-message", authenticateJWT, async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+    const { user_id } = req.user;
+    const query = "INSERT INTO contacts (user_id, name_surname, email, subject, message) VALUES ($1, $2, $3, $4, $5)";
+    const values = [user_id, name, email, subject, message];
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Messaggio inviato con successo" });
+  } catch (error) {
+    console.error("Errore nell'invio del messaggio:", error);
+    res.status(500).json({ msg: "Errore nell'invio del messaggio" });
+  }
+});
+
+app.get("/api/messages", authenticateJWT, async (req, res) => {
+  
+  try {
+    const query = "SELECT * FROM contacts";
+    const result = await pool.query(query);
+
+    // if no rows are found, return anything
+    if (result.rows.length === 0) {
+      return res.status(200).json({ messages: [] });
+    }
+
+    const query2 = "SELECT COUNT(*) FROM contacts";
+    const result2 = await pool.query(query2);
+    res.status(200).json({ messages: result.rows, count: result2.rows[0].count });
+
+  } catch (error) {
+    console.error("Errore nel recupero dei messaggi:", error);
+    res.status(500).json({ msg: "Errore nel recupero dei messaggi" });
+  }
+})
+
+app.delete("/api/delete-message/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = "DELETE FROM contacts WHERE id = $1";
+    const values = [id];
+    await pool.query(query, values);
+    
+    res.status(200).json({ msg: "Messaggio eliminato con successo" });
+  } catch (error) {
+    console.error("Errore nell'eliminazione del messaggio:", error);
+    res.status(500).json({ msg: "Errore nell'eliminazione del messaggio" });
+  }
+})
 
 function emailCheck(email) {
   const re =
@@ -747,7 +846,8 @@ function passwordCheck(password) {
 }
 
 function phoneCheck(phone) {
-  const re = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+  // max 15 characters, digits only, no spaces, no leading zeros, no special characters, allowed +, (, ), -, ., /,
+  const re = /^[\+]?[(]?[0-9]{3,5}[)]?[-\s\.]?[0-9]{3,5}[-\s\.]?[0-9]{4,10}$/im; 
   return re.test(String(phone).toLowerCase());
 }
 

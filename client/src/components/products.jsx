@@ -48,6 +48,9 @@ function Products() {
     const [messageConfirm, setMessageConfirm] = useState("");
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [productToDelete, setProductToDelete] = useState(null);
+
+    const [value, setValue] = useState("");
+    const [productOrdering, setProductOrdering] = useState("default");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -56,6 +59,7 @@ function Products() {
 
             try {
                 const response = await axios.get("http://localhost:8080/api/products-info", {
+                    params: {order: productOrdering},
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -77,6 +81,9 @@ function Products() {
 
         getProductsInfo();
 
+    }, [productOrdering]);
+
+    useEffect(() => {
         const handleResize = () => {
             const screenWidth = window.innerWidth;
             let newSlidesToShow = screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3;
@@ -137,6 +144,18 @@ function Products() {
         centerPadding: '0px',
     };
 
+    const handleSelect = (event) => {
+        setValue(event.target.value);
+
+        if (event.target.value === "price-asc") {
+            setProductOrdering("asc");        
+        } else if (event.target.value === "price-desc") {
+            setProductOrdering("desc");
+        } else if (event.target.value === "default") {
+            setProductOrdering("default");
+        }
+    };
+
     return (
         <div className="mt-5 flex justify-center items-center w-full">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
@@ -163,7 +182,7 @@ function Products() {
                                 {numProducts} {numProducts === 1 ? "risultato" : "risultati"}
                             </div>
                             <div className="text-arial text-xl text-black w-full md:w-auto">
-                                <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 md:left-0 translate-x-[-50%] md:translate-x-0 text-center" name="sorting" id="sorting">
+                                <select className="bg-white w-[260px] h-10 rounded-lg relative left-1/2 md:left-0 translate-x-[-50%] md:translate-x-0 text-center" name="sorting" id="sorting" onChange={handleSelect}>
                                     <option value="default">Ordinamento predefinito</option>
                                     <option value="price-asc">Prezzo crescente</option>
                                     <option value="price-desc">Prezzo decrescente</option>

@@ -34,6 +34,11 @@ const Login = () => {
             if (response.status === 200) {
                 console.log('Login successful:', response.data);
                 localStorage.setItem('token', response.data.token);
+
+                // reset the form fields
+                setEmail('');
+                setPassword('');
+                
                 navigate('/User');
             } else {
                 console.error('Error:', response.data.msg);

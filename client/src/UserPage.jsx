@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import MessagePopUp from './components/messagePopUp';
 import ConfirmPopUp from './components/confirmPopUp';
+import Dashboard from './components/content_dashboard';
 
 const UserPage = () => {
     const [userInfo, setUserInfo] = useState({});
@@ -122,7 +123,7 @@ const UserPage = () => {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.post('http://localhost:8080/api/update-username', { username: newUsername }, {
+            const response = await axios.put('http://localhost:8080/api/update-username', { username: newUsername }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -146,7 +147,7 @@ const UserPage = () => {
 
         setNewPhone(`+${newPhone}`);
         try {
-            const response = await axios.post('http://localhost:8080/api/update-phone', { phone_number: newPhone }, {
+            const response = await axios.put('http://localhost:8080/api/update-phone', { phone_number: newPhone }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -238,7 +239,7 @@ const UserPage = () => {
                         </div>
                     </form>
                 </div>
-
+                <Dashboard />
                 <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
                     <div className="w-full md:w-[20%] flex justify-center">
                         <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>

@@ -86,8 +86,8 @@ const handleCartInsertion = async () => {
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
-            <div className="w-[400px]">
-                <img src={`http://localhost:8080/uploaded_img/${product.image}`} alt={product.name} className="rounded-lg"/>
+            <div className="w-[400px] h-[300px] overflow-hidden">
+                <img src={`http://localhost:8080/uploaded_img/${product.image}`} alt={product.name} className="w-full h-full object-cover rounded-lg"/>
             </div>
             <div className="w-full md:w-[50%] p-4 lg:pl-20 flex flex-col items-center text-arial text-xl text-center">
                 <h1 className="text-arial text-2xl text-center font-bold pb-5 w-full">{product.name}</h1>
@@ -105,7 +105,7 @@ const handleCartInsertion = async () => {
                     </div>
                 </div>
                 <div className="flex flex-row items-center justify-center gap-5">
-                    <QuantitySelector onValueChange={handleQuantityChange}/>
+                    <QuantitySelector onValueChange={handleQuantityChange} value={quantity}/>
                     <button className="m-3 font-arial font-semibold text-xl w-auto p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" 
                         onClick={handleCartInsertion}
                     >Aggiungi al carrello</button>

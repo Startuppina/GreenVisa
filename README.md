@@ -36,7 +36,7 @@ Now the folder `nome-cartella` is created
 Quickstart:
 
 ```
-docker-compose down -v && docker-compose up --build
+docker compose down -v && docker compose up --build
 ```
 
 Per creare l'immagine dell'appplicazione:

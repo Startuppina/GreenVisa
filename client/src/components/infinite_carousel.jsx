@@ -4,7 +4,7 @@ import Marquee from "react-fast-marquee";
 function Infinite_carousel() {
   return (
       <div className="w-[95%] mx-auto overflow-hidden whitespace-nowrap">
-          <Marquee pauseOnHover gradient gradientColor="#2d7044" gradientWidth={30}>
+          <Marquee gradient gradientColor="#2d7044" gradientWidth={30}>
               <div className="w-[45vw] md:w-[25vw] inline-block m-2 transition-transform duration-300 ease-in-out hover:scale-105">
                   <img src="/img/hospitality.png" title="hospitality" className="rounded-lg" />
               </div>

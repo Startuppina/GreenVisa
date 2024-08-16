@@ -3,7 +3,7 @@ import News from './components/news_carousel'
 import Navbar from './components/navbar'
 import Footer from './components/footer'
 import ScrollToTop from './components/scrollToTop'
-import CourseUploadForm from './components/news_form'
+import NewsForm from './components/news_form'
 
 const NewsPage = () => {
 
@@ -12,7 +12,7 @@ const NewsPage = () => {
       <ScrollToTop />
       <Navbar />
       <News />
-      <CourseUploadForm/>
+      <NewsForm />
       <Footer/>
     </div>
   )

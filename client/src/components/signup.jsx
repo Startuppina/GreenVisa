@@ -50,6 +50,15 @@ const Signup = () => {
             });
 
             if (response.status === 200) {
+
+                //reset fields
+                setUsername('');
+                setPhone('');
+                setEmail('');
+                setPassword('');
+                setConfirmPassword('');
+                setAcceptedTerms(false);
+                
                 navigate('/login');
             } 
 
@@ -60,7 +69,7 @@ const Signup = () => {
     };
 
     return (
-        <div className="bg-[url('/img/login.jpg')] bg-cover h-screen bg-center bg-no-repeat m-0 py-10 flex items-center justify-center ">
+        <div className="bg-[url('/img/login.jpg')] bg-cover h-auto 2xl:h-full bg-center bg-no-repeat m-0 py-10 flex items-center justify-center ">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
