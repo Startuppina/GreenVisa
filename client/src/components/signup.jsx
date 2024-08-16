@@ -50,6 +50,15 @@ const Signup = () => {
             });
 
             if (response.status === 200) {
+
+                //reset fields
+                setUsername('');
+                setPhone('');
+                setEmail('');
+                setPassword('');
+                setConfirmPassword('');
+                setAcceptedTerms(false);
+                
                 navigate('/login');
             } 
 

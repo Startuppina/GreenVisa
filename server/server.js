@@ -634,6 +634,11 @@ app.get("/api/products-info", authenticateJWT, async (req, res) => {
       const query = "SELECT COUNT(*) FROM products";
       const result = await pool.query(query);
 
+      // if count is 0, return an empty array
+      if (result.rows[0].count === 0) {
+          return res.status(200).json({ numProducts: 0, products: [] });
+      }
+
       let query2;
       if (order === "desc") {
           query2 = "SELECT * FROM products ORDER BY price DESC";
@@ -780,9 +785,54 @@ app.delete("/api/remove-from-cart/:id", authenticateJWT, async (req, res) => {
   }
 });
 
+app.post("/api/send-message", authenticateJWT, async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+    const { user_id } = req.user;
+    const query = "INSERT INTO contacts (user_id, name_surname, email, subject, message) VALUES ($1, $2, $3, $4, $5)";
+    const values = [user_id, name, email, subject, message];
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Messaggio inviato con successo" });
+  } catch (error) {
+    console.error("Errore nell'invio del messaggio:", error);
+    res.status(500).json({ msg: "Errore nell'invio del messaggio" });
+  }
+});
 
+app.get("/api/messages", authenticateJWT, async (req, res) => {
+  
+  try {
+    const query = "SELECT * FROM contacts";
+    const result = await pool.query(query);
 
+    // if no rows are found, return anything
+    if (result.rows.length === 0) {
+      return res.status(200).json({ messages: [] });
+    }
 
+    const query2 = "SELECT COUNT(*) FROM contacts";
+    const result2 = await pool.query(query2);
+    res.status(200).json({ messages: result.rows, count: result2.rows[0].count });
+
+  } catch (error) {
+    console.error("Errore nel recupero dei messaggi:", error);
+    res.status(500).json({ msg: "Errore nel recupero dei messaggi" });
+  }
+})
+
+app.delete("/api/delete-message/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = "DELETE FROM contacts WHERE id = $1";
+    const values = [id];
+    await pool.query(query, values);
+    
+    res.status(200).json({ msg: "Messaggio eliminato con successo" });
+  } catch (error) {
+    console.error("Errore nell'eliminazione del messaggio:", error);
+    res.status(500).json({ msg: "Errore nell'eliminazione del messaggio" });
+  }
+})
 
 function emailCheck(email) {
   const re =

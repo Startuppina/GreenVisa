@@ -39,6 +39,16 @@ CREATE TABLE IF NOT EXISTS products (
     UNIQUE (cod)  -- Aggiunto un vincolo di unicità per il codice prodotto
 );
 
+CREATE TABLE IF NOT EXISTS contacts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    name_surname VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,  -- Messaggio inviato dall'utente
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS cart (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,

@@ -4,6 +4,7 @@ import MessagePopUp from './messagePopUp';
 import ConfirmPopUp from './confirmPopUp';
 import NewsForm from './news_form';
 import ProductsForm from './products_form';
+import MessagesDashboard from './contacts_receiver';
 
 const Dashboard = () => {
     const [news, setNews] = useState([]);
@@ -187,6 +188,7 @@ const Dashboard = () => {
             <hr className='w-full border border-black mt-10'></hr>
             <NewsForm />
             <ProductsForm />
+            <MessagesDashboard />
         </div>
         
     );
