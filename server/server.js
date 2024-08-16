@@ -629,22 +629,29 @@ app.post("/api/upload-product", authenticateJWT, upload.single("image"), async (
 
 app.get("/api/products-info", authenticateJWT, async (req, res) => {
   try {
+      const { order = "default" } = req.query;  // Aggiungi un valore di default per evitare errori
+      // Get the total number of products
+      const query = "SELECT COUNT(*) FROM products";
+      const result = await pool.query(query);
 
-    // Get the total number of products
-    const query = "SELECT COUNT(*) FROM products";
-    const result = await pool.query(query);
-
-    // Get all products
-    const query2 = "SELECT * FROM products";
-    const result2 = await pool.query(query2);
-    console.log(result2.rows);
-    res.status(200).json({numProducts: result.rows[0].count, products: result2.rows});
+      let query2;
+      if (order === "desc") {
+          query2 = "SELECT * FROM products ORDER BY price DESC";
+      } else if (order === "asc") {
+          query2 = "SELECT * FROM products ORDER BY price ASC";
+      } else {
+          query2 = "SELECT * FROM products"; // Default case
+      }
+      
+      const result2 = await pool.query(query2);
+      res.status(200).json({ numProducts: result.rows[0].count, products: result2.rows });
 
   } catch (error) {
-    console.error("Errore nel recupero dei prodotti", error);
-    res.status(500).json({ msg: "Errore nel recupero dei prodotti" });
+      console.error("Errore nel recupero dei prodotti", error);
+      res.status(500).json({ msg: "Errore nel recupero dei prodotti" });
   }
 });
+
 
 app.get("/api/product-details/:id", authenticateJWT, async (req, res) => {
   try {

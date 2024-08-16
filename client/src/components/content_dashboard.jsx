@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MessagePopUp from './messagePopUp';
 import ConfirmPopUp from './confirmPopUp';
+import NewsForm from './news_form';
+import ProductsForm from './products_form';
 
 const Dashboard = () => {
     const [news, setNews] = useState([]);
@@ -91,12 +93,13 @@ const Dashboard = () => {
 
     const handleDelete = (id, type) => {
         setItemToDelete({ id, type });
-        setMessageConfirm(type === 'news' ? "Sei sicuro di voler eliminare questa notizia?" : "Sei sicuro di voler eliminare questo prodotto?");
+        setMessageConfirm(type === 'news' ? "Sei sicuro di voler eliminare questa notizia?" : "Sei sicuro di voler eliminare questa certificazione?");
         setPopupConfirmDelete(true);
     };
 
     return (
-        <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-20 py-6">
+        <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4 ">
+            <h1 className="text-3xl font-bold text-black text-center pb-10">Dashboard amministratore</h1>
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
@@ -107,8 +110,8 @@ const Dashboard = () => {
             >
                 {messageConfirm}
             </ConfirmPopUp>
-            <div className="flex-grow text-arial text-xl p-4">
-                <h1 className="text-3xl font-bold text-black text-center pb-10">Contenuti caricati</h1>
+            <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl px-10 py-6 hover:transform">
+                <h1 className="text-2xl font-bold text-black text-center pb-10">Contenuti caricati</h1>
 
                 <div className="flex justify-between mb-6">
                     <p>News totali: {totalNews}</p>
@@ -116,20 +119,20 @@ const Dashboard = () => {
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/2">
+                    <div className="w-full md:w-1/2 overflow-x-auto">
                         <h2 className="text-2xl font-bold mb-4">News</h2>
                         <table className="table-auto w-full border-collapse">
                             <thead>
-                                <tr>
-                                    <th className="border px-4 py-2">Titolo</th>
-                                    <th className="border px-4 py-2">Contenuto</th>
-                                    <th className="border px-4 py-2">Immagine</th>
-                                    <th className="border px-4 py-2 w-[10%]">Azioni</th>
+                                <tr className=''>
+                                    <th className="border px-4 py-2 min-w-[150px]">Titolo</th>
+                                    <th className="border px-4 py-2 min-w-[200px]">Contenuto</th>
+                                    <th className="border px-4 py-2 min-w-[100px]">Immagine</th>
+                                    <th className="border px-4 py-2 min-w-[80px] w-[10%]">Azioni</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {news.map(newsItem => (
-                                    <tr key={newsItem.id}>
+                                    <tr key={newsItem.id} className="block md:table-row">
                                         <td className="border px-4 py-2 truncate max-w-xs">{newsItem.title}</td>
                                         <td className="border px-4 py-2 truncate max-w-xs">{newsItem.content}</td>
                                         <td className="border px-4 py-2">{newsItem.image}</td>
@@ -147,21 +150,21 @@ const Dashboard = () => {
                         </table>
                     </div>
 
-                    <div className="w-full md:w-1/2">
+                    <div className="w-full md:w-1/2 overflow-x-auto">
                         <h2 className="text-2xl font-bold mb-4">Prodotti</h2>
                         <table className="table-auto w-full border-collapse">
                             <thead>
                                 <tr>
-                                    <th className="border px-4 py-2">Nome</th>
-                                    <th className="border px-4 py-2">Prezzo</th>
-                                    <th className="border px-4 py-2">Immagine</th>
-                                    <th className="border px-4 py-2">Categoria</th>
-                                    <th className="border px-4 py-2 w-[10%]">Azioni</th>
+                                    <th className="border px-4 py-2 min-w-[150px]">Nome</th>
+                                    <th className="border px-4 py-2 min-w-[100px]">Prezzo</th>
+                                    <th className="border px-4 py-2 min-w-[100px]">Immagine</th>
+                                    <th className="border px-4 py-2 min-w-[120px]">Categoria</th>
+                                    <th className="border px-4 py-2 min-w-[80px] w-[10%]">Azioni</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {products.map(product => (
-                                    <tr key={product.id}>
+                                    <tr key={product.id} className="block md:table-row">
                                         <td className="border px-4 py-2 truncate max-w-xs">{product.name}</td>
                                         <td className="border px-4 py-2">${product.price}</td>
                                         <td className="border px-4 py-2">{product.image}</td>
@@ -177,11 +180,15 @@ const Dashboard = () => {
                                     </tr>
                                 ))}
                             </tbody>
-                        </table>
+                        </table>                
                     </div>
                 </div>
             </div>
+            <hr className='w-full border border-black mt-10'></hr>
+            <NewsForm />
+            <ProductsForm />
         </div>
+        
     );
 };
 
