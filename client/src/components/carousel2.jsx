@@ -53,7 +53,7 @@ function Carousel() {
             <Slide {...properties}>
                 {descItems.map((item, index) => (
                     <div
-                        className="w-full h-auto flex flex-col lg:flex-row items-center justify-center p-4 lg:p-0"
+                        className="w-full h-auto flex flex-col lg:flex-row items-center justify-center p-4 lg:p-0 mt-4"
                         key={index}
                     >
                         <div className="w-full lg:w-[65%] h-auto lg:h-[40vh] px-4 flex flex-col items-center justify-center">

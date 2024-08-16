@@ -9,7 +9,7 @@ function Article() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log("Fetching article with ID:", id); // Debug
+        console.log("Fetching article with ID:", id);
         const getArticle = async () => {
             try {
                 const response = await axios.get(`http://localhost:8080/api/article/${id}`, {
@@ -30,7 +30,7 @@ function Article() {
         };
 
         getArticle();
-    }, [id]); // Aggiungi [id] come dipendenza in modo che useEffect venga eseguito quando l'id cambia
+    }, [id]);
 
     const nextArticle = (currentId) => {
         const nextId = parseInt(currentId) + 1;
@@ -51,43 +51,48 @@ function Article() {
     };
 
     return (
-        <div>
-            <div className='flex flex-col items-center justify-center'>
-                <div className='w-full flex flex-col items-center justify-center'>
-                    <div className='flex flex-col gap-3 md:flex-row w-[80%] items-center justify-center mt-20 mb-6 font-arial text-xl md:text-2xl font-bold text-[#2d7044]'>
-                        <div
-                            className='text-center px-4 py-2 mx-2 w-[180px] md:w-[250px] rounded-md bg-[#d9d9d9] text-[#2d7044] hover:bg-[#d0d0d0] transition-colors cursor-pointer'
-                            onClick={() => previousArticle(id)} // Passa l'id corrente alla funzione
-                        >
-                            {"<< precedente"}
-                        </div>
-                        <div className='text-center px-4 py-2 mx-2 w-[180px] md:w-[250px] rounded-md bg-[#d9d9d9] text-[#2d7044] hover:bg-[#d0d0d0] transition-colors cursor-pointer' onClick={() => navigate('/News')}>Torna alle news</div>
-                        <div
-                            className='text-center px-4 py-2 mx-2 w-[180px] md:w-[250px] rounded-md bg-[#d9d9d9] text-[#2d7044] hover:bg-[#d0d0d0] transition-colors cursor-pointer'
-                            onClick={() => nextArticle(id)} // Passa l'id corrente alla funzione
-                        >
-                            {"successivo >>"}
-                        </div>
-                    </div>
-                    <div className='w-[100px] p-1 bg-red-600 text-arial text-center font-bold text-xl text-white rounded-lg animate-blink'>
-                        NEWS
-                    </div>
+        <div className='flex flex-col items-center justify-center min-h-screen p-4 w-full'>
+            <div className='w-full flex flex-col items-center justify-center'>
+                <div className='flex flex-col gap-3 md:flex-row w-full md:w-[80%] items-center justify-center  mb-6'>
+                    <button
+                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] rounded-lg bg-[#2d7044] text-white hover:bg-[#1e4d2c] shadow-lg transition-all duration-300 ease-in-out'
+                        onClick={() => previousArticle(id)}
+                    >
+                        {"<< Precedente"}
+                    </button>
+                    <button
+                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] rounded-lg bg-[#2d7044] text-white hover:bg-[#1e4d2c] shadow-lg transition-all duration-300 ease-in-out'
+                        onClick={() => navigate('/News')}
+                    >
+                        Torna alle News
+                    </button>
+                    <button
+                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] rounded-lg bg-[#2d7044] text-white hover:bg-[#1e4d2c] shadow-lg transition-all duration-300 ease-in-out'
+                        onClick={() => nextArticle(id)}
+                    >
+                        {"Successivo >>"}
+                    </button>
                 </div>
+                <div className='w-[120px] p-2 bg-red-600 text-arial text-center font-bold text-2xl text-white rounded-lg animate-blink'>
+                    NEWS
+                </div>
+            </div>
 
-                <div className='w-full mt-8 mb-5'>
-                    <h1 className='font-arial text-xl md:text-3xl w-[50%] mx-auto font-bold text-center'>{article.title}</h1>
-                </div>
-                <img
-                    src={`http://localhost:8080/uploaded_img/${article.image}`}
-                    alt={article.title}
-                    className='w-[50%] h-[50%] md:w-[40%] md:h-[40%] lg:w-[20%] lg:h-[20%] mx-auto rounded-lg mt-5'
-                />
-                <div className='w-full mt-5 mb-5 text-arial text-justify text-xl p-0 mx-0'>
-                    <div
-                        className="prose lg:prose-xl prose-h1:text-3xl prose-h2:text-2xl prose-p:text-xl prose-ul:pl-5 prose-ul:list-disc w-[90%] mx-auto"
-                        dangerouslySetInnerHTML={{ __html: article.content }}
-                    ></div>
-                </div>
+            <div className='w-full mt-8 mb-5'>
+                <h1 className='font-arial text-2xl md:text-4xl w-[90%] mx-auto font-bold text-center text-[#2d7044]'>
+                    {article.title}
+                </h1>
+            </div>
+            <img
+                src={`http://localhost:8080/uploaded_img/${article.image}`}
+                alt={article.title}
+                className='w-[50%] md:w-[30%] lg:w-[20%] mx-auto rounded-lg mt-5'
+            />
+            <div className='w-full mt-5 mb-5 text-arial text-justify text-lg md:text-xl px-4 lg:px-20 mx-auto'>
+                <div
+                    className="prose lg:prose-xl prose-h1:text-3xl prose-h2:text-2xl prose-p:text-lg prose-ul:pl-5 prose-ul:list-disc w-[90%] mx-auto text-black"
+                    dangerouslySetInnerHTML={{ __html: article.content }}
+                ></div>
             </div>
         </div>
     );

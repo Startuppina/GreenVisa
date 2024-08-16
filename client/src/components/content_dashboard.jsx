@@ -186,9 +186,9 @@ const Dashboard = () => {
                 </div>
             </div>
             <hr className='w-full border border-black mt-10'></hr>
+            <MessagesDashboard />
             <NewsForm />
             <ProductsForm />
-            <MessagesDashboard />
         </div>
         
     );
