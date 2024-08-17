@@ -27,6 +27,8 @@ const UserPage = () => {
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
     const handlePhoneChange = (value) => setNewPhone(value);
 
+    const [isAdmin, setIsAdmin] = useState(false);
+
     useEffect(() => {
         const fetchInfo = async () => {
             try {
@@ -38,6 +40,9 @@ const UserPage = () => {
 
                 if (response.status === 200) {
                     setUserInfo(response.data);
+                    if (response.data.administrator) {
+                        setIsAdmin(true);
+                    }
                     return;
                 }
 
@@ -239,7 +244,7 @@ const UserPage = () => {
                         </div>
                     </form>
                 </div>
-                <Dashboard />
+                {isAdmin && <Dashboard />}
                 <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
                     <div className="w-full md:w-[20%] flex justify-center">
                         <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>
