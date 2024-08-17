@@ -80,6 +80,15 @@ const authenticateJWT = (req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+//only for admin
+function authenticateAdmin(req, res, next) {
+  if (req.user && req.user.role === "administrator") {
+    next();
+  } else {
+    res.status(403).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+  }
+}
+
 app.post("/api/signup", async (req, res) => {
   const { username, email, password, phone } = req.body;
 
@@ -112,7 +121,7 @@ app.post("/api/signup", async (req, res) => {
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
     await pool.query(
-      "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, true, $4)",
+      "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, false, $4)",
       [username, email, newPhone, hashedPassword]
     );
 
@@ -148,7 +157,14 @@ app.post("/api/login", async (req, res) => {
       return res.status(400).json({ msg: "Password errata" });
     }
 
-    const token = jwt.sign({ user_id: user.id }, secretKey, { expiresIn: "7d" });
+    let token;
+    //check if user is admin
+    if (user.administrator) {
+      token = jwt.sign({ user_id: user.id, role : "administrator" }, secretKey, { expiresIn: "3d" });
+     } else {
+      token = jwt.sign({ user_id: user.id, role : "user" }, secretKey, { expiresIn: "3d" });
+     } 
+    
     return res
       .status(200)
       .json({ msg: "Login effettuato con successo!", token });
@@ -461,10 +477,15 @@ app.put("/api/change-password", authenticateJWT, async (req, res) => {
 });
 
 
-app.post("/api/upload-news", authenticateJWT, upload.single("image"), async (req, res) => {
+app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
   try {
     const image = req.file;
     const { title, content } = req.body;
+    const { role } = req.user;
+
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per caricare notizie" });
+    }
 
     if (!req.user || !req.user.user_id) {
       console.log("ID utente mancante:", req.user);
@@ -536,9 +557,14 @@ app.get("/api/article/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/delete-news/:id", authenticateJWT, async (req, res) => {
+app.delete("/api/delete-news/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+
+    const { role } = req.user;
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
 
     const query = "SELECT * FROM news WHERE id = $1";
     const values = [id];
@@ -577,11 +603,15 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-app.post("/api/upload-product", authenticateJWT, upload.single("image"), async (req, res) => {
+app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
   try {
     const image = req.file;
     const { name, price, category, tag, info, cod } = req.body;
-    const { user_id } = req.user;
+    const { user_id, role } = req.user;
+
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
 
     // Controllo che tutti i campi siano compilati
     if (!name || !price || !category || !tag || !info || !cod) {
@@ -675,9 +705,14 @@ app.get("/api/product-details/:id", authenticateJWT, async (req, res) => {
   }
 })
 
-app.delete("/api/delete-product/:id", authenticateJWT, async (req, res) => {
+app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const { role } = req.user;
+
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
 
     const query = "SELECT * FROM products WHERE id = $1";
     const values = [id];
@@ -820,9 +855,15 @@ app.get("/api/messages", authenticateJWT, async (req, res) => {
   }
 })
 
-app.delete("/api/delete-message/:id", authenticateJWT, async (req, res) => {
+app.delete("/api/delete-message/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const { role } = req.user;
+
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per eliminare questo messaggio" });
+    }
+    
     const query = "DELETE FROM contacts WHERE id = $1";
     const values = [id];
     await pool.query(query, values);

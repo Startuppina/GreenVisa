@@ -12,9 +12,12 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.14",
     "axios": "^1.7.3",
+    "draft-js": "^0.11.7",
+    "install": "^0.13.0",
     "react": "^18.3.1",
     "react-credit-cards-2": "^1.0.2",
     "react-dom": "^18.3.1",
+    "react-draft-wysiwyg": "^1.15.0",
     "react-fast-marquee": "^1.6.5",
     "react-phone-input-2": "^2.15.1",
     "react-quill": "^2.0.0",

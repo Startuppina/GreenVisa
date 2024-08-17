@@ -22,6 +22,7 @@ const Dashboard = () => {
         const fetchedNews = async () => {
             const token = localStorage.getItem('token');
 
+
             try {
                 const response = await axios.get('http://localhost:8080/api/news', {
                     headers: {
@@ -64,6 +65,7 @@ const Dashboard = () => {
     }, []);
 
     const deleteItem = async () => {
+        setPopupConfirmDelete(false);
         if (!itemToDelete) return;
 
         const { id, type } = itemToDelete;
@@ -87,7 +89,7 @@ const Dashboard = () => {
                 setPopupConfirmDelete(false);
             }
         } catch (error) {
-            setMessagePopUp(`Errore durante la cancellazione del ${type}`);
+            setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
     };
@@ -186,9 +188,9 @@ const Dashboard = () => {
                 </div>
             </div>
             <hr className='w-full border border-black mt-10'></hr>
+            <MessagesDashboard />
             <NewsForm />
             <ProductsForm />
-            <MessagesDashboard />
         </div>
         
     );

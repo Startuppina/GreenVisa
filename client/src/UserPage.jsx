@@ -27,6 +27,8 @@ const UserPage = () => {
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
     const handlePhoneChange = (value) => setNewPhone(value);
 
+    const [isAdmin, setIsAdmin] = useState(false);
+
     useEffect(() => {
         const fetchInfo = async () => {
             try {
@@ -38,6 +40,9 @@ const UserPage = () => {
 
                 if (response.status === 200) {
                     setUserInfo(response.data);
+                    if (response.data.administrator) {
+                        setIsAdmin(true);
+                    }
                     return;
                 }
 
@@ -197,7 +202,7 @@ const UserPage = () => {
                             <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
                         </div>
                         <div className='flex justify-center'>
-                            <button className='p-2 w-[150px] z-10 bg-[#2d7044] text-black rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]' onClick={() => setShowModifier(!showModifier)}>Modifica</button>
+                            <button className='p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]' onClick={() => setShowModifier(!showModifier)}>Modifica</button>
                         </div>
                     </div>
                     <div className='w-full md:w-[45%] bg-[#d9d9d9] p-4 rounded-lg'>
@@ -219,7 +224,7 @@ const UserPage = () => {
                             className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                         />
                         <div className='flex justify-center'>
-                            <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-black rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                            <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                         </div>
                     </form>
 
@@ -235,11 +240,11 @@ const UserPage = () => {
                             preferredCountries={['it']}
                         />
                         <div className='flex justify-center'>
-                            <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-black rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                            <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                         </div>
                     </form>
                 </div>
-                <Dashboard />
+                {isAdmin && <Dashboard />}
                 <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
                     <div className="w-full md:w-[20%] flex justify-center">
                         <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>

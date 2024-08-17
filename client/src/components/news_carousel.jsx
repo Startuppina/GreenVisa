@@ -163,9 +163,9 @@ const NewsCarousel = () => {
                                 <Link to={`/Article/${item.id}`} key={item.id}>
                                     <div className={`relative mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
                                         style={{
-                                            width: slidesToShow === 1 ? '90%' : slidesToShow === 2 ? '90%' : '100%',
+                                            width: slidesToShow === 1 ? '100%' : slidesToShow === 2 ? '90%' : '100%',
                                             maxWidth: '800px',
-                                            height: '470px',
+                                            height: '600px',
                                             margin: '0 auto',
                                         }}>
                                         <div className="relative w-full h-[80%]">
