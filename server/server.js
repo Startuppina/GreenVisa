@@ -22,12 +22,19 @@ const app = express();
 
 // Middleware per il CORS
 app.use((req, res, next) => {
-  // everyone 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Aggiungi 'Authorization' se stai usando un token JWT
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 });
+
+app.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(204); // Status code 204: No Content
+});
+
 
 DOMPurify = createDOMPurify(new JSDOM().window);
 
@@ -48,7 +55,7 @@ const storage = multer.diskStorage({
 });
 
 
-const upload = multer({ storage: storage});
+const upload = multer({ storage: storage });
 
 app.use('/uploaded_img', express.static(path.join(__dirname, 'uploaded_img')));
 
@@ -98,12 +105,12 @@ app.post("/api/signup", async (req, res) => {
   } else if (!passwordCheck(password)) { //implement password check defined below
     return res
       .status(400)
-      .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" }); 
+      .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" });
   } else if (!emailCheck(email)) {
     return res.status(400).json({ msg: "Email non valida" });
   } else if (!phoneCheck(phone)) {
     return res.status(400).json({ msg: "Numero di telefono non valido" });
-  } 
+  }
 
   try {
     const result = await pool.query(
@@ -160,11 +167,11 @@ app.post("/api/login", async (req, res) => {
     let token;
     //check if user is admin
     if (user.administrator) {
-      token = jwt.sign({ user_id: user.id, role : "administrator" }, secretKey, { expiresIn: "3d" });
-     } else {
-      token = jwt.sign({ user_id: user.id, role : "user" }, secretKey, { expiresIn: "3d" });
-     } 
-    
+      token = jwt.sign({ user_id: user.id, role: "administrator" }, secretKey, { expiresIn: "3d" });
+    } else {
+      token = jwt.sign({ user_id: user.id, role: "user" }, secretKey, { expiresIn: "3d" });
+    }
+
     return res
       .status(200)
       .json({ msg: "Login effettuato con successo!", token });
@@ -297,7 +304,7 @@ app.post("/api/send_email", async (req, res) => {
     );
     if (result.rows.length > 0) {
       const recoveryToken = jwt.sign(
-        { id: result.rows[0].id},
+        { id: result.rows[0].id },
         secretKey,
         { expiresIn: "1h" }
       )
@@ -422,8 +429,8 @@ function sendEmail({ recipient_email, OTP }) {
         </body>
         </html>`,
     };
-    
-    
+
+
     transporter.sendMail(mail_configs, function (error, info) {
       if (error) {
         console.error("Errore nell'invio dell'email:", error);
@@ -453,7 +460,7 @@ app.put("/api/change-password", authenticateJWT, async (req, res) => {
     const { password } = req.body;
     const { id } = req.user;
 
-    if(!passwordCheck(password)) {
+    if (!passwordCheck(password)) {
       return res
         .status(400)
         .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" });
@@ -506,7 +513,7 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
 
     await pool.query(query, values);
     res.status(200).json({ msg: "Notizia caricata con successo" });
-    
+
   } catch (error) {
     console.error("Errore nel caricamento della notizia:", error);
     res.status(500).json({ msg: "Errore nel caricamento della notizia" });
@@ -519,7 +526,7 @@ app.get("/api/news", async (req, res) => {
     const result = await pool.query(query);
 
     const countNews = await pool.query("SELECT COUNT(*) FROM news");
-    
+
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Errore nel recupero delle notizie:", error);
@@ -535,7 +542,7 @@ app.get("/api/article/:id", async (req, res) => {
     if (isNaN(parseInt(id))) {
       return res.status(400).json({ msg: "Invalid article ID" });
     }
-        
+
     const query = "SELECT * FROM news WHERE id = $1";
     const values = [id];
     const result = await pool.query(query, values);
@@ -591,15 +598,15 @@ app.delete("/api/delete-news/:id", authenticateJWT, authenticateAdmin, async (re
 // create api to apload categriues of a product. categories is an enum
 app.get('/api/categories', async (req, res) => {
   try {
-      const query = `
+    const query = `
           SELECT unnest(enum_range(NULL::category_type)) AS category
       `;
-      const result = await pool.query(query);
-      const categories = result.rows.map(row => row.category);
-      res.json(categories);
+    const result = await pool.query(query);
+    const categories = result.rows.map(row => row.category);
+    res.json(categories);
   } catch (error) {
-      console.error('Error fetching categories:', error);
-      res.status(500).send('Server Error');
+    console.error('Error fetching categories:', error);
+    res.status(500).send('Server Error');
   }
 });
 
@@ -637,7 +644,7 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
       return res.status(400).json({ msg: "Immagine mancante" });
     }
 
-    if(info.length > 100) {
+    if (info.length > 100) {
       return res.status(400).json({ msg: "La descrizione è troppo lunga. Max 100 caratteri" });
     }
 
@@ -659,31 +666,31 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
 
 app.get("/api/products-info", authenticateJWT, async (req, res) => {
   try {
-      const { order = "default" } = req.query;  // Aggiungi un valore di default per evitare errori
-      // Get the total number of products
-      const query = "SELECT COUNT(*) FROM products";
-      const result = await pool.query(query);
+    const { order = "default" } = req.query;  // Aggiungi un valore di default per evitare errori
+    // Get the total number of products
+    const query = "SELECT COUNT(*) FROM products";
+    const result = await pool.query(query);
 
-      // if count is 0, return an empty array
-      if (result.rows[0].count === 0) {
-          return res.status(200).json({ numProducts: 0, products: [] });
-      }
+    // if count is 0, return an empty array
+    if (result.rows[0].count === 0) {
+      return res.status(200).json({ numProducts: 0, products: [] });
+    }
 
-      let query2;
-      if (order === "desc") {
-          query2 = "SELECT * FROM products ORDER BY price DESC";
-      } else if (order === "asc") {
-          query2 = "SELECT * FROM products ORDER BY price ASC";
-      } else {
-          query2 = "SELECT * FROM products"; // Default case
-      }
-      
-      const result2 = await pool.query(query2);
-      res.status(200).json({ numProducts: result.rows[0].count, products: result2.rows });
+    let query2;
+    if (order === "desc") {
+      query2 = "SELECT * FROM products ORDER BY price DESC";
+    } else if (order === "asc") {
+      query2 = "SELECT * FROM products ORDER BY price ASC";
+    } else {
+      query2 = "SELECT * FROM products"; // Default case
+    }
+
+    const result2 = await pool.query(query2);
+    res.status(200).json({ numProducts: result.rows[0].count, products: result2.rows });
 
   } catch (error) {
-      console.error("Errore nel recupero dei prodotti", error);
-      res.status(500).json({ msg: "Errore nel recupero dei prodotti" });
+    console.error("Errore nel recupero dei prodotti", error);
+    res.status(500).json({ msg: "Errore nel recupero dei prodotti" });
   }
 });
 
@@ -738,40 +745,40 @@ app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async 
 
 app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
   try {
-      const { id } = req.params; // ID del prodotto
-      const { user_id } = req.user;
-      const { name, image, price, quantity } = req.body;
+    const { id } = req.params; // ID del prodotto
+    const { user_id } = req.user;
+    const { name, image, price, quantity } = req.body;
 
-      // Controlla se il prodotto esiste
-      const query = "SELECT * FROM products WHERE id = $1";
-      const values = [id];
-      const result = await pool.query(query, values);
+    // Controlla se il prodotto esiste
+    const query = "SELECT * FROM products WHERE id = $1";
+    const values = [id];
+    const result = await pool.query(query, values);
 
-      if (result.rows.length === 0) {
-          return res.status(404).json({ msg: "Prodotto non trovato" });
-      }
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: "Prodotto non trovato" });
+    }
 
-      //constrolla se il prodotto e' gia nel carrello dell'utente
-      const query1 = "SELECT * FROM cart WHERE user_id = $1 AND product_id = $2";
-      const values1 = [user_id, id];
-      const result1 = await pool.query(query1, values1);
-      if (result1.rows.length > 0) {
-          return res.status(400).json({ msg: "Prodotto già presente nel carrello" });
-      }
+    //constrolla se il prodotto e' gia nel carrello dell'utente
+    const query1 = "SELECT * FROM cart WHERE user_id = $1 AND product_id = $2";
+    const values1 = [user_id, id];
+    const result1 = await pool.query(query1, values1);
+    if (result1.rows.length > 0) {
+      return res.status(400).json({ msg: "Prodotto già presente nel carrello" });
+    }
 
-      // Aggiungi il prodotto al carrello
-      const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, price) VALUES ($1, $2, $3, $4, $5, $6)";
-      const values2 = [user_id, id, name, image, quantity, price];
-      await pool.query(query2, values2);
-      res.status(200).json({ msg: "Prodotto aggiunto al carrello con successo" });
+    // Aggiungi il prodotto al carrello
+    const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, price) VALUES ($1, $2, $3, $4, $5, $6)";
+    const values2 = [user_id, id, name, image, quantity, price];
+    await pool.query(query2, values2);
+    res.status(200).json({ msg: "Prodotto aggiunto al carrello con successo" });
   } catch (error) {
-      console.error("Errore nell'aggiungere il prodotto al carrello:", error);
-      res.status(500).json({ msg: "Errore nell'aggiungere il prodotto al carrello" });
+    console.error("Errore nell'aggiungere il prodotto al carrello:", error);
+    res.status(500).json({ msg: "Errore nell'aggiungere il prodotto al carrello" });
   }
 });
 
 app.get("/api/fetch-user-cart", authenticateJWT, async (req, res) => {
-  
+
   try {
     const { user_id } = req.user;
 
@@ -807,16 +814,16 @@ app.put("/api/update-quantity/:id", authenticateJWT, async (req, res) => {
 
 app.delete("/api/remove-from-cart/:id", authenticateJWT, async (req, res) => {
   try {
-      const { id } = req.params;
-      console.log('ID dai parametri della richiesta:', id);
-      const { user_id } = req.user;
-      const query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
-      const values = [user_id, id];
-      await pool.query(query, values);
-      res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
+    const { id } = req.params;
+    console.log('ID dai parametri della richiesta:', id);
+    const { user_id } = req.user;
+    const query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
+    const values = [user_id, id];
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
   } catch (error) {
-      console.error("Errore nel rimuovere il prodotto dal carrello:", error);
-      res.status(500).json({ msg: "Errore nel rimuovere il prodotto dal carrello" });
+    console.error("Errore nel rimuovere il prodotto dal carrello:", error);
+    res.status(500).json({ msg: "Errore nel rimuovere il prodotto dal carrello" });
   }
 });
 
@@ -835,7 +842,7 @@ app.post("/api/send-message", authenticateJWT, async (req, res) => {
 });
 
 app.get("/api/messages", authenticateJWT, async (req, res) => {
-  
+
   try {
     const query = "SELECT * FROM contacts";
     const result = await pool.query(query);
@@ -863,15 +870,60 @@ app.delete("/api/delete-message/:id", authenticateJWT, authenticateAdmin, async 
     if (role !== "administrator") {
       return res.status(200).json({ msg: "Non hai i permessi per eliminare questo messaggio" });
     }
-    
+
     const query = "DELETE FROM contacts WHERE id = $1";
     const values = [id];
     await pool.query(query, values);
-    
+
     res.status(200).json({ msg: "Messaggio eliminato con successo" });
   } catch (error) {
     console.error("Errore nell'eliminazione del messaggio:", error);
     res.status(500).json({ msg: "Errore nell'eliminazione del messaggio" });
+  }
+})
+
+app.put("/api/edit-news/:id", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
+
+  try {
+    const { title, content } = req.body;
+    const image = req.file;
+    const { id } = req.params;
+    const { role } = req.user;
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per modificare le notizie" });
+    }
+    const query = "UPDATE news SET (title, content, image) = ($1, $2, $3) WHERE id = $4";
+    const values = [title, content, image?.filename, id];
+    await pool.query(query, values);
+
+    const query2 = "SELECT * FROM news WHERE id = $1";
+    const values2 = [id];
+    const result = await pool.query(query2, values2);
+    res.status(200).json({ msg: "Notizie aggiornate correttamente", tuple: result.rows });
+  } catch (error) {
+    console.error("Errore nell'aggiornare le notizie:", error);
+    res.status(500).json({ msg: "Errore nell'aggiornare le notizie" });
+  }
+})
+
+app.put("/api/edit-product/:id", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
+
+  try {
+    const { name, price, info, cod, category, tag } = req.body;
+    const image = req.file;
+    const { id } = req.params;
+    const { role, user_id } = req.user;
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per modificare i prodotti" });
+    }
+
+    const query = "UPDATE products SET (name, price, image, info, cod, category, tag) = ($1, $2, $3, $4, $5, $6, $7) WHERE id = $8 AND user_id = $9";
+    const values = [name, price, image?.filename, info, cod, category, tag, id, user_id];
+    const result = await pool.query(query, values);
+    res.status(200).json({ msg: "Prodotti aggiornati correttamente", tuple: result.rows });
+  } catch (error) {
+    console.error("Errore nell'aggiornare i prodotti:", error);
+    res.status(500).json({ msg: "Errore nell'aggiornare i prodotti" });
   }
 })
 
@@ -888,7 +940,7 @@ function passwordCheck(password) {
 
 function phoneCheck(phone) {
   // max 15 characters, digits only, no spaces, no leading zeros, no special characters, allowed +, (, ), -, ., /,
-  const re = /^[\+]?[(]?[0-9]{3,5}[)]?[-\s\.]?[0-9]{3,5}[-\s\.]?[0-9]{4,10}$/im; 
+  const re = /^[\+]?[(]?[0-9]{3,5}[)]?[-\s\.]?[0-9]{3,5}[-\s\.]?[0-9]{4,10}$/im;
   return re.test(String(phone).toLowerCase());
 }
 

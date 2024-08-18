@@ -7,13 +7,14 @@ import NewsForm from "./news_form";
 import ProductsForm from "./products_form";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [news, setNews] = useState([]);
   const [products, setProducts] = useState([]);
   const [totalNews, setTotalNews] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
-  const [categories, setCategories] = useState([]); // Assuming categories are fetched separately
+  const [categories, setCategories] = useState([]);
 
   const [buttonPopup, setButtonPopup] = useState(false);
   const [messagePopUp, setMessagePopUp] = useState("");
@@ -26,6 +27,8 @@ const Dashboard = () => {
   const [showProducts, setShowProducts] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [showForms, setShowForms] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -41,11 +44,15 @@ const Dashboard = () => {
           setTotalNews(response.data.length);
         }
       } catch (error) {
-        setMessagePopUp("Errore durante il recupero delle notizie");
-        setButtonPopup(true);
+        //setMessagePopUp("Errore durante il recupero delle notizie");
+        //setButtonPopup(true);
       }
     };
 
+    fetchNews();
+  }, [news]); // No dependencies
+
+  useEffect(() => {
     const fetchProducts = async () => {
       const token = localStorage.getItem("token");
       try {
@@ -62,13 +69,16 @@ const Dashboard = () => {
           setTotalProducts(response.data.products?.length || 0);
         }
       } catch (error) {
-        setMessagePopUp("Errore durante il recupero dei prodotti");
-        setButtonPopup(true);
+        //setMessagePopUp("Errore durante il recupero delle certificazioni");
+        //setButtonPopup(true);
       }
     };
 
+    fetchProducts();
+  }, [products]); // No dependencies
+
+  useEffect(() => {
     const fetchCategories = async () => {
-      // Example API call to fetch categories
       try {
         const response = await axios.get(
           "http://localhost:8080/api/categories"
@@ -82,10 +92,8 @@ const Dashboard = () => {
       }
     };
 
-    fetchNews();
-    fetchProducts();
     fetchCategories();
-  }, []);
+  }, []); // No dependencies
 
   const deleteItem = async () => {
     setPopupConfirmDelete(false);
@@ -113,7 +121,6 @@ const Dashboard = () => {
           );
           setTotalProducts((prevTotalProducts) => prevTotalProducts - 1);
         }
-        setPopupConfirmDelete(false);
       }
     } catch (error) {
       setMessagePopUp(error.response?.data?.msg || error.message);
@@ -129,20 +136,22 @@ const Dashboard = () => {
     if (!itemToEdit) return;
 
     const { id, type, ...editedData } = itemToEdit;
+    const elements = { id, type, ...editedData };
+    console.log(elements);
     const token = localStorage.getItem("token");
 
     try {
       const formData = new FormData();
-      for (const key in editedData) {
-        if (editedData[key] instanceof File) {
-          formData.append(key, editedData[key]);
+      for (const key in elements) {
+        if (elements[key] instanceof File) {
+          formData.append(key, elements[key]);
         } else {
-          formData.append(key, editedData[key]);
+          formData.append(key, elements[key]);
         }
       }
 
       const response = await axios.put(
-        `http://localhost:8080/api/update-${type}/${id}`,
+        `http://localhost:8080/api/edit-${type}/${id}`,
         formData,
         {
           headers: {
@@ -153,17 +162,15 @@ const Dashboard = () => {
       );
 
       if (response.status === 200) {
+        const updatedItem = response.data.tuple;
+        console.log("ciao",updatedItem);
         if (type === "news") {
           setNews((prevNews) =>
-            prevNews.map((news) =>
-              news.id === id ? { ...news, ...editedData } : news
-            )
+            prevNews.map((news) => (news.id === id ? updatedItem : news))
           );
         } else if (type === "product") {
           setProducts((prevProducts) =>
-            prevProducts.map((product) =>
-              product.id === id ? { ...product, ...editedData } : product
-            )
+            prevProducts.map((product) => (product.id === id ? updatedItem : product))
           );
         }
         setItemToEdit(null);
@@ -247,48 +254,28 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex justify-end space-x-2">
-                    {itemToEdit && itemToEdit.id === newsItem.id ? (
-                      <>
-                        <div className="flex flex-col md:flex-row gap-3">
-                          <button
-                            onClick={saveEdit}
-                            className="bg-green-500 text-white px-4 py-2 rounded border-2 border-green-500 hover:text-green-500 hover:bg-white"
-                          >
-                            Salva
-                          </button>
-                          <button
-                            onClick={cancelEdit}
-                            className="bg-gray-500 text-white px-4 py-2 rounded border-2 border-gray-500 hover:bg-white hover:text-gray-500"
-                          >
-                            Annulla
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => {
-                            handleEdit(newsItem, "news");
-                            setShowButtons(true);
-                          }}
-                          className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044]"
-                        >
-                          Modifica
-                        </button>
-                        <button
-                          onClick={() => {
-                            setItemToDelete({ id: newsItem.id, type: "news" });
-                            setMessageConfirm(
-                              "Sei sicuro di voler eliminare questa notizia?"
-                            );
-                            setPopupConfirmDelete(true);
-                          }}
-                          className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded hover:border-red-500 hover:text-red-500 hover:bg-white"
-                        >
-                          Elimina
-                        </button>
-                      </>
-                    )}
+                    <>
+                      <button
+                        onClick={() => {
+                          handleEdit(newsItem, "news");
+                        }}
+                        className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044]"
+                      >
+                        Modifica
+                      </button>
+                      <button
+                        onClick={() => {
+                          setItemToDelete({ id: newsItem.id, type: "news" });
+                          setMessageConfirm(
+                            "Sei sicuro di voler eliminare questa notizia?"
+                          );
+                          setPopupConfirmDelete(true);
+                        }}
+                        className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded hover:border-red-500 hover:text-red-500 hover:bg-white"
+                      >
+                        Elimina
+                      </button>
+                    </>
                   </div>
                   {itemToEdit?.type === "news" && (
                     <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6">
@@ -298,7 +285,7 @@ const Dashboard = () => {
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
-                          saveEdit();
+
                         }}
                         className="flex flex-col"
                       >
@@ -334,7 +321,17 @@ const Dashboard = () => {
                         <div className="flex justify-center gap-3">
                           <button
                             type="submit"
-                            onClick={saveEdit}
+                            onClick={() => {
+                              // Imposta l'item da modificare
+                              setItemToEdit((prevItem) => ({
+                                ...prevItem,
+                                id: newsItem.id,
+                                type: "news",
+                              }));
+
+                              // Chiama la funzione saveEdit
+                              saveEdit();
+                            }}
                             className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                           >
                             Salva
@@ -419,48 +416,29 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex justify-end space-x-2">
-                    {itemToEdit && itemToEdit.id === productItem.id ? (
-                      <>
-                        <div className="flex flex-col md:flex-row gap-3">
-                          <button
-                            onClick={saveEdit}
-                            className="bg-green-500 text-white px-4 py-2 rounded border-2 border-green-500 hover:text-green-500 hover:bg-white"
-                          >
-                            Salva
-                          </button>
-                          <button
-                            onClick={cancelEdit}
-                            className="bg-gray-500 text-white px-4 py-2 rounded border-2 border-gray-500 hover:bg-white hover:text-gray-500"
-                          >
-                            Annulla
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleEdit(productItem, "product")}
-                          className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044]"
-                        >
-                          Modifica
-                        </button>
-                        <button
-                          onClick={() => {
-                            setItemToDelete({
-                              id: productItem.id,
-                              type: "product",
-                            });
-                            setMessageConfirm(
-                              "Sei sicuro di voler eliminare questa certificazione?"
-                            );
-                            setPopupConfirmDelete(true);
-                          }}
-                          className="bg-red-500 text-white px-4 py-2 rounded border-2 border-red-500 hover:text-red-500 hover:bg-white"
-                        >
-                          Elimina
-                        </button>
-                      </>
-                    )}
+                    <>
+                      <button
+                        onClick={() => handleEdit(productItem, "product")}
+                        className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044]"
+                      >
+                        Modifica
+                      </button>
+                      <button
+                        onClick={() => {
+                          setItemToDelete({
+                            id: productItem.id,
+                            type: "product",
+                          });
+                          setMessageConfirm(
+                            "Sei sicuro di voler eliminare questa certificazione?"
+                          );
+                          setPopupConfirmDelete(true);
+                        }}
+                        className="z-20 bg-red-500 text-white px-4 py-2 rounded border-2 border-red-500 hover:text-red-500 hover:bg-white"
+                      >
+                        Elimina
+                      </button>
+                    </>
                   </div>
                   {itemToEdit?.type === "product" && (
                     <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border border-gray-300 shadow-xl">
@@ -510,8 +488,8 @@ const Dashboard = () => {
                             <span className="block mb-2">Codice</span>
                             <input
                               type="text"
-                              name="code"
-                              value={itemToEdit.code || ""}
+                              name="cod"
+                              value={itemToEdit.cod || ""}
                               onChange={handleChange}
                               className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
                             />
@@ -559,7 +537,17 @@ const Dashboard = () => {
                         <div className="flex justify-center gap-3">
                           <button
                             type="submit"
-                            onClick={saveEdit}
+                            onClick={() => {
+                              // Imposta l'item da modificare
+                              setItemToEdit((prevItem) => ({
+                                ...prevItem,
+                                id: productItem.id,
+                                type: "product",
+                              }));
+
+                              // Chiama la funzione saveEdit
+                              saveEdit();
+                            }}
                             className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                           >
                             Salva

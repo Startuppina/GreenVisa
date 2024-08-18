@@ -45,7 +45,7 @@ function ProductsForm() {
         const token = localStorage.getItem("token");
 
         if (!name || !price || !image || !info || !cod || !category || !tag) {
-            setMessagePopup("Please fill out all fields.");
+            setMessagePopup("Compila tutti i campi");
             setButtonPopup(true);
             return;
         }
@@ -70,10 +70,13 @@ function ProductsForm() {
             });
 
             if (response.status === 200) {
-                navigate(0);
+                setMessagePopup(response.data.msg);
+                setButtonPopup(true);
+                navigate("/User");
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
                 setButtonPopup(true);
+                
             }
         } catch (error) {
             setMessagePopup(error.response?.data?.msg || error.message);

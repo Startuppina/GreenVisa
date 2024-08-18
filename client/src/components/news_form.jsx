@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import TextEditor from './textEditor';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import MessagePopUp from './messagePopUp';
 
 
 
@@ -10,6 +11,9 @@ const NewsForm = () => {
     const [content, setContent] = useState('');
     const [image, setImage] = useState(null);
     const navigate = useNavigate();
+
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopUp, setMessagePopUp] = useState("");
 
     //const [value, setValue] = useState(''); // Per ReactQuill
 
@@ -30,7 +34,8 @@ const NewsForm = () => {
         const sanitizedContent = sanitizeContent(content);
 
         if (!title || sanitizedContent === '' || !image) {
-            alert('Please fill out all fields.');
+            setMessagePopUp("Compila tutti i campi");
+            setButtonPopup(true);
             return;
         }
 
@@ -40,7 +45,8 @@ const NewsForm = () => {
 
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('Please log in first.');
+            setMessagePopUp("Per favore effettua il login");
+            setButtonPopup(true);
             return;
         }
     
@@ -60,7 +66,9 @@ const NewsForm = () => {
             })
 
             if (response.status == 200) {
-                navigate(0);
+                setMessagePopUp(response.data.msg);
+                setButtonPopup(true);
+                navigate("/User");
             }
     
             const contentType = response.headers.get('Content-Type');
@@ -72,13 +80,17 @@ const NewsForm = () => {
             setContent('');
             setImage(null);
         } catch (error) {
-            console.error('Error:', error.message);
+            setMessagePopUp(`Errore durante la pubblicazione della notizia: ${error.message}`);
+            setButtonPopup(true);
         }
     };
     
 
     return (
         <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6">
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopUp}
+            </MessagePopUp>
             <h2 className="text-2xl font-bold text-center mb-4">Pubblica una notizia</h2>
             <form onSubmit={handleSubmit} className="flex flex-col ">
                 <div className="flex flex-col md:flex-row md:gap-3 mb-4">
