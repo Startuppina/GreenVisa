@@ -121,7 +121,7 @@ app.post("/api/signup", async (req, res) => {
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
     await pool.query(
-      "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, false, $4)",
+      "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, true, $4)",
       [username, email, newPhone, hashedPassword]
     );
 
