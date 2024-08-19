@@ -96,6 +96,7 @@ function authenticateAdmin(req, res, next) {
   }
 }
 
+
 app.post("/api/signup", async (req, res) => {
   const { username, email, password, phone } = req.body;
 
@@ -128,7 +129,7 @@ app.post("/api/signup", async (req, res) => {
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
     await pool.query(
-      "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, true, $4)",
+      "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, false, $4)",
       [username, email, newPhone, hashedPassword]
     );
 
@@ -294,6 +295,39 @@ app.put("/api/update-phone", authenticateJWT, async (req, res) => {
     res.status(500).json({ message: "Errore interno del server" });
   }
 });
+
+app.put("/api/update-email", authenticateJWT, async (req, res) => {
+  try {
+    // Ottieni l'email dell'utente dal token
+    const { user_id } = req.user;
+    const { email } = req.body;
+
+    // Trova l'utente dal database
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      user_id,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
+
+    if (!emailCheck(email)) {
+      return res.status(400).json({ message: "Email non valida" });
+    }
+
+    // Aggiorna l'email nel database
+    await pool.query("UPDATE users SET email = $1 WHERE id = $2", [
+      email,
+      user_id,
+    ]);
+
+    // Invia una risposta di successo
+    res.status(200).json({ message: "Email aggiornata con successo" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+})
 
 app.post("/api/send_email", async (req, res) => {
   try {
@@ -491,7 +525,7 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
     const { role } = req.user;
 
     if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per caricare notizie" });
+      return res.status(400).json({ msg: "Non hai i permessi per caricare notizie" });
     }
 
     if (!req.user || !req.user.user_id) {
@@ -718,7 +752,7 @@ app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async 
     const { role } = req.user;
 
     if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+      return res.status(400).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
     }
 
     const query = "SELECT * FROM products WHERE id = $1";
@@ -868,7 +902,7 @@ app.delete("/api/delete-message/:id", authenticateJWT, authenticateAdmin, async 
     const { role } = req.user;
 
     if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per eliminare questo messaggio" });
+      return res.status(400).json({ msg: "Non hai i permessi per eliminare questo messaggio" });
     }
 
     const query = "DELETE FROM contacts WHERE id = $1";
@@ -890,8 +924,17 @@ app.put("/api/edit-news/:id", authenticateJWT, authenticateAdmin, upload.single(
     const { id } = req.params;
     const { role } = req.user;
     if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per modificare le notizie" });
+      return res.status(400).json({ msg: "Non hai i permessi per modificare le notizie" });
     }
+
+    //remove previous image from updated_img
+    const query_img = "SELECT image FROM news WHERE id = $1";
+    const values_img = [id];
+    const result_img = await pool.query(query_img, values_img);
+    const previous_image = result_img.rows[0].image;
+    const path = `./uploaded_img/${previous_image}`;
+    fs.unlinkSync(path);
+
     const query = "UPDATE news SET (title, content, image) = ($1, $2, $3) WHERE id = $4";
     const values = [title, content, image?.filename, id];
     await pool.query(query, values);
@@ -914,16 +957,24 @@ app.put("/api/edit-product/:id", authenticateJWT, authenticateAdmin, upload.sing
     const { id } = req.params;
     const { role, user_id } = req.user;
     if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per modificare i prodotti" });
+      return res.status(400).json({ msg: "Non hai i permessi per modificare le certificazioni" });
     }
+
+    //remove previous image from updated_img
+    const query_img = "SELECT image FROM products WHERE id = $1";
+    const values_img = [id];
+    const result_img = await pool.query(query_img, values_img);
+    const previous_image = result_img.rows[0].image;
+    const path = `./uploaded_img/${previous_image}`;
+    fs.unlinkSync(path);
 
     const query = "UPDATE products SET (name, price, image, info, cod, category, tag) = ($1, $2, $3, $4, $5, $6, $7) WHERE id = $8 AND user_id = $9";
     const values = [name, price, image?.filename, info, cod, category, tag, id, user_id];
     const result = await pool.query(query, values);
-    res.status(200).json({ msg: "Prodotti aggiornati correttamente", tuple: result.rows });
+    res.status(200).json({ msg: "Certificazione aggiornata con successo", tuple: result.rows });
   } catch (error) {
-    console.error("Errore nell'aggiornare i prodotti:", error);
-    res.status(500).json({ msg: "Errore nell'aggiornare i prodotti" });
+    console.error("Errore nell'aggiornare le certificazioni:", error);
+    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
   }
 })
 
@@ -951,5 +1002,31 @@ app.use((err, req, res, next) => {
 
 app.listen(port, '0.0.0.0', async () => {
   console.log(`Server in ascolto sulla porta ${port}`);
+
+  try {
+    if (!process.env.USERNAME_ADMIN || !process.env.EMAIL_ADMIN || !process.env.PASS_ADMIN) {
+      throw new Error("ADMIN USER CREDENTIALS NOT DEFINED");
+    }
+
+    //check if admin user already exists, if not, create it, if yes, don't allow to create another one
+    const adminExistsQuery = "SELECT 1 FROM users WHERE email = $1 LIMIT 1";
+    const result = await pool.query(adminExistsQuery, [process.env.EMAIL_ADMIN]);
+
+    if (result.rows.length === 0) { // Se non esiste già un admin con questa email
+      const hashed_admin_pass = bcrypt.hashSync(process.env.PASS_ADMIN, 12);
+      const query_admin = "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, $4, $5)";
+      const values_admin = [process.env.USERNAME_ADMIN, process.env.EMAIL_ADMIN, null, true, hashed_admin_pass];
+
+      await pool.query(query_admin, values_admin);
+      console.log("Admin user created successfully.");
+    } else {
+      console.log("Admin user already exists, skipping creation.");
+    }
+
+  } catch (err) {
+    console.error("Error while creating admin user:", err.message);
+    throw new Error("Failed to create admin user");
+  }
 });
+
 

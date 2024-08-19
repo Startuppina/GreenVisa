@@ -14,6 +14,7 @@ const UserPage = () => {
     const [userInfo, setUserInfo] = useState({});
     const [newUsername, setNewUsername] = useState('');
     const [newPhone, setNewPhone] = useState('');
+    const [newEmail, setNewEmail] = useState('');
     const [showModifier, setShowModifier] = useState(false);
     const navigate = useNavigate();
 
@@ -26,6 +27,7 @@ const UserPage = () => {
 
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
     const handlePhoneChange = (value) => setNewPhone(value);
+    const handleEmailChange = (e) => setNewEmail(e.target.value);
 
     const [isAdmin, setIsAdmin] = useState(false);
 
@@ -170,6 +172,32 @@ const UserPage = () => {
         }
     };
 
+    const handleEmailModifier = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await axios.put('http://localhost:8080/api/update-email', { email: newEmail }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 200) {
+                setMessagePopup("Email aggiornata con successo");
+                setButtonPopup(true);
+                setUserInfo({ ...userInfo, email: response.data.email || newEmail });
+            }
+
+        } catch (error) {
+            setMessagePopup(`Errore durante l'aggiornamento dell'email: ${error.message}`);
+            setButtonPopup(true);
+        }
+    };
+
+    
+
     return (
         <div className="flex flex-col min-h-screen">
             <ScrollToTop />
@@ -211,37 +239,59 @@ const UserPage = () => {
                     </div>
                 </div>
 
-                <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 ${showModifier ? '' : 'hidden'}`}>
+                <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 w-full m-4 border shadow-lg rounded-lg mx-auto ${showModifier ? '' : 'hidden'}`}>
                     <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
 
-                    <form className='mx-auto md:w-[40%] mb-4' onSubmit={handleUsernameModifier}>
+                    <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleUsernameModifier}>
                         <label htmlFor="username" className="block mb-2">Username</label>
-                        <input
-                            type="text"
-                            id="username"
-                            value={newUsername}
-                            onChange={handleUsernameChange}
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                        />
-                        <div className='flex justify-center'>
-                            <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                        <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
+                            <input
+                                type="text"
+                                id="username"
+                                value={newUsername}
+                                onChange={handleUsernameChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            />
+                            <div className='flex justify-center'>
+                                <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                            </div>
+                        </div>
+                        
+                    </form>
+
+                    <form className='mx-auto md:w-[80%]' onSubmit={handlePhoneModifier}>
+                        <label htmlFor="phone" className="block mb-2">Telefono</label>
+                        <div className='flex flex-col md:flex-row gap-3 items-center justify-center'> 
+                            <PhoneInput
+                                country={'it'}
+                                value={newPhone}
+                                onChange={handlePhoneChange}
+                                buttonClass='w-[45px] p-2 bg-gray-50'
+                                dropdownClass='w-full p-2 bg-gray-50'
+                                inputStyle={{ width: '100%', height : '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                                preferredCountries={['it']}
+                            />
+                            <div className='flex justify-center'>
+                                <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                            </div>
                         </div>
                     </form>
 
-                    <form className='mx-auto md:w-[40%]' onSubmit={handlePhoneModifier}>
-                        <label htmlFor="phone" className="block mb-2">Telefono</label>
-                        <PhoneInput
-                            country={'it'}
-                            value={newPhone}
-                            onChange={handlePhoneChange}
-                            buttonClass='w-[45px] p-2 bg-gray-50'
-                            dropdownClass='w-full p-2 bg-gray-50'
-                            inputStyle={{ width: '100%', height : '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
-                            preferredCountries={['it']}
-                        />
-                        <div className='flex justify-center'>
-                            <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                    <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleEmailModifier}>
+                        <label htmlFor="email" className="block mb-2">email</label>
+                        <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
+                            <input
+                                type="email"
+                                id="email"
+                                value={newEmail}
+                                onChange={handleEmailChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            />
+                            <div className='flex justify-center'>
+                                <input type='submit' value='Modifica email' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                            </div>
                         </div>
+                        
                     </form>
                 </div>
                 {isAdmin && <Dashboard />}

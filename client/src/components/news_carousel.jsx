@@ -182,11 +182,6 @@ const NewsCarousel = () => {
                                         </div>
                                     </div>
                                 </Link>
-                                <div className="flex items-center w-auto h-auto justify-center hover:cursor-pointer hover:transform hover:scale-150 transition-transform duration-300 mt-5" onClick={() => handleDeleteNews(item.id)}>
-                                    <svg width="50" height="50" xmlns='http://www.w3.org/2000/svg' >
-                                        <image href="./public/delete.svg" width="50" height="50"/>
-                                    </svg>
-                                </div>
                             </div>
                         ))}
                     </Slider>

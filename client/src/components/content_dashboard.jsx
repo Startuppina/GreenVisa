@@ -217,7 +217,7 @@ const Dashboard = () => {
 
       <div className="flex flex-col">
         <button
-          className="bg-gray-300 text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+          className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
           onClick={() => setShowNews(!showNews)}
         >
           {showNews ? "Nascondi News" : "Mostra News"}
@@ -354,7 +354,7 @@ const Dashboard = () => {
         )}
 
         <button
-          className="bg-gray-300 text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+          className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
           onClick={() => setShowProducts(!showProducts)}
         >
           {showProducts ? "Nascondi Certificazioni" : "Mostra Certificazioni"}
@@ -570,7 +570,7 @@ const Dashboard = () => {
         )}
       </div>
       <button
-        className="bg-gray-300 text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+        className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
         onClick={() => setShowMessages(!showMessages)}
       >
         {showMessages ? "Nascondi Messaggi" : "Mostra Messaggi"}
@@ -578,7 +578,7 @@ const Dashboard = () => {
       {showMessages && <MessagesDashboard />}
 
       <button
-        className="bg-gray-300 text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+        className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
         onClick={() => setShowForms(!showForms)}
       >
         {showForms ? "Nascondi Forms" : "Mostra Forms"}
