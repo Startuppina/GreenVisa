@@ -11,8 +11,9 @@ const NewsPage = () => {
     <div>
       <ScrollToTop />
       <Navbar />
-      <News />
-      <NewsForm />
+      <main>
+        <News />
+      </main>
       <Footer/>
     </div>
   )

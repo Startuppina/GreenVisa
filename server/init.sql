@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    phone_number VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(255),
     administrator BOOLEAN NOT NULL,
     password_digest TEXT
 );
@@ -83,12 +83,5 @@ CREATE TABLE IF NOT EXISTS credit_cards (
     UNIQUE (number)  -- Aggiunto un vincolo di unicità per il numero della carta di credito
 );
 
-/*
-CREATE TABLE if NOT EXISTS session (
-    sid varchar NOT NULL COLLATE "default",
-    sess json NOT NULL,
-    expire timestamp(6) NOT NULL,
-    PRIMARY KEY (sid)
-);*/
 
 
