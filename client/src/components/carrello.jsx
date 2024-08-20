@@ -3,13 +3,17 @@ import QuantitySelector from "./quantitySelector";
 import { Link } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import axios from "axios";
+import { useRecoveryContext } from "../provider/provider";
 
 function Carrello() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState('');
-    const [cartProducts, setCartProducts] = useState([]);
-    const [quantities, setQuantities] = useState({});
-    const [isEmpty, setIsEmpty] = useState(true);
+    //const [cartProducts, setCartProducts] = useState([]);
+    //const [quantities, setQuantities] = useState({});
+    //const [isEmpty, setIsEmpty] = useState(true);
+    const { cartProducts, setCartProducts } = useRecoveryContext();
+    const { quantities, setQuantities } = useRecoveryContext();
+    const {isEmpty, setIsEmpty} = useRecoveryContext();
 
     useEffect(() => {
         const getCartProducts = async () => {
@@ -93,6 +97,39 @@ function Carrello() {
         }
     };
 
+    const handleCheckout = async () => {
+        const token = localStorage.getItem('token');
+        try {
+
+            const productsData = cartProducts.map(product => ({
+                id: product.product_id,
+                name: product.name,
+                price: product.price,
+                quantity: quantities[product.product_id]
+            }));
+            
+            // Convertire l'array in una stringa JSON
+            const jsonData = JSON.stringify(productsData);
+            console.log(jsonData);
+
+            const response = await axios.post('http://localhost:8080/api/checkout-session', jsonData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 200) {
+                //setCartProducts([]);
+                //setQuantities({});
+                //setIsEmpty(true);
+                window.location.href = response.data.url;
+            }
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+    }
+
     const calculateSubtotal = () => {
         return cartProducts.reduce((total, product) => total + (product.price * (quantities[product.product_id] || 1)), 0);
     }
@@ -161,8 +198,9 @@ function Carrello() {
                 <button 
                     type="submit" 
                     className="relative left-[50%] translate-x-[-50%] w-full md:w-auto mt-5 p-1 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black z-50"
+                    onClick={handleCheckout}
                 >
-                    <Link to="/Payment">Concludi il pagamento</Link>
+                    Concludi il pagamento
                 </button>
             </div>
         </div>

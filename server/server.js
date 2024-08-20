@@ -8,15 +8,17 @@ const multer = require("multer");
 const fs = require('fs');
 const path = require("path");
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 
 const port = 8080;
 
-
 const email_sender = process.env.EMAIL_SENDER;
 const pass_sender = process.env.PASS_SENDER;
+
+
 
 const app = express();
 
@@ -1147,6 +1149,72 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Qualcosa è andato storto!" });
 });
+
+
+app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
+  try {
+    const products = req.body; // Ora req.body è un array di oggetti prodotto
+
+    // Verifica l'esistenza di ogni prodotto
+    for (const product of products) {
+      const { id, name, price, quantity } = product;
+      console.log(`ID: ${id}, Name: ${name}, Price: ${price}, Quantity: ${quantity}`);
+
+      // Check if product exists
+      const query = "SELECT * FROM products WHERE id = $1";
+      const values = [id];
+      const result = await pool.query(query, values); // Usa 'await' per risolvere la promessa
+
+      if (result.rows.length === 0) {
+        throw new Error(`Product ${id} not found`);
+      }
+    }
+
+
+    // Crea la sessione di pagamento con Stripe
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: products.map(product => ({
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: product.name,
+          },
+          unit_amount: Math.round(product.price * 100), // Converti il prezzo in centesimi e arrotonda
+        },
+        quantity: product.quantity,
+      })),
+      success_url: "http://localhost:3000/PaymentSuccess", // Assicurati che questi URL siano corretti
+      cancel_url: "http://localhost:3000/Carrello",
+    });
+
+    // Restituisci l'URL della sessione di Stripe
+    res.status(200).json({ url: session.url });
+  } catch (error) {
+    console.error('Errore nella sessione di pagamento', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
+app.delete("/api/remove-user-cart", authenticateJWT, async (req, res) => {
+
+  try {
+    const { user_id } = req.user;
+    const query = "DELETE FROM cart WHERE user_id = $1";
+    const values = [user_id];
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Carrello cancellato con successo" });
+  } catch (error) {
+    console.error("Errore nella rimozione degli articoli utente dal carrello:", error);
+    res.status(500).json({ msg: "Internal server error" });
+  }
+})
+
+
+
+
 
 app.listen(port, '0.0.0.0', async () => {
   console.log(`Server in ascolto sulla porta ${port}`);

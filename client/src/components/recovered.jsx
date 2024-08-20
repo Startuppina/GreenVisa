@@ -12,7 +12,7 @@ export default function Recovered() {
   return (
     <div className="text-arial">
       <div className="w-full min-h-screen flex flex-col items-center justify-center">
-        <img src="/img/logo.png" alt="logo" className="w-[200px] h-[200px]" />
+        <img src="/img/logo.png" alt="logo" className="w-[150px] h-[150px] md:w-[200px] md:h-[200px]" />
         <div className="flex items-center justify-center pt-8">
           <h1 className="w-[70%] font-arial font-bold text-4xl text-center">
             Password modificata con successo!
