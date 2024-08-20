@@ -5,12 +5,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 function Article() {
     const { id } = useParams();
     const [article, setArticle] = useState({});
-    const [countNews, setCountNews] = useState(0);
+    const [articleIds, setArticleIds] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log("Fetching article with ID:", id);
-        const getArticle = async () => {
+        const getArticleData = async () => {
             try {
                 const response = await axios.get(`http://localhost:8080/api/article/${id}`, {
                     headers: {
@@ -19,41 +18,39 @@ function Article() {
                 });
 
                 if (response.status === 200) {
-                    console.log("response: ", response.data.article);
                     setArticle(response.data.article);
-                    setCountNews(response.data.countnews);
-                    console.log("news: ", response.data.countnews);
+                    setArticleIds(response.data.ids); // Assicurati che articleIds venga restituito dal backend
                 }
             } catch (error) {
                 console.log(error);
             }
         };
 
-        getArticle();
+        getArticleData();
     }, [id]);
 
     const nextArticle = (currentId) => {
-        const nextId = parseInt(currentId) + 1;
-        if (nextId <= countNews) {
+        const currentIndex = articleIds.indexOf(parseInt(currentId));
+        if (currentIndex !== -1) {
+            const nextIndex = (currentIndex + 1) % articleIds.length;
+            const nextId = articleIds[nextIndex];
             navigate(`/Article/${nextId}`);
-        } else {
-            navigate(`/Article/${1}`);
         }
     };
 
     const previousArticle = (currentId) => {
-        const prevId = parseInt(currentId) - 1;
-        if (prevId >= 1) {
+        const currentIndex = articleIds.indexOf(parseInt(currentId));
+        if (currentIndex !== -1) {
+            const prevIndex = (currentIndex - 1 + articleIds.length) % articleIds.length;
+            const prevId = articleIds[prevIndex];
             navigate(`/Article/${prevId}`);
-        } else {
-            navigate(`/Article/${countNews}`);
         }
     };
 
     return (
-        <div className='flex flex-col items-center justify-center  p-4 w-full'>
+        <div className='flex flex-col items-center justify-center p-4 w-full'>
             <div className='w-full flex flex-col items-center justify-center'>
-                <div className='flex flex-col gap-3 md:flex-row w-full md:w-[80%] items-center justify-center  mb-6'>
+                <div className='flex flex-col gap-3 md:flex-row w-full md:w-[80%] items-center justify-center mb-6'>
                     <button
                         className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] rounded-lg bg-[#2d7044] text-white hover:bg-[#1e4d2c] shadow-lg transition-all duration-300 ease-in-out'
                         onClick={() => previousArticle(id)}

@@ -4,13 +4,12 @@ import { Link } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
+import { MutatingDots } from 'react-loader-spinner'; // Importa il componente MutatingDots
 
 function Carrello() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState('');
-    //const [cartProducts, setCartProducts] = useState([]);
-    //const [quantities, setQuantities] = useState({});
-    //const [isEmpty, setIsEmpty] = useState(true);
+    const [isLoading, setIsLoading] = useState(false); // Stato per gestire il caricamento
     const { cartProducts, setCartProducts } = useRecoveryContext();
     const { quantities, setQuantities } = useRecoveryContext();
     const {isEmpty, setIsEmpty} = useRecoveryContext();
@@ -74,30 +73,31 @@ function Carrello() {
 
     const handleRemoveProduct = async (productId) => {
         const token = localStorage.getItem('token');
-        try {
-            const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.status === 200) {
-                setCartProducts(prevProducts => prevProducts.filter(product => product.product_id !== productId));
-                setQuantities(prevQuantities => {
-                    const { [productId]: _, ...rest } = prevQuantities;
-                    return rest;
+            try {
+                const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
-                if (cartProducts.length === 1) {
-                    setIsEmpty(true);
+                if (response.status === 200) {
+                    setCartProducts(prevProducts => prevProducts.filter(product => product.product_id !== productId));
+                    setQuantities(prevQuantities => {
+                        const { [productId]: _, ...rest } = prevQuantities;
+                        return rest;
+                    });
+                    if (cartProducts.length === 1) {
+                        setIsEmpty(true);
+                    }
                 }
+            } catch (error) {
+                setMessagePopUp(error.response?.data?.msg || error.message);
+                setButtonPopup(true);
             }
-        } catch (error) {
-            setMessagePopUp(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
-        }
     };
 
     const handleCheckout = async () => {
+        setIsLoading(true); // Attiva il caricamento
         const token = localStorage.getItem('token');
         try {
 
@@ -119,14 +119,13 @@ function Carrello() {
                 }
             });
             if (response.status === 200) {
-                //setCartProducts([]);
-                //setQuantities({});
-                //setIsEmpty(true);
                 window.location.href = response.data.url;
             }
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
+        } finally {
+            setIsLoading(false); // Disattiva il caricamento in caso di errore
         }
     }
 
@@ -195,13 +194,28 @@ function Carrello() {
                     <p>Totale</p>
                     <p>{calculateTotal().toFixed(2)} €</p>
                 </div>
-                <button 
-                    type="submit" 
-                    className="relative left-[50%] translate-x-[-50%] w-full md:w-auto mt-5 p-1 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black z-50"
-                    onClick={handleCheckout}
-                >
-                    Concludi il pagamento
-                </button>
+
+                {isLoading ? (
+                    <div className="flex justify-center items-center mt-5">
+                        <MutatingDots 
+                            height="100"
+                            width="100"
+                            color="#2d7044"
+                            secondaryColor= '#2d7044'
+                            radius='12.5'
+                            ariaLabel="mutating-dots-loading"
+                            visible={true}
+                        />
+                    </div>
+                ) : (
+                    <button 
+                        type="submit" 
+                        className="relative left-[50%] translate-x-[-50%] w-full md:w-auto mt-5 p-1 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black z-50"
+                        onClick={handleCheckout}
+                    >
+                        Concludi il pagamento
+                    </button>
+                )}
             </div>
         </div>
     );

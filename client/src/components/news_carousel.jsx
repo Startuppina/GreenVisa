@@ -104,9 +104,7 @@ const NewsCarousel = () => {
         setPopupConfirmDelete(true);
     }; 
 
-
     const deleteNews = async () => {
-
         const token = localStorage.getItem('token');
         if (!token) {
             setMessagePopup('Token non trovato');
@@ -120,7 +118,7 @@ const NewsCarousel = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 }
-            })
+            });
 
             if (response.status === 200) {
                 navigate(0);
@@ -130,7 +128,6 @@ const NewsCarousel = () => {
             setMessagePopup(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
-        
     };
 
     return (
@@ -142,7 +139,7 @@ const NewsCarousel = () => {
                 trigger={popupConfirmDelete}
                 setTrigger={setPopupConfirmDelete}
                 onButtonClick={deleteNews}>
-                {messageConfirm }
+                {messageConfirm}
             </ConfirmPopUp>
             <div className='text-3xl font-bold text-center mb-3'>
                 <span className='text-[#2d7044]'>GREEN </span>NEWS
@@ -164,8 +161,8 @@ const NewsCarousel = () => {
                                     <div className={`relative mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
                                         style={{
                                             width: slidesToShow === 1 ? '100%' : slidesToShow === 2 ? '90%' : '100%',
-                                            maxWidth: '800px',
-                                            height: '600px',
+                                            maxWidth: '700px',
+                                            height: slidesToShow === 1 ? '500px' : '600px',
                                             margin: '0 auto',
                                         }}>
                                         <div className="relative w-full h-[80%]">

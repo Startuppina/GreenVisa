@@ -706,7 +706,6 @@ app.get("/api/article/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verifica se l'id è definito e se è un numero intero
     if (isNaN(parseInt(id))) {
       return res.status(400).json({ msg: "Invalid article ID" });
     }
@@ -720,17 +719,20 @@ app.get("/api/article/:id", async (req, res) => {
     }
 
     const countNews = await pool.query("SELECT COUNT(*) FROM news");
+    const idsResult = await pool.query("SELECT id FROM news");
 
-    //sanitize content with DOMPurify
+    // Convert IDs to an array of numbers
+    const ids = idsResult.rows.map(row => row.id);
+    // Sanitize content with DOMPurify
     result.rows[0].content = DOMPurify.sanitize(result.rows[0].content);
 
-    //send data and countnews
-    res.status(200).json({ article: result.rows[0], countnews: countNews.rows[0].count });
+    res.status(200).json({ article: result.rows[0], countnews: countNews.rows[0].count, ids });
   } catch (error) {
     console.error("Errore nel recupero dell'articolo:", error);
     res.status(500).json({ msg: "Errore nel recupero dell'articolo" });
   }
 });
+
 
 app.delete("/api/delete-news/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
   try {
