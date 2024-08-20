@@ -6,6 +6,7 @@ import MessagesDashboard from "./contacts_receiver";
 import NewsForm from "./news_form";
 import ProductsForm from "./products_form";
 import ReactQuill from "react-quill";
+import TextEditor from "./textEditor";
 import "react-quill/dist/quill.snow.css";
 import { useNavigate } from "react-router-dom";
 
@@ -115,11 +116,15 @@ const Dashboard = () => {
         if (type === "news") {
           setNews((prevNews) => prevNews.filter((news) => news.id !== id));
           setTotalNews((prevTotalNews) => prevTotalNews - 1);
+          setMessagePopUp("Notizia eliminata con successo");
+          setButtonPopup(true);
         } else if (type === "product") {
           setProducts((prevProducts) =>
             prevProducts.filter((product) => product.id !== id)
           );
           setTotalProducts((prevTotalProducts) => prevTotalProducts - 1);
+          setMessagePopUp("Certificazione eliminata con successo");
+          setButtonPopup(true);
         }
       }
     } catch (error) {
@@ -168,10 +173,14 @@ const Dashboard = () => {
           setNews((prevNews) =>
             prevNews.map((news) => (news.id === id ? updatedItem : news))
           );
+          setMessagePopUp("Notizia modificata con successo");
+          setButtonPopup(true);
         } else if (type === "product") {
           setProducts((prevProducts) =>
             prevProducts.map((product) => (product.id === id ? updatedItem : product))
           );
+          setMessagePopUp("Certificazione modificata con successo");
+          setButtonPopup(true);
         }
         setItemToEdit(null);
       }
@@ -312,11 +321,12 @@ const Dashboard = () => {
                         </div>
                         <label className="flex flex-col w-full z-10">
                           <span className="block mb-2">Contenuto:</span>
-                          <ReactQuill
+                          {/*<ReactQuill
                             value={itemToEdit.content || ""}
                             onChange={handleQuillChange}
                             className="mb-4"
-                          />
+                          />*/}
+                          <TextEditor value={itemToEdit.content || ""} onChange={handleQuillChange}/>
                         </label>
                         <div className="flex justify-center gap-3">
                           <button

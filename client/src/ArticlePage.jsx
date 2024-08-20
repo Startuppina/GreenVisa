@@ -9,7 +9,9 @@ function ArticlePage()  {
     <div>
       <ScrollToTop />
       <Navbar />
-      <Article />
+      <main>
+        <Article />
+      </main>
       <Footer />
     </div>
   )

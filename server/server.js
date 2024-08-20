@@ -353,6 +353,29 @@ app.post("/api/send_email", async (req, res) => {
   }
 });
 
+app.post("/api/send-email-message", async (req, res) => {
+  try {
+    //verifica se l'email esiste nel database
+    const result = await pool.query(
+      "SELECT id, email FROM users WHERE email = $1",
+      [req.body.email]
+    );
+    if (result.rows.length === 0) {
+      return res.status(400).json({ msg: "Non esiste un utente con questa email" });
+    }
+
+    sendEmailMessage({
+      recipient_email: req.body.email,
+    });
+
+    return res.status(200).json({ msg: "Email di presa in carico inviata correttamente" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
 function sendEmail({ recipient_email, OTP }) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
@@ -453,6 +476,115 @@ function sendEmail({ recipient_email, OTP }) {
                     <p>Ciao,</p>
                     <p>Grazie per aver utilizzato Green Visa. Usa il seguente codice OTP per recuperare la tua password. Il codice è valido per 5 minuti:</p>
                     <div class="otp">${OTP}</div>
+                    <p>Saluti,<br />Green Visa</p>
+                </div>
+                <div class="footer">
+                    <p>Green Visa</p>
+                    <p>La sostenibilità con un click!</p>
+                </div>
+            </div>
+        </body>
+        </html>`,
+    };
+
+
+    transporter.sendMail(mail_configs, function (error, info) {
+      if (error) {
+        console.error("Errore nell'invio dell'email:", error);
+        return reject({
+          message: `Errore durante l'invio dell'email: ${error.message}`,
+        });
+      }
+      return resolve({ message: "Email inviata con successo" });
+    });
+  });
+}
+
+function sendEmailMessage({ recipient_email }) {
+  return new Promise((resolve, reject) => {
+    var transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        //PER RAGIONI DI SICUREZZA LE CREDENZIALI DEVONO STARE NEL .ENV
+        user: email_sender,
+        pass: pass_sender
+      },
+    });
+
+    const mail_configs = {
+      from: email_sender,
+      to: recipient_email,
+      subject: "Green Visa Presa in carico",
+      html: `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Green Visa - Presa in carico</title>
+            <style>
+                body {
+                    font-family: Helvetica, Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 50px auto;
+                    background-color: #ffffff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .logo {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .logo img {
+                    width: 150px;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content h1 {
+                    font-size: 1.4em;
+                    color: #2d7044;
+                    font-weight: 600;
+                }
+                .content p {
+                    font-size: 1.1em;
+                    color: #333333;
+                }
+                .footer {
+                    text-align: right;
+                    padding-top: 20px;
+                    color: #aaa;
+                    font-size: 0.8em;
+                    line-height: 1.5;
+                }
+                @media screen and (max-width: 600px) {
+                    .container {
+                        width: 100%;
+                        padding: 10px;
+                    }
+                    .content h1 {
+                        font-size: 1.2em;
+                    }
+                    .content p {
+                        font-size: 1em;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="logo">
+                    <img src="http://localhost:8080/logo2.png" alt="Green Visa">
+                </div>
+                <div class="content">
+                    <h1>Green Visa</h1>
+                    <p>Ciao,</p>
+                    <p>Grazie per aver utilizzato Green Visa. Il messagio da te inviato e' stato preso in carico. Ricevera al piu' presto una email di risposta</p>
                     <p>Saluti,<br />Green Visa</p>
                 </div>
                 <div class="footer">
@@ -927,6 +1059,14 @@ app.put("/api/edit-news/:id", authenticateJWT, authenticateAdmin, upload.single(
       return res.status(400).json({ msg: "Non hai i permessi per modificare le notizie" });
     }
 
+    if (!title || !content) {
+      return res.status(400).json({ msg: "Titolo e contenuto mancanti" });
+    }
+
+    if (!image) {
+      return res.status(400).json({ msg: "Immagine mancante" });
+    }
+
     //remove previous image from updated_img
     const query_img = "SELECT image FROM news WHERE id = $1";
     const values_img = [id];
@@ -958,6 +1098,14 @@ app.put("/api/edit-product/:id", authenticateJWT, authenticateAdmin, upload.sing
     const { role, user_id } = req.user;
     if (role !== "administrator") {
       return res.status(400).json({ msg: "Non hai i permessi per modificare le certificazioni" });
+    }
+
+    if (!name || !price || !info || !cod || !category || !tag) {
+      return res.status(400).json({ msg: "I campi nome, prezzo, info, codice, categoria e tag sono obbligatori" });
+    }
+
+    if (!image) {
+      return res.status(400).json({ msg: "Immagine mancante" });
     }
 
     //remove previous image from updated_img

@@ -51,7 +51,7 @@ function Article() {
     };
 
     return (
-        <div className='flex flex-col items-center justify-center min-h-screen p-4 w-full'>
+        <div className='flex flex-col items-center justify-center  p-4 w-full'>
             <div className='w-full flex flex-col items-center justify-center'>
                 <div className='flex flex-col gap-3 md:flex-row w-full md:w-[80%] items-center justify-center  mb-6'>
                     <button
@@ -88,9 +88,10 @@ function Article() {
                 alt={article.title}
                 className='w-[50%] md:w-[30%] lg:w-[20%] mx-auto rounded-lg mt-5'
             />
-            <div className='w-full mt-5 mb-5 text-arial text-justify text-lg md:text-xl px-4 lg:px-20 mx-auto'>
+            <div className='w-full mt-5 mb-5 text-arial text-justify text-lg md:text-xl px-4 mx-auto'>
                 <div
-                    className="prose lg:prose-xl prose-h1:text-3xl prose-h2:text-2xl prose-p:text-lg prose-ul:pl-5 prose-ul:list-disc w-[90%] mx-auto text-black"
+                    id='content'
+                    className="prose prose-xl prose-h1:text-4xl prose-h2:text-3xl prose-p:text-xl prose-ul:pl-20 prose-ul:list-disc w-[95%] lg:w-[85%] mx-auto text-black"
                     dangerouslySetInnerHTML={{ __html: article.content }}
                 ></div>
             </div>
