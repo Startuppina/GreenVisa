@@ -65,6 +65,29 @@ const MessagesDashboard = () => {
         setPopupConfirmDelete(true);
     };
 
+    const handleSendEmail = async (email) => {
+        const token = localStorage.getItem('token');
+    
+        try {
+            const response = await axios.post("http://localhost:8080/api/send-email-message", { email }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+    
+            if (response.status === 200) {
+                setMessagePopUp("Email di presa in carico inviata correttamente");
+                setButtonPopup(true);
+            }
+    
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+    };
+    
+
     return (
         <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
@@ -103,12 +126,18 @@ const MessagesDashboard = () => {
                                 <h2 className="text-xl font-bold">Messaggio</h2>
                                 <p className="text-lg">{message.message}</p>
                             </div>
-                            <div className="flex justify-end mt-4">
+                            <div className="flex justify-end mt-4 gap-3">
                                 <button
                                     onClick={() => handleDelete(message.id)}
-                                    className="bg-red-500 text-white px-4 py-2 rounded"
+                                    className="bg-red-500 border-red-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-red-500 transition-colors duration-300 ease-in-out"
                                 >
                                     Elimina
+                                </button>
+                                <button
+                                    onClick={() => handleSendEmail(message.email)}
+                                    className="bg-blue-500 border-blue-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out"
+                                >
+                                    Conferma ricezione
                                 </button>
                             </div>
                         </div>
