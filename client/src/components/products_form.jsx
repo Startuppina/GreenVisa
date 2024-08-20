@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import MessagePopUp from './messagePopUp';
+import { MutatingDots } from 'react-loader-spinner';
 
 function ProductsForm() {
     const [name, setName] = useState('');
@@ -12,6 +13,7 @@ function ProductsForm() {
     const [category, setCategory] = useState('');
     const [tag, setTag] = useState('');
     const [categories, setCategories] = useState([]);
+    const [isLoading, setIsLoading] = useState(false); // Stato per gestire il caricamento
     const navigate = useNavigate();
 
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -41,10 +43,13 @@ function ProductsForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+       
+        setIsLoading(true);
 
         const token = localStorage.getItem("token");
 
         if (!name || !price || !image || !info || !cod || !category || !tag) {
+            setIsLoading(false);
             setMessagePopup("Compila tutti i campi");
             setButtonPopup(true);
             return;
@@ -70,15 +75,20 @@ function ProductsForm() {
             });
 
             if (response.status === 200) {
-                setMessagePopup(response.data.msg);
-                setButtonPopup(true);
+                setTimeout(() => {
+                    setMessagePopup(response.data.msg);
+                    setButtonPopup(true);
+                    setIsLoading(false);
+                }, 3000); // Caricamento finto di 2 secondi
+                
                 navigate("/User");
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
                 setButtonPopup(true);
-                
+                setIsLoading(false);
             }
         } catch (error) {
+            setIsLoading(false);
             setMessagePopup(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
@@ -164,12 +174,26 @@ function ProductsForm() {
                     </label>
                 </div>
                 <div className='flex justify-center'>
+                    {isLoading ? (
+                        <div className="flex justify-center items-center mt-5">
+                            <MutatingDots 
+                                height="100"
+                                width="100"
+                                color="#2d7044"
+                                secondaryColor= '#2d7044'
+                                radius='12.5'
+                                ariaLabel="mutating-dots-loading"
+                                visible={true}
+                            />
+                        </div>
+                    ) : (
                     <button
                         type="submit"
                         className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                     >
                         Carica
                     </button>
+                    )}
                 </div>
             </form>
         </div>

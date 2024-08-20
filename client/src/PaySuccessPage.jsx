@@ -2,15 +2,13 @@ import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MutatingDots } from 'react-loader-spinner'
 import { useRecoveryContext } from './provider/provider';
+import axios from 'axios';
 
 function PaySuccessPage() {
   const { setCartProducts, setQuantities, setIsEmpty } = useRecoveryContext();
   const navigate = useNavigate();
 
   useEffect(() => {
-    setCartProducts([]);
-    setQuantities({});
-    setIsEmpty(true);
 
     const remove_user_cart = async () => {
       const token = localStorage.getItem('token');
@@ -23,6 +21,9 @@ function PaySuccessPage() {
         });
         if (response.status === 200) {
           console.log(response.data);
+          setCartProducts([]);
+          setQuantities({});
+          setIsEmpty(true);
         }
       } catch (error) {
         console.error(error);

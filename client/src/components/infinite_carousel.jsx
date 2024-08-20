@@ -2,6 +2,7 @@ import React from "react";
 import Marquee from "react-fast-marquee";
 
 function Infinite_carousel() {
+    
   return (
       <div className="w-[95%] mx-auto overflow-hidden whitespace-nowrap">
           <Marquee gradient gradientColor="#2d7044" gradientWidth={30}>

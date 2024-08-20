@@ -3,6 +3,7 @@ import TextEditor from './textEditor';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import MessagePopUp from './messagePopUp';
+import { MutatingDots } from 'react-loader-spinner';
 
 
 
@@ -10,6 +11,8 @@ const NewsForm = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [image, setImage] = useState(null);
+    const [isLoading, setIsLoading] = useState(false); // Stato per gestire il caricamento
+
     const navigate = useNavigate();
 
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -30,10 +33,13 @@ const NewsForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        setIsLoading(true);
         
         const sanitizedContent = sanitizeContent(content);
 
         if (!title || sanitizedContent === '' || !image) {
+            setIsLoading(false);
             setMessagePopUp("Compila tutti i campi");
             setButtonPopup(true);
             return;
@@ -45,6 +51,7 @@ const NewsForm = () => {
 
         const token = localStorage.getItem('token');
         if (!token) {
+            setIsLoading(false);
             setMessagePopUp("Per favore effettua il login");
             setButtonPopup(true);
             return;
@@ -66,15 +73,18 @@ const NewsForm = () => {
             })
 
             if (response.status == 200) {
-                setMessagePopUp(response.data.msg);
-                setButtonPopup(true);
-                navigate("/User");
+                setTimeout(() => {
+                    setMessagePopUp(response.data.msg);
+                    setButtonPopup(true);
+                    setIsLoading(false);
+                }, 3000);
+                    navigate("/User");
             }
     
-            const contentType = response.headers.get('Content-Type');
+            /*const contentType = response.headers.get('Content-Type');
             if (!contentType || !contentType.includes('application/json')) {
                 throw new Error('Invalid content-type: expected application/json');
-            }
+            }*/
     
             setTitle('');
             setContent('');
@@ -82,6 +92,7 @@ const NewsForm = () => {
         } catch (error) {
             setMessagePopUp(`Errore durante la pubblicazione della notizia: ${error.message}`);
             setButtonPopup(true);
+            setIsLoading(false);
         }
     };
     
@@ -118,12 +129,26 @@ const NewsForm = () => {
                     <TextEditor theme="snow" value={content} onChange={handleContentChange}/>
                 </label>}
                 <div className='flex justify-center'>
+                {isLoading ? (
+                        <div className="flex justify-center items-center mt-5">
+                            <MutatingDots 
+                                height="100"
+                                width="100"
+                                color="#2d7044"
+                                secondaryColor= '#2d7044'
+                                radius='12.5'
+                                ariaLabel="mutating-dots-loading"
+                                visible={true}
+                            />
+                        </div>
+                    ) : (
                     <button
                         type="submit"
                         className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                     >
                         Carica
                     </button>
+                    )}
                 </div>
             </form>
         </div>
