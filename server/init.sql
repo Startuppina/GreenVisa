@@ -51,16 +51,18 @@ CREATE TABLE IF NOT EXISTS promocodes (
 CREATE TABLE IF NOT EXISTS promocodes_publishment (
     id SERIAL PRIMARY KEY,
     promocode_id INT NOT NULL,
-    FOREIGN KEY (promocode_id) REFERENCES promocodes(id)
+    FOREIGN KEY (promocode_id) REFERENCES promocodes(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS utilizzo_codici (
+
+CREATE TABLE IF NOT EXISTS promocodes_usage (
     id SERIAL PRIMARY KEY,
-    codice_id INT NOT NULL,
-    utente_id INT NOT NULL,
-    data_utilizzo TIMESTAMP NOT NULL,
-    FOREIGN KEY (codice_id) REFERENCES promocodes(id),
-    UNIQUE(codice_id, utente_id)
+    code_id INT NOT NULL,
+    user_id INT NOT NULL,
+    usage_date TIMESTAMP NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (code_id) REFERENCES promocodes(id),
+    UNIQUE(code_id, user_id)
 );
 
 
@@ -93,8 +95,11 @@ CREATE TABLE IF NOT EXISTS orders (
     price INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
+    code_id INTEGER DEFAULT NULL, -- Il codice promozionale associato all'ordine --
+    order_date DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    FOREIGN KEY (code_id) REFERENCES promocodes(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS credit_cards (
