@@ -5,8 +5,9 @@ import ConfirmPopUp from "./confirmPopUp";
 import MessagesDashboard from "./contacts_receiver";
 import NewsForm from "./news_form";
 import ProductsForm from "./products_form";
-import ReactQuill from "react-quill";
 import TextEditor from "./textEditor";
+import PromoCodeForm from "./promoCodeForm";
+import PromoCodes from "./promoCodes";
 import "react-quill/dist/quill.snow.css";
 import { useNavigate } from "react-router-dom";
 
@@ -27,6 +28,7 @@ const Dashboard = () => {
   const [showNews, setShowNews] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [showPromocodes, setShowPromocodes] = useState(false);
   const [showForms, setShowForms] = useState(false);
 
   const navigate = useNavigate();
@@ -589,12 +591,21 @@ const Dashboard = () => {
 
       <button
         className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+        onClick={() => setShowPromocodes(!showPromocodes)}
+      >
+        {showMessages ? "Nascondi Codici Promozionali" : "Mostra Codici Promozionali"}
+      </button>
+      {showPromocodes && <PromoCodes />}
+
+      <button
+        className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
         onClick={() => setShowForms(!showForms)}
       >
         {showForms ? "Nascondi Forms" : "Mostra Forms"}
       </button>
       {showForms && <NewsForm />}
       {showForms && <ProductsForm />}
+      {showForms && <PromoCodeForm />}
     </div>
   );
 };

@@ -6,6 +6,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      perspective: {
+        '1000': '1000px',
+      },
       keyframes: {
         blink: {
           '0%, 100%': { opacity: 1 },
@@ -27,9 +30,10 @@ module.exports = {
       },
     },
   },
+  variants: {},
   plugins: [
     require('@tailwindcss/typography'),
-    function({ addUtilities }) {
+    function ({ addUtilities }) {
       addUtilities({
         '.fade-out': {
           '@apply opacity-0 transition-opacity duration-[2000ms] ease-out': {},
@@ -38,7 +42,7 @@ module.exports = {
           padding: '0',
           margin: '0',
         },
-      }, ['responsive', 'hover'])
-    }
+      }, ['responsive', 'hover']);
+    },
   ],
-}
+};

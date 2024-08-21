@@ -155,34 +155,37 @@ const NewsCarousel = () => {
             ) : (
                 <div className="w-full h-auto p-8">
                     <Slider {...settings}>
-                        {news.map((item) => (        
+                        {news.map((item) => (
                             <div className='p-6 mx-auto z-10'>
                                 <Link to={`/Article/${item.id}`} key={item.id}>
-                                    <div className={`relative mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
+                                    <div
+                                        className={`relative mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
                                         style={{
-                                            width: slidesToShow === 1 ? '100%' : slidesToShow === 2 ? '90%' : '100%',
-                                            maxWidth: '700px',
-                                            height: slidesToShow === 1 ? '500px' : '600px',
+                                            width: slidesToShow === 1 ? '90%' : '100%',
+                                            maxWidth: '500px',
+                                            aspectRatio: '1', // Keep the aspect ratio 1:1 (square)
                                             margin: '0 auto',
-                                        }}>
-                                        <div className="relative w-full h-[80%]">
-                                            <img 
-                                                src={`http://localhost:8080/uploaded_img/${item.image}`} 
-                                                alt={item.title} 
-                                                className="w-full h-full object-cover rounded-t-lg" // Arrotonda solo la parte superiore
+                                        }}
+                                    >
+                                        <div className="w-full h-full border-gray-300 border-2 rounded-lg">
+                                            <img
+                                                src={`http://localhost:8080/uploaded_img/${item.image}`}
+                                                alt={item.title}
+                                                className="w-full h-full object-fill rounded-lg"
                                             />
                                         </div>
-                                        <div className="w-full h-[20%] text-arial text-2xl text-black font-bold text-center p-4 flex items-center justify-center overflow-hidden">
+                                    </div>
+                                    <div className="text-arial text-2xl text-black font-bold text-center p-4 flex items-center justify-center">
                                             <p className="overflow-ellipsis whitespace-nowrap overflow-hidden text-center">
                                                 {item.title}
                                             </p>
                                         </div>
-                                    </div>
                                 </Link>
                             </div>
                         ))}
                     </Slider>
                 </div>
+
             )}
         </div>
     );
