@@ -13,6 +13,11 @@ function Carrello() {
     const { cartProducts, setCartProducts } = useRecoveryContext();
     const { quantities, setQuantities } = useRecoveryContext();
     const {isEmpty, setIsEmpty} = useRecoveryContext();
+    const [promoCode, setPromoCode] = useState('');
+
+    const handlePromoCodeChange = (event) => {
+        setPromoCode(event.target.value);
+    };
 
     useEffect(() => {
         const getCartProducts = async () => {
@@ -97,35 +102,59 @@ function Carrello() {
     };
 
     const handleCheckout = async () => {
-        setIsLoading(true); // Attiva il caricamento
+    setIsLoading(true); // Attiva il caricamento
+    const token = localStorage.getItem('token');
+    try {
+        const productsData = cartProducts.map(product => ({
+            id: product.product_id,
+            name: product.name,
+            price: product.price,
+            quantity: quantities[product.product_id]
+        }));
+        
+        // Prepara i dati per il checkout, includendo il promoCode
+        const checkoutData = {
+            products: productsData,
+            promoCode: promoCode // Includi il codice promozionale
+        };
+
+        const response = await axios.post('http://localhost:8080/api/checkout-session', checkoutData, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (response.status === 200) {
+            window.location.href = response.data.url;
+            //localStorage.setItem('promocode', promoCode);
+        }
+    } catch (error) {
+        setMessagePopUp(error.response?.data?.msg || error.message);
+        setButtonPopup(true);
+    } finally {
+        setIsLoading(false); // Disattiva il caricamento in caso di errore
+    }
+}
+
+
+    const applyPromoCode = async () => {
         const token = localStorage.getItem('token');
+
         try {
-
-            const productsData = cartProducts.map(product => ({
-                id: product.product_id,
-                name: product.name,
-                price: product.price,
-                quantity: quantities[product.product_id]
-            }));
-            
-            // Convertire l'array in una stringa JSON
-            const jsonData = JSON.stringify(productsData);
-            console.log(jsonData);
-
-            const response = await axios.post('http://localhost:8080/api/checkout-session', jsonData, {
+            const response = await axios.post('http://localhost:8080/api/apply-promo-code', { code: promoCode }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 }
             });
             if (response.status === 200) {
-                window.location.href = response.data.url;
+                setMessagePopUp(response.data.msg);
+                setButtonPopup(true);
             }
+
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
-        } finally {
-            setIsLoading(false); // Disattiva il caricamento in caso di errore
         }
     }
 
@@ -183,8 +212,8 @@ function Carrello() {
             <div className="w-[90%] md:w-[70%] h-auto p-5 text-arial text-xl mx-auto">
                 <p>Codice Promozionale</p>
                 <div className="w-full h-auto flex flex-col md:flex-row gap-4 md:gap-12 items-center justify-between mb-10">
-                    <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5'/>
-                    <button type="submit" className="w-full md:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">Applica</button>
+                    <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5' onChange={handlePromoCodeChange}/>
+                    <button type="submit" className="w-full md:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" onClick={applyPromoCode}>Applica</button>
                 </div>
                 <div className="w-full h-auto flex flex-row items-center justify-between">
                     <p>Subtotale</p>
@@ -210,7 +239,7 @@ function Carrello() {
                 ) : (
                     <button 
                         type="submit" 
-                        className="relative left-[50%] translate-x-[-50%] w-full md:w-auto mt-5 p-1 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black z-50"
+                        className="relative left-[50%] translate-x-[-50%] w-full md:w-auto mt-5 p-1 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black"
                         onClick={handleCheckout}
                     >
                         Concludi il pagamento

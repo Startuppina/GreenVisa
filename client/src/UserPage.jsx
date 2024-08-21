@@ -9,7 +9,7 @@ import axios from 'axios';
 import MessagePopUp from './components/messagePopUp';
 import ConfirmPopUp from './components/confirmPopUp';
 import Dashboard from './components/content_dashboard';
-
+import CodeUsage from './components/codeUsage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrown } from '@fortawesome/free-solid-svg-icons';
 
@@ -237,15 +237,14 @@ const UserPage = () => {
                             <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
                             <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
                         </div>
-                        <div className='flex justify-center'>
-                            <button className='p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]' onClick={() => setShowModifier(!showModifier)}>Modifica</button>
-                        </div>
                     </div>
                     <div className='w-full md:w-[45%] bg-[#d9d9d9] p-4 rounded-lg'>
                         <h2 className='text-2xl font-bold'>Certificazioni acquistate</h2>
                         <p>Titolo: Green Visa</p>
                     </div>
                 </div>
+
+                <CodeUsage/>
 
                 <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 w-[97%] m-4 border shadow-lg rounded-lg mx-auto ${showModifier ? '' : 'hidden'}`}>
                     <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>

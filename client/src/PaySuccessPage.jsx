@@ -29,7 +29,10 @@ function PaySuccessPage() {
         console.error(error);
       }
     };
+
+    //setCodeUsageTrue();
     remove_user_cart();
+
     const timer = setTimeout(() => {
       navigate('/Carrello');
     }, 5000);
