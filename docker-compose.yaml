@@ -10,7 +10,8 @@ services:
     volumes:
       - ./server/uploaded_img:/usr/src/app/uploaded_img
     depends_on:
-      - db
+      db:
+        condition: service_healthy # Attende che il db sia sano
 
   client:
     build:
@@ -34,6 +35,11 @@ services:
     volumes:
       - green-visa-db:/var/lib/postgresql/data
       - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d green-visa" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgweb:
     image: sosedoff/pgweb

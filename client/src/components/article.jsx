@@ -19,7 +19,7 @@ function Article() {
 
                 if (response.status === 200) {
                     setArticle(response.data.article);
-                    setArticleIds(response.data.ids); // Assicurati che articleIds venga restituito dal backend
+                    setArticleIds(response.data.ids);
                 }
             } catch (error) {
                 console.log(error);
@@ -51,20 +51,20 @@ function Article() {
         <div className='flex flex-col items-center justify-center p-4 w-full'>
             <div className='w-full flex flex-col items-center justify-center'>
                 <div className='flex flex-col gap-3 md:flex-row w-full md:w-[80%] items-center justify-center mb-6'>
-                    <button
-                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] rounded-lg bg-[#2d7044] text-white hover:bg-[#1e4d2c] shadow-lg transition-all duration-300 ease-in-out'
+                    <div
+                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
                         onClick={() => previousArticle(id)}
                     >
                         {"<< Precedente"}
-                    </button>
+                    </div>
                     <button
-                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] rounded-lg bg-[#2d7044] text-white hover:bg-[#1e4d2c] shadow-lg transition-all duration-300 ease-in-out'
+                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
                         onClick={() => navigate('/News')}
                     >
                         Torna alle News
                     </button>
                     <button
-                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] rounded-lg bg-[#2d7044] text-white hover:bg-[#1e4d2c] shadow-lg transition-all duration-300 ease-in-out'
+                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
                         onClick={() => nextArticle(id)}
                     >
                         {"Successivo >>"}
@@ -80,11 +80,13 @@ function Article() {
                     {article.title}
                 </h1>
             </div>
-            <img
-                src={`http://localhost:8080/uploaded_img/${article.image}`}
-                alt={article.title}
-                className='w-[50%] md:w-[30%] lg:w-[20%] mx-auto rounded-lg mt-5'
-            />
+            <div className="w-[300px] h-[300px] border-gray-300 border-2 rounded-lg">
+                <img
+                    src={`http://localhost:8080/uploaded_img/${article.image}`}
+                    alt={article.title}
+                    className="w-full h-full object-fill rounded-lg"
+                />
+            </div>
             <div className='w-full mt-5 mb-5 text-arial text-justify text-lg md:text-xl px-4 mx-auto'>
                 <div
                     id='content'

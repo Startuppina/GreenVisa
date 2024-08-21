@@ -39,6 +39,31 @@ CREATE TABLE IF NOT EXISTS products (
     UNIQUE (cod)  -- Aggiunto un vincolo di unicità per il codice prodotto
 );
 
+
+CREATE TABLE IF NOT EXISTS promocodes (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(10) UNIQUE NOT NULL,
+    discount INT NOT NULL,
+    start DATE NOT NULL,
+    expiration DATE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS promocodes_publishment (
+    id SERIAL PRIMARY KEY,
+    promocode_id INT NOT NULL,
+    FOREIGN KEY (promocode_id) REFERENCES promocodes(id)
+);
+
+CREATE TABLE IF NOT EXISTS utilizzo_codici (
+    id SERIAL PRIMARY KEY,
+    codice_id INT NOT NULL,
+    utente_id INT NOT NULL,
+    data_utilizzo TIMESTAMP NOT NULL,
+    FOREIGN KEY (codice_id) REFERENCES promocodes(id),
+    UNIQUE(codice_id, utente_id)
+);
+
+
 CREATE TABLE IF NOT EXISTS contacts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -82,6 +107,7 @@ CREATE TABLE IF NOT EXISTS credit_cards (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (number)  -- Aggiunto un vincolo di unicità per il numero della carta di credito
 );
+
 
 
 

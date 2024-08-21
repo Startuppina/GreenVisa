@@ -14,5 +14,8 @@ COPY . .
 # Espone la porta su cui il server ascolta
 EXPOSE 8080
 
+
 # Comando per avviare il server
 CMD [ "npm", "run", "dev" ]
+
+

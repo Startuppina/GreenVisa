@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require("path");
 require("dotenv").config();
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
+const cron = require('node-cron');
 
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
@@ -18,6 +19,45 @@ const port = 8080;
 const email_sender = process.env.EMAIL_SENDER;
 const pass_sender = process.env.PASS_SENDER;
 
+// Funzione per ritentare la connessione al database
+async function connectWithRetry() {
+  let client;
+  for (let i = 0; i < 10; i++) {
+    try {
+      client = await pool.connect();
+      return client;
+    } catch (error) {
+      console.error('Errore di connessione al database, ritentando...', error);
+      await new Promise(resolve => setTimeout(resolve, 5000)); // Ritenta dopo 5 secondi
+    }
+  }
+  throw new Error('Impossibile connettersi al database dopo diversi tentativi');
+}
+
+// Funzione per creare un admin se non esiste
+async function createAdminIfNotExists() {
+  const client = await connectWithRetry();
+  try {
+    // Verifica se esiste già un amministratore
+    const res = await client.query('SELECT * FROM users WHERE administrator = TRUE LIMIT 1');
+    if (res.rows.length === 0) {
+      // Nessun amministratore trovato, quindi creane uno
+      const hashedPassword = await bcrypt.hash('adminpassword', 10); // Modifica la password e il salt come necessario
+      await client.query(
+        `INSERT INTO users (username, email, phone_number, administrator, password_digest)
+         VALUES ($1, $2, $3, $4, $5)`,
+        ['admin', 'admin@example.com', '123-456-7890', true, hashedPassword]
+      );
+      console.log('Admin creato con successo.');
+    } else {
+      console.log('Admin già esistente.');
+    }
+  } catch (error) {
+    console.error('Errore durante la creazione dell\'admin:', error);
+  } finally {
+    client.release();
+  }
+}
 
 
 const app = express();
@@ -814,7 +854,7 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
       return res.status(400).json({ msg: "Immagine mancante" });
     }
 
-    if (info.length > 100) {
+    if (info.length > 500) {
       return res.status(400).json({ msg: "La descrizione è troppo lunga. Max 100 caratteri" });
     }
 
@@ -1130,27 +1170,66 @@ app.put("/api/edit-product/:id", authenticateJWT, authenticateAdmin, upload.sing
   }
 })
 
-function emailCheck(email) {
-  const re =
-    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  return re.test(String(email).toLowerCase());
-}
+app.post("/api/create-promo-code", authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+    const { code, discount, start, expiration } = req.body;
+    if (!code || !discount || !start || !expiration) {
+      return res.status(400).json({ msg: "I campi codice, sconto, inizio e fine sono obbligatori" });
+    } else if (code.length > 10) {
+      return res.status(400).json({ msg: "Il codice non deve superare i 10 caratteri" });
+    } else if (start > expiration) {
+      return res.status(400).json({ msg: "La data di inizio non deve superare la data di fine" });
+    } else if (start < Date.now()) {
+      return res.status(400).json({ msg: "Data di inizio non corretta" });
+    }
 
-function passwordCheck(password) {
-  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/; // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
-  return re.test(String(password));
-}
+    const query = "INSERT INTO promocodes (code, discount, start, expiration) VALUES ($1, $2, $3, $4)";
+    const values = [code, discount, start, expiration];
+    const result = await pool.query(query, values);
+    res.status(200).json({ msg: "Certificazione aggiornata con successo" });
+  } catch (error) {
+    console.error("Errore nell'aggiornare le certificazioni:", error);
+    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
+  }
+})
 
-function phoneCheck(phone) {
-  // max 15 characters, digits only, no spaces, no leading zeros, no special characters, allowed +, (, ), -, ., /,
-  const re = /^[\+]?[(]?[0-9]{3,5}[)]?[-\s\.]?[0-9]{3,5}[-\s\.]?[0-9]{4,10}$/im;
-  return re.test(String(phone).toLowerCase());
-}
+app.get("/api/fetch-promo-codes", authenticateJWT, authenticateAdmin, async (req, res) => {
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Qualcosa è andato storto!" });
-});
+  try {
+    const query = "SELECT * FROM promocodes";
+    const result = await pool.query(query);
+    res.status(200).json({ promocodes: result.rows });
+  } catch (error) {
+    console.error("Errore nell'aggiornare caricare le certificazioni:", error);
+    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
+  }
+})
+
+app.post("/api/publish-promo-code/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
+
+  try {
+    const { id } = req.params;
+    const query = "INSERT INTO promocodes_publishment (promocode_id) VALUES ($1)";
+    await pool.query(query, [id]);
+    res.status(200).json({ msg: "Certificazione pubblicata con successo" });
+  } catch (error) {
+    console.error("Errore nell'aggiornare le certificazioni:", error);
+    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
+  }
+})
+
+app.delete("/api/delete-promo-code/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
+
+  try {
+    const { id } = req.params;
+    const query = "DELETE FROM promocodes WHERE id = $1";
+    await pool.query(query, [id]);
+    res.status(200).json({ msg: "Certificazione eliminata con successo" });
+  } catch (error) {
+    console.error("Errore nell'aggiornare le certificazioni:", error);
+    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
+  }
+})
 
 
 app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
@@ -1214,36 +1293,68 @@ app.delete("/api/remove-user-cart", authenticateJWT, async (req, res) => {
   }
 })
 
+function emailCheck(email) {
+  const re =
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(email).toLowerCase());
+}
+
+function passwordCheck(password) {
+  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/; // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
+  return re.test(String(password));
+}
+
+function phoneCheck(phone) {
+  // max 15 characters, digits only, no spaces, no leading zeros, no special characters, allowed +, (, ), -, ., /,
+  const re = /^[\+]?[(]?[0-9]{3,5}[)]?[-\s\.]?[0-9]{3,5}[-\s\.]?[0-9]{4,10}$/im;
+  return re.test(String(phone).toLowerCase());
+}
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Qualcosa è andato storto!" });
+})
 
 
+async function deleteExpiredPromoCodes() {
+  try {
+    const query = `
+          DELETE FROM promocodes
+          WHERE expiration < NOW()
+      `;
+    const result = await pool.query(query);
+    console.log(`Deleted ${result.rowCount} expired promo codes`);
+  } catch (error) {
+    console.error('Error deleting expired promo codes:', error);
+  }
+};
 
+// Pianifica l'esecuzione della pulizia ogni giorno a mezzanotte
+cron.schedule('0 0 * * *', () => {
+  console.log('Running scheduled job to delete expired promo codes');
+  deleteExpiredPromoCodes();
+});
 
 app.listen(port, '0.0.0.0', async () => {
   console.log(`Server in ascolto sulla porta ${port}`);
 
   try {
-    if (!process.env.USERNAME_ADMIN || !process.env.EMAIL_ADMIN || !process.env.PASS_ADMIN) {
-      throw new Error("ADMIN USER CREDENTIALS NOT DEFINED");
-    }
-
-    //check if admin user already exists, if not, create it, if yes, don't allow to create another one
-    const adminExistsQuery = "SELECT 1 FROM users WHERE email = $1 LIMIT 1";
-    const result = await pool.query(adminExistsQuery, [process.env.EMAIL_ADMIN]);
-
-    if (result.rows.length === 0) { // Se non esiste già un admin con questa email
-      const hashed_admin_pass = bcrypt.hashSync(process.env.PASS_ADMIN, 12);
-      const query_admin = "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, $4, $5)";
-      const values_admin = [process.env.USERNAME_ADMIN, process.env.EMAIL_ADMIN, null, true, hashed_admin_pass];
-
-      await pool.query(query_admin, values_admin);
-      console.log("Admin user created successfully.");
+    // Verifica se esiste già un amministratore
+    const res = await pool.query('SELECT * FROM users WHERE administrator = TRUE LIMIT 1');
+    if (res.rows.length === 0) {
+      // Nessun amministratore trovato, quindi creane uno
+      const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Modifica la password e il salt come necessario
+      await pool.query(
+        `INSERT INTO users (username, email, phone_number, administrator, password_digest)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [process.env.USERNAME_ADMIN, process.env.EMAIL_ADMIN, null, true, hashedPassword]
+      );
+      console.log('Admin creato con successo.');
     } else {
-      console.log("Admin user already exists, skipping creation.");
+      console.log('Admin già esistente.');
     }
-
-  } catch (err) {
-    console.error("Error while creating admin user:", err.message);
-    throw new Error("Failed to create admin user");
+  } catch (error) {
+    console.error('Errore durante la creazione dell\'admin:', error);
   }
 });
 
