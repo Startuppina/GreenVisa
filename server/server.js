@@ -1241,16 +1241,16 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
 
     if (result.rows.length > 0) {
 
-      const query2 = "SELECT * FROM promocodes_usage WHERE code_id = $1 AND user_id = $2";
+      const query2 = "SELECT * FROM orders WHERE code_id = $1 AND user_id = $2";
       const values2 = [code_id, req.user.user_id];
       const result2 = await pool.query(query2, values2);
       if (result2.rows.length > 0) {
         return res.status(400).json({ msg: "Hai gia usato questo codice" });
       }
 
-      const query3 = "INSERT INTO promocodes_usage (code_id, user_id, usage_date, used) VALUES ($1, $2, $3)";
-      const values3 = [result.rows[0].id, req.user.user_id, new Date(), false];
-      await pool.query(query3, values3); // Esegui l'inserimento senza ulteriore controllo
+      //const query3 = "INSERT INTO promocodes_usage (code_id, user_id, usage_date, used) VALUES ($1, $2, $3)";
+      //const values3 = [result.rows[0].id, req.user.user_id, new Date(), false];
+      //await pool.query(query3, values3); // Esegui l'inserimento senza ulteriore controllo
 
       res.status(200).json({ msg: "Codice valido" });
     } else {
@@ -1298,29 +1298,38 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
     }
 
     let discountCoupon = null;
+    let promoCodeID = null;
 
     // Se esiste un promoCode, verifica la validità e crea il coupon su Stripe
     if (promoCode) {
       const query = `
         SELECT promocodes.discount, promocodes.id 
         FROM promocodes 
-        JOIN promocodes_usage ON promocodes.id = promocodes_usage.code_id 
-        WHERE promocodes.code = $1
+        JOIN orders ON promocodes.id = orders.code_id 
+        WHERE promocodes.code = $1 AND orders.user_id = $2
       `;
-      const values = [promoCode];
+      const values = [promoCode, req.user.user_id];
       const result = await pool.query(query, values);
 
-      if (result.rows.length === 0) {
-        return res.status(400).json({ error: "Codice promozionale non valido" });
+      let discount = 0;
+
+      if (result.rows.length > 0) {
+        discount = 0;
+        console.log("Codice promozionale già utilizzato");
+      } else {
+
+        const query = "SELECT * FROM promocodes JOIN promocodes_publishment ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
+        const values = [promoCode];
+        const result = await pool.query(query, values);
+
+        discount = result.rows[0].discount;
+        promoCodeID = result.rows[0].id;
+
+        discountCoupon = await stripe.coupons.create({
+          percent_off: discount,
+          duration: 'once',
+        });
       }
-
-      const discount = result.rows[0].discount;
-
-      discountCoupon = await stripe.coupons.create({
-        percent_off: discount,
-        duration: 'once',
-      });
-
     }
 
     // Crea la sessione di pagamento con Stripe
@@ -1342,6 +1351,27 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       cancel_url: "http://localhost:3000/Carrello",
     });
 
+    // Crea l'ordine nel database per ogni prodotto
+    for (const product of products) {
+
+      const orderQuery = `
+        INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) 
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `;
+
+      const orderValues = [
+        product.quantity, // Quantità del prodotto
+        product.price, // Prezzo del prodotto
+        req.user.user_id, // ID dell'utente
+        product.id, // ID del prodotto
+        promoCode ? promoCodeID : null, // ID del codice promozionale se presente
+        new Date() // Data dell'ordine
+      ];
+
+      await pool.query(orderQuery, orderValues);
+    }
+
+
     // Restituisci l'URL della sessione di Stripe
     res.status(200).json({ url: session.url });
   } catch (error) {
@@ -1349,6 +1379,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
 
 
 

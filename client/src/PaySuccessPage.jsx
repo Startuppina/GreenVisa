@@ -30,7 +30,6 @@ function PaySuccessPage() {
       }
     };
 
-    //setCodeUsageTrue();
     remove_user_cart();
 
     const timer = setTimeout(() => {
