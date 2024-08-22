@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS products (
     cod VARCHAR(255) NOT NULL,
     category category_type NOT NULL,
     tag VARCHAR(255) NOT NULL,
+    stripe_product_id VARCHAR(255),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (cod)  -- Aggiunto un vincolo di unicità per il codice prodotto
 );
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS promocodes (
     id SERIAL PRIMARY KEY,
     code VARCHAR(10) UNIQUE NOT NULL,
     discount INT NOT NULL,
+    used_by VARCHAR(255),
     start DATE NOT NULL,
     expiration DATE NOT NULL
 );

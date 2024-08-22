@@ -10,49 +10,6 @@ function PaySuccessPage() {
 
   useEffect(() => {
 
-    const remove_user_cart = async () => {
-      const token = localStorage.getItem('token');
-      try {
-        const response = await axios.delete('http://localhost:8080/api/remove-user-cart', {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (response.status === 200) {
-          console.log(response.data);
-          setCartProducts([]);
-          setQuantities({});
-          setIsEmpty(true);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    const createOrder = async () => {
-      const token = localStorage.getItem('token');
-
-      const orderData = localStorage.getItem('productsIDs');
-      const codeID = localStorage.getItem('codeId');
-
-      try {
-
-        const response = await axios.post('http://localhost:8080/api/create-order', {orderData: JSON.parse(orderData), codeID: codeID}, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response.status === 200) {
-          console.log(response.data);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
     createOrder();
     //remove_user_cart();
 
@@ -65,6 +22,49 @@ function PaySuccessPage() {
       clearTimeout(timer);
     }
   }, []);
+
+  const remove_user_cart = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await axios.delete('http://localhost:8080/api/remove-user-cart', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 200) {
+        console.log(response.data);
+        setCartProducts([]);
+        setQuantities({});
+        setIsEmpty(true);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const createOrder = async () => {
+    const token = localStorage.getItem('token');
+
+    const orderData = localStorage.getItem('productsIDs');
+    const codeID = localStorage.getItem('codeId');
+
+    try {
+
+      const response = await axios.post('http://localhost:8080/api/create-order', {orderData: JSON.parse(orderData), codeID: codeID}, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 200) {
+        console.log(response.data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const returnToLogin = () => {
     navigate('/Carrello');

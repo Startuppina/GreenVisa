@@ -174,6 +174,7 @@ function Carrello() {
             }
 
         } catch (error) {
+            setPromoCode('');
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }

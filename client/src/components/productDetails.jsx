@@ -91,7 +91,7 @@ const handleCartInsertion = async () => {
             </div>
             <div className="w-full md:w-[50%] p-4 lg:pl-20 flex flex-col items-center text-arial text-xl text-center">
                 <h1 className="text-arial text-2xl text-center font-bold pb-5 w-full">{product.name}</h1>
-                <p className="m-4">{product.price}</p>
+                <p className="m-4">{product.price} €</p>
                 <p className="pb-5 w-[70%]">{product.info}</p>
                 <div className="flex flex-row gap-5 items-center justify-center" style={{ justifyContent: 'space-between' }}>
                     <div className="font-bold">Stanze</div>

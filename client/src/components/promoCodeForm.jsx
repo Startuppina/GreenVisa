@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import MessagePopUp from './messagePopUp'
 import axios from 'axios'
 import { MutatingDots } from 'react-loader-spinner'
@@ -9,17 +9,36 @@ function PromoCodeForm() {
     const [discount, setDiscount] = useState('');
     const [start, setStart] = useState('');
     const [expiration, setExpiration] = useState('');
+    const [category, setCategory] = useState('');
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    const [categories, setCategories] = useState([]);
+
     const handleCodeChange = (e) => setCode(e.target.value);
     const handleDiscountChange = (e) => setDiscount(e.target.value);
     const handleStartChange = (e) => setStart(e.target.value);
     const handleExpirationChange = (e) => setExpiration(e.target.value);
+    const handleCategoryChange = (e) => setCategory(e.target.value);
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/api/categories');
+                const data = response.data
+                setCategories(["Tutti", ...data]);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                setCategories(['Category 1', 'Category 2', 'Category 3']);
+            }
+        };
+
+        fetchCategories();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,7 +47,7 @@ function PromoCodeForm() {
         setIsLoading(true);
         
         try {
-            const response = await axios.post('http://localhost:8080/api/create-promo-code', { code, discount, start, expiration }, {
+            const response = await axios.post('http://localhost:8080/api/create-promo-code', { code, discount, start, expiration, category }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -115,6 +134,19 @@ function PromoCodeForm() {
                         onChange={handleExpirationChange}
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
                     />
+                </label>
+                <label className="flex flex-col w-full">
+                    <span className="block mb-2">Categoria di utilizzo</span>
+                    <select
+                        value={category}
+                        onChange={handleCategoryChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
+                    >
+                        <option value="" disabled>Seleziona una categoria</option>
+                        {categories.map((cat, index) => (
+                            <option key={index} value={cat}>{cat}</option>
+                        ))}
+                    </select>
                 </label>
             </div>
             
