@@ -4,20 +4,16 @@ import { Link } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
-import { MutatingDots } from 'react-loader-spinner'; // Importa il componente MutatingDots
+import { MutatingDots } from 'react-loader-spinner';
 
 function Carrello() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // Stato per gestire il caricamento
-    const { cartProducts, setCartProducts } = useRecoveryContext();
-    const { quantities, setQuantities } = useRecoveryContext();
-    const {isEmpty, setIsEmpty} = useRecoveryContext();
+    const [isLoading, setIsLoading] = useState(false);
+    const { cartProducts, setCartProducts, quantities, setQuantities, isEmpty, setIsEmpty } = useRecoveryContext();
     const [promoCode, setPromoCode] = useState('');
+    const [discount, setDiscount] = useState(0);
 
-    const handlePromoCodeChange = (event) => {
-        setPromoCode(event.target.value);
-    };
 
     useEffect(() => {
         const getCartProducts = async () => {
@@ -52,7 +48,7 @@ function Carrello() {
         };
 
         getCartProducts();
-    }, []);
+    }, [setCartProducts, setQuantities, setIsEmpty]);
 
     const handleQuantityChange = async (productId, newQuantity) => {
         const token = localStorage.getItem('token');
@@ -78,64 +74,88 @@ function Carrello() {
 
     const handleRemoveProduct = async (productId) => {
         const token = localStorage.getItem('token');
-            try {
-                const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (response.status === 200) {
-                    setCartProducts(prevProducts => prevProducts.filter(product => product.product_id !== productId));
-                    setQuantities(prevQuantities => {
-                        const { [productId]: _, ...rest } = prevQuantities;
-                        return rest;
-                    });
-                    if (cartProducts.length === 1) {
-                        setIsEmpty(true);
-                    }
+        try {
+            const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 }
-            } catch (error) {
-                setMessagePopUp(error.response?.data?.msg || error.message);
-                setButtonPopup(true);
+            });
+            if (response.status === 200) {
+                setCartProducts(prevProducts => prevProducts.filter(product => product.product_id !== productId));
+                setQuantities(prevQuantities => {
+                    const { [productId]: _, ...rest } = prevQuantities;
+                    return rest;
+                });
+                if (cartProducts.length === 1) {
+                    setIsEmpty(true);
+                }
             }
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
     };
 
     const handleCheckout = async () => {
-    setIsLoading(true); // Attiva il caricamento
-    const token = localStorage.getItem('token');
-    try {
+        setIsLoading(true);
+        const token = localStorage.getItem('token');
+
         const productsData = cartProducts.map(product => ({
             id: product.product_id,
             name: product.name,
             price: product.price,
             quantity: quantities[product.product_id]
         }));
+
+        localStorage.setItem('productsIDs', JSON.stringify(cartProducts.map(product => product.id)));
         
+
         // Prepara i dati per il checkout, includendo il promoCode
         const checkoutData = {
             products: productsData,
-            promoCode: promoCode // Includi il codice promozionale
+            promoCode: promoCode
         };
 
-        const response = await axios.post('http://localhost:8080/api/checkout-session', checkoutData, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (response.status === 200) {
-            window.location.href = response.data.url;
-            //localStorage.setItem('promocode', promoCode);
-        }
-    } catch (error) {
-        setMessagePopUp(error.response?.data?.msg || error.message);
-        setButtonPopup(true);
-    } finally {
-        setIsLoading(false); // Disattiva il caricamento in caso di errore
-    }
-}
+        try {
 
+            console.log(promoCode);
+
+            const response = await axios.post('http://localhost:8080/api/get-code-id', { code: promoCode }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 200) {
+                console.log(response.data);
+                localStorage.setItem('codeId', response.data.codeId);
+            }
+
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        } 
+
+        try {
+            // Esegui il checkout e redirigi l'utente alla pagina appropriata
+            const response = await axios.post('http://localhost:8080/api/checkout-session', checkoutData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                window.location.href = response.data.url;
+            }
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const applyPromoCode = async () => {
         const token = localStorage.getItem('token');
@@ -150,6 +170,7 @@ function Carrello() {
             if (response.status === 200) {
                 setMessagePopUp(response.data.msg);
                 setButtonPopup(true);
+                setDiscount(response.data.discount);
             }
 
         } catch (error) {
@@ -162,6 +183,9 @@ function Carrello() {
         return cartProducts.reduce((total, product) => total + (product.price * (quantities[product.product_id] || 1)), 0);
     }
 
+    const calculateDiscount = () => {
+        return calculateSubtotal() * (discount / 100);
+    }
     const calculateTotal = () => {
         return calculateSubtotal(); // Add additional charges (like taxes) if applicable
     }
@@ -212,16 +236,20 @@ function Carrello() {
             <div className="w-[90%] md:w-[70%] h-auto p-5 text-arial text-xl mx-auto">
                 <p>Codice Promozionale</p>
                 <div className="w-full h-auto flex flex-col md:flex-row gap-4 md:gap-12 items-center justify-between mb-10">
-                    <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5' onChange={handlePromoCodeChange}/>
+                    <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5' onChange={(e) => setPromoCode(e.target.value)}/>
                     <button type="submit" className="w-full md:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" onClick={applyPromoCode}>Applica</button>
                 </div>
                 <div className="w-full h-auto flex flex-row items-center justify-between">
                     <p>Subtotale</p>
                     <p>{calculateSubtotal().toFixed(2)} €</p>
                 </div>
+                <div className="w-full h-auto flex flex-row items-center justify-between">
+                    <p>Sconto {discount}%</p>
+                    <p>-{calculateDiscount().toFixed(2)} €</p>
+                </div>
                 <div className="w-full h-auto flex flex-row items-center justify-between font-bold">
                     <p>Totale</p>
-                    <p>{calculateTotal().toFixed(2)} €</p>
+                    <p>{(calculateTotal() - calculateDiscount()).toFixed(2)} €</p>
                 </div>
 
                 {isLoading ? (

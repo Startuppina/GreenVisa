@@ -86,9 +86,9 @@ CREATE TABLE IF NOT EXISTS orders (
     product_id INTEGER NOT NULL,
     code_id INTEGER DEFAULT NULL, -- Il codice promozionale associato all'ordine --
     order_date DATE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (code_id) REFERENCES promocodes(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+    FOREIGN KEY (code_id) REFERENCES promocodes(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS credit_cards (
