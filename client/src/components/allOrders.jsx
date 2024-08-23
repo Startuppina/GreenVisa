@@ -33,13 +33,13 @@ function AllOrders() {
         <div className='w-[98.5%] h-[500px] overflow-y-auto mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6'>
             <h2 className='text-2xl font-bold mb-4'>Ordini degli Utenti</h2>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 justify-center">
                 {message ? (
                     <p>{message}</p>
                 ) : (
                     orders.map((order) => 
                         <>
-                        <div key={order.order_id} className=" p-4 w-[500px] rounded-lg border-2">
+                        <div key={order.order_id} className=" p-4 w-full md:w-[500px] rounded-lg border-2">
                             <h3 className="text-lg font-bold mb-4">Ordine {order.order_id}</h3>
                             <div className="flex items-center mb-4">
                                 <img 

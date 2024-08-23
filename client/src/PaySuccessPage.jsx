@@ -14,9 +14,10 @@ function PaySuccessPage() {
     createOrder();
     //remove_user_cart();
 
+    localStorage.removeItem('productsIDs');
+    localStorage.removeItem('codeId');
+
     const timer = setTimeout(() => {
-      localStorage.removeItem('productsIDs');
-      localStorage.removeItem('codeId');
       navigate('/Carrello');
     }, 50000);
     return () => {
@@ -26,6 +27,7 @@ function PaySuccessPage() {
 
   const remove_user_cart = async () => {
     const token = localStorage.getItem('token');
+
     try {
       const response = await axios.delete('http://localhost:8080/api/remove-user-cart', {
         headers: {
