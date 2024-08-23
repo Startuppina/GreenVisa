@@ -108,8 +108,8 @@ function Carrello() {
             quantity: quantities[product.product_id]
         }));
 
-        localStorage.setItem('productsIDs', JSON.stringify(cartProducts.map(product => product.id)));
-        
+        localStorage.setItem('productsIDs', JSON.stringify(cartProducts.map(product => product.product_id)));
+        console.log(JSON.parse(localStorage.getItem('productsIDs')));
 
         // Prepara i dati per il checkout, includendo il promoCode
         const checkoutData = {
@@ -129,6 +129,7 @@ function Carrello() {
             });
             if (response.status === 200) {
                 console.log(response.data);
+                console.log(response.data.codeId);
                 localStorage.setItem('codeId', response.data.codeId);
             }
 
@@ -174,6 +175,7 @@ function Carrello() {
             }
 
         } catch (error) {
+            setPromoCode('');
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
@@ -239,17 +241,18 @@ function Carrello() {
                     <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5' onChange={(e) => setPromoCode(e.target.value)}/>
                     <button type="submit" className="w-full md:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" onClick={applyPromoCode}>Applica</button>
                 </div>
-                <div className="w-full h-auto flex flex-row items-center justify-between">
+                {/*<div className="w-full h-auto flex flex-row items-center justify-between">
                     <p>Subtotale</p>
                     <p>{calculateSubtotal().toFixed(2)} €</p>
-                </div>
-                <div className="w-full h-auto flex flex-row items-center justify-between">
-                    <p>Sconto {discount}%</p>
-                    <p>-{calculateDiscount().toFixed(2)} €</p>
-                </div>
+                </div>*/}
                 <div className="w-full h-auto flex flex-row items-center justify-between font-bold">
                     <p>Totale</p>
-                    <p>{(calculateTotal() - calculateDiscount()).toFixed(2)} €</p>
+                    {/*<p>{(calculateTotal() - calculateDiscount()).toFixed(2)} €</p>*/}
+                    <p>{calculateTotal().toFixed(2)} €</p>
+                </div>
+                <div className="w-full h-auto flex flex-row items-center justify-between">
+                    <p>- Sconto {discount}% applicato sulle certificazioni compatibili <br/> (riduzione applicata in fase di checkout)</p>
+                    
                 </div>
 
                 {isLoading ? (

@@ -131,6 +131,7 @@ function PromoCodes() {
                             <h1 className="text-3xl font-bold text-center">{code.code}</h1>
                             {visibleDetails === code.id && (
                                 <>
+                                    <p className="text-center text-sm">Utilizzo: {code.used_by}</p>
                                     <p className="text-center text-sm mt-2">Sconto {code.discount}%</p>
                                     <p className="text-center text-sm">Da {code.start} <br />a {code.expiration}</p>
                                 </>

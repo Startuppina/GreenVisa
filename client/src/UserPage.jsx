@@ -10,6 +10,7 @@ import MessagePopUp from './components/messagePopUp';
 import ConfirmPopUp from './components/confirmPopUp';
 import Dashboard from './components/content_dashboard';
 import CodeUsage from './components/codeUsage';
+import UserOrders from './components/userOrders';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrown } from '@fortawesome/free-solid-svg-icons';
 
@@ -228,25 +229,23 @@ const UserPage = () => {
                         <FontAwesomeIcon icon={faCrown} className="text-yellow-500 ml-2 rotate-45 relative bottom-5 right-4" title="Admin" />
                     )}
                 </h1>
-
-                <div className='flex flex-col md:flex-row items-center justify-center gap-4 mb-[5%]'>
-                    <div className='w-full md:w-[45%] bg-[#d9d9d9] p-4 rounded-lg'>
+                
+                <div className='flex flex-col md:flex-row items-center justify-center gap-4 mx-2 md:mx-14 mb-4'>
+                    <div className='w-full bg-[#d9d9d9] p-4 rounded-lg  h-[220px]'>
                         <h2 className='text-2xl font-bold'>Informazioni personali</h2>
                         <div className='pb-5'>
                             <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
                             <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
                             <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
                         </div>
+                        <div className='flex justify-center'>
+                            <button className='p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]' onClick={() => setShowModifier(!showModifier)}>Modifica</button>
+                        </div>
                     </div>
-                    <div className='w-full md:w-[45%] bg-[#d9d9d9] p-4 rounded-lg'>
-                        <h2 className='text-2xl font-bold'>Certificazioni acquistate</h2>
-                        <p>Titolo: Green Visa</p>
-                    </div>
+                    <CodeUsage/>
                 </div>
 
-                <CodeUsage/>
-
-                <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 w-[97%] m-4 border shadow-lg rounded-lg mx-auto ${showModifier ? '' : 'hidden'}`}>
+                <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 mx-2 md:mx-14 my-4 border shadow-lg rounded-lg ${showModifier ? '' : 'hidden'}`}>
                     <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
 
                     <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleUsernameModifier}>
@@ -260,13 +259,13 @@ const UserPage = () => {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             />
                             <div className='flex justify-center'>
-                                <input type='submit' value='Modifica username' className="my-3 p-2 w-[200px] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                                <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                             </div>
                         </div>
                         
                     </form>
 
-                    <form className='mx-auto w-full md:w-[80%]' onSubmit={handlePhoneModifier}>
+                    <form className='mx-auto md:w-[80%]' onSubmit={handlePhoneModifier}>
                         <label htmlFor="phone" className="block mb-2">Telefono</label>
                         <div className='flex flex-col md:flex-row gap-3 items-center justify-center'> 
                             <PhoneInput
@@ -279,7 +278,7 @@ const UserPage = () => {
                                 preferredCountries={['it']}
                             />
                             <div className='flex justify-center'>
-                                <input type='submit' value='Modifica telefono' className="my-3 p-2 w-[200px] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                                <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                             </div>
                         </div>
                     </form>
@@ -295,12 +294,14 @@ const UserPage = () => {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             />
                             <div className='flex justify-center'>
-                                <input type='submit' value='Modifica email' className="my-3 p-2 w-[200px] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                                <input type='submit' value='Modifica email' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                             </div>
                         </div>
                         
                     </form>
+                
                 </div>
+                <UserOrders />
                 {isAdmin && <Dashboard />}
                 <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
                     <div className="w-full md:w-[20%] flex justify-center">

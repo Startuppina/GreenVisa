@@ -38,12 +38,15 @@ const CodeUsage = () => {
 
 
   return (
-    <div className='w-full flex flex-col md:flex-row items-center justify-center gap-4 mb-[5%]'>
-      <div className='w-full m-14 bg-[#d9d9d9] p-4 rounded-lg'>
+    <div className='w-full flex flex-col md:flex-row items-center justify-center gap-4'>
+      <div className='w-full h-[220px] bg-yellow-500 p-4 rounded-lg overflow-y-auto'>
         <h2 className='text-2xl font-bold mb-4'>Codici Utilizzabili</h2>
         {codici.map((codice, index) => (
             <div className='mb-3 flex items-center justify-between bg-white p-4 rounded-lg shadow'>
-                <span className='text-lg font-mono'>{codice.code}</span>
+                <div className='flex flex-col md:flex-row md:space-x-20'>
+                  <span className='text-lg font-mono text-red-500 w-[100px]'>{codice.code}</span>
+                  <span className='text-lg font-mono'>Utilizzo: {codice.used_by}</span>
+                </div>
                 <button
                 onClick={() => handleCopy(codice.code)}
                 className='bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300'

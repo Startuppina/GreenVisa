@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MutatingDots } from 'react-loader-spinner'
 import { useRecoveryContext } from './provider/provider';
@@ -7,51 +7,9 @@ import axios from 'axios';
 function PaySuccessPage() {
   const { setCartProducts, setQuantities, setIsEmpty } = useRecoveryContext();
   const navigate = useNavigate();
+  const [code, setCode] = useState(null);
 
   useEffect(() => {
-
-    const remove_user_cart = async () => {
-      const token = localStorage.getItem('token');
-      try {
-        const response = await axios.delete('http://localhost:8080/api/remove-user-cart', {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (response.status === 200) {
-          console.log(response.data);
-          setCartProducts([]);
-          setQuantities({});
-          setIsEmpty(true);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    const createOrder = async () => {
-      const token = localStorage.getItem('token');
-
-      const orderData = localStorage.getItem('productsIDs');
-      const codeID = localStorage.getItem('codeId');
-
-      try {
-
-        const response = await axios.post('http://localhost:8080/api/create-order', {orderData: JSON.parse(orderData), codeID: codeID}, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response.status === 200) {
-          console.log(response.data);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
 
     createOrder();
     //remove_user_cart();
@@ -65,6 +23,57 @@ function PaySuccessPage() {
       clearTimeout(timer);
     }
   }, []);
+
+  const remove_user_cart = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await axios.delete('http://localhost:8080/api/remove-user-cart', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 200) {
+        console.log(response.data);
+        setCartProducts([]);
+        setQuantities({});
+        setIsEmpty(true);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const createOrder = async () => {
+    const token = localStorage.getItem('token');
+
+    const orderData = localStorage.getItem('productsIDs');
+    const codeID = localStorage.getItem('codeId');
+    console.log("codeID:", codeID);
+    
+    if (codeID !== undefined) {
+      setCode(codeID);
+    } else {
+      setCode(null);
+    }
+
+    try {
+      //IL POST VERRA FATTO DUE VOLTE, QUINDI DUE ORDINI INVECE CHE UNO IN QUANTO IN MAIN.JS C'E'
+      //REACT STRICT MODE CHE IN AMBIENTE DI PRODUZIONE E' DISABILITATO
+      const response = await axios.post('http://localhost:8080/api/create-order', {orderData: JSON.parse(orderData), codeID: code}, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 200) {
+        console.log(response.data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const returnToLogin = () => {
     navigate('/Carrello');

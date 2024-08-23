@@ -859,20 +859,32 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
       return res.status(400).json({ msg: "La descrizione è troppo lunga. Max 100 caratteri" });
     }
 
-    // Inserisco il prodotto nel database
+    // Crea il prodotto su Stripe
+    const stripeProduct = await stripe.products.create({
+      name: name,
+      description: info,
+      metadata: {
+        category: category,
+        tag: tag,
+        cod: cod
+      }
+    });
+
+    // Inserisco il prodotto nel database con l'ID Stripe
     const query = `
-      INSERT INTO products (user_id, name, price, image, info, cod, category, tag) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO products (user_id, name, price, image, info, cod, category, tag, stripe_product_id) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `;
-    const values = [user_id, name, parsedPrice, image.filename, info, cod, category, tag];
+    const values = [user_id, name, parsedPrice, image.filename, info, cod, category, tag, stripeProduct.id];
 
     await pool.query(query, values);
     res.status(200).json({ msg: "Prodotto caricato con successo" });
   } catch (error) {
     console.error("Errore durante il caricamento del prodotto:", error);
-    res.status(500).json({ msg: "Errore durante il caricamento dell'immagine" });
+    res.status(500).json({ msg: "Errore durante il caricamento del prodotto" });
   }
 });
+
 
 
 app.get("/api/products-info", authenticateJWT, async (req, res) => {
@@ -966,7 +978,7 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
     const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ msg: "Prodotto non trovato" });
+      return res.status(404).json({ msg: "Certificazione non trovata" });
     }
 
     //constrolla se il prodotto e' gia nel carrello dell'utente
@@ -974,17 +986,17 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
     const values1 = [user_id, id];
     const result1 = await pool.query(query1, values1);
     if (result1.rows.length > 0) {
-      return res.status(400).json({ msg: "Prodotto già presente nel carrello" });
+      return res.status(400).json({ msg: "La certificazione e' gia nel carrello" });
     }
 
     // Aggiungi il prodotto al carrello
     const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, price) VALUES ($1, $2, $3, $4, $5, $6)";
     const values2 = [user_id, id, name, image, quantity, price];
     await pool.query(query2, values2);
-    res.status(200).json({ msg: "Prodotto aggiunto al carrello con successo" });
+    res.status(200).json({ msg: "Certificazione al carrello con successo" });
   } catch (error) {
-    console.error("Errore nell'aggiungere il prodotto al carrello:", error);
-    res.status(500).json({ msg: "Errore nell'aggiungere il prodotto al carrello" });
+    console.error("Errore nell'aggiungere la certificazione al carrello:", error);
+    res.status(500).json({ msg: "Errore nell'aggiungere la certificazione al carrello" });
   }
 });
 
@@ -1173,9 +1185,9 @@ app.put("/api/edit-product/:id", authenticateJWT, authenticateAdmin, upload.sing
 
 app.post("/api/create-promo-code", authenticateJWT, authenticateAdmin, async (req, res) => {
   try {
-    const { code, discount, start, expiration } = req.body;
-    if (!code || !discount || !start || !expiration) {
-      return res.status(400).json({ msg: "I campi codice, sconto, inizio e fine sono obbligatori" });
+    const { code, discount, start, expiration, category } = req.body;
+    if (!code || !discount || !start || !expiration || !category) {
+      return res.status(400).json({ msg: "Completa tutti i campi" });
     } else if (code.length > 10) {
       return res.status(400).json({ msg: "Il codice non deve superare i 10 caratteri" });
     } else if (start > expiration) {
@@ -1184,8 +1196,8 @@ app.post("/api/create-promo-code", authenticateJWT, authenticateAdmin, async (re
       return res.status(400).json({ msg: "Data di inizio non corretta" });
     }
 
-    const query = "INSERT INTO promocodes (code, discount, start, expiration) VALUES ($1, $2, $3, $4)";
-    const values = [code, discount, start, expiration];
+    const query = "INSERT INTO promocodes (code, discount, used_by, start, expiration) VALUES ($1, $2, $3, $4, $5)";
+    const values = [code, discount, category, start, expiration];
     const result = await pool.query(query, values);
     res.status(200).json({ msg: "Certificazione aggiornata con successo" });
   } catch (error) {
@@ -1209,7 +1221,7 @@ app.get("/api/fetch-promo-codes", authenticateJWT, authenticateAdmin, async (req
 app.get("/api/fetch-published-codes", authenticateJWT, async (req, res) => {
 
   try {
-    const query = "SELECT code FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id";
+    const query = "SELECT code, used_by FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id";
     const result = await pool.query(query);
     res.status(200).json({ codes: result.rows });
   } catch (error) {
@@ -1242,18 +1254,7 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
 
     if (result.rows.length > 0) {
 
-      const query2 = "SELECT * FROM orders WHERE code_id = $1 AND user_id = $2";
-      const values2 = [code_id, req.user.user_id];
-      const result2 = await pool.query(query2, values2);
-      if (result2.rows.length > 0) {
-        return res.status(400).json({ msg: "Hai gia usato questo codice" });
-      }
-
-      //const query3 = "INSERT INTO promocodes_usage (code_id, user_id, usage_date, used) VALUES ($1, $2, $3)";
-      //const values3 = [result.rows[0].id, req.user.user_id, new Date(), false];
-      //await pool.query(query3, values3); // Esegui l'inserimento senza ulteriore controllo
-
-      res.status(200).json({ msg: "Codice valido", discount: result.rows[0].discount });
+      res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount });
     } else {
       res.status(400).json({ msg: "Codice non valido" }); // Cambiato a 400 per errore client
     }
@@ -1270,16 +1271,16 @@ app.post("/api/get-code-id", authenticateJWT, async (req, res) => {
   try {
     const { code } = req.body;
     console.log(`Codice: ${code}`);
-    const query = "SELECT promocode_id FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
-    const values = [code];
-    const result = await pool.query(query, values);
-
-    if (result.rows.length > 0) {
-      res.status(200).json({ codeId: result.rows[0].promocode_id });
+    if (code === "") {
+      res.status(200).json({ msg: "nessun codice inserito" });
     } else {
-      res.status(400).json({ msg: "Errore" }); // Cambiato a 400 per errore client
+      const query = "SELECT promocode_id FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
+      const values = [code];
+      const result = await pool.query(query, values);
 
+      res.status(200).json({ codeId: result.rows[0].promocode_id });
     }
+
 
   } catch (error) {
     console.error("Errore nella richiesta dell'id del codice:", error);
@@ -1302,133 +1303,195 @@ app.delete("/api/delete-promo-code/:id", authenticateJWT, authenticateAdmin, asy
 })
 
 
-
 app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
   try {
-    const { products, promoCode } = req.body; // Recupera prodotti e codice promozionale dal body della richiesta
-    console.log("Codici promozionali:", promoCode);
-    // Verifica l'esistenza di ogni prodotto
-    for (const product of products) {
-      const { id } = product;
+    const { promoCode, products } = req.body; // products deve contenere id, name, price e quantity
+    const { user_id } = req.user;
 
-      const query = "SELECT * FROM products WHERE id = $1";
-      const values = [id];
-      const result = await pool.query(query, values);
-
-      if (result.rows.length === 0) {
-        throw new Error(`Product ${id} not found`);
-      }
-    }
-
-    let discountCoupon = null;
-    let promoCodeID = null;
-
-    // Se esiste un promoCode, verifica la validità e crea il coupon su Stripe
+    // Verifica la validità del codice promozionale
+    let promo = null;
     if (promoCode) {
-      const query = `
-        SELECT promocodes.discount, promocodes.id 
-        FROM promocodes 
-        JOIN orders ON promocodes.id = orders.code_id 
-        WHERE promocodes.code = $1 AND orders.user_id = $2
-      `;
-      const values = [promoCode, req.user.user_id];
-      const result = await pool.query(query, values);
+      const promoQuery = "SELECT * FROM promocodes WHERE code = $1 AND start <= CURRENT_DATE AND expiration >= CURRENT_DATE";
+      const promoValues = [promoCode];
+      const promoResult = await pool.query(promoQuery, promoValues);
 
-      let discount = 0;
-
-      if (result.rows.length > 0) {
-        discount = 0;
-        console.log("Codice promozionale già utilizzato");
+      if (promoResult.rows.length > 0) {
+        promo = promoResult.rows[0];
       } else {
-
-        const query = "SELECT * FROM promocodes JOIN promocodes_publishment ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
-        const values = [promoCode];
-        const result = await pool.query(query, values);
-
-        discount = result.rows[0].discount;
-        promoCodeID = result.rows[0].promocode_id;
-
-        discountCoupon = await stripe.coupons.create({
-          percent_off: discount,
-          duration: 'once',
-        });
+        return res.status(400).json({ msg: "Codice promozionale non valido" });
       }
     }
 
-    // Crea la sessione di pagamento con Stripe
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      line_items: products.map(product => ({
+    // Calcola l'importo totale e applica sconti solo sui prodotti compatibili
+    const items = [];
+
+    for (const product of products) {
+      const { id, name, price, quantity } = product;
+
+      // Recupera informazioni sul prodotto dal database
+      const productQuery = "SELECT * FROM products WHERE id = $1";
+      const productValues = [id];
+      const productResult = await pool.query(productQuery, productValues);
+
+      if (productResult.rows.length === 0) {
+        return res.status(400).json({ msg: `Prodotto con ID ${id} non trovato` });
+      }
+
+      const productInfo = productResult.rows[0];
+
+      if (promo && promo.used_by === "Tutti") {
+        // Applica sconto ai prodotti compatibili
+        productPrice = price * (1 - promo.discount / 100);
+      } else if (promo && promo.used_by.includes(productInfo.category)) {
+        // Applica sconto ai prodotti compatibili
+        productPrice = price * (1 - promo.discount / 100);
+      } else {
+        productPrice = price;
+      }
+
+      items.push({
         price_data: {
-          currency: "eur",
+          currency: 'eur', // Cambia la valuta se necessario
           product_data: {
-            name: product.name,
+            name: name,
           },
-          unit_amount: Math.round(product.price * 100), // Prezzo pieno in centesimi
+          unit_amount: productPrice * 100, // Stripe richiede l'importo in centesimi
         },
-        quantity: product.quantity,
-      })),
-      discounts: discountCoupon ? [{ coupon: discountCoupon.id }] : [],
+        quantity: quantity,
+      });
+    }
+
+    // Crea una sessione di checkout su Stripe
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: items,
+      mode: 'payment',
       success_url: "http://localhost:3000/PaymentSuccess",
       cancel_url: "http://localhost:3000/Carrello",
+      metadata: {
+        user_id: user_id,
+        promo_code: promoCode || '',
+      },
+      // Nota: Stripe non supporta direttamente l'applicazione di sconti personalizzati
+      // quindi devi calcolare l'importo finale nel server e passarlo come importo totale
     });
 
-    // Restituisci l'URL della sessione di Stripe
     res.status(200).json({ url: session.url });
   } catch (error) {
-    console.error('Errore nella sessione di pagamento', error);
-    res.status(400).json({ error: error.message });
+    console.error("Errore durante la creazione della sessione di checkout:", error);
+    res.status(500).json({ msg: "Errore durante la creazione della sessione di checkout" });
   }
 });
 
-
 app.post("/api/create-order", authenticateJWT, async (req, res) => {
-
   try {
-    const { orderData, codeID } = req.body; // Recupera prodotti e codice promozionale dal body della richiesta
-    console.log("Prodotti:", orderData);
-    console.log("Codice promozionale:", codeID);
+    const { orderData, codeID } = req.body;
+    const { user_id } = req.user;
 
-    console.log("lunghezza orderData:", orderData.length);
+    console.log("Dati dell'ordine:", orderData);
+    console.log("User ID:", user_id);
 
-    // Crea l'ordine nel database per ogni prodotto
     for (const id of orderData) {
+      // Recupera quantità e prezzo dal carrello
+      const query = "SELECT quantity, price FROM cart WHERE user_id = $1 AND product_id = $2";
+      const values = [user_id, id];
+      const result = await pool.query(query, values);
 
-      console.log("ciao");
+      console.log("Risultato query:", result.rows);
 
-      const productQuery = "SELECT * FROM cart WHERE product_id = $1";
-      const productValues = [id];
-      const productResult = await pool.query(productQuery, productValues);
-      const quantity = productResult.rows[0].quantity;
-      const price = productResult.rows[0].price;
+      // Verifica se il prodotto esiste nel carrello
+      if (result.rows.length === 0) {
+        return res.status(404).json({ msg: `Prodotto con ID ${id} non trovato nel carrello.` });
+      }
 
-      const orderQuery = `
-        INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) 
-        VALUES ($1, $2, $3, $4, $5, $6)
-      `;
+      const quantity = result.rows[0].quantity;
+      const price = result.rows[0].price;
+      const order_date = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-      const orderValues = [
-        quantity, // Quantità del prodotto
-        price, // Prezzo del prodotto
-        req.user.user_id, // ID dell'utente
-        id, // ID del prodotto
-        codeID ? codeID : null, // ID del codice promozionale se presente
-        new Date() // Data dell'ordine
-      ];
+      // Inserisci l'ordine nella tabella
+      const query2 = "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)";
+      const values2 = [quantity, price, user_id, id, codeID, order_date];
+      await pool.query(query2, values2);
 
-      await pool.query(orderQuery, orderValues);
+      console.log(`Ordine creato per prodotto ID ${id}`);
     }
 
-    res.status(200).json({ msg: "Ordine creato con successo" });
+    // Risposta positiva al termine dell'inserimento
+    res.status(201).json({ msg: "Ordine creato con successo." });
+
   } catch (error) {
-    console.error("Errore nella creazione dell'ordine:", error);
-    res.status(500).json({ msg: "Internal server error" });
+    console.error("Errore durante la creazione dell'ordine:", error);
+    res.status(500).json({ msg: "Errore durante la creazione dell'ordine" });
   }
-})
+});
 
+app.get("/api/user-orders", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
 
+    const query = `
+          SELECT 
+              orders.id AS order_id, 
+              orders.quantity AS quantity, 
+              orders.price AS price, 
+              orders.order_date AS order_date, 
+              products.name AS product_name, 
+              products.image AS product_image 
+          FROM 
+              orders 
+          JOIN 
+              products ON orders.product_id = products.id 
+          WHERE 
+              orders.user_id = $1
+      `;
+    const values = [user_id];
+    const result = await pool.query(query, values);
 
+    if (result.rows.length === 0) {
+      return res.status(200).json({ msg: "Nessun ordine trovato" });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Errore nel recupero degli ordini:", error);
+    res.status(500).json({ msg: "Errore nel recupero degli ordini" });
+  }
+});
+
+app.get("/api/all-orders", authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+    const { user_id, role } = req.user;
+
+    //verifica che l'utente sia un amministratore
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
+
+    const query = `
+          SELECT 
+              orders.id AS order_id, 
+              orders.quantity AS quantity, 
+              orders.price AS price, 
+              orders.order_date AS order_date, 
+              products.name AS product_name, 
+              products.image AS product_image 
+          FROM 
+              orders 
+          JOIN 
+              products ON orders.product_id = products.id
+      `;
+    const result = await pool.query(query);
+
+    if (result.rows.length === 0) {
+      return res.status(200).json({ msg: "Nessun ordine trovato" });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Errore nel recupero degli ordini:", error);
+    res.status(500).json({ msg: "Errore nel recupero degli ordini" });
+  }
+});
 
 
 
