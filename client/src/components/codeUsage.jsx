@@ -39,7 +39,7 @@ const CodeUsage = () => {
 
   return (
     <div className='w-full flex flex-col md:flex-row items-center justify-center gap-4'>
-      <div className='w-full m-14 bg-[#d9d9d9] p-4 rounded-lg'>
+      <div className='w-full h-[220px] bg-yellow-500 p-4 rounded-lg overflow-y-auto'>
         <h2 className='text-2xl font-bold mb-4'>Codici Utilizzabili</h2>
         {codici.map((codice, index) => (
             <div className='mb-3 flex items-center justify-between bg-white p-4 rounded-lg shadow'>

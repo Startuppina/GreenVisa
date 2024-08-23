@@ -8,6 +8,7 @@ import ProductsForm from "./products_form";
 import TextEditor from "./textEditor";
 import PromoCodeForm from "./promoCodeForm";
 import PromoCodes from "./promoCodes";
+import AllOrders from "./allOrders";
 import "react-quill/dist/quill.snow.css";
 import { useNavigate } from "react-router-dom";
 
@@ -30,6 +31,7 @@ const Dashboard = () => {
   const [showMessages, setShowMessages] = useState(false);
   const [showPromocodes, setShowPromocodes] = useState(false);
   const [showForms, setShowForms] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
 
   const navigate = useNavigate();
 
@@ -228,7 +230,7 @@ const Dashboard = () => {
 
       <div className="flex flex-col">
         <button
-          className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+          className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
           onClick={() => setShowNews(!showNews)}
         >
           {showNews ? "Nascondi News" : "Mostra News"}
@@ -366,7 +368,7 @@ const Dashboard = () => {
         )}
 
         <button
-          className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+          className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
           onClick={() => setShowProducts(!showProducts)}
         >
           {showProducts ? "Nascondi Certificazioni" : "Mostra Certificazioni"}
@@ -582,7 +584,7 @@ const Dashboard = () => {
         )}
       </div>
       <button
-        className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
         onClick={() => setShowMessages(!showMessages)}
       >
         {showMessages ? "Nascondi Messaggi" : "Mostra Messaggi"}
@@ -590,15 +592,23 @@ const Dashboard = () => {
       {showMessages && <MessagesDashboard />}
 
       <button
-        className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
+        onClick={() => setShowOrders(!showOrders)}
+      >
+        {showOrders ? "Nascondi Ordini utenti" : "Mostra Ordini utenti"}
+      </button>
+      {showOrders && <AllOrders />}
+
+      <button
+        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
         onClick={() => setShowPromocodes(!showPromocodes)}
       >
-        {showMessages ? "Nascondi Codici Promozionali" : "Mostra Codici Promozionali"}
+        {showPromocodes ? "Nascondi Codici Promozionali" : "Mostra Codici Promozionali"}
       </button>
       {showPromocodes && <PromoCodes />}
 
       <button
-        className="bg-[#d9d9d9] text-black px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105"
+        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
         onClick={() => setShowForms(!showForms)}
       >
         {showForms ? "Nascondi Forms" : "Mostra Forms"}
@@ -606,6 +616,8 @@ const Dashboard = () => {
       {showForms && <NewsForm />}
       {showForms && <ProductsForm />}
       {showForms && <PromoCodeForm />}
+
+
     </div>
   );
 };

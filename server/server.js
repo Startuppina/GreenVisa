@@ -978,7 +978,7 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
     const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ msg: "Prodotto non trovato" });
+      return res.status(404).json({ msg: "Certificazione non trovata" });
     }
 
     //constrolla se il prodotto e' gia nel carrello dell'utente
@@ -986,17 +986,17 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
     const values1 = [user_id, id];
     const result1 = await pool.query(query1, values1);
     if (result1.rows.length > 0) {
-      return res.status(400).json({ msg: "Prodotto già presente nel carrello" });
+      return res.status(400).json({ msg: "La certificazione e' gia nel carrello" });
     }
 
     // Aggiungi il prodotto al carrello
     const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, price) VALUES ($1, $2, $3, $4, $5, $6)";
     const values2 = [user_id, id, name, image, quantity, price];
     await pool.query(query2, values2);
-    res.status(200).json({ msg: "Prodotto aggiunto al carrello con successo" });
+    res.status(200).json({ msg: "Certificazione al carrello con successo" });
   } catch (error) {
-    console.error("Errore nell'aggiungere il prodotto al carrello:", error);
-    res.status(500).json({ msg: "Errore nell'aggiungere il prodotto al carrello" });
+    console.error("Errore nell'aggiungere la certificazione al carrello:", error);
+    res.status(500).json({ msg: "Errore nell'aggiungere la certificazione al carrello" });
   }
 });
 
@@ -1254,13 +1254,6 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
 
     if (result.rows.length > 0) {
 
-      /*const query2 = "SELECT * FROM orders WHERE code_id = $1 AND user_id = $2";
-      const values2 = [code_id, req.user.user_id];
-      const result2 = await pool.query(query2, values2);
-      if (result2.rows.length > 0) {
-        return res.status(400).json({ msg: "Hai gia usato questo codice" });
-      }*/
-
       res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount });
     } else {
       res.status(400).json({ msg: "Codice non valido" }); // Cambiato a 400 per errore client
@@ -1278,16 +1271,16 @@ app.post("/api/get-code-id", authenticateJWT, async (req, res) => {
   try {
     const { code } = req.body;
     console.log(`Codice: ${code}`);
-    const query = "SELECT promocode_id FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
-    const values = [code];
-    const result = await pool.query(query, values);
-
-    if (result.rows.length > 0) {
-      res.status(200).json({ codeId: result.rows[0].promocode_id });
+    if (code === "") {
+      res.status(200).json({ msg: "nessun codice inserito" });
     } else {
-      res.status(400).json({ msg: "Errore" }); // Cambiato a 400 per errore client
+      const query = "SELECT promocode_id FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
+      const values = [code];
+      const result = await pool.query(query, values);
 
+      res.status(200).json({ codeId: result.rows[0].promocode_id });
     }
+
 
   } catch (error) {
     console.error("Errore nella richiesta dell'id del codice:", error);
@@ -1377,7 +1370,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       cancel_url: "http://localhost:3000/Carrello",
       metadata: {
         user_id: user_id,
-        promo_code: promoCode || ''
+        promo_code: promoCode || '',
       },
       // Nota: Stripe non supporta direttamente l'applicazione di sconti personalizzati
       // quindi devi calcolare l'importo finale nel server e passarlo come importo totale
@@ -1387,6 +1380,116 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
   } catch (error) {
     console.error("Errore durante la creazione della sessione di checkout:", error);
     res.status(500).json({ msg: "Errore durante la creazione della sessione di checkout" });
+  }
+});
+
+app.post("/api/create-order", authenticateJWT, async (req, res) => {
+  try {
+    const { orderData, codeID } = req.body;
+    const { user_id } = req.user;
+
+    console.log("Dati dell'ordine:", orderData);
+    console.log("User ID:", user_id);
+
+    for (const id of orderData) {
+      // Recupera quantità e prezzo dal carrello
+      const query = "SELECT quantity, price FROM cart WHERE user_id = $1 AND product_id = $2";
+      const values = [user_id, id];
+      const result = await pool.query(query, values);
+
+      console.log("Risultato query:", result.rows);
+
+      // Verifica se il prodotto esiste nel carrello
+      if (result.rows.length === 0) {
+        return res.status(404).json({ msg: `Prodotto con ID ${id} non trovato nel carrello.` });
+      }
+
+      const quantity = result.rows[0].quantity;
+      const price = result.rows[0].price;
+      const order_date = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+      // Inserisci l'ordine nella tabella
+      const query2 = "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)";
+      const values2 = [quantity, price, user_id, id, codeID, order_date];
+      await pool.query(query2, values2);
+
+      console.log(`Ordine creato per prodotto ID ${id}`);
+    }
+
+    // Risposta positiva al termine dell'inserimento
+    res.status(201).json({ msg: "Ordine creato con successo." });
+
+  } catch (error) {
+    console.error("Errore durante la creazione dell'ordine:", error);
+    res.status(500).json({ msg: "Errore durante la creazione dell'ordine" });
+  }
+});
+
+app.get("/api/user-orders", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+
+    const query = `
+          SELECT 
+              orders.id AS order_id, 
+              orders.quantity AS quantity, 
+              orders.price AS price, 
+              orders.order_date AS order_date, 
+              products.name AS product_name, 
+              products.image AS product_image 
+          FROM 
+              orders 
+          JOIN 
+              products ON orders.product_id = products.id 
+          WHERE 
+              orders.user_id = $1
+      `;
+    const values = [user_id];
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(200).json({ msg: "Nessun ordine trovato" });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Errore nel recupero degli ordini:", error);
+    res.status(500).json({ msg: "Errore nel recupero degli ordini" });
+  }
+});
+
+app.get("/api/all-orders", authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+    const { user_id, role } = req.user;
+
+    //verifica che l'utente sia un amministratore
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
+
+    const query = `
+          SELECT 
+              orders.id AS order_id, 
+              orders.quantity AS quantity, 
+              orders.price AS price, 
+              orders.order_date AS order_date, 
+              products.name AS product_name, 
+              products.image AS product_image 
+          FROM 
+              orders 
+          JOIN 
+              products ON orders.product_id = products.id
+      `;
+    const result = await pool.query(query);
+
+    if (result.rows.length === 0) {
+      return res.status(200).json({ msg: "Nessun ordine trovato" });
+    }
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Errore nel recupero degli ordini:", error);
+    res.status(500).json({ msg: "Errore nel recupero degli ordini" });
   }
 });
 

@@ -93,10 +93,14 @@ const router = createBrowserRouter([
   },
 ]);
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+{/*<React.StrictMode>
     <RecoveryContextProvider>
       <RouterProvider router={router} />
     </RecoveryContextProvider>
-  </React.StrictMode>,
+  </React.StrictMode>,*/}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+    <RecoveryContextProvider>
+      <RouterProvider router={router} />
+    </RecoveryContextProvider>
 )
