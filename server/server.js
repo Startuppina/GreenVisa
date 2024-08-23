@@ -35,31 +35,6 @@ async function connectWithRetry() {
   throw new Error('Impossibile connettersi al database dopo diversi tentativi');
 }
 
-// Funzione per creare un admin se non esiste
-async function createAdminIfNotExists() {
-  const client = await connectWithRetry();
-  try {
-    // Verifica se esiste già un amministratore
-    const res = await client.query('SELECT * FROM users WHERE administrator = TRUE LIMIT 1');
-    if (res.rows.length === 0) {
-      // Nessun amministratore trovato, quindi creane uno
-      const hashedPassword = await bcrypt.hash('adminpassword', 10); // Modifica la password e il salt come necessario
-      await client.query(
-        `INSERT INTO users (username, email, phone_number, administrator, password_digest)
-         VALUES ($1, $2, $3, $4, $5)`,
-        ['admin', 'admin@example.com', '123-456-7890', true, hashedPassword]
-      );
-      console.log('Admin creato con successo.');
-    } else {
-      console.log('Admin già esistente.');
-    }
-  } catch (error) {
-    console.error('Errore durante la creazione dell\'admin:', error);
-  } finally {
-    client.release();
-  }
-}
-
 
 const app = express();
 
@@ -138,6 +113,26 @@ function authenticateAdmin(req, res, next) {
     res.status(403).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
   }
 }
+
+app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, res) => {
+
+  try {
+    const { role, user_id } = req.user;
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
+
+    const query = "SELECT username FROM users WHERE id = $1";
+    const values = [user_id];
+    const result = await pool.query(query, values);
+    const username = result.rows[0].username;
+    res.status(200).json({ username });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Errore durante la richiesta" });
+  }
+})
 
 
 app.post("/api/signup", async (req, res) => {
@@ -629,6 +624,114 @@ function sendEmailMessage({ recipient_email }) {
                     <p>Ciao,</p>
                     <p>Grazie per aver utilizzato Green Visa. Il messagio da te inviato e' stato preso in carico. Ricevera al piu' presto una email di risposta</p>
                     <p>Saluti,<br />Green Visa</p>
+                </div>
+                <div class="footer">
+                    <p>Green Visa</p>
+                    <p>La sostenibilità con un click!</p>
+                </div>
+            </div>
+        </body>
+        </html>`,
+    };
+
+    transporter.sendMail(mail_configs, function (error, info) {
+      if (error) {
+        console.error("Errore nell'invio dell'email:", error);
+        return reject({
+          message: `Errore durante l'invio dell'email: ${error.message}`,
+        });
+      }
+      return resolve({ message: "Email inviata con successo" });
+    });
+  });
+}
+
+function sendEmailResponse({ recipient_email, email_title, email_content, receiver_username, admin_username }) {
+  return new Promise((resolve, reject) => {
+    var transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        //PER RAGIONI DI SICUREZZA LE CREDENZIALI DEVONO STARE NEL .ENV
+        user: email_sender,
+        pass: pass_sender
+      },
+    });
+
+    const mail_configs = {
+      from: email_sender,
+      to: recipient_email,
+      subject: "Green Visa Risposta",
+      html: `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Green Visa - Risposta</title>
+            <style>
+                body {
+                    font-family: Helvetica, Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 50px auto;
+                    background-color: #ffffff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .logo {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .logo img {
+                    width: 150px;
+                }
+                .content {
+                    text-align: center;
+                }
+                .content h1 {
+                    font-size: 1.4em;
+                    color: #2d7044;
+                    font-weight: 600;
+                }
+                .content p {
+                    font-size: 1.1em;
+                    color: #333333;
+                }
+                .footer {
+                    text-align: right;
+                    padding-top: 20px;
+                    color: #aaa;
+                    font-size: 0.8em;
+                    line-height: 1.5;
+                }
+                @media screen and (max-width: 600px) {
+                    .container {
+                        width: 100%;
+                        padding: 10px;
+                    }
+                    .content h1 {
+                        font-size: 1.2em;
+                    }
+                    .content p {
+                        font-size: 1em;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="logo">
+                    <img src="http://localhost:8080/logo2.png" alt="Green Visa">
+                </div>
+                <div class="content">
+                    <h1>${email_title}</h1>
+                    <p>Ciao ${receiver_username},</p>
+                    <p>${email_content}</p>
+                    <p>Saluti,<br />${admin_username} da Green Visa</p>
                 </div>
                 <div class="footer">
                     <p>Green Visa</p>
@@ -1508,6 +1611,64 @@ app.delete("/api/remove-user-cart", authenticateJWT, async (req, res) => {
     res.status(500).json({ msg: "Internal server error" });
   }
 })
+
+
+app.post("/api/send-message-response", authenticateJWT, authenticateAdmin, async (req, res) => {
+
+  try {
+    const { emailTitle, emailContent, receiverEmail } = req.body;
+    const { role, user_id } = req.user;
+
+    //verifica che l'utente sia un amministratore
+    if (role !== "administrator") {
+      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
+
+    if (!emailTitle || !emailContent) {
+      return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
+    }
+
+    if (!receiverEmail) {
+      return res.status(400).json({ msg: "Problemi nel reperire l'email del destinatario" });
+    }
+
+    const result = await pool.query(
+      "SELECT id, username, email FROM users WHERE email = $1",
+      [receiverEmail]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ msg: "Non esiste un utente con questa email" });
+    }
+
+    const { username } = result.rows[0];
+
+    const myUsername = "SELECT username FROM users WHERE id = $1";
+    const values = [user_id];
+    const result2 = await pool.query(myUsername, values);
+    if (result2.rows.length === 0) {
+      return res.status(400).json({ msg: "Non esiste un utente con questo ID" });
+    }
+
+    const admin_username = result2.rows[0].username
+
+    sendEmailResponse({
+      recipient_email: receiverEmail,
+      email_title: emailTitle,
+      email_content: emailContent,
+      receiver_username: username,
+      admin_username: admin_username
+    });
+
+    return res.status(200).json({ msg: "Email di risposta inviata correttamente" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+
+})
+
 
 function emailCheck(email) {
   const re =

@@ -33,7 +33,7 @@ function UserOrders() {
         <div className='h-[350px] bg-[#d9d9d9] p-4 rounded-lg mx-2 md:mx-14 overflow-x-auto'>
             <h2 className='text-2xl font-bold mb-4'>I tuoi ordini</h2>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 justify-center">
                 {message ? (
                     <p>{message}</p>
                 ) : (
