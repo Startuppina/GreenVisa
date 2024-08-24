@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS cart (
     name VARCHAR(255) NOT NULL,
     image VARCHAR(255) NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),  -- Assicurati che la quantità sia positiva
+    option VARCHAR(255) NOT NULL,
     price INTEGER NOT NULL,  -- Prezzo dell'articolo (al momento dell'aggiunta al carrello)
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE

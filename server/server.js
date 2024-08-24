@@ -10,6 +10,7 @@ const path = require("path");
 require("dotenv").config();
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 const cron = require('node-cron');
+const pricingFunctions = require('./priceCalculator');
 
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
@@ -1073,7 +1074,41 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params; // ID del prodotto
     const { user_id } = req.user;
-    const { name, image, price, quantity } = req.body;
+    const { name, image, price, quantity, option } = req.body;
+
+    if (!option) {
+      return res.status(400).json({ msg: "Opzione mancante. Scegline una" });
+    }
+
+    const categoryQuery = "SELECT category FROM products WHERE id = $1";
+    const categoryResult = await pool.query(categoryQuery, [id]);
+    const category = categoryResult.rows[0].category;
+    let finalPrice = price;
+
+    // Chiama la funzione di calcolo del prezzo in base alla categoria
+    switch (category) {
+      case "Certificazione hotel":
+        finalPrice = pricingFunctions.getHotelPrice(option, price);
+        break;
+      case "Certificazione spa e resort":
+        finalPrice = pricingFunctions.getSpaPrice(option, price);
+        break;
+      case "Certificazione trasporti":
+        finalPrice = pricingFunctions.getTransportPrice(option, price);
+        break;
+      case "Certificazione industria":
+        finalPrice = pricingFunctions.getIndustryPrice(option, price);
+        break;
+      case "Certificazione store e retail":
+        finalPrice = pricingFunctions.getStorePrice(option, price);
+        break;
+      case "Certificazione bar e ristoranti":
+        finalPrice = pricingFunctions.getBarPrice(option, price);
+        break;
+      default:
+        return res.status(400).json({ msg: "Categoria non valida" });
+    }
+
 
     // Controlla se il prodotto esiste
     const query = "SELECT * FROM products WHERE id = $1";
@@ -1093,8 +1128,8 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
     }
 
     // Aggiungi il prodotto al carrello
-    const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, price) VALUES ($1, $2, $3, $4, $5, $6)";
-    const values2 = [user_id, id, name, image, quantity, price];
+    const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+    const values2 = [user_id, id, name, image, quantity, option, finalPrice];
     await pool.query(query2, values2);
     res.status(200).json({ msg: "Certificazione al carrello con successo" });
   } catch (error) {
@@ -1108,7 +1143,7 @@ app.get("/api/fetch-user-cart", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
 
-    const query = "SELECT * FROM cart WHERE user_id = $1";
+    const query = "SELECT * FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
     const values = [user_id];
     const result = await pool.query(query, values);
 
@@ -1350,14 +1385,20 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
 
   try {
     const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ msg: "Nessun codice inserito" });
+    }
     const query = "SELECT * FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
     const values = [code];
     const result = await pool.query(query, values);
+    const used_by = result.rows[0].used_by;
+    const discount = result.rows[0].discount;
     const code_id = result.rows[0].id;
 
     if (result.rows.length > 0) {
 
-      res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount });
+      res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
     } else {
       res.status(400).json({ msg: "Codice non valido" }); // Cambiato a 400 per errore client
     }
@@ -1373,7 +1414,6 @@ app.post("/api/get-code-id", authenticateJWT, async (req, res) => {
 
   try {
     const { code } = req.body;
-    console.log(`Codice: ${code}`);
     if (code === "") {
       res.status(200).json({ msg: "nessun codice inserito" });
     } else {

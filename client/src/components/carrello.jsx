@@ -13,12 +13,13 @@ function Carrello() {
     const { cartProducts, setCartProducts, quantities, setQuantities, isEmpty, setIsEmpty } = useRecoveryContext();
     const [promoCode, setPromoCode] = useState('');
     const [discount, setDiscount] = useState(0);
+    const [promoCategory, setPromoCategory] = useState('');
 
 
     useEffect(() => {
         const getCartProducts = async () => {
             const token = localStorage.getItem('token');
-
+    
             try {
                 const response = await axios.get('http://localhost:8080/api/fetch-user-cart', {
                     headers: {
@@ -26,27 +27,22 @@ function Carrello() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-
+    
                 if (response.status === 200) {
-                    if (response.data.count === 0) {
-                        setIsEmpty(true);
-                    } else {
-                        setIsEmpty(false);
-                    }
-
                     setCartProducts(response.data.cart);
                     const initialQuantities = response.data.cart.reduce((acc, product) => {
                         acc[product.product_id] = product.quantity;
                         return acc;
                     }, {});
                     setQuantities(initialQuantities);
+                    setIsEmpty(response.data.cart.length === 0); // Imposta isEmpty qui
                 }
             } catch (error) {
                 setMessagePopUp(error.response?.data?.msg || error.message);
                 setButtonPopup(true);
             }
         };
-
+    
         getCartProducts();
     }, [setCartProducts, setQuantities, setIsEmpty]);
 
@@ -82,14 +78,15 @@ function Carrello() {
                 }
             });
             if (response.status === 200) {
-                setCartProducts(prevProducts => prevProducts.filter(product => product.product_id !== productId));
+                setCartProducts(prevProducts => {
+                    const updatedProducts = prevProducts.filter(product => product.product_id !== productId);
+                    setIsEmpty(updatedProducts.length === 0); // Verifica se il carrello è vuoto
+                    return updatedProducts;
+                });
                 setQuantities(prevQuantities => {
                     const { [productId]: _, ...rest } = prevQuantities;
                     return rest;
                 });
-                if (cartProducts.length === 1) {
-                    setIsEmpty(true);
-                }
             }
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
@@ -171,6 +168,7 @@ function Carrello() {
             if (response.status === 200) {
                 setMessagePopUp(response.data.msg);
                 setButtonPopup(true);
+                setPromoCategory(response.data.used_by);
                 setDiscount(response.data.discount);
             }
 
@@ -251,7 +249,7 @@ function Carrello() {
                     <p>{calculateTotal().toFixed(2)} €</p>
                 </div>
                 <div className="w-full h-auto flex flex-row items-center justify-between">
-                    <p>- Sconto {discount}% applicato sulle certificazioni compatibili <br/> (riduzione applicata in fase di checkout)</p>
+                    {discount > 0 && <p>- Sconto {discount}% applicato su {promoCategory === "Tutti" ? "tutti i prodotti" : promoCategory} <br/> (riduzione applicata in fase di checkout)</p>}
                     
                 </div>
 
