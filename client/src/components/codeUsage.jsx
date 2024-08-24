@@ -38,24 +38,25 @@ const CodeUsage = () => {
 
 
   return (
-    <div className='w-full flex flex-col md:flex-row items-center justify-center gap-4'>
-      <div className='w-full h-[220px] bg-yellow-500 p-4 rounded-lg overflow-y-auto'>
-        <h2 className='text-2xl font-bold mb-4'>Codici Utilizzabili</h2>
+    <div className="w-full lg:w-1/2 bg-yellow-500 p-4 rounded-lg overflow-y-auto flex-1">
+        <h2 className="text-2xl font-bold mb-4 text-center lg:text-left">Codici sconto disponibili</h2>
         {codici.map((codice, index) => (
-            <div className='mb-3 flex items-center justify-between bg-white p-4 rounded-lg shadow'>
-                <div className='flex flex-col md:flex-row md:space-x-20'>
-                  <span className='text-lg font-mono text-red-500 w-[100px]'>{codice.code}</span>
-                  <span className='text-lg font-mono'>Utilizzo: {codice.used_by}</span>
+            <div
+                key={index} // Aggiungi una chiave unica per migliorare le prestazioni di React
+                className="mb-4 flex flex-row items-center lg:items-start justify-between bg-white p-4 rounded-lg shadow"
+            >
+                <div className="flex flex-col items-start space-y-2 lg:space-y-0 w-full lg:w-auto">
+                    <span className="text-lg font-mono text-red-500 flex-shrink-0">{codice.code}</span>
+                    <span className="text-lg font-mono text-gray-700">Utilizzo: {codice.used_by}</span>
                 </div>
                 <button
-                onClick={() => handleCopy(codice.code)}
-                className='bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300'
+                    onClick={() => handleCopy(codice.code)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300 mt-3 lg:mt-0"
                 >
-                {copiedCodes[codice.code] ? 'Copiato!' : 'Copia'}
+                    {copiedCodes[codice.code] ? 'Copiato!' : 'Copia'}
                 </button>
             </div>
         ))}
-      </div>
     </div>
   );
 };

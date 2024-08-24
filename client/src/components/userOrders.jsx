@@ -30,7 +30,7 @@ function UserOrders() {
     }, []);
 
     return (
-        <div className='h-[350px] bg-[#d9d9d9] p-4 rounded-lg mx-2 md:mx-14 overflow-x-auto'>
+        <div className='h-[350px] bg-[#d9d9d9] p-4 rounded-lg mx-2 md:mx-14 overflow-x-auto mt-4'>
             <h2 className='text-2xl font-bold mb-4'>I tuoi ordini</h2>
             
             <div className="flex flex-wrap gap-4 justify-center">
@@ -39,25 +39,26 @@ function UserOrders() {
                 ) : (
                     orders.map((order) => (
                         <>
-                        <div key={order.order_id} className="p-4 w-[500px] rounded-lg border-2 border-gray-400">
+                        <div key={order.order_id} className="p-4 w-full max-w-[500px] rounded-lg border-2 border-gray-400 z-10">
                             <h3 className="text-lg font-bold mb-4">Ordine {order.order_id}</h3>
-                            <div className="flex items-center mb-4">
+                            <div className="flex flex-col md:flex-row text-center md:text-left items-center md:items-start mb-4">
                                 <img 
                                     src={`http://localhost:8080/uploaded_img/${order.product_image}`} 
                                     alt={order.product_name} 
-                                    className="w-32 h-32 object-cover rounded-lg mr-4" 
+                                    className="w-full h-32 md:w-32 md:h-32 object-cover rounded-lg mb-4 md:mb-0 md:mr-4" 
                                 />
                                 <div>
                                     <p className="text-xl font-semibold">{order.product_name}</p>
-                                    <p className="text-gray-600">Data: <p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p></p>
+                                    <p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p>
                                 </div>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex flex-col md:flex-row justify-between">
                                 <p className="mb-2"><span className="font-semibold">Quantità:</span> {order.quantity}</p>
                                 <p className="mb-2"><span className="font-semibold">Prezzo:</span> {order.price} €</p>
                             </div>
                         </div>
                         <hr className="my-4 border-1 border-black" />
+
                         </>
                     ))
                 )}

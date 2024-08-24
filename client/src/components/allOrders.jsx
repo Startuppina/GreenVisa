@@ -49,7 +49,7 @@ function AllOrders() {
                                 />
                                 <div>
                                     <p className="text-xl font-semibold">{order.product_name}</p>
-                                    <p className="text-gray-600">Data: <p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p></p>
+                                    <p className="text-gray-600"><p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p></p>
                                 </div>
                             </div>
                             <div className="flex justify-between">

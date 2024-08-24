@@ -230,16 +230,21 @@ const UserPage = () => {
                     )}
                 </h1>
                 
-                <div className='flex flex-col md:flex-row items-center justify-center gap-4 mx-2 md:mx-14 mb-4'>
-                    <div className='w-full bg-[#d9d9d9] p-4 rounded-lg  h-[220px]'>
-                        <h2 className='text-2xl font-bold'>Informazioni personali</h2>
-                        <div className='pb-5'>
-                            <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
-                            <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
-                            <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
+                <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 md:mx-14 h-[600px] lg:h-[300px]">
+                    <div className="w-full bg-[#d9d9d9] p-4 rounded-lg flex-1">
+                        <h2 className="text-2xl font-bold">Informazioni personali</h2>
+                        <div className="pb-5">
+                        <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
+                        <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
+                        <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
                         </div>
-                        <div className='flex justify-center'>
-                            <button className='p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]' onClick={() => setShowModifier(!showModifier)}>Modifica</button>
+                        <div className="flex justify-center">
+                        <button
+                            className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                            onClick={() => setShowModifier(!showModifier)}
+                        >
+                            Modifica
+                        </button>
                         </div>
                     </div>
                     <CodeUsage/>

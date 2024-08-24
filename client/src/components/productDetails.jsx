@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import QuantitySelector from "./quantitySelector";
 import Products from "./products";
 import MessagePopUp from "./messagePopUp";
-import ConfirmPopUp from "./confirmPopUp";
+import CategoryBasedSelect from "./categoryBasedSelect";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -11,13 +11,14 @@ function ProductDetails() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState("");
     const [quantity, setQuantity] = useState(1); // Usa quantity per gestire la quantità
-    const [valueFromSelect, setValueFromSelect] = useState(0);
+    const [valueFromSelect, setValueFromSelect] = useState("");
+    const [category, setCategory] = useState("");
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const handleSelectChange = (event) => {
-        const selectedValue = event.target.value;
+    const handleSelectChange = (selectedValue) => {
         setValueFromSelect(selectedValue);
+        console.log("Selezionato:",selectedValue);
     }
 
     const handleQuantityChange = (newQuantity) => {
@@ -38,6 +39,7 @@ function ProductDetails() {
                 
                 if (response.status === 200) {
                     setProduct(response.data.product);
+                    setCategory(response.data.product.category);
                 }
             } catch (error) {
                 setMessagePopUp(error.response?.data?.msg || error.message);
@@ -49,36 +51,37 @@ function ProductDetails() {
     }, [id]);
 
 
-const handleCartInsertion = async () => {
-    const token = localStorage.getItem("token");
+    const handleCartInsertion = async () => {
+        const token = localStorage.getItem("token");
+        console.log("Valore di valueFromSelect prima dell'invio:", valueFromSelect);
 
-    const cartData = {
-        name: product.name,
-        image: product.image,
-        price: product.price,
-        quantity: quantity
-    };
+        const cartData = {
+            name: product.name,
+            image: product.image,
+            price: product.price,
+            quantity: quantity,
+            option: valueFromSelect
+        };
 
-    try {
-        const response = await axios.post(`http://localhost:8080/api/cart-insertion/${id}`, cartData, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+        console.log(cartData);
+
+        try {
+            const response = await axios.post(`http://localhost:8080/api/cart-insertion/${id}`, cartData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                setMessagePopUp(response.data.msg);
+                setButtonPopup(true);
             }
-        });
-
-        if (response.status === 200) {
-            setMessagePopUp(response.data.msg);
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
-    } catch (error) {
-        setMessagePopUp(error.response?.data?.msg || error.message);
-        setButtonPopup(true);
-    }
-};
-
-    
-    
+    };
 
     return (
         <>
@@ -93,17 +96,7 @@ const handleCartInsertion = async () => {
                 <h1 className="text-arial text-2xl text-center font-bold pb-5 w-full">{product.name}</h1>
                 <p className="m-4">{product.price} €</p>
                 <p className="pb-5 w-[70%]">{product.info}</p>
-                <div className="flex flex-row gap-5 items-center justify-center" style={{ justifyContent: 'space-between' }}>
-                    <div className="font-bold">Stanze</div>
-                    <div className="text-arial text-xl text-black items-center">
-                        <select className="bg-white w-[200px] rounded-lg" name="rooms" id="rooms" onChange={handleSelectChange}>
-                            <option value="0">Scegli un'opzione</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                </div>
+                <CategoryBasedSelect onSelectChange={handleSelectChange} value={valueFromSelect} category={category}/>
                 <div className="flex flex-row items-center justify-center gap-5">
                     <QuantitySelector onValueChange={handleQuantityChange} value={quantity}/>
                     <button className="m-3 font-arial font-semibold text-xl w-auto p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" 
