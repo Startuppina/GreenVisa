@@ -1,16 +1,19 @@
 function getHotelPrice(option, price) {
     switch (option) {
-        case "1-50":
+        case "1-24":
             //increase price depending by case
             return price;
-        case "51-100":
-            return price * 1.4;
-        case "101-150":
-            return price * 1.6;
-        case "151-200":
-            return price * 1.8;
+        case "25-49":
+            price = 525;
+            return price;
+        case "50-99":
+            price = 790;
+            return price;
+        case "100-499":
+            price = 1180;
+            return price;
         default:
-            return 0;
+            return price;
     }
 }
 
@@ -26,7 +29,7 @@ function getTransportPrice(option, price) {
         case "151-200":
             return price * 1.8;
         default:
-            return 0;
+            return price;
     }
 }
 
@@ -80,15 +83,18 @@ function getStorePrice(option, price) {
 
 function getBarPrice(option, price) {
     switch (option) {
-        case "1-50":
+        case "1-49":
             //increase price depending by case
             return price;
-        case "51-100":
-            return price * 1.4;
-        case "101-150":
-            return price * 1.6;
-        case "151-200":
-            return price * 1.8;
+        case "50-99":
+            price = 450;
+            return price;
+        case "100-199":
+            price = 675;
+            return price;
+        case "200-299":
+            price = 1015;
+            return price;
         default:
             return 0;
     }

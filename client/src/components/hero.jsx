@@ -14,7 +14,7 @@ function Hero() {
                 <div className="font-arial text-4xl md:text-5xl lg:text-6xl w-[80%] md:w-[60%] lg:w-[35%] text-black">
                     La sostenibilità con un click!
                 </div>
-                <button className="mt-7 font-arial font-semibold text-xl w-[70%] md:text-2xl md:w-[50%] lg:text-2xl lg:w-[30%] p-3 bg-[#2d7044] rounded-[15px] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] border-4 border-transparent hover:border-[#2d7044]">
+                <button className="mt-7 font-arial font-semibold text-xl text-white w-[70%] md:text-2xl md:w-[50%] lg:text-2xl lg:w-[30%] p-3 bg-[#2d7044] rounded-[15px] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] border-4 border-transparent hover:border-[#2d7044]">
                     <Link to="/Products">ENTRA IN GREEN VISA</Link>
                 </button>
             </div>

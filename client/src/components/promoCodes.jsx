@@ -3,6 +3,7 @@ import axios from "axios";
 import ConfirmPopUp from "./confirmPopUp";
 import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
+import { useRecoveryContext } from "../provider/provider";
 
 function PromoCodes() {
     const [promoCodes, setPromoCodes] = useState([]);
@@ -16,6 +17,8 @@ function PromoCodes() {
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState("");
+
+    const { CodeTrigger, setCodeTrigger } = useRecoveryContext();
 
     const navigate = useNavigate();
 
@@ -44,7 +47,7 @@ function PromoCodes() {
             }
         };
         fetchPromoCodes();
-    }, []);
+    }, [CodeTrigger]);
 
     const formatDate = (isoDateString) => {
         const date = new Date(isoDateString);
@@ -74,6 +77,7 @@ function PromoCodes() {
                 setPromoCodeToDelete(null);
                 setMessagePopUp(response.data.msg);
                 setButtonPopup(true);
+                setCodeTrigger(!CodeTrigger);
             }
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
@@ -95,15 +99,18 @@ function PromoCodes() {
                 setMessagePopUp(response.data.msg);
                 setButtonPopup(true);
                 setPromoCodeToPublish(null);
+                setCodeTrigger(!CodeTrigger);
+                navigate("/User");
             }
         } catch (error) {
             console.error(error);
         }
     };
 
+    const colors = ["#2d7044", "#1e90ff", "#ff6347", "#ffd700", "#32cd32", "#a52a2a", "#ff00ff", "#7b68ee"]; // Array di colori
 
     return (
-        <div className="p-4 flex flex-wrap justify-center items-center bg-gray-100 gap-4">
+        <div className="p-4 flex flex-wrap justify-center items-center gap-4 w-[98.5%] rounded-2xl border shadow-xl mb-8">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
@@ -122,42 +129,42 @@ function PromoCodes() {
                 {messageConfirm}
             </ConfirmPopUp>
             {promoCodes.length > 0 ? (
-                promoCodes.map(code => (
-                    <div className="flex flex-col items-center "  key={code.id}>
+                promoCodes.map((code, index) => (
+                    <div className="flex flex-col items-center" key={code.id}>
                         <div
-                            className="w-[200px] h-[170px] bg-[#2d7044] text-white rounded-lg flex flex-col items-center justify-center p-4 cursor-pointer"
+                            className="w-[200px] h-[200px] text-white rounded-lg flex flex-col items-center justify-center p-4 cursor-pointer transform transition-transform duration-300 hover:scale-105 shadow-lg hover:shadow-2xl"
+                            style={{ backgroundColor: colors[index % colors.length] }} // Applica un colore diverso
                             onClick={() => handleToggleDetails(code.id)}
                         >
-                            <h1 className="text-3xl font-bold text-center">{code.code}</h1>
+                            <h1 className="text-4xl font-extrabold text-center tracking-wider">{code.code}</h1>
                             {visibleDetails === code.id && (
                                 <>
-                                    <p className="text-center text-sm">Utilizzo: {code.used_by}</p>
-                                    <p className="text-center text-sm mt-2">Sconto {code.discount}%</p>
-                                    <p className="text-center text-sm">Da {code.start} <br />a {code.expiration}</p>
+                                    <p className="text-center text-sm mt-2">Utilizzato da: <strong>{code.used_by}</strong></p>
+                                    <p className="text-center text-lg font-bold mt-2">Sconto: {code.discount}%</p>
+                                    <p className="text-center text-xs mt-1">Valido dal {code.start} <br />al {code.expiration}</p>
                                 </>
                             )}
                         </div>
                         <div className="flex gap-3">
-                            <button className="bg-red-500 text-white rounded-lg p-2 mt-2" 
-                            onClick={() => {
-                                setPromoCodeToDelete(code.id);
-                                setMessageConfirm(
-                                  "Sei sicuro di voler eliminare questo codice?"
-                                );
-                                setPopupConfirmDelete(true);
-                              }}
-                            >Elimina</button>
-                             <button className="bg-blue-500 text-white rounded-lg p-2 mt-2" 
-                            onClick={() => {
-                                setPromoCodeToPublish(code.id);
-                                setMessageConfirm(
-                                  "Sei sicuro di voler rendere accessibile questo codice promozionale?"
-                                );
-                                setPopupConfirmPublish(true);
-                              }}
-                            >Pubblica</button>
+                            <button className="bg-red-500 text-white border-2 border-red-500 rounded-lg p-2 mt-2 transform transition-colors duration-300 ease-in-out hover:text-red-500 hover:bg-white" 
+                                onClick={() => {
+                                    setPromoCodeToDelete(code.id);
+                                    setMessageConfirm("Sei sicuro di voler eliminare questo codice?");
+                                    setPopupConfirmDelete(true);
+                                }}
+                            >
+                                Elimina
+                            </button>
+                            <button className="bg-blue-500 text-white border-2 border-blue-500 rounded-lg p-2 mt-2 transform transition-colors duration-300 ease-in-out hover:text-blue-500 hover:bg-white" 
+                                onClick={() => {
+                                    setPromoCodeToPublish(code.id);
+                                    setMessageConfirm("Sei sicuro di voler rendere accessibile questo codice promozionale?");
+                                    setPopupConfirmPublish(true);
+                                }}
+                            >
+                                Pubblica
+                            </button>
                         </div>
-                        
                     </div>
                 ))
             ) : (

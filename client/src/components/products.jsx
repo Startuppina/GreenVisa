@@ -7,6 +7,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import ConfirmPopUp from "./confirmPopUp";
+import  getPriceCategory  from "./getPriceCategory";
 
 const NextArrow = (props) => {
     const { onClick } = props;
@@ -55,14 +56,12 @@ function Products() {
 
     useEffect(() => {
         const getProductsInfo = async () => {
-            const token = localStorage.getItem("token");
 
             try {
                 const response = await axios.get("http://localhost:8080/api/products-info", {
                     params: {order: productOrdering},
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
                     }
                 });
                 
@@ -97,12 +96,6 @@ function Products() {
             window.removeEventListener('resize', handleResize);
         };
     }, []);
-
-    const handleDeleteProduct = (id) => {
-        setProductToDelete(id);
-        setMessageConfirm('Sei sicuro di voler eliminare la certificazione?');
-        setPopupConfirmDelete(true);
-    }; 
 
     const deleteProduct = async () => {
 
@@ -199,7 +192,7 @@ function Products() {
                                                     <img src={`http://localhost:8080/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
                                                 </div>
                                                 <div className="text-arial text-xl text-white font-bold text-center pt-3">{item.name}</div>
-                                                <div className="text-arial text-xl text-white text-center pt-2">Da {item.price} €</div>
+                                                <div className="text-arial text-xl text-white text-center pt-2">{getPriceCategory(item.category)}</div>
                                             </div>
                                         </Link>
 

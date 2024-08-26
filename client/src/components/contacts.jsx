@@ -30,7 +30,6 @@ function Contacts() {
         console.log('Message:', message);
         console.log('Subject:', subject);
 
-        const token = localStorage.getItem("token");
         const contactData = {
             name,
             email,
@@ -38,16 +37,10 @@ function Contacts() {
             message,
         };
 
-        if (!token) {
-            setErrorMessage('Token mancante. Per favore effettua il login.');
-            return;
-        }
-
         try {
             const response = await axios.post("http://localhost:8080/api/send-message", contactData, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 }
             });
             

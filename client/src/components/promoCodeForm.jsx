@@ -3,6 +3,7 @@ import MessagePopUp from './messagePopUp'
 import axios from 'axios'
 import { MutatingDots } from 'react-loader-spinner'
 import { useNavigate } from 'react-router-dom'
+import { useRecoveryContext } from '../provider/provider'
 
 function PromoCodeForm() {
     const [code, setCode] = useState('');
@@ -22,6 +23,8 @@ function PromoCodeForm() {
     const handleStartChange = (e) => setStart(e.target.value);
     const handleExpirationChange = (e) => setExpiration(e.target.value);
     const handleCategoryChange = (e) => setCategory(e.target.value);
+
+    const { codeTrigger, setCodeTrigger } = useRecoveryContext();
 
     const navigate = useNavigate();
 
@@ -59,9 +62,10 @@ function PromoCodeForm() {
                     setMessagePopUp(response.data.msg);
                     setButtonPopup(true);
                     setIsLoading(false);
+                    setCodeTrigger(!codeTrigger);
                 }, 3000);
 
-                navigate(0);
+                navigate('/User');
 
             }
             setCode('');
