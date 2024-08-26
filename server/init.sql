@@ -59,12 +59,10 @@ CREATE TABLE IF NOT EXISTS promocodes_publishment (
 
 CREATE TABLE IF NOT EXISTS contacts (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
     name_surname VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     subject VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,  -- Messaggio inviato dall'utente
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    message TEXT NOT NULL  -- Messaggio inviato dall'utente
 );
 
 CREATE TABLE IF NOT EXISTS cart (

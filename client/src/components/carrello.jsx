@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import QuantitySelector from "./quantitySelector";
-import { Link } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
 import { MutatingDots } from 'react-loader-spinner';
+import { useNavigate } from 'react-router-dom';
 
 function Carrello() {
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -14,6 +14,8 @@ function Carrello() {
     const [promoCode, setPromoCode] = useState('');
     const [discount, setDiscount] = useState(0);
     const [promoCategory, setPromoCategory] = useState('');
+
+    const navigate = useNavigate();
 
 
     useEffect(() => {
@@ -38,6 +40,11 @@ function Carrello() {
                     setIsEmpty(response.data.cart.length === 0); // Imposta isEmpty qui
                 }
             } catch (error) {
+
+                if (error.response && error.response.status === 403) {
+                    navigate('/login');
+                    return;
+                }
                 setMessagePopUp(error.response?.data?.msg || error.message);
                 setButtonPopup(true);
             }
@@ -179,6 +186,22 @@ function Carrello() {
         }
     }
 
+    function getDescrizioneCategoria(category, option) {
+        if (category === "Certificazione hotel") {
+            return `stanze: ${option}`;
+        } else if (category === "Certificazione spa e resort") {
+            return `servizi: ${option}`;
+        } else if (category === "Certificazione trasporti") {
+            return `veicoli: ${option}`;
+        } else if (category === "Certificazione industria") {
+            return `impianti: ${option}`;
+        } else if (category === "Certificazione store e retail") {
+            return `negozi: ${option}`;
+        } else {
+            return `coperti: ${option}`;
+        }
+    }
+
     const calculateSubtotal = () => {
         return cartProducts.reduce((total, product) => total + (product.price * (quantities[product.product_id] || 1)), 0);
     }
@@ -216,9 +239,9 @@ function Carrello() {
                                 <div className="w-full md:w-[60%] p-4 flex flex-col gap-5 text-arial text-xl text-left">
                                     <div className="flex flex-col lg:flex-row items-start justify-between">
                                         <p className="font-bold text-left">{product.name}</p>
-                                        <p className="flex items-end">{product.price} €</p>
+                                        <p className="flex items-end">{(product.price * (quantities[product.product_id] || 1)).toFixed(2)} €</p> {/* Calcolo dinamico del prezzo totale */}
                                     </div>
-                                    <p>Stanze: 1 – 24</p>
+                                    <p>{getDescrizioneCategoria(product.category, product.option)}</p>
                                     <div className="">
                                         <QuantitySelector
                                             value={quantities[product.product_id] || 1}

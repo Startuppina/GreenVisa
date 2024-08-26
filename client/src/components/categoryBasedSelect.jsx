@@ -5,11 +5,11 @@ function CategoryBasedSelect({ category, onSelectChange }) {
     const options = {
         "Certificazione hotel": [
             { value: "default", label: "Scegli un'opzione" },
-            { value: "1-50", label: "1-50 stanze" },
-            { value: "51-100", label: "51-100 stanze" },
-            { value: "101-150", label: "101-150 stanze" },
-            { value: "151-200", label: "151-200 stanze" },
-            { value: "201+", label: "201+ stanze" }
+            { value: "1-24", label: "1-24 stanze" },
+            { value: "25-49", label: "25-49 stanze" },
+            { value: "50-99", label: "50-99 stanze" },
+            { value: "100-499", label: "100-499 stanze" },
+            //{ value: "201+", label: "201+ stanze" }
         ],
         "Certificazione spa e resort": [
             { value: "default", label: "Scegli un'opzione" },
@@ -43,10 +43,10 @@ function CategoryBasedSelect({ category, onSelectChange }) {
         ],
         "Certificazione bar e ristoranti": [
             { value: "default", label: "Scegli un'opzione" },
-            { value: "1-10", label: "1-10 locali" },
-            { value: "11-50", label: "11-50 locali" },
-            { value: "51-100", label: "51-100 locali" },
-            { value: "101+", label: "101+ locali" }
+            { value: "1-49", label: "1-49 coperti" },
+            { value: "50-99", label: "50-99 coperti" },
+            { value: "100-199", label: "100-199 coperti" },
+            { value: "200-299", label: "200-299 coperti" }
         ]
     };
 

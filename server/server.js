@@ -82,15 +82,21 @@ const secretKey = process.env.SECRET_KEY;
 
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers.authorization; // Access the "Authorization" header
+  const authHeader = req.headers.authorization;
 
   if (authHeader) {
-    const token = authHeader.split(" ")[1]; // Extract the token from the "Authorization" header
+    const token = authHeader.split(" ")[1]; // Extract token from "Bearer <token>"
 
     jwt.verify(token, secretKey, (err, user) => {
       if (err) {
-        console.error("Errore di verifica del token:", err); // Log dell'errore di verifica del token
-        return res.sendStatus(403); // Token non valido
+        console.error("Errore di verifica del token:", err);
+
+        if (err.name === "TokenExpiredError") {
+          // Token scaduto
+          return res.status(401).json({ msg: "Token scaduto" });
+        }
+
+        return res.sendStatus(403); // Token non valido per altri motivi
       }
 
       req.user = user;
@@ -101,6 +107,7 @@ const authenticateJWT = (req, res, next) => {
     res.sendStatus(401); // Nessun token fornito
   }
 };
+
 
 //const purify = DOMPurify(window);
 app.use(express.json());
@@ -928,7 +935,7 @@ app.get('/api/categories', async (req, res) => {
 app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
   try {
     const image = req.file;
-    const { name, price, category, tag, info, cod } = req.body;
+    const { name, category, tag, info, cod } = req.body;
     const { user_id, role } = req.user;
 
     if (role !== "administrator") {
@@ -936,7 +943,7 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
     }
 
     // Controllo che tutti i campi siano compilati
-    if (!name || !price || !category || !tag || !info || !cod) {
+    if (!name || !category || !tag || !info || !cod) {
       return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
     }
 
@@ -946,6 +953,32 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
     const checkCodResult = await pool.query(checkCodQuery, checkCodValues);
     if (checkCodResult.rows.length > 0) {
       return res.status(400).json({ msg: "Codice prodotto già esistente. Inserisci un codice diverso" });
+    }
+
+    // set price based on category 
+    let price;
+    switch (category) {
+      case "Certificazione hotel":
+        price = 350;
+        break;
+      case "Certificazione spa e resort":
+        price = 350;
+        break;
+      case "Certificazione trasporti":
+        price = 350;
+        break;
+      case "Certificazione industria":
+        price = 350;
+        break;
+      case "Certificazione store e retail":
+        price = 350;
+        break;
+      case "Certificazione bar e ristoranti":
+        price = 300;
+        break;
+      default:
+        price = 0;
+        break;
     }
 
     // Controllo che il prezzo sia un numero valido
@@ -991,7 +1024,7 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
 
 
 
-app.get("/api/products-info", authenticateJWT, async (req, res) => {
+app.get("/api/products-info", async (req, res) => {
   try {
     const { order = "default" } = req.query;  // Aggiungi un valore di default per evitare errori
     // Get the total number of products
@@ -1022,7 +1055,7 @@ app.get("/api/products-info", authenticateJWT, async (req, res) => {
 });
 
 
-app.get("/api/product-details/:id", authenticateJWT, async (req, res) => {
+app.get("/api/product-details/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1109,6 +1142,8 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
         return res.status(400).json({ msg: "Categoria non valida" });
     }
 
+    console.log("Final price:", finalPrice);
+
 
     // Controlla se il prodotto esiste
     const query = "SELECT * FROM products WHERE id = $1";
@@ -1131,7 +1166,7 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
     const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
     const values2 = [user_id, id, name, image, quantity, option, finalPrice];
     await pool.query(query2, values2);
-    res.status(200).json({ msg: "Certificazione al carrello con successo" });
+    res.status(200).json({ msg: "Certificazione aggiunta al carrello" });
   } catch (error) {
     console.error("Errore nell'aggiungere la certificazione al carrello:", error);
     res.status(500).json({ msg: "Errore nell'aggiungere la certificazione al carrello" });
@@ -1143,7 +1178,7 @@ app.get("/api/fetch-user-cart", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
 
-    const query = "SELECT * FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
+    const query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
     const values = [user_id];
     const result = await pool.query(query, values);
 
@@ -1188,12 +1223,12 @@ app.delete("/api/remove-from-cart/:id", authenticateJWT, async (req, res) => {
   }
 });
 
-app.post("/api/send-message", authenticateJWT, async (req, res) => {
+app.post("/api/send-message", async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
-    const { user_id } = req.user;
-    const query = "INSERT INTO contacts (user_id, name_surname, email, subject, message) VALUES ($1, $2, $3, $4, $5)";
-    const values = [user_id, name, email, subject, message];
+    //const { user_id } = req.user;
+    const query = "INSERT INTO contacts (name_surname, email, subject, message) VALUES ($1, $2, $3, $4)";
+    const values = [name, email, subject, message];
     await pool.query(query, values);
     res.status(200).json({ msg: "Messaggio inviato con successo" });
   } catch (error) {
@@ -1337,10 +1372,10 @@ app.post("/api/create-promo-code", authenticateJWT, authenticateAdmin, async (re
     const query = "INSERT INTO promocodes (code, discount, used_by, start, expiration) VALUES ($1, $2, $3, $4, $5)";
     const values = [code, discount, category, start, expiration];
     const result = await pool.query(query, values);
-    res.status(200).json({ msg: "Certificazione aggiornata con successo" });
+    res.status(200).json({ msg: "Codice promozionale aggiunto con successo" });
   } catch (error) {
-    console.error("Errore nell'aggiornare le certificazioni:", error);
-    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
+    console.error("Errore nell'inserimento del codice:", error);
+    res.status(500).json({ msg: "Errore nell'inserimento del codice" });
   }
 })
 

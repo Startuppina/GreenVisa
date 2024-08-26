@@ -77,6 +77,9 @@ const NewsForm = () => {
                     setMessagePopUp(response.data.msg);
                     setButtonPopup(true);
                     setIsLoading(false);
+                    setTitle('');
+                    setContent('');
+                    setImage(null);
                 }, 3000);
                     navigate("/User");
             }

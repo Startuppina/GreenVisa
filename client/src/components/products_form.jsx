@@ -34,13 +34,14 @@ function ProductsForm() {
     }, []);
 
     const handleTitleChange = (e) => setName(e.target.value);
-    const handlePriceChange = (e) => setPrice(e.target.value);
+    //const handlePriceChange = (e) => setPrice(e.target.value);
     const handleImageChange = (e) => setImage(e.target.files[0]);
     const handleInfoChange = (e) => setInfo(e.target.value);
     const handleCodeChange = (e) => setCod(e.target.value);
     const handleCategoryChange = (e) => setCategory(e.target.value);
     const handleTagChange = (e) => setTag(e.target.value);
-
+    
+        
     const handleSubmit = async (e) => {
         e.preventDefault();
        
@@ -48,16 +49,9 @@ function ProductsForm() {
 
         const token = localStorage.getItem("token");
 
-        if (!name || !price || !image || !info || !cod || !category || !tag) {
-            setIsLoading(false);
-            setMessagePopup("Compila tutti i campi");
-            setButtonPopup(true);
-            return;
-        }
-
         const formData = new FormData();
         formData.append('name', name);
-        formData.append('price', price);
+        //formData.append('price', price);
         formData.append('image', image);
         formData.append('info', info);
         formData.append('cod', cod);
@@ -79,6 +73,13 @@ function ProductsForm() {
                     setMessagePopup(response.data.msg);
                     setButtonPopup(true);
                     setIsLoading(false);
+                    setName('');
+                    setPrice('');
+                    setImage(null);
+                    setInfo('');
+                    setCod('');
+                    setCategory('');
+                    setTag('');
                 }, 3000); // Caricamento finto di 2 secondi
                 
                 navigate("/User");
@@ -111,15 +112,16 @@ function ProductsForm() {
                             className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
                         />
                     </label>
+                    {/*
                     <label className="flex flex-col w-full">
-                        <span className="block mb-2">Prezzo</span>
+                        <span className="block mb-2">Prezzo (base 350 euro)</span>
                         <input
                             type="text"
                             value={price}
-                            onChange={handlePriceChange}
+                            //onChange={handlePriceChange}
                             className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
                         />
-                    </label>
+                    </label> */}
                     <label className="flex flex-col w-full">
                         <span className="block mb-2">Immagine</span>
                         <input

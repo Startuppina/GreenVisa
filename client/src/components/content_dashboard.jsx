@@ -230,7 +230,7 @@ const Dashboard = () => {
 
       <div className="flex flex-col">
         <button
-          className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
+          className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-[1.03] hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
           onClick={() => setShowNews(!showNews)}
         >
           {showNews ? "Nascondi News" : "Mostra News"}
@@ -272,7 +272,7 @@ const Dashboard = () => {
                         onClick={() => {
                           handleEdit(newsItem, "news");
                         }}
-                        className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044]"
+                        className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044] transition-colors duration-300 ease-in-out"
                       >
                         Modifica
                       </button>
@@ -284,7 +284,7 @@ const Dashboard = () => {
                           );
                           setPopupConfirmDelete(true);
                         }}
-                        className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded hover:border-red-500 hover:text-red-500 hover:bg-white"
+                        className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded hover:border-red-500 hover:text-red-500 hover:bg-white transition-colors duration-300 ease-in-out"
                       >
                         Elimina
                       </button>
@@ -346,7 +346,7 @@ const Dashboard = () => {
                               // Chiama la funzione saveEdit
                               saveEdit();
                             }}
-                            className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                            className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] "
                           >
                             Salva
                           </button>
@@ -368,7 +368,7 @@ const Dashboard = () => {
         )}
 
         <button
-          className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
+          className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-[1.03] hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
           onClick={() => setShowProducts(!showProducts)}
         >
           {showProducts ? "Nascondi Certificazioni" : "Mostra Certificazioni"}
@@ -433,7 +433,7 @@ const Dashboard = () => {
                     <>
                       <button
                         onClick={() => handleEdit(productItem, "product")}
-                        className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044]"
+                        className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044] transition-colors duration-300 ease-in-out"
                       >
                         Modifica
                       </button>
@@ -448,7 +448,7 @@ const Dashboard = () => {
                           );
                           setPopupConfirmDelete(true);
                         }}
-                        className="z-20 bg-red-500 text-white px-4 py-2 rounded border-2 border-red-500 hover:text-red-500 hover:bg-white"
+                        className="z-20 bg-red-500 text-white px-4 py-2 rounded border-2 border-red-500 hover:text-red-500 hover:bg-white transition-colors duration-300 ease-in-out"
                       >
                         Elimina
                       </button>
@@ -584,7 +584,7 @@ const Dashboard = () => {
         )}
       </div>
       <button
-        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
+        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-[1.03] hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
         onClick={() => setShowMessages(!showMessages)}
       >
         {showMessages ? "Nascondi Messaggi" : "Mostra Messaggi"}
@@ -592,7 +592,7 @@ const Dashboard = () => {
       {showMessages && <MessagesDashboard />}
 
       <button
-        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
+        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-[1.03] hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
         onClick={() => setShowOrders(!showOrders)}
       >
         {showOrders ? "Nascondi Ordini utenti" : "Mostra Ordini utenti"}
@@ -600,7 +600,7 @@ const Dashboard = () => {
       {showOrders && <AllOrders />}
 
       <button
-        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
+        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-[1.03] hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
         onClick={() => setShowPromocodes(!showPromocodes)}
       >
         {showPromocodes ? "Nascondi Codici Promozionali" : "Mostra Codici Promozionali"}
@@ -608,7 +608,7 @@ const Dashboard = () => {
       {showPromocodes && <PromoCodes />}
 
       <button
-        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-105 hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
+        className="bg-[#a3c4b5] text-[#2d7044] px-4 py-2 rounded mb-4 transition-transform transform hover:scale-[1.03] hover:bg-[#8db3a2] shadow-sm hover:shadow-md"
         onClick={() => setShowForms(!showForms)}
       >
         {showForms ? "Nascondi Forms" : "Mostra Forms"}

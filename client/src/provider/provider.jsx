@@ -10,9 +10,10 @@ export const RecoveryContextProvider = ({ children }) => {
     const [cartProducts, setCartProducts] = useState([]);
     const [quantities, setQuantities] = useState({});
     const [isEmpty, setIsEmpty] = useState(true);
+    const[codeTrigger, setCodeTrigger] = useState(false);
 
     return (
-        <RecoveryContext.Provider value={{ email, setEmail, OTP, setOTP, cartProducts, setCartProducts, quantities, setQuantities, isEmpty, setIsEmpty }}>
+        <RecoveryContext.Provider value={{ email, setEmail, OTP, setOTP, cartProducts, setCartProducts, quantities, setQuantities, isEmpty, setIsEmpty, codeTrigger, setCodeTrigger }}>
             {children}
         </RecoveryContext.Provider>
     );

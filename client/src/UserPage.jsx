@@ -37,6 +37,7 @@ const UserPage = () => {
 
     useEffect(() => {
         const fetchInfo = async () => {
+            
             try {
                 const response = await axios.get('http://localhost:8080/api/user-info', {
                     headers: {
@@ -53,6 +54,12 @@ const UserPage = () => {
                 }
 
             } catch (error) {
+
+                if (error.response && error.response.status === 401) {
+                    localStorage.removeItem('token');
+                    navigate('/login');
+                    return;
+                }
                 setMessagePopup(error.response?.data?.msg || error.message);
                 setButtonPopup(true);
             }
@@ -238,7 +245,7 @@ const UserPage = () => {
                         <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
                         <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
                         </div>
-                        <div className="flex justify-center">
+                        <div className="flex justify-center relative top-20">
                         <button
                             className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                             onClick={() => setShowModifier(!showModifier)}

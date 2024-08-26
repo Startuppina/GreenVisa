@@ -5,6 +5,7 @@ import MessagePopUp from "./messagePopUp";
 import CategoryBasedSelect from "./categoryBasedSelect";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import getPriceCategory from "./getPriceCategory";
 
 function ProductDetails() {
     const [product, setProduct] = useState({});
@@ -27,13 +28,11 @@ function ProductDetails() {
 
     useEffect(() => {
         const getProductDetails = async () => {
-            const token = localStorage.getItem("token");
 
             try {
                 const response = await axios.get(`http://localhost:8080/api/product-details/${id}`, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
                     }
                 });
                 
@@ -78,6 +77,15 @@ function ProductDetails() {
                 setButtonPopup(true);
             }
         } catch (error) {
+
+            if (error.response && error.response.status === 401) {
+                localStorage.removeItem('token');
+                navigate('/login');
+                return;
+            } else if (error.response && error.response.status === 403) {
+                navigate('/login');
+                return;
+            }
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
@@ -89,12 +97,12 @@ function ProductDetails() {
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
-            <div className="w-[400px] h-[300px] overflow-hidden">
+            <div className="w-[400px] h-[300px] overflow-hidden ">
                 <img src={`http://localhost:8080/uploaded_img/${product.image}`} alt={product.name} className="w-full h-full object-cover rounded-lg"/>
             </div>
-            <div className="w-full md:w-[50%] p-4 lg:pl-20 flex flex-col items-center text-arial text-xl text-center">
+            <div className="w-full md:w-[40%] p-4 lg:pl-20 flex flex-col items-center text-arial text-xl text-center">
                 <h1 className="text-arial text-2xl text-center font-bold pb-5 w-full">{product.name}</h1>
-                <p className="m-4">{product.price} €</p>
+                <p className="m-4">{getPriceCategory(product.category)} €</p>
                 <p className="pb-5 w-[70%]">{product.info}</p>
                 <CategoryBasedSelect onSelectChange={handleSelectChange} value={valueFromSelect} category={category}/>
                 <div className="flex flex-row items-center justify-center gap-5">
@@ -109,7 +117,7 @@ function ProductDetails() {
         </div>
         <div className="w-full h-auto md:p-8 text-arial text-xl text-black text-center flex flex-col gap-5 items-center">
             <h1 className="text-2xl font-bold">Info</h1>
-            <p className="p-4 md:w-[40%] text-justify">Dopo l’acquisto riceverai sulla tua mail un link univoco e privato che ti darà accesso al questionario che ci consentirà di calcolare in tempo reale le emissioni di CO2 della tua struttura/azienda.</p>
+            <p className="p-4 w-full lg:w-[40%] text-justify">Dopo l’acquisto riceverai sulla tua mail un link univoco e privato che ti darà accesso al questionario che ci consentirà di calcolare in tempo reale le emissioni di CO2 della tua struttura/azienda.</p>
         </div>
         <h1 className="text-3xl font-bold text-center">Altri prodotti</h1>
 

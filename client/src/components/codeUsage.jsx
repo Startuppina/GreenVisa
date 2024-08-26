@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useRecoveryContext } from '../provider/provider';
 
 const CodeUsage = () => {
     const [copiedCodes, setCopiedCodes] = useState({});
     const [codici, setCodici] = useState([]);
+
+    const { codeTrigger } = useRecoveryContext();
 
   useEffect(() => {
 
@@ -26,7 +29,7 @@ const CodeUsage = () => {
       
     };
     fetchFromPublished();
-  }, []);
+  }, [codeTrigger]);
 
   const handleCopy = (codice) => {
     navigator.clipboard.writeText(codice);
@@ -43,7 +46,7 @@ const CodeUsage = () => {
         {codici.map((codice, index) => (
             <div
                 key={index} // Aggiungi una chiave unica per migliorare le prestazioni di React
-                className="mb-4 flex flex-row items-center lg:items-start justify-between bg-white p-4 rounded-lg shadow"
+                className="mb-4 flex flex-row items-center lg:items-start justify-between bg-white p-4 rounded-lg shadow tranform transition duration-300 hover:scale-[1.02] hover:shadow-lg" 
             >
                 <div className="flex flex-col items-start space-y-2 lg:space-y-0 w-full lg:w-auto">
                     <span className="text-lg font-mono text-red-500 flex-shrink-0">{codice.code}</span>
@@ -51,7 +54,7 @@ const CodeUsage = () => {
                 </div>
                 <button
                     onClick={() => handleCopy(codice.code)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300 mt-3 lg:mt-0"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300 my-auto"
                 >
                     {copiedCodes[codice.code] ? 'Copiato!' : 'Copia'}
                 </button>
