@@ -16,6 +16,18 @@ CREATE TABLE IF NOT EXISTS news (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS news_read_status (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    news_id INTEGER NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP DEFAULT NULL,  -- Memorizza il timestamp di quando la notizia è stata letta
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (news_id) REFERENCES news(id) ON DELETE CASCADE,
+    UNIQUE (user_id, news_id)  -- Un utente può avere uno stato di lettura per ogni notizia
+);
+
+
 CREATE TYPE category_type AS ENUM (
     'Certificazione hotel',
     'Certificazione spa e resorts',
@@ -39,6 +51,19 @@ CREATE TABLE IF NOT EXISTS products (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (cod)  -- Aggiunto un vincolo di unicità per il codice prodotto
 );
+
+CREATE TABLE IF NOT EXISTS plates (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,  -- Riferimento diretto alla certificazione
+    serial_number VARCHAR(255) UNIQUE NOT NULL,  -- Numero di serie univoco per ogni targhetta
+    status VARCHAR(50) DEFAULT 'in attesa di spedizione',  -- Stato della targhetta (es. "spedita", "in produzione")
+    shipping_date DATE,  -- Data di spedizione (può essere NULL finché non è spedita)
+    tracking_number VARCHAR(255),  -- Numero di tracciamento per la spedizione
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 
 
 CREATE TABLE IF NOT EXISTS promocodes (

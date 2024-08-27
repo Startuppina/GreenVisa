@@ -29,6 +29,33 @@ function Article() {
         getArticleData();
     }, [id]);
 
+    useEffect(() => {
+        const setNewsread = async () => {
+
+            const token = localStorage.getItem("token");
+
+            try {
+                const response = await axios.put(`http://localhost:8080/api/set-news-read/${id}`, {}, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 200) {
+                    console.log(response.data);
+                }
+
+            } catch (error) {
+                console.log(error);
+            }
+
+        };
+                    
+
+        setNewsread();
+    }, []);
+
     const nextArticle = (currentId) => {
         const currentIndex = articleIds.indexOf(parseInt(currentId));
         if (currentIndex !== -1) {

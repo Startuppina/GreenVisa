@@ -11,6 +11,7 @@ import ConfirmPopUp from './components/confirmPopUp';
 import Dashboard from './components/content_dashboard';
 import CodeUsage from './components/codeUsage';
 import UserOrders from './components/userOrders';
+import Plate from './components/plate';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrown } from '@fortawesome/free-solid-svg-icons';
 
@@ -313,7 +314,9 @@ const UserPage = () => {
                     </form>
                 
                 </div>
+                <Plate />
                 <UserOrders />
+                
                 {isAdmin && <Dashboard />}
                 <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
                     <div className="w-full md:w-[20%] flex justify-center">

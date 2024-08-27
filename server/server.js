@@ -828,10 +828,33 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
     }
 
     const sanitizedContent = DOMPurify.sanitize(content);
-    const query = "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4)";
+    const insertNewsQuery = "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4) RETURNING id";
     const values = [req.user.user_id, title, sanitizedContent, image.filename];
 
-    await pool.query(query, values);
+    // Iniziare una transazione
+    const client = await pool.connect();
+    await client.query('BEGIN');
+
+    // Inserire la notizia e ottenere l'ID della notizia
+    const resNews = await client.query(insertNewsQuery, values);
+    const newsId = resNews.rows[0].id;
+
+    // Aggiornare lo stato di lettura per tutti gli utenti
+    const updateReadStatusQuery = `
+      INSERT INTO news_read_status (user_id, news_id)
+      SELECT u.id, $1
+      FROM users u
+      LEFT JOIN news_read_status nrs
+      ON u.id = nrs.user_id AND $1 = nrs.news_id
+      WHERE nrs.id IS NULL;
+    `;
+
+    await client.query(updateReadStatusQuery, [newsId]);
+
+    // Completare la transazione
+    await client.query('COMMIT');
+    client.release();
+
     res.status(200).json({ msg: "Notizia caricata con successo" });
 
   } catch (error) {
@@ -839,6 +862,7 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
     res.status(500).json({ msg: "Errore nel caricamento della notizia" });
   }
 });
+
 
 app.get("/api/news", async (req, res) => {
   try {
@@ -884,6 +908,38 @@ app.get("/api/article/:id", async (req, res) => {
     res.status(500).json({ msg: "Errore nel recupero dell'articolo" });
   }
 });
+
+app.put("/api/set-news-read/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const query = `UPDATE news_read_status
+                  SET is_read = TRUE, read_at = NOW()
+                  WHERE user_id = $1 AND news_id = $2`;
+    const values = [req.user.user_id, id];
+    await pool.query(query, values);
+
+    res.status(200).json({ msg: "Notizia impostata come letta correttamente" });
+
+  } catch (error) {
+    console.error("Errore nell'impostazione della notizia come letta:", error);
+    res.status(500).json({ msg: "Errore nell'impostazione della notizia come letta" });
+  }
+
+})
+
+app.get("/api/news-unread", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const query = "SELECT * FROM news JOIN news_read_status ON news.id = news_read_status.news_id WHERE news.user_id = $1 AND is_read = FALSE";
+    const values = [user_id];
+    const result = await pool.query(query, values);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Errore nel recupero delle notizie:", error);
+    res.status(500).json({ msg: "Errore nel recupero delle notizie" });
+  }
+})
 
 
 app.delete("/api/delete-news/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
