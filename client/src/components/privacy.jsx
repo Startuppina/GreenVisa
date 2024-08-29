@@ -1,8 +1,10 @@
 import React from 'react'
+import SurveyComponent from './transportQuetionnaire'
 
 function Privacy() {
   return (
     <>
+    <SurveyComponent />
     <div className='flex flex-col font-arial p-4 md:px-20 text-arial text-justify text-xl mt-10'>
       <h1 className='text-3xl font-bold pb-2'>Titolare del trattamento</h1><br/>
       <p className='pb-10'>Il Titolare del trattamento, ai sensi dell’art. 13 del GDPR è GREENVISA Srl – Viale G. Cesare, 14, 00192 – Roma (RM) – P.IVA 14866791008 che rispetta il diritto dei propri utenti ad essere informati con riguardo alla raccolta e alle altre operazioni di trattamento dei loro dati personali, e fornisce le seguenti informazioni circa il trattamento dei dati personali che Lei, in qualità di interessato, ci ha comunicato.</p>

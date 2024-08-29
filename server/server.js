@@ -1800,6 +1800,50 @@ app.post("/api/send-message-response", authenticateJWT, authenticateAdmin, async
 
 })
 
+app.get('/api/building-options', async (req, res) => {
+  try {
+    // Funzione per ottenere i valori degli enum
+    const getEnumValues = async (enumType) => {
+      const query = `SELECT unnest(enum_range(NULL::${enumType})) AS value`;
+      const result = await pool.query(query);
+      return result.rows.map(row => row.value);
+    };
+
+    // Ottieni i valori di ciascun enum
+    const [years, renovations, heatDistributions, ventilations, energyControls, maintenances, waterRecoveries, electricityMeters, analyzers] = await Promise.all([
+      getEnumValues('construction_year_enum'),
+      getEnumValues('renovation_enum'),
+      getEnumValues('heat_distribution_enum'),
+      getEnumValues('ventilation_enum'),
+      getEnumValues('energy_control_enum'),
+      getEnumValues('maintenance_enum'),
+      getEnumValues('water_recovery_enum'),
+      getEnumValues('electricity_meter_enum'),
+      getEnumValues('analyzers_enum'),
+    ]);
+
+    // Crea l'oggetto di risposta JSON
+    const response = {
+      construction_years: years,
+      renovations: renovations,
+      heat_distributions: heatDistributions,
+      ventilations: ventilations,
+      energy_controls: energyControls,
+      maintenances: maintenances,
+      water_recoveries: waterRecoveries,
+      electricity_meters: electricityMeters,
+      analyzers: analyzers,
+    };
+
+    console.log('Response:', response);
+    // Restituisci la risposta JSON
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching options:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 function emailCheck(email) {
   const re =

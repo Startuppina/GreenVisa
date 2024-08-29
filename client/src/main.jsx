@@ -20,6 +20,7 @@ import Recovered from './components/recovered.jsx';
 import InsertEmail from './components/insertEmail.jsx';
 import PaySuccessPage from './PaySuccessPage.jsx';
 import { RecoveryContextProvider } from './provider/provider.jsx';
+import Buildings from './buildingsPage.jsx';
 
 
 const router = createBrowserRouter([
@@ -90,6 +91,10 @@ const router = createBrowserRouter([
   {
     path: "/PaymentSuccess",
     element: <PaySuccessPage />,
+  },
+  {
+    path: "/buildings",
+    element: <Buildings />,
   },
 ]);
 

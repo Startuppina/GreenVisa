@@ -14,6 +14,7 @@ import UserOrders from './components/userOrders';
 import Plate from './components/plate';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrown } from '@fortawesome/free-solid-svg-icons';
+import { Link } from 'react-router-dom';
 
 const UserPage = () => {
     const [userInfo, setUserInfo] = useState({});
@@ -257,6 +258,12 @@ const UserPage = () => {
                     </div>
                     <CodeUsage/>
                 </div>
+
+                <Link to="/buildings">
+                    <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg hover:trasform hover:scale-105 duration-300">
+                        <h1 className="text-2xl font-bold text-black text-center">I tuoi edifici</h1>
+                    </div>
+                </Link>
 
                 <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 mx-2 md:mx-14 my-4 border shadow-lg rounded-lg ${showModifier ? '' : 'hidden'}`}>
                     <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
