@@ -1,0 +1,149 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import PlantForm from "./plantForm";
+import { useRecoveryContext } from "../provider/provider";
+import ConfirmPopUp from "./confirmPopUp";
+
+function Plants() {
+    const [plants, setPlants] = useState([]); // Inizializzato come array vuoto
+    const [numPlants, setNumPlants] = useState(0);
+    const [showPlantForm, setShowPlantForm] = useState(false);
+
+    const [plantsToDelete, setPlantsToDelete] = useState(null);
+    const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
+    const [messageConfirm, setMessageConfirm] = useState('');
+
+
+    const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
+
+    useEffect(() => {
+
+        const fetchPlants = async () => {
+            const token = localStorage.getItem("token");
+            const id = buildingID;
+            if (!id) {
+                console.log('No building ID available');
+                return;
+            }
+            try {
+                const response = await axios.get(`http://localhost:8080/api/buildings/${id}/fetch-plants`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                console.log('Plants data:', response.data); // Log the response data
+                if (response.status === 200) {
+                    setPlants(response.data.plants); // Controllo aggiuntivo
+                    setNumPlants(response.data.count);
+
+
+                }
+            } catch (error) {
+                console.log('Error fetching plants:', error);
+            }
+        };
+        fetchPlants();
+    }, [buildingID, refresh]); // Added buildingID as a dependency, also plantrigger as a dependency
+
+    const deletePlant = async () => {
+        const token = localStorage.getItem('token');
+        const { id } = plantsToDelete;
+        try {
+            const response = await axios.delete(`http://localhost:8080/api/delete-plant/${id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                const updatedPlants = plants.filter((plant) => plant.id !== id);
+                setPlants(updatedPlants);
+                setNumPlants(updatedPlants.length);
+                setPopupConfirmDelete(false);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    return (
+        <div className="text-arial text-xl mt-4 mb-4">
+            <ConfirmPopUp
+                trigger={popupConfirmDelete}
+                setTrigger={setPopupConfirmDelete}
+                onButtonClick={deletePlant}
+            >
+                {messageConfirm}
+            </ConfirmPopUp>
+            <div className=" bg-[#D9D9D9] rounded-lg mx-2 md:mx-14">
+                <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti</h1>
+
+                {numPlants === 0 ? (
+                    <div className="flex flex-col items-center justify-center pb-4">
+                        <div className="text-center pb-4">Nessun impianto presente</div>
+                        <button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>
+                    </div>
+                ) : (
+                    <div className="flex flex-col mx-4 h-[45vh] overflow-y-auto mb-4">
+                        {plants.map((plant) => ( // Controllo per prevenire plants undefined
+                            <>
+                                <div
+                                    className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
+                                    key={plant.id}
+                                >
+                                    <div className="">
+                                        <strong>Descrizione:</strong> {plant.description}
+                                    </div>
+                                    <div className="">
+                                        <strong>Tipo di impianto:</strong> {plant.plant_type}
+                                    </div>
+                                    <div className="">
+                                        <strong>Tipo di servizio:</strong> {plant.service_type}
+                                    </div>
+                                    <div className="">
+                                        <strong>Tipo di generatore:</strong> {plant.generator_type}
+                                    </div>
+                                    <div className="">
+                                        <strong>Descrizione tipologia:</strong> {plant.generator_description}
+                                    </div>
+                                    <div className="">
+                                        <strong>Elemento consumato dal generatore:</strong> {plant.fuel_type}
+                                    </div>
+                                    <div className="">
+                                        <strong>Quantità (metano e biogas [SMC], biodiesel e GPL [litri], olio e cippato [ton], pellet [kg]):</strong> {plant.quantity}
+                                    </div>
+                                    <div className="">
+                                        <strong>Fornitura elettrica per altri servizi nell'edificio:</strong> {plant.electricity_supply}
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
+                                            onClick={() => {
+                                                setPlantsToDelete({
+                                                    id: plant.id,
+                                                });
+                                                setMessageConfirm(
+                                                    "Sei sicuro di voler eliminare questo impianto solare?"
+                                                );
+                                                setPopupConfirmDelete(true);
+                                            }}>
+                                            Elimina
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </>
+                        ))}
+                        <div className="flex flex-col items-center justify-center">
+                            <button className="p-2 mb-4 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>
+                        </div>
+                    </div>
+                )}
+                {showPlantForm && <div className="pb-1"><PlantForm /></div>}
+            </div>
+        </div >
+    );
+}
+
+export default Plants;
