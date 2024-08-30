@@ -283,6 +283,19 @@ CREATE TABLE IF NOT EXISTS photovoltaics (
     power DECIMAL(10,2) NOT NULL CHECK (power > 0) --potenza--
 );
 
+-------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS survey_responses (
+    id SERIAL PRIMARY KEY,
+    survey_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    page_no INTEGER,
+    survey_data JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT unique_user_survey UNIQUE (user_id, survey_id)
+);
+
+
 
 
 

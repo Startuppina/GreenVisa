@@ -11,10 +11,11 @@ require("dotenv").config();
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 const cron = require('node-cron');
 const pricingFunctions = require('./priceCalculator');
-
+const bodyParser = require('body-parser');
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 const { disconnect } = require("process");
+const { v4: uuidv4 } = require('uuid')
 
 const port = 8080;
 
@@ -112,6 +113,7 @@ const authenticateJWT = (req, res, next) => {
 //const purify = DOMPurify(window);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 //only for admin
 function authenticateAdmin(req, res, next) {
@@ -2224,6 +2226,92 @@ app.get("/api/buildings/:id/fetch-photovoltaics", authenticateJWT, async (req, r
     res.status(500).json({ msg: "Errore interno del server" });
   }
 })
+
+app.get("/api/user-orders-category", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+
+    // Esegui la query SQL corretta
+    const rows = await pool.query(`
+      SELECT
+        o.id AS order_id,
+        p.name AS product_name,
+        p.category AS product_category
+      FROM
+        orders o
+      JOIN
+        products p
+      ON
+        o.product_id = p.id
+      WHERE
+        o.user_id = $1;
+    `, [user_id]);
+
+    // Invia i dati come JSON
+    res.status(200).json({ orders: rows.rows });
+  } catch (error) {
+    console.error('Error fetching orders:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+
+// Endpoint per salvare i dati del survey
+app.post('/api/responses', authenticateJWT, async (req, res) => {
+  const { surveyId, pageNo, surveyData } = req.body;
+  const { user_id } = req.user;
+
+  console.log("ALL", user_id, surveyId, pageNo, surveyData);
+
+  // Controllo per assicurarsi che i dati necessari siano presenti
+  if (!surveyData) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const query = `
+      INSERT INTO survey_responses (survey_id, user_id, page_no, survey_data)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (user_id, survey_id) 
+      DO UPDATE SET 
+        page_no = EXCLUDED.page_no,
+        survey_data = EXCLUDED.survey_data
+      RETURNING id;
+    `;
+    const values = [surveyId, user_id, pageNo, surveyData];
+
+    const result = await pool.query(query, values);
+    res.status(201).json({ id: result.rows[0].id });
+  } catch (err) {
+    console.error("Error inserting or updating survey response:", err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/responses/:surveyId', authenticateJWT, async (req, res) => {
+  const { surveyId } = req.params;
+  const { user_id } = req.user;
+
+  try {
+    const query = `
+      SELECT page_no, survey_data 
+      FROM survey_responses 
+      WHERE user_id = $1 AND survey_id = $2
+    `;
+    const values = [user_id, surveyId];
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No survey data found' });
+    }
+
+    // Assuming you want to send all pages and responses
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error retrieving survey data:", err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 
 
