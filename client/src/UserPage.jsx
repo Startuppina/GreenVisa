@@ -24,6 +24,8 @@ const UserPage = () => {
     const [showModifier, setShowModifier] = useState(false);
     const navigate = useNavigate();
 
+    const [ordersCategory, setOrdersCategory] = useState([]);
+
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
@@ -39,7 +41,7 @@ const UserPage = () => {
 
     useEffect(() => {
         const fetchInfo = async () => {
-            
+
             try {
                 const response = await axios.get('http://localhost:8080/api/user-info', {
                     headers: {
@@ -67,7 +69,34 @@ const UserPage = () => {
             }
         }
 
+        const fetchOrdersCategory = async () => {
+
+            try {
+                const response = await axios.get('http://localhost:8080/api/user-orders-category', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.status === 200) {
+                    setOrdersCategory(response.data.orders);
+                    return;
+                }
+
+            } catch (error) {
+
+                if (error.response && error.response.status === 401) {
+                    return;
+                }
+                setMessagePopup(error.response?.data?.msg || error.message);
+                setButtonPopup(true);
+            }
+
+        }
+
         fetchInfo();
+        fetchOrdersCategory();
+
     }, []);
 
     const logout = async () => {
@@ -132,6 +161,8 @@ const UserPage = () => {
             }
         }
     };
+
+
 
     const handleDeleteAccount = async () => {
         setMessageConfirm('Sei sicuro di voler cancellare il tuo account?');
@@ -209,7 +240,7 @@ const UserPage = () => {
         }
     };
 
-    
+
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -238,25 +269,35 @@ const UserPage = () => {
                         <FontAwesomeIcon icon={faCrown} className="text-yellow-500 ml-2 rotate-45 relative bottom-5 right-4" title="Admin" />
                     )}
                 </h1>
-                
+
                 <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 md:mx-14 h-[600px] lg:h-[300px]">
                     <div className="w-full bg-[#d9d9d9] p-4 rounded-lg flex-1">
                         <h2 className="text-2xl font-bold">Informazioni personali</h2>
                         <div className="pb-5">
-                        <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
-                        <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
-                        <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
+                            <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
+                            <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
+                            <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
                         </div>
                         <div className="flex justify-center relative top-20">
-                        <button
-                            className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
-                            onClick={() => setShowModifier(!showModifier)}
-                        >
-                            Modifica
-                        </button>
+                            <button
+                                className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                onClick={() => setShowModifier(!showModifier)}
+                            >
+                                Modifica
+                            </button>
                         </div>
                     </div>
-                    <CodeUsage/>
+                    <CodeUsage />
+                </div>
+                <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg ">
+                    <h1 className="text-2xl font-bold text-black mb-4">Questionari disponibili</h1>
+                    {ordersCategory.map((category) => (
+                        <div key={category.order_id} >
+                            <h2 className="text-xl font-bold text-black">Questionario per la categoria: {category.product_category}</h2>
+                            <div className='text-black mb-2 hover:text-[#2d7044]'><Link to={`/questionario/${category.product_category}`}>Clicca qui per accedere al questionario</Link></div>
+                            <hr className='border border-black' />
+                        </div>
+                    ))}
                 </div>
 
                 <Link to="/buildings">
@@ -282,19 +323,19 @@ const UserPage = () => {
                                 <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                             </div>
                         </div>
-                        
+
                     </form>
 
                     <form className='mx-auto md:w-[80%]' onSubmit={handlePhoneModifier}>
                         <label htmlFor="phone" className="block mb-2">Telefono</label>
-                        <div className='flex flex-col md:flex-row gap-3 items-center justify-center'> 
+                        <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
                             <PhoneInput
                                 country={'it'}
                                 value={newPhone}
                                 onChange={handlePhoneChange}
                                 buttonClass='w-[45px] p-2 bg-gray-50'
                                 dropdownClass='w-full p-2 bg-gray-50'
-                                inputStyle={{ width: '100%', height : '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                                inputStyle={{ width: '100%', height: '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
                                 preferredCountries={['it']}
                             />
                             <div className='flex justify-center'>
@@ -317,13 +358,13 @@ const UserPage = () => {
                                 <input type='submit' value='Modifica email' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
                             </div>
                         </div>
-                        
+
                     </form>
-                
+
                 </div>
                 <Plate />
                 <UserOrders />
-                
+
                 {isAdmin && <Dashboard />}
                 <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
                     <div className="w-full md:w-[20%] flex justify-center">

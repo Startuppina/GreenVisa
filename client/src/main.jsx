@@ -22,6 +22,7 @@ import PaySuccessPage from './PaySuccessPage.jsx';
 import { RecoveryContextProvider } from './provider/provider.jsx';
 import Buildings from './buildingsPage.jsx';
 import BuildingPage from './buildingPage.jsx';
+import QuestionnairePage from './questionnairePage.jsx';
 
 
 const router = createBrowserRouter([
@@ -100,6 +101,10 @@ const router = createBrowserRouter([
   {
     path: "/building/:id",
     element: <BuildingPage />,
+  },
+  {
+    path: "/questionario/:category",
+    element: <QuestionnairePage />,
   },
 ]);
 

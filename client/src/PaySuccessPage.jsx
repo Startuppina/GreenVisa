@@ -12,7 +12,7 @@ function PaySuccessPage() {
   useEffect(() => {
 
     createOrder();
-    //remove_user_cart();
+    remove_user_cart();
 
     localStorage.removeItem('productsIDs');
     localStorage.removeItem('codeId');
@@ -52,7 +52,7 @@ function PaySuccessPage() {
     const orderData = localStorage.getItem('productsIDs');
     const codeID = localStorage.getItem('codeId');
     console.log("codeID:", codeID);
-    
+
     if (codeID !== undefined) {
       setCode(codeID);
     } else {
@@ -62,13 +62,13 @@ function PaySuccessPage() {
     try {
       //IL POST VERRA FATTO DUE VOLTE, QUINDI DUE ORDINI INVECE CHE UNO IN QUANTO IN MAIN.JS C'E'
       //REACT STRICT MODE CHE IN AMBIENTE DI PRODUZIONE E' DISABILITATO
-      const response = await axios.post('http://localhost:8080/api/create-order', {orderData: JSON.parse(orderData), codeID: code}, {
+      const response = await axios.post('http://localhost:8080/api/create-order', { orderData: JSON.parse(orderData), codeID: code }, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (response.status === 200) {
         console.log(response.data);
       }
@@ -101,7 +101,7 @@ function PaySuccessPage() {
               ariaLabel="mutating-dots-loading"
               wrapperStyle={{}}
               wrapperClass=""
-              />
+            />
           </div>
         </div>
         <div className="w-full flex items-center justify-center p-8">
