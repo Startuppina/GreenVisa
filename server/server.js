@@ -1835,7 +1835,6 @@ app.get('/api/building-options', async (req, res) => {
       analyzers: analyzers,
     };
 
-    console.log('Response:', response);
     // Restituisci la risposta JSON
     res.json(response);
   } catch (error) {
@@ -1843,6 +1842,390 @@ app.get('/api/building-options', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+app.post("/api/upload-building", authenticateJWT, async (req, res) => {
+  try {
+    // Estrai i dati dal corpo della richiesta
+    const {
+      name,
+      description,
+      year,
+      renovation,
+      heating,
+      ventilation,
+      energyControl,
+      maintenance,
+      waterRecovery,
+      electricityCounter,
+      electricityAnalyzer,
+      lighting,
+      led,
+      gasLamp
+    } = req.body;
+
+
+    // Verifica che tutti i dati richiesti siano presenti
+    if (!name || !description || !year || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !lighting || !led || !gasLamp) {
+      return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
+    }
+
+    // Recupera l'ID utente dalla richiesta
+    const userId = req.user.user_id;
+
+    // Verifica che l'ID utente sia valido
+    if (!userId) {
+      return res.status(401).json({ msg: "Utente non autenticato" });
+    }
+
+    // Prepara i valori per l'inserimento
+    const values = [
+      name,
+      userId,
+      description,
+      year,
+      renovation,
+      heating,
+      ventilation,
+      energyControl,
+      maintenance,
+      waterRecovery,
+      electricityCounter,
+      lighting,
+      led,
+      gasLamp,
+      electricityAnalyzer
+    ];
+
+    // Esegui la query di inserimento
+    await pool.query(`
+      INSERT INTO buildings (
+        name,
+        user_id,
+        description,
+        construction_year,
+        renovation,
+        heat_distribution,
+        ventilation,
+        energy_control,
+        maintenance,
+        water_recovery,
+        electricity_meter,
+        incandescent,
+        led,
+        gas_lamp,
+        analyzers
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+      )
+    `, values);
+
+    // Rispondi con successo
+    res.status(200).json({ msg: "Edificio caricato con successo" });
+  } catch (error) {
+    console.error('Error inserting building:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+app.delete("/api/delete-building/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    console.log('ID dai parametri della richiesta:', id);
+    const query = "DELETE FROM buildings WHERE user_id = $1 AND id = $2";
+    const values = [user_id, id];
+    await pool.query(query, values);
+    res.status(200).json({ msg: "Edificio rimosso con successo" });
+
+  } catch (error) {
+    console.error('Error deleting building:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+app.get("/api/fetch-buildings", authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+
+    if (!userId) {
+      return res.status(401).json({ msg: "Utente non autenticato" });
+    }
+
+    const rows = await pool.query(`
+      SELECT * FROM buildings WHERE user_id = $1
+    `, [userId]);
+
+    const numBuildings = await pool.query(`
+      SELECT COUNT(*) FROM buildings WHERE user_id = $1
+    `, [userId]);
+
+    console.log('Response:', rows.rows, numBuildings.rows[0].count);
+
+    res.status(200).json({ buildings: rows.rows, numBuildings: numBuildings.rows[0].count });
+  } catch (error) {
+    console.error('Error fetching buildings:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.get("/api/fetch-building/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+
+    const rows = await pool.query(`SELECT * FROM buildings WHERE id = $1 AND user_id = $2`, [id, user_id]);
+    res.status(200).json({ building: rows.rows[0] });
+  } catch (error) {
+    console.error('Error fetching building:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.get("/api/plant-options", authenticateJWT, async (req, res) => {
+  try {
+    // Funzione per ottenere i valori degli enum
+    const getEnumValues = async (enumType) => {
+      const query = `SELECT unnest(enum_range(NULL::${enumType})) AS value`;
+      const result = await pool.query(query);
+      return result.rows.map(row => row.value);
+    };
+
+    // Ottieni i valori di ciascun enum
+    const [plant_type, service_type, generator_type, fuel_type, electricity_supply] = await Promise.all([
+      getEnumValues('plant_type_enum'),
+      getEnumValues('service_type_enum'),
+      getEnumValues('generator_type_enum'),
+      getEnumValues('fuel_type_enum'),
+      getEnumValues('electricity_supply_enum'),
+    ]);
+
+    // Crea l'oggetto di risposta JSON
+    const response = {
+      plant_type: plant_type,
+      service_type: service_type,
+      generator_type: generator_type,
+      fuel_type: fuel_type,
+      electricity_supply: electricity_supply
+    };
+
+    // Restituisci la risposta JSON
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching options:', error);
+    res.status(500).send('Server Error');
+  }
+
+})
+
+app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    const { description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply } = req.body;
+
+    if (!description || !plantType || !serviceType || !generatorType || !fuelType || !quantity || !electricitySupply) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    if (isNaN(quantity)) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
+    }
+
+    if (quantity <= 0) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
+    }
+
+    const values = [user_id, id, description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply];
+
+    await pool.query(`
+      INSERT INTO plants (
+        user_id, building_id, description, plant_type, service_type, generator_type, generator_description, fuel_type, quantity, electricity_supply
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+      )
+    `, values);
+
+    res.status(200).json({ msg: "Pianta aggiunta con successo" });
+  } catch (error) {
+    console.error('Error adding plant:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.get("/api/buildings/:id/fetch-plants", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+
+    const query2 = "SELECT COUNT(*) FROM plants WHERE building_id = $1 AND user_id = $2";
+    const values2 = [id, user_id];
+    const result2 = await pool.query(query2, values2);
+    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+
+    console.log('Count from database:', count); // Log count
+
+    const rows = await pool.query(`SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`, [id, user_id]);
+
+    res.status(200).json({ plants: rows.rows, count: count });
+  } catch (error) {
+    console.error('Error fetching plants:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+app.delete("/api/delete-plant/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+
+    await pool.query(`DELETE FROM plants WHERE id = $1`, [id]);
+    res.status(200).json({ msg: "Impianto eliminato con successo" });
+  } catch (error) {
+    console.error('Error deleting plant:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+app.post("/api/buildings/:id/upload/solar", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    const { installedArea } = req.body;
+
+    if (!installedArea) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    if (isNaN(installedArea)) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
+    }
+
+    if (installedArea <= 0) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
+    }
+
+    const values = [id, installedArea];
+
+    await pool.query(`
+      INSERT INTO solars (
+        building_id, installed_area
+      ) VALUES (
+        $1, $2
+      )
+    `, values);
+
+    res.status(200).json({ msg: "Impianto solare aggiunto con successo" });
+  } catch (error) {
+    console.error('Error adding solar:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+
+})
+
+app.delete("/api/delete-solar/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    const values = [id];
+    await pool.query("DELETE FROM solars WHERE id = $1", values);
+    res.status(200).json({ msg: "Impianto solare eliminato con successo" });
+  } catch (error) {
+    console.error('Error deleting solar:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.get("/api/buildings/:id/fetch-solars", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+
+    const rows = await pool.query(`SELECT * FROM solars WHERE building_id = $1`, [id]);
+
+    const query2 = "SELECT COUNT(*) FROM solars WHERE building_id = $1";
+    const values2 = [id];
+    const result2 = await pool.query(query2, values2);
+    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+
+    res.status(200).json({ solars: rows.rows, count: count });
+  } catch (error) {
+    console.error('Error fetching solars:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.post("/api/buildings/:id/upload/photovoltaic", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    const { power } = req.body;
+
+    if (!power) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    if (isNaN(power)) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
+    }
+
+    if (power <= 0) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
+    }
+
+    const values = [id, power];
+
+    await pool.query(`
+      INSERT INTO photovoltaics (
+        building_id, power
+      ) VALUES (
+        $1, $2
+      )
+    `, values);
+
+    res.status(200).json({ msg: "Impianto fotovoltaico aggiunto con successo" });
+  } catch (error) {
+    console.error('Error adding photovoltaic:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+
+})
+
+app.delete("/api/delete-photovoltaic/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+
+    const values = [id];
+    await pool.query("DELETE FROM photovoltaics WHERE id = $1", values);
+    res.status(200).json({ msg: "Impianto fotovoltaico eliminato con successo" });
+  } catch (error) {
+    console.error('Error deleting photovoltaic:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+
+
+})
+
+app.get("/api/buildings/:id/fetch-photovoltaics", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+
+    const rows = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [id]);
+
+    const query2 = "SELECT COUNT(*) FROM photovoltaics WHERE building_id = $1";
+    const values2 = [id];
+    const result2 = await pool.query(query2, values2);
+    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+
+    res.status(200).json({ photos: rows.rows, count: count });
+  } catch (error) {
+    console.error('Error fetching photovoltaics:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+
 
 
 function emailCheck(email) {
@@ -1897,8 +2280,8 @@ app.listen(port, '0.0.0.0', async () => {
       // Nessun amministratore trovato, quindi creane uno
       const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Modifica la password e il salt come necessario
       await pool.query(
-        `INSERT INTO users (username, email, phone_number, administrator, password_digest)
-         VALUES ($1, $2, $3, $4, $5)`,
+        `INSERT INTO users(username, email, phone_number, administrator, password_digest)
+         VALUES($1, $2, $3, $4, $5)`,
         [process.env.USERNAME_ADMIN, process.env.EMAIL_ADMIN, null, true, hashedPassword]
       );
       console.log('Admin creato con successo.');

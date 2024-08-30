@@ -259,8 +259,8 @@ CREATE TYPE electricity_supply_enum AS ENUM (
 
 CREATE TABLE IF NOT EXISTS plants (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),  -- assuming you have a users table with an id field
-    building_id INTEGER REFERENCES buildings(id),  -- assuming you have a buildings table with an id field
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- assuming you have a users table with an id field
+    building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
     description TEXT NOT NULL,
     plant_type plant_type_enum NOT NULL,
     service_type service_type_enum NOT NULL,
@@ -273,13 +273,13 @@ CREATE TABLE IF NOT EXISTS plants (
 
 CREATE TABLE IF NOT EXISTS solars (
     id SERIAL PRIMARY KEY,
-    building_id INTEGER REFERENCES buildings(id),  -- assuming you have a buildings table with an id field
+    building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
     installed_area DECIMAL(10,2) NOT NULL CHECK (installed_area > 0) --quantita' installata--
 );
 
 CREATE TABLE IF NOT EXISTS photovoltaics (
     id SERIAL PRIMARY KEY,
-    building_id INTEGER REFERENCES buildings(id),  -- assuming you have a buildings table with an id field
+    building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
     power DECIMAL(10,2) NOT NULL CHECK (power > 0) --potenza--
 );
 

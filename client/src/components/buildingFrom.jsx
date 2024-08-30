@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import MessagePopUp from "./messagePopUp";
+import { MutatingDots } from "react-loader-spinner";
+import { useNavigate } from "react-router-dom";
+import { useRecoveryContext } from "../provider/provider";
 
 function BuildingFrom() {
     const [name, setName] = useState("");
@@ -28,6 +32,14 @@ function BuildingFrom() {
     const [electricityCounters, setElectricityCounters] = useState([]);
     const [analyzers, setAnalyzers] = useState([]);
 
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState('');
+
+    const { addBuildingTrigger, setAddBuildingTrigger } = useRecoveryContext();
+
+
+    const navigate = useNavigate();
+
     useEffect(() => {
         const fetchSelectOptions = async () => {
             try {
@@ -49,6 +61,74 @@ function BuildingFrom() {
         fetchSelectOptions();
     }, []);
 
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        setIsLoading(true);
+
+        const token = localStorage.getItem("token");
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('description', description);
+        formData.append('year', year);
+        formData.append('renovation', renovation);
+        formData.append('heating', heating);
+        formData.append('ventilation', ventilation);
+        formData.append('energyControl', energyControl);
+        formData.append('maintenance', maintenance);
+        formData.append('waterRecovery', waterRecovery);
+        formData.append('electricityCounter', electricityCounter);
+        formData.append('electricityAnalyzer', electricityAnalyzer);
+        formData.append('lighting', lighting);
+        formData.append('led', led);
+        formData.append('gasLamp', gasLamp);
+
+        console.log('Form data:', formData);
+
+        try {
+            const response = await axios.post('http://localhost:8080/api/upload-building', formData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                setTimeout(() => {
+                    setMessagePopup(response.data.msg);
+                    setButtonPopup(true);
+                    setIsLoading(false);
+                    setName("");
+                    setDescription("");
+                    setYear("");
+                    setRenovation("");
+                    setHeating("");
+                    setVentilation("");
+                    setEnergyControl("");
+                    setMaintenance("");
+                    setWaterRecovery("");
+                    setElectricityCounter("");
+                    setElectricityAnalyzer("");
+                    setLighting("");
+                    setLed("");
+                    setGasLamp("");
+                    setAddBuildingTrigger(!addBuildingTrigger);
+                }, 3000); // Caricamento finto di 2 secondi
+
+                navigate('/buildings');
+            } else if (response.status === 400) {
+                setMessagePopup(response.data.msg);
+                setButtonPopup(true);
+                setIsLoading(false);
+            }
+        } catch (error) {
+            setIsLoading(false);
+            setMessagePopup(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+    };
+
     // Funzioni handleChange per aggiornare gli stati
     const handleNameChange = (e) => setName(e.target.value);
     const handleDescriptionChange = (e) => setDescription(e.target.value);
@@ -67,9 +147,12 @@ function BuildingFrom() {
 
     return (
         <div className="mt-4">
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
             <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border border-gray-300 shadow-xl">
                 <h2 className="text-2xl font-bold text-center mb-6">Inserisci un nuovo edificio</h2>
-                <form className="flex flex-col">
+                <form onSubmit={handleSubmit} className="flex flex-col">
                     {/* Sezione Informazioni Generali */}
                     <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">

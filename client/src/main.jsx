@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 //import './index.css'
-import {createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import LoginPage from './LoginPage.jsx';
 import NewsPage from './NewsPage.jsx';
 import SignUpPage from './SignUpPage.jsx';
@@ -21,6 +21,7 @@ import InsertEmail from './components/insertEmail.jsx';
 import PaySuccessPage from './PaySuccessPage.jsx';
 import { RecoveryContextProvider } from './provider/provider.jsx';
 import Buildings from './buildingsPage.jsx';
+import BuildingPage from './buildingPage.jsx';
 
 
 const router = createBrowserRouter([
@@ -66,7 +67,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/payment",
-    element: <PaymentPage />, 
+    element: <PaymentPage />,
   },
   {
     path: "/User",
@@ -96,6 +97,10 @@ const router = createBrowserRouter([
     path: "/buildings",
     element: <Buildings />,
   },
+  {
+    path: "/building/:id",
+    element: <BuildingPage />,
+  },
 ]);
 
 {/*<React.StrictMode>
@@ -105,7 +110,7 @@ const router = createBrowserRouter([
   </React.StrictMode>,*/}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-    <RecoveryContextProvider>
-      <RouterProvider router={router} />
-    </RecoveryContextProvider>
+  <RecoveryContextProvider>
+    <RouterProvider router={router} />
+  </RecoveryContextProvider>
 )
