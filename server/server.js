@@ -2227,28 +2227,28 @@ app.get("/api/buildings/:id/fetch-photovoltaics", authenticateJWT, async (req, r
   }
 })
 
-app.get("/api/user-orders-category", authenticateJWT, async (req, res) => {
+app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
 
     // Esegui la query SQL corretta
     const rows = await pool.query(`
-      SELECT
-        o.id AS order_id,
-        p.name AS product_name,
-        p.category AS product_category
-      FROM
-        orders o
-      JOIN
-        products p
-      ON
-        o.product_id = p.id
-      WHERE
-        o.user_id = $1;
+      SELECT 
+      o.id AS order_id,
+      p.category AS product_category,
+      total_score AS total_score
+      FROM 
+          orders o
+      JOIN 
+          products p ON o.product_id = p.id
+      LEFT JOIN 
+          survey_responses ON product_id = o.product_id
+      WHERE 
+          o.user_id = $1;
     `, [user_id]);
 
     // Invia i dati come JSON
-    res.status(200).json({ orders: rows.rows });
+    res.status(200).json({ surveyInfo: rows.rows });
   } catch (error) {
     console.error('Error fetching orders:', error.message);
     res.status(500).json({ msg: "Errore interno del server" });
@@ -2256,12 +2256,11 @@ app.get("/api/user-orders-category", authenticateJWT, async (req, res) => {
 });
 
 
-// Endpoint per salvare i dati del survey
 app.post('/api/responses', authenticateJWT, async (req, res) => {
-  const { surveyId, pageNo, surveyData } = req.body;
+  const { surveyId, pageNo, surveyData, totalScore } = req.body; // Aggiungi totalScore
   const { user_id } = req.user;
 
-  console.log("ALL", user_id, surveyId, pageNo, surveyData);
+  console.log("ALL", user_id, surveyId, pageNo, surveyData, totalScore); // Aggiungi totalScore
 
   // Controllo per assicurarsi che i dati necessari siano presenti
   if (!surveyData) {
@@ -2270,15 +2269,16 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
 
   try {
     const query = `
-      INSERT INTO survey_responses (survey_id, user_id, page_no, survey_data)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO survey_responses (survey_id, user_id, certification_id, page_no, survey_data, total_score)
+      VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (user_id, survey_id) 
       DO UPDATE SET 
         page_no = EXCLUDED.page_no,
-        survey_data = EXCLUDED.survey_data
+        survey_data = EXCLUDED.survey_data,
+        total_score = EXCLUDED.total_score
       RETURNING id;
     `;
-    const values = [surveyId, user_id, pageNo, surveyData];
+    const values = [surveyId, user_id, 1, pageNo, surveyData, totalScore]; // Aggiungi totalScore
 
     const result = await pool.query(query, values);
     res.status(201).json({ id: result.rows[0].id });
@@ -2288,27 +2288,27 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
   }
 });
 
+
 app.get('/api/responses/:surveyId', authenticateJWT, async (req, res) => {
   const { surveyId } = req.params;
   const { user_id } = req.user;
 
   try {
     const query = `
-      SELECT page_no, survey_data 
-      FROM survey_responses 
-      WHERE user_id = $1 AND survey_id = $2
+      SELECT page_no, survey_data, total_score FROM survey_responses
+      WHERE user_id = $1 AND survey_id = $2;
     `;
     const values = [user_id, surveyId];
+
     const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'No survey data found' });
     }
 
-    // Assuming you want to send all pages and responses
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("Error retrieving survey data:", err);
+    console.error("Error restoring survey data:", err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
