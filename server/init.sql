@@ -289,10 +289,14 @@ CREATE TABLE IF NOT EXISTS survey_responses (
     id SERIAL PRIMARY KEY,
     survey_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
+    certification_id INTEGER NOT NULL,
     page_no INTEGER,
     survey_data JSONB,
+    total_score INTEGER,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    CONSTRAINT unique_user_survey UNIQUE (user_id, survey_id)
+    CONSTRAINT unique_user_survey UNIQUE (user_id, survey_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (certification_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
 

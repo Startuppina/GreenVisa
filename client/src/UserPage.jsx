@@ -15,6 +15,7 @@ import Plate from './components/plate';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrown } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
+import { useRecoveryContext } from './provider/provider';
 
 const UserPage = () => {
     const [userInfo, setUserInfo] = useState({});
@@ -24,7 +25,7 @@ const UserPage = () => {
     const [showModifier, setShowModifier] = useState(false);
     const navigate = useNavigate();
 
-    const [ordersCategory, setOrdersCategory] = useState([]);
+    const [surveyInfo, setSurveyInfo] = useState([]);
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
@@ -38,6 +39,8 @@ const UserPage = () => {
     const handleEmailChange = (e) => setNewEmail(e.target.value);
 
     const [isAdmin, setIsAdmin] = useState(false);
+
+    const { initialData, totalScore } = useRecoveryContext(); //check survey data
 
     useEffect(() => {
         const fetchInfo = async () => {
@@ -72,14 +75,14 @@ const UserPage = () => {
         const fetchOrdersCategory = async () => {
 
             try {
-                const response = await axios.get('http://localhost:8080/api/user-orders-category', {
+                const response = await axios.get('http://localhost:8080/api/user-questionnaires', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
 
                 if (response.status === 200) {
-                    setOrdersCategory(response.data.orders);
+                    setSurveyInfo(response.data.surveyInfo);
                     return;
                 }
 
@@ -96,6 +99,7 @@ const UserPage = () => {
 
         fetchInfo();
         fetchOrdersCategory();
+
 
     }, []);
 
@@ -289,16 +293,30 @@ const UserPage = () => {
                     </div>
                     <CodeUsage />
                 </div>
-                <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg ">
-                    <h1 className="text-2xl font-bold text-black mb-4">Questionari disponibili</h1>
-                    {ordersCategory.map((category) => (
-                        <div key={category.order_id} >
-                            <h2 className="text-xl font-bold text-black">Questionario per la categoria: {category.product_category}</h2>
-                            <div className='text-black mb-2 hover:text-[#2d7044]'><Link to={`/questionario/${category.product_category}`}>Clicca qui per accedere al questionario</Link></div>
-                            <hr className='border border-black' />
-                        </div>
-                    ))}
-                </div>
+                {surveyInfo && (
+                    <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-6 border border-gray-300 rounded-lg">
+                        <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
+                        {initialData && <p className='mb-4 text-gray-600'>Hai dei questionari incompleti</p>}
+                        {surveyInfo.map((info) => (
+                            <div key={info.order_id} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                                <div className='flex flex-col md:flex-row justify-between'>
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-2">Questionario per la categoria: {info.product_category}</h2>
+                                    <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span></div>
+                                </div>
+                                <div className='flex justify-center md:justify-start'>
+                                    <button className="p-2 w-auto z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
+                                        <Link to={`/questionario/${info.product_category}?param1=${info.order_id}`}>
+                                            Accedi al questionario
+                                        </Link>
+                                    </button>
+                                </div>
+
+                                <hr className='border-gray-300 my-4' />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
 
                 <Link to="/buildings">
                     <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg hover:trasform hover:scale-105 duration-300">
