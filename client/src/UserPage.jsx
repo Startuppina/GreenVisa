@@ -40,7 +40,7 @@ const UserPage = () => {
 
     const [isAdmin, setIsAdmin] = useState(false);
 
-    const { initialData, totalScore } = useRecoveryContext(); //check survey data
+    const { initialData } = useRecoveryContext(); //check survey data
 
     useEffect(() => {
         const fetchInfo = async () => {
@@ -293,7 +293,7 @@ const UserPage = () => {
                     </div>
                     <CodeUsage />
                 </div>
-                {surveyInfo && (
+                {surveyInfo.length > 0 && (
                     <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-6 border border-gray-300 rounded-lg">
                         <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
                         {initialData && <p className='mb-4 text-gray-600'>Hai dei questionari incompleti</p>}
