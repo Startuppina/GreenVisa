@@ -280,7 +280,7 @@ const UserPage = () => {
                         <div className="pb-5">
                             <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
                             <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
-                            <p><strong>Telefono:</strong> {userInfo ? userInfo.phone_number : ''}</p>
+                            <p className='flex flex-row gap-2'><strong>Telefono:</strong> {userInfo ? (userInfo.phone_number ? userInfo.phone_number : <div className='text-gray-400'>Inserisci il tuo numero di telefono</div>) : ''}</p>
                         </div>
                         <div className="flex justify-center relative top-20">
                             <button
@@ -293,36 +293,6 @@ const UserPage = () => {
                     </div>
                     <CodeUsage />
                 </div>
-                {surveyInfo.length > 0 && (
-                    <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-6 border border-gray-300 rounded-lg">
-                        <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
-                        {initialData && <p className='mb-4 text-gray-600'>Hai dei questionari incompleti</p>}
-                        {surveyInfo.map((info) => (
-                            <div key={info.order_id} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
-                                <div className='flex flex-col md:flex-row justify-between'>
-                                    <h2 className="text-2xl font-semibold text-gray-800 mb-2">Questionario per la categoria: {info.product_category}</h2>
-                                    <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span></div>
-                                </div>
-                                <div className='flex justify-center md:justify-start'>
-                                    <button className="p-2 w-auto z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
-                                        <Link to={`/questionario/${info.product_category}?param1=${info.order_id}`}>
-                                            Accedi al questionario
-                                        </Link>
-                                    </button>
-                                </div>
-
-                                <hr className='border-gray-300 my-4' />
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-
-                <Link to="/buildings">
-                    <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg hover:trasform hover:scale-105 duration-300">
-                        <h1 className="text-2xl font-bold text-black text-center">I tuoi edifici</h1>
-                    </div>
-                </Link>
 
                 <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 mx-2 md:mx-14 my-4 border shadow-lg rounded-lg ${showModifier ? '' : 'hidden'}`}>
                     <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
@@ -380,6 +350,35 @@ const UserPage = () => {
                     </form>
 
                 </div>
+
+                {surveyInfo.length > 0 && (
+                    <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-6 border border-gray-300 rounded-lg">
+                        <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
+                        {surveyInfo.map((info) => (
+                            <div key={info.order_id} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                                <div className='flex flex-col md:flex-row justify-between'>
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-2">Questionario per la categoria: {info.product_category}</h2>
+                                    <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span></div>
+                                </div>
+                                <div className='flex justify-center md:justify-start'>
+                                    <button className="p-2 w-auto z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
+                                        <Link to={`/questionario/${info.product_category}?param1=${info.order_id}&param2=${info.product_category}`}>
+                                            Accedi al questionario
+                                        </Link>
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+
+                <Link to="/buildings">
+                    <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg hover:trasform hover:scale-105 duration-300">
+                        <h1 className="text-2xl font-bold text-black text-center">I tuoi edifici</h1>
+                    </div>
+                </Link>
+
                 <Plate />
                 <UserOrders />
 

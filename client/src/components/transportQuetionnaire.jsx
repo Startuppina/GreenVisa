@@ -6,7 +6,7 @@ import { themeJson } from "../surveyTheme";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
 
-function SurveyComponent({ certification_id }) {
+function TransportQuetionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
   const { initialData, setInitialData } = useRecoveryContext(); // Stato per i dati iniziali
   const [totalScore, setTotalScore] = useState(0);
@@ -14,7 +14,7 @@ function SurveyComponent({ certification_id }) {
   //          <p>Hai totalizzato un punteggio di: <span class="score">${totalScore}</span> punti.</p>
   const json = {
     "title": "Certificazione trasporti",
-    "logoPosition": "right",
+    "completeText": "Termina",
     "completedHtml": `
       <style>
         .completed-page {
@@ -94,22 +94,22 @@ function SurveyComponent({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "Indicazione del sistema di trasporto",
-                "score": 1
+                "score": 0
               },
               {
                 "value": "Item 2",
                 "text": "Numero di mezzi da certificare",
-                "score": 1
+                "score": 0
               },
               {
                 "value": "Item 3",
                 "text": "Utilizzo dei mezzi",
-                "score": 1
+                "score": 0
               },
               {
                 "value": "Item 4",
                 "text": "Conferma del rispetto delle norme in riferimento alla gestione del mezzo (revisioni, assicurazioni, bolli, tagliandi)",
-                "score": 1
+                "score": 0
               }
             ]
           },
@@ -169,13 +169,13 @@ function SurveyComponent({ certification_id }) {
           {
             "type": "matrixdynamic",
             "name": "question3",
-            "title": "In che anno sono stati immatricolati i mezzi sopra descritti?\n",
+            "title": "In che anno sono stati immatricolati i mezzi sopra descritti? Indica il numero di mezzi immatricolati per i vari anni\n",
             "description": "Rimuovi le righe non necessarie",
             "isRequired": true,
             "columns": [
               {
                 "name": "Column 1",
-                "title": "Mezzo",
+                "title": "Numero Mezzi",
                 "cellType": "text"
               },
               {
@@ -226,13 +226,13 @@ function SurveyComponent({ certification_id }) {
           {
             "type": "matrixdynamic",
             "name": "question4",
-            "title": "I mezzi che sta certificando rientrano nella macro area di emissioni, denominata euro?",
+            "title": "I mezzi che sta certificando rientrano nella macro area di emissioni, denominata euro? Inidica il numero di mezzi per ogni area",
             "description": "Rimuovi le righe non necessarie",
             "isRequired": true,
             "columns": [
               {
                 "name": "Column 1",
-                "title": "Mezzo",
+                "title": "Numero mezzi",
                 "cellType": "text"
               },
               {
@@ -321,13 +321,13 @@ function SurveyComponent({ certification_id }) {
           {
             "type": "matrixdynamic",
             "name": "question8",
-            "title": "Indichi la data dell’ultima revisione fatta ai mezzi che sta certificando",
+            "title": "Indichi la data dell’ultima revisione fatta ai mezzi che sta certificando. Indica il numero di mezzi per ogni anno di revisione",
             "description": "Rimuovi le righe non necessarie",
             "isRequired": true,
             "columns": [
               {
                 "name": "Column 1",
-                "title": "Mezzo",
+                "title": "Mumero mezzi",
                 "cellType": "text"
               },
               {
@@ -378,13 +378,13 @@ function SurveyComponent({ certification_id }) {
           {
             "type": "matrixdynamic",
             "name": "question9",
-            "title": "Indichi ove vi fosse, la presenza del bollino blu* relativamente ai mezzi che sta certificando\n",
+            "title": "Indichi ove vi fosse, la presenza del bollino blu* relativamente ai mezzi che sta certificando. indica il numero di mezzi che hanno il bollino e il numero di mezzi che non hanno il bollino\n",
             "description": "Si tratta del bollino che viene rilasciato al momento della revisione dell’autoveicolo o del motoveicolo a seguito del controllo dei dispositivi di combustione e scarico",
             "isRequired": true,
             "columns": [
               {
                 "name": "Column 1",
-                "title": "Mezzo",
+                "title": "Numero mezzi",
                 "cellType": "text"
               },
               {
@@ -990,19 +990,27 @@ function SurveyComponent({ certification_id }) {
   // Funzione per calcolare il punteggio per le domande di tipo matrixdynamic
   function calcolaPunteggioMatrixdynamic(responses, element) {
     let punteggioTotale = 0;
+    let mezziTotali = 0;
 
     // Funzione per calcolare il punteggio in base all'anno
     const calcolaPunteggioAnno = (response) => {
-      console.log("Punteggio anno", response["Column 2"]);
-      const punteggio = yearScores[response["Column 2"]] || 0;
+      //console.log("Punteggio anno", response["Column 2"]);
+      //console.log("numero mezzi", parseInt(response["Column 1"]));
+      const punteggio = yearScores[response["Column 2"]] * parseInt(response["Column 1"]) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio anno
+      mezziTotali += parseInt(response["Column 1"]);
       console.log(`Anno: ${response["Column 2"]}, Punteggio: ${punteggio}`);
+      //console.log(`Totale mezzi inseriti: ${mezziTotali}`);
       return punteggio;
     };
 
     // Funzione per calcolare il punteggio in base all'Euro
     const calcolaPunteggioEuro = (response) => {
-      const punteggio = euroScores[response["Column 2"]] || 0;
+      console.log("Punteggio euro", response["Column 2"]);
+      console.log("numero mezzi", parseInt(response["Column 1"]));
+      const punteggio = euroScores[response["Column 2"]] * parseInt(response["Column 1"]) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio Euro
+      mezziTotali += parseInt(response["Column 1"]);
       console.log(`Euro: ${response["Column 2"]}, Punteggio: ${punteggio}`);
+      console.log(`Totale mezzi inseriti: ${mezziTotali}`);
       return punteggio;
     };
 
@@ -1017,21 +1025,25 @@ function SurveyComponent({ certification_id }) {
         punteggioTotale += punteggioEuro;
       } else if (element.name === 'question9') {
         // Calcola il punteggio per la domanda 9
-        if (row["Column 2"] === 1) {
+        if (row["Column 2"] === 1) { // 1 = si
           console.log("Column2 bollino valore", row["Column 2"]);
           // Se la risposta è "Si", calcola il punteggio basato sull'anno
-          const punteggioAnno = yearScores[row["Column 3"]] || 0;
+          mezziTotali += parseInt(row["Column 1"]);
+          const punteggioAnno = yearScores[row["Column 3"]] * parseInt(row["Column 1"]) || 0;
           punteggioTotale += punteggioAnno;
           console.log(`Domanda: ${element.name}, Risposta: Si, Anno: ${row["Column 3"]}, Punteggio: ${punteggioAnno}`);
         } else if (row["Column 2"] === 0) {
           // Se la risposta è "No", il punteggio è 0
+          mezziTotali += parseInt(row["Column 1"]);
           punteggioTotale += 0;
           console.log(`Domanda: ${element.name}, Risposta: No, Punteggio: 0`);
         }
       }
     });
 
-    return punteggioTotale;
+
+    console.log("media punteggio", punteggioTotale / mezziTotali);
+    return Math.round(punteggioTotale / mezziTotali);
   }
 
   // Funzione per calcolare il punteggio per i pannelli
@@ -1058,4 +1070,4 @@ function SurveyComponent({ certification_id }) {
   return <Survey model={survey} />;
 }
 
-export default SurveyComponent;
+export default TransportQuetionnaire;
