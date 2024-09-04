@@ -25,6 +25,9 @@ const UserPage = () => {
     const [showModifier, setShowModifier] = useState(false);
     const navigate = useNavigate();
 
+    const [showUserInfo, setShowUserInfo] = useState(true);
+    const [showDashboard, setShowDashboard] = useState(false);
+
     const [surveyInfo, setSurveyInfo] = useState([]);
 
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -244,160 +247,207 @@ const UserPage = () => {
         }
     };
 
+    const [activeSection, setActiveSection] = useState('user'); // Stato per tenere traccia della sezione attiva
+
+    const handleSwitch = (section) => {
+        setActiveSection(section);
+    };
 
 
     return (
         <div className="flex flex-col min-h-screen">
             <ScrollToTop />
             <Navbar />
-            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
-                {messagePopup}
-            </MessagePopUp>
-            <ConfirmPopUp
-                trigger={popupConfirmDelete}
-                setTrigger={setPopupConfirmDelete}
-                onButtonClick={deleteAccount}>
-                {messageConfirm}
-            </ConfirmPopUp>
-            <ConfirmPopUp
-                trigger={popupConfirmLogout}
-                setTrigger={setPopupConfirmLogout}
-                onButtonClick={logout}>
-                {messageConfirm}
-            </ConfirmPopUp>
+            <main className="min-h-screen">
 
-            <div className="flex-grow text-arial text-xl p-4">
-                <h1 className="text-3xl font-bold text-black text-center pb-10">
-                    Ciao {userInfo ? userInfo.username : ''}
+                <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                    {messagePopup}
+                </MessagePopUp>
+                <ConfirmPopUp
+                    trigger={popupConfirmDelete}
+                    setTrigger={setPopupConfirmDelete}
+                    onButtonClick={deleteAccount}>
+                    {messageConfirm}
+                </ConfirmPopUp>
+                <ConfirmPopUp
+                    trigger={popupConfirmLogout}
+                    setTrigger={setPopupConfirmLogout}
+                    onButtonClick={logout}>
+                    {messageConfirm}
+                </ConfirmPopUp>
+
+                <div className="flex-col space-between text-arial text-xl p-4">
+
+                    <h1 className="text-3xl font-bold text-black text-center pb-5">
+                        Ciao {userInfo ? userInfo.username : ''}
+                        {isAdmin && (
+                            <FontAwesomeIcon icon={faCrown} className="text-yellow-500 ml-2" title="Admin" />
+                        )}
+                    </h1>
+
                     {isAdmin && (
-                        <FontAwesomeIcon icon={faCrown} className="text-yellow-500 ml-2 rotate-45 relative bottom-5 right-4" title="Admin" />
+                        <div>
+                            {/* Sezione per selezionare tra Utente e Amministratore */}
+                            <div className='flex justify-center items-center gap-10 pb-10 font-bold'>
+                                <div
+                                    onClick={() => handleSwitch('user')}
+                                    className={`cursor-pointer ${activeSection === 'user' ? 'text-[#2d7044]' : 'text-gray-500'}`}
+                                >
+                                    Utente
+                                </div>
+                                <div
+                                    onClick={() => handleSwitch('admin')}
+                                    className={`cursor-pointer ${activeSection === 'admin' ? 'text-[#2d7044]' : 'text-gray-500'}`}
+                                >
+                                    Amministratore
+                                </div>
+                            </div>
+                        </div>
                     )}
-                </h1>
 
-                <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 md:mx-14 h-[600px] lg:h-[300px]">
-                    <div className="w-full bg-[#d9d9d9] p-4 rounded-lg flex-1">
-                        <h2 className="text-2xl font-bold">Informazioni personali</h2>
-                        <div className="pb-5">
-                            <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
-                            <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
-                            <p className='flex flex-row gap-2'><strong>Telefono:</strong> {userInfo ? (userInfo.phone_number ? userInfo.phone_number : <div className='text-gray-400'>Inserisci il tuo numero di telefono</div>) : ''}</p>
-                        </div>
-                        <div className="flex justify-center relative top-20">
-                            <button
-                                className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
-                                onClick={() => setShowModifier(!showModifier)}
-                            >
-                                Modifica
-                            </button>
-                        </div>
-                    </div>
-                    <CodeUsage />
-                </div>
+                    {activeSection === 'user' && (
+                        <div>
 
-                <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 mx-2 md:mx-14 my-4 border shadow-lg rounded-lg ${showModifier ? '' : 'hidden'}`}>
-                    <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
 
-                    <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleUsernameModifier}>
-                        <label htmlFor="username" className="block mb-2">Username</label>
-                        <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
-                            <input
-                                type="text"
-                                id="username"
-                                value={newUsername}
-                                onChange={handleUsernameChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                            />
-                            <div className='flex justify-center'>
-                                <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
-                            </div>
-                        </div>
-
-                    </form>
-
-                    <form className='mx-auto md:w-[80%]' onSubmit={handlePhoneModifier}>
-                        <label htmlFor="phone" className="block mb-2">Telefono</label>
-                        <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
-                            <PhoneInput
-                                country={'it'}
-                                value={newPhone}
-                                onChange={handlePhoneChange}
-                                buttonClass='w-[45px] p-2 bg-gray-50'
-                                dropdownClass='w-full p-2 bg-gray-50'
-                                inputStyle={{ width: '100%', height: '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
-                                preferredCountries={['it']}
-                            />
-                            <div className='flex justify-center'>
-                                <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
-                            </div>
-                        </div>
-                    </form>
-
-                    <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleEmailModifier}>
-                        <label htmlFor="email" className="block mb-2">email</label>
-                        <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
-                            <input
-                                type="email"
-                                id="email"
-                                value={newEmail}
-                                onChange={handleEmailChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                            />
-                            <div className='flex justify-center'>
-                                <input type='submit' value='Modifica email' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
-                            </div>
-                        </div>
-
-                    </form>
-
-                </div>
-
-                {surveyInfo.length > 0 && (
-                    <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-6 border border-gray-300 rounded-lg">
-                        <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
-                        {surveyInfo.map((info) => (
-                            <div key={info.order_id} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
-                                <div className='flex flex-col md:flex-row justify-between'>
-                                    <h2 className="text-2xl font-semibold text-gray-800 mb-2">Questionario per la categoria: {info.product_category}</h2>
-                                    <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span></div>
+                            <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 md:mx-14 h-[600px] lg:h-[300px]">
+                                <div className="w-full bg-[#d9d9d9] p-4 rounded-lg flex-1">
+                                    <h2 className="text-2xl font-bold">Informazioni personali</h2>
+                                    <div className="pb-5">
+                                        <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
+                                        <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
+                                        <p className='flex flex-row gap-2'><strong>Telefono:</strong> {userInfo ? (userInfo.phone_number ? userInfo.phone_number : <div className='text-gray-400'>Inserisci il tuo numero di telefono</div>) : ''}</p>
+                                    </div>
+                                    <div className="flex justify-center relative top-20">
+                                        <button
+                                            className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                            onClick={() => setShowModifier(!showModifier)}
+                                        >
+                                            Modifica
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className='flex justify-center md:justify-start'>
-                                    <button className="p-2 w-auto z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
-                                        <Link to={`/questionario/${info.product_category}?param1=${info.order_id}&param2=${info.product_category}`}>
-                                            Accedi al questionario
-                                        </Link>
-                                    </button>
-                                </div>
+                                <CodeUsage />
                             </div>
-                        ))}
-                    </div>
-                )}
+
+                            <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 mx-2 md:mx-14 my-4 border shadow-lg rounded-lg ${showModifier ? '' : 'hidden'}`}>
+                                <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
+
+                                <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleUsernameModifier}>
+                                    <label htmlFor="username" className="block mb-2">Username</label>
+                                    <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
+                                        <input
+                                            type="text"
+                                            id="username"
+                                            value={newUsername}
+                                            onChange={handleUsernameChange}
+                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                                        />
+                                        <div className='flex justify-center'>
+                                            <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                                        </div>
+                                    </div>
+
+                                </form>
+
+                                <form className='mx-auto md:w-[80%]' onSubmit={handlePhoneModifier}>
+                                    <label htmlFor="phone" className="block mb-2">Telefono</label>
+                                    <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
+                                        <PhoneInput
+                                            country={'it'}
+                                            value={newPhone}
+                                            onChange={handlePhoneChange}
+                                            buttonClass='w-[45px] p-2 bg-gray-50'
+                                            dropdownClass='w-full p-2 bg-gray-50'
+                                            inputStyle={{ width: '100%', height: '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                                            preferredCountries={['it']}
+                                        />
+                                        <div className='flex justify-center'>
+                                            <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleEmailModifier}>
+                                    <label htmlFor="email" className="block mb-2">email</label>
+                                    <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            value={newEmail}
+                                            onChange={handleEmailChange}
+                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                                        />
+                                        <div className='flex justify-center'>
+                                            <input type='submit' value='Modifica email' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
+                                        </div>
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                            {surveyInfo.length > 0 && (
+                                <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-6 border border-gray-300 rounded-lg">
+                                    <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
+                                    {surveyInfo.map((info) => (
+                                        <div key={info.order_id} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                                            <div className='flex flex-col md:flex-row justify-between'>
+                                                <h2 className="text-2xl font-semibold text-gray-800 mb-2">Questionario per la categoria: {info.product_category}</h2>
+                                                <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span></div>
+                                            </div>
+                                            <div className='flex justify-center md:justify-start'>
+                                                <button className="p-2 w-auto z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
+                                                    <Link to={`/questionario/${info.product_category}?param1=${info.order_id}&param2=${info.product_category}`}>
+                                                        Accedi al questionario
+                                                    </Link>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
 
-                <Link to="/buildings">
-                    <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg hover:trasform hover:scale-105 duration-300">
-                        <h1 className="text-2xl font-bold text-black text-center">I tuoi edifici</h1>
-                    </div>
-                </Link>
+                            <Link to="/buildings">
+                                <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg hover:trasform hover:scale-105 duration-300">
+                                    <h1 className="text-2xl font-bold text-black text-center">I tuoi edifici</h1>
+                                </div>
+                            </Link>
 
-                <Plate />
-                <UserOrders />
+                            <Plate />
+                            <UserOrders />
 
-                {isAdmin && <Dashboard />}
-                <div className='flex flex-col md:flex-row gap-3 mt-10 justify-center'>
-                    <div className="w-full md:w-[20%] flex justify-center">
-                        <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>
-                            Esci
-                        </button>
-                    </div>
+
+                        </div>
+                    )}
+
+                    {activeSection === 'admin' && (
+                        <div className='h-auto'>
+                            {isAdmin && <Dashboard />}
+                        </div>
+                    )}
+
+
+
+                </div>
+            </main>
+            <div className='flex flex-col md:flex-row gap-3 justify-center mb-4 mt-1'>
+                <div className="w-full md:w-[20%] flex justify-center">
+                    <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>
+                        Esci
+                    </button>
+                </div>
+                {!isAdmin && (
                     <div className="w-full md:w-[20%] flex justify-center">
                         <button className='p-2 w-full z-10 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleDeleteAccount}>
                             Elimina account
                         </button>
                     </div>
-                </div>
+                )}
+
             </div>
             <Footer />
-        </div>
+        </div >
     );
 };
 

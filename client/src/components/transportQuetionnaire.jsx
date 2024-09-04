@@ -5,11 +5,15 @@ import "survey-core/defaultV2.min.css";
 import { themeJson } from "../surveyTheme";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
+import MessagePopUp from "./messagePopUp";
 
 function TransportQuetionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
   const { initialData, setInitialData } = useRecoveryContext(); // Stato per i dati iniziali
   const [totalScore, setTotalScore] = useState(0);
+
+  const [buttonPopup, setButtonPopup] = useState(false);
+  const [messagePopup, setMessagePopup] = useState(false);
 
   //          <p>Hai totalizzato un punteggio di: <span class="score">${totalScore}</span> punti.</p>
   const json = {
@@ -122,106 +126,77 @@ function TransportQuetionnaire({ certification_id }) {
               {
                 "name": "text1",
                 "title": "Autobus\n",
-                "score": 1
+                "score": 0
               },
               {
                 "name": "text2",
                 "title": "Minibus",
-                "score": 1
+                "score": 0
               },
               {
                 "name": "text3",
                 "title": "Autovetture\n",
-                "score": 1
+                "score": 0
               },
               {
                 "name": "text4",
                 "title": "Autovetture Cabrio\n",
-                "score": 1
+                "score": 0
               },
               {
                 "name": "text5",
                 "title": "Scooter",
-                "score": 1
+                "score": 0
               },
               {
                 "name": "text6",
                 "title": "Moto",
-                "score": 1
+                "score": 0
               },
               {
                 "name": "text7",
                 "title": "Biciclette",
-                "score": 1
+                "score": 0
               },
               {
                 "name": "text8",
                 "title": "Trasporto su acqua",
-                "score": 1
+                "score": 0
               },
               {
                 "name": "text9",
                 "title": "Aerotrasporti\n",
-                "score": 1
+                "score": 0
               }
             ]
           },
           {
             "type": "matrixdynamic",
             "name": "question3",
-            "title": "In che anno sono stati immatricolati i mezzi sopra descritti? Indica il numero di mezzi immatricolati per i vari anni\n",
+            "title": "In che anno sono stati immatricolati i mezzi sopra descritti? Indica il numero di mezzi immatricolati per i vari anni",
             "description": "Rimuovi le righe non necessarie",
             "isRequired": true,
             "columns": [
               {
                 "name": "Column 1",
                 "title": "Numero Mezzi",
-                "cellType": "text"
+                "cellType": "text",
               },
               {
                 "name": "Column 2",
                 "title": "Anno",
                 "cellType": "dropdown",
                 "choices": [
-                  {
-                    "value": 1,
-                    "text": "2024"
-                  },
-                  {
-                    "value": 2,
-                    "text": "2023"
-                  },
-                  {
-                    "value": 3,
-                    "text": "2022"
-                  },
-                  {
-                    "value": 4,
-                    "text": "2021"
-                  },
-                  {
-                    "value": 5,
-                    "text": "2020"
-                  },
-                  {
-                    "value": 6,
-                    "text": "Prima del 2020"
-                  },
-                  {
-                    "value": 7,
-                    "text": "Prima del 2010"
-                  }
-                ],
-                "storeOthersAsComment": true
+                  { "value": 1, "text": "2024" },
+                  { "value": 2, "text": "2023" },
+                  { "value": 3, "text": "2022" },
+                  { "value": 4, "text": "2021" },
+                  { "value": 5, "text": "2020" },
+                  { "value": 6, "text": "Prima del 2020" },
+                  { "value": 7, "text": "Prima del 2010" }
+                ]
               }
             ],
-            "choices": [
-              1,
-              2,
-              3,
-              4,
-              5
-            ]
           },
           {
             "type": "matrixdynamic",
@@ -270,7 +245,7 @@ function TransportQuetionnaire({ certification_id }) {
               3,
               4,
               5
-            ]
+            ],
           },
           {
             "type": "radiogroup",
@@ -373,7 +348,7 @@ function TransportQuetionnaire({ certification_id }) {
               3,
               4,
               5
-            ]
+            ],
           },
           {
             "type": "matrixdynamic",
@@ -399,10 +374,7 @@ function TransportQuetionnaire({ certification_id }) {
                   {
                     "value": 2,
                     "text": "No"
-                  },
-                  3,
-                  4,
-                  5
+                  }
                 ],
                 "storeOthersAsComment": true
               },
@@ -449,7 +421,8 @@ function TransportQuetionnaire({ certification_id }) {
               3,
               4,
               5
-            ]
+            ],
+            "rowCount": 1,
           },
           {
             "type": "html",
@@ -592,78 +565,78 @@ function TransportQuetionnaire({ certification_id }) {
             ]
           },
           {
-            "type": "panel",
+            "type": "matrixdynamic",
             "name": "question15",
-            "visibleIf": "{question2.text9} notempty ",
-            "requiredIf": "{question2.text9} notempty ",
             "title": "Trasporto su acqua:",
-            "elements": [
+            "columns": [
               {
-                "type": "text",
-                "name": "question16",
-                "visibleIf": "{question2.text8} notempty ",
-                "title": "Specifichi il tipo di mezzo\n",
-                "requiredIf": "{question2.text8} notempty "
+                "name": "Column 1",
+                "title": "Tipo di Mezzo",
+                "cellType": "text"
               },
               {
-                "type": "radiogroup",
-                "name": "question17",
-                "visibleIf": "{question2.text8} notempty ",
-                "title": "Motore:\n",
-                "requiredIf": "{question2.text8} notempty ",
+                "name": "Column 2",
+                "title": "Quantita\n",
+                "cellType": "text"
+              },
+              {
+                "name": "Column 3",
+                "title": "Carburante\n",
+                "cellType": "dropdown",
                 "choices": [
                   {
-                    "value": "Item 1",
-                    "text": "Benzina",
-                    "score": 65
+                    "value": 1,
+                    "text": "Benzina"
                   },
                   {
-                    "value": "Item 2",
-                    "text": "Diesel",
-                    "score": 35
+                    "value": 2,
+                    "text": "Diesel"
                   },
                   {
-                    "value": "Item 3",
-                    "text": "Gas",
-                    "score": 75
+                    "value": 3,
+                    "text": "Gas"
                   },
                   {
-                    "value": "Item 4",
-                    "text": "Elettrico",
-                    "score": 85
+                    "value": 4,
+                    "text": "Elettrico"
                   },
                   {
-                    "value": "Item 5",
-                    "text": "Vela",
-                    "score": 100
-
+                    "value": 5,
+                    "text": "Vela"
                   },
                   {
-                    "value": "Item 6",
-                    "text": "Remi",
-                    "score": 100
+                    "value": 6,
+                    "text": "Remi"
                   }
-                ]
+                ],
+                "storeOthersAsComment": true
               }
+            ],
+            "choices": [
+              1,
+              2,
+              3,
+              4,
+              5
             ]
           },
           {
             "type": "panel",
-            "name": "question18",
+            "name": "question16",
             "visibleIf": "{question2.text9} notempty ",
             "requiredIf": "{question2.text9} notempty ",
             "title": "Aerotrasporti:",
             "elements": [
               {
                 "type": "text",
-                "name": "question19",
+                "name": "question17",
                 "visibleIf": "{question2.text9} notempty ",
                 "title": "Specifichi il tipo di mezzo",
                 "requiredIf": "{question2.text9} notempty "
               },
               {
                 "type": "text",
-                "name": "question20",
+                "name": "question18",
                 "visibleIf": "{question2.text9} notempty ",
                 "title": "Specifichi il tipo di alimentazione:",
                 "requiredIf": "{question2.text9} notempty "
@@ -672,7 +645,7 @@ function TransportQuetionnaire({ certification_id }) {
           },
           {
             "type": "radiogroup",
-            "name": "question21",
+            "name": "question19",
             "title": "Nel calcolo dei percorsi nella vostra attività si fa uso di software o navigatori in modo da ottimizzare il viaggio e circolare in regime di risparmio e rispetto dell’ambiente?\n",
             "isRequired": true,
             "choices": [
@@ -690,7 +663,7 @@ function TransportQuetionnaire({ certification_id }) {
           },
           {
             "type": "radiogroup",
-            "name": "question22",
+            "name": "question20",
             "title": "I mezzi che sta certificando utilizzano pneumatici con etichetta energetica in classe A con caratteristiche di elevato rotolamento?\n",
             "isRequired": true,
             "choices": [
@@ -713,7 +686,7 @@ function TransportQuetionnaire({ certification_id }) {
           },
           {
             "type": "radiogroup",
-            "name": "question23",
+            "name": "question21",
             "title": "Il personale conducente è stato formato alle tecniche di guida volte alla riduzione dei consumi? (eco-drive)?\n",
             "isRequired": true,
             "choices": [
@@ -736,7 +709,7 @@ function TransportQuetionnaire({ certification_id }) {
           },
           {
             "type": "radiogroup",
-            "name": "question24",
+            "name": "question22",
             "title": "Sarebbe interessato ad un corso di mobility manager*?\n",
             "description": "Il mobility manager è la figura che consente di dare risposte di breve periodo ai problemi della congestione del traffico e delle sue conseguenze sulla salute. Opera sul governo della domanda di trasporto, lavorando in particolare sugli spostamenti e sui comportamenti delle persone. Il mobility manager aziendale ha un’importante funzione poiché pianifica all’interno dell’attività e permette di ottimizzare i costi per gli spostamenti in armonia con le politiche di mobilità sostenibile del territorio in cui l’attività opera, migliorandone difatti l’immagine complessiva ed il rapporto con gli stakeholder.",
             "isRequired": true,
@@ -755,7 +728,7 @@ function TransportQuetionnaire({ certification_id }) {
           },
           {
             "type": "radiogroup",
-            "name": "question25",
+            "name": "question23",
             "title": "Sarebbe interessato ad una certificazione di 2° livello?\n",
             "isRequired": true,
             "choices": [
@@ -773,7 +746,7 @@ function TransportQuetionnaire({ certification_id }) {
           },
           {
             "type": "radiogroup",
-            "name": "question26",
+            "name": "question24",
             "title": "Sarebbe interessato a portare avanti un’attività di auditing energetico* per la struttura (Vs. uffici direzionali) che ha appena certificato?",
             "description": "Per auditing Energetico si intende quell’attività che si pone l’obiettivo di capire in che modo l’energia viene utilizzata, quali sono le cause degli eventuali sprechi ed eventualmente quali interventi possono essere suggeriti all’utente. \nLa proposta all’utente si traduce in un piano energetico che valuti non solo la fattibilità tecnica ma anche e soprattutto quella economica degli interventi migliorativi proposti",
             "isRequired": true,
@@ -866,7 +839,8 @@ function TransportQuetionnaire({ certification_id }) {
 
 
   function handleSurveyComplete() {
-    saveSurveyData(survey);
+    let totalScore = calcolaPunteggio(survey.data);
+    saveSurveyDataComplete(survey, totalScore);
 
     console.log("Answers:", survey.data);
   }
@@ -889,7 +863,17 @@ function TransportQuetionnaire({ certification_id }) {
   }
 
   function saveSurveyData(survey) {
-    let totalScore = calcolaPunteggio(survey.data);
+    const data = {
+      surveyId: userInfo,
+      certification_id,
+      totalScore,
+      pageNo: survey.currentPageNo,
+      surveyData: survey.data,
+    };
+    submitSurveyData(data);
+  }
+
+  function saveSurveyDataComplete(survey, totalScore) {
     const data = {
       surveyId: userInfo,
       certification_id,
@@ -926,6 +910,8 @@ function TransportQuetionnaire({ certification_id }) {
             console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMatrixdynamic}`);
             break;
           case 'panel':
+            console.log('Dati passati alla funzione calcolaPunteggioPanel:', formData[element.name], element);
+
             const punteggioPanel = calcolaPunteggioPanel(formData[element.name], element);
             punteggioTotale += punteggioPanel;
             console.log(`Pannello: ${element.title}, Punteggio: ${punteggioPanel}`);
@@ -938,12 +924,13 @@ function TransportQuetionnaire({ certification_id }) {
       });
     });
 
-    return punteggioTotale;
+    return (punteggioTotale);
   }
-
 
   // Funzione per calcolare il punteggio per le domande di tipo radiogroup
   function calcolaPunteggioRadiogroup(response, element) {
+
+    //console.log(`parametri radiogroup:`, response, element);
     let punteggio = 0;
     if (response && element.choices) {
       const scelta = element.choices.find(choice => choice.value === response);
@@ -954,6 +941,8 @@ function TransportQuetionnaire({ certification_id }) {
     return punteggio;
   }
 
+  let sommaMezzi = 0;
+
 
   // Funzione per calcolare il punteggio per le domande di tipo multipletext
   function calcolaPunteggioMultipletext(response, element) {
@@ -962,11 +951,12 @@ function TransportQuetionnaire({ certification_id }) {
       console.log(`Item: ${item.name}, Risposta: ${response[item.name]}`);
       if (response[item.name]) {
         punteggio += item.score || 0;
-        console.log(`Punteggio multiple text: ${punteggio}`);
+        //console.log(`Punteggio multiple text: ${punteggio}`);
       }
     });
     return punteggio;
   }
+
 
   const yearScores = {
     1: 100, //2024
@@ -986,31 +976,71 @@ function TransportQuetionnaire({ certification_id }) {
     5: 0 //euro 2
   };
 
+  const fuelScores = {
+    1: 65, //benzina
+    2: 35, //diesel
+    3: 75, //gas
+    4: 85, //elettrico
+    5: 100, //vela
+    6: 100 //remi
+  };
+
+  const penalitaPerAnno = {
+    1: 0,   //2024
+    2: 2,   //2023
+    3: 4,   //2022
+    4: 6,   //2021
+    5: 8,   //2020
+    6: 10,  //prima 2020
+    7: 12   //molto vecchi
+  };
+
+  const penalitaPerEuro = {
+    1: 0,   //euro 6
+    2: 2,   //euro 5
+    3: 4,   //euro 4
+    4: 6,   //euro 3
+    5: 8    //euro 2
+  };
+
+  const penalitaPerCarburante = {
+    1: 10,  // benzina
+    2: 20,  // diesel
+    3: 5,   // gas
+    4: 2,   // elettrico
+    5: 0,   // vela (nessuna penalità)
+    6: 0    // remi (nessuna penalità)
+  };
+
 
   // Funzione per calcolare il punteggio per le domande di tipo matrixdynamic
   function calcolaPunteggioMatrixdynamic(responses, element) {
     let punteggioTotale = 0;
     let mezziTotali = 0;
+    let mean = 0;
 
     // Funzione per calcolare il punteggio in base all'anno
     const calcolaPunteggioAnno = (response) => {
-      //console.log("Punteggio anno", response["Column 2"]);
-      //console.log("numero mezzi", parseInt(response["Column 1"]));
-      const punteggio = yearScores[response["Column 2"]] * parseInt(response["Column 1"]) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio anno
+      const penalitaAnno = penalitaPerAnno[response["Column 2"]] || 0;
+      const punteggio = (yearScores[response["Column 2"]] - penalitaAnno) * parseInt(response["Column 1"]) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio anno
       mezziTotali += parseInt(response["Column 1"]);
-      console.log(`Anno: ${response["Column 2"]}, Punteggio: ${punteggio}`);
-      //console.log(`Totale mezzi inseriti: ${mezziTotali}`);
       return punteggio;
     };
 
     // Funzione per calcolare il punteggio in base all'Euro
     const calcolaPunteggioEuro = (response) => {
-      console.log("Punteggio euro", response["Column 2"]);
-      console.log("numero mezzi", parseInt(response["Column 1"]));
-      const punteggio = euroScores[response["Column 2"]] * parseInt(response["Column 1"]) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio Euro
+      const penalitaEuro = penalitaPerEuro[response["Column 2"]] || 0;
+      const punteggio = (euroScores[response["Column 2"]] - penalitaEuro) * parseInt(response["Column 1"]) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio Euro
       mezziTotali += parseInt(response["Column 1"]);
-      console.log(`Euro: ${response["Column 2"]}, Punteggio: ${punteggio}`);
-      console.log(`Totale mezzi inseriti: ${mezziTotali}`);
+      return punteggio;
+    };
+
+    // Funzione per calcolare il punteggio in base al carburante
+    const calcolaPunteggioCarburante = (response) => {
+      const penalitaCarburante = penalitaPerCarburante[response["Column 3"]] || 0;
+      const punteggio = ((fuelScores[response["Column 3"]] - penalitaCarburante) * parseInt(response["Column 2"])) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio Euro
+      console.log(`punteggio con penalita: ${punteggio}`);
+      mezziTotali += parseInt(response["Column 2"]);
       return punteggio;
     };
 
@@ -1038,17 +1068,29 @@ function TransportQuetionnaire({ certification_id }) {
           punteggioTotale += 0;
           console.log(`Domanda: ${element.name}, Risposta: No, Punteggio: 0`);
         }
+      } else if (element.name === 'question15') {
+        const punteggioCarburante = calcolaPunteggioCarburante(row);
+        punteggioTotale += punteggioCarburante;
       }
+
     });
 
 
-    console.log("media punteggio", punteggioTotale / mezziTotali);
-    return Math.round(punteggioTotale / mezziTotali);
+
+    mean = Math.round(punteggioTotale / mezziTotali);
+    if (isNaN(mean)) {
+      mean = 0;
+    }
+    console.log("punteggio totale", punteggioTotale);
+    console.log("media punteggio", mean);
+    return mean;
   }
 
   // Funzione per calcolare il punteggio per i pannelli
   function calcolaPunteggioPanel(formData, panel) {
     let punteggio = 0;
+
+    console.log(`parametri pannello:`, formData, panel);
 
     if (formData && panel.elements) {
       panel.elements.forEach(element => {
@@ -1067,7 +1109,14 @@ function TransportQuetionnaire({ certification_id }) {
 
 
 
-  return <Survey model={survey} />;
+  return (
+    <>
+      <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+        {messagePopup}
+      </MessagePopUp>
+      <Survey model={survey} />
+    </>
+  );
 }
 
 export default TransportQuetionnaire;

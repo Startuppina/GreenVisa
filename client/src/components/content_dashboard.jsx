@@ -26,11 +26,6 @@ const Dashboard = () => {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [itemToEdit, setItemToEdit] = useState(null);
 
-  const [showNews, setShowNews] = useState(false);
-  const [showProducts, setShowProducts] = useState(false);
-  const [showMessages, setShowMessages] = useState(false);
-  const [showPromocodes, setShowPromocodes] = useState(false);
-  const [showForms, setShowForms] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
 
   const navigate = useNavigate();
@@ -212,11 +207,14 @@ const Dashboard = () => {
     setItemToEdit(null);
   };
 
+  const [activeSection, setActiveSection] = useState(null);
+
+  const toggleSection = (section) => {
+    setActiveSection(activeSection === section ? null : section);
+  };
+
   return (
     <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
-      <h1 className="text-3xl font-bold text-black text-center pb-10">
-        Dashboard amministratore
-      </h1>
       <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
         {messagePopUp}
       </MessagePopUp>
@@ -232,7 +230,9 @@ const Dashboard = () => {
         <button
           className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
           style={{ backgroundColor: "#2d7044" }}
-          onClick={() => setShowNews(!showNews)}
+          onClick={() => {
+            toggleSection("news");
+          }}
         >
           <svg
             width="24"
@@ -259,13 +259,15 @@ const Dashboard = () => {
             <circle cx="12" cy="8" r="1" fill="currentColor" />
             <path d="M11 14h6m-6 3h3" stroke="currentColor" strokeWidth="2" />
           </svg>
-          <span>{showNews ? "Nascondi News" : "Mostra News"}</span>
+          <span>News</span>
         </button>
 
         <button
           className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
           style={{ backgroundColor: "#2d7044" }}
-          onClick={() => setShowProducts(!showProducts)}
+          onClick={() => {
+            toggleSection("products");
+          }}
         >
           <svg
             width="24"
@@ -281,13 +283,15 @@ const Dashboard = () => {
               />
             </g>
           </svg>
-          <span>{showProducts ? "Nascondi Certificazioni" : "Mostra Certificazioni"}</span>
+          <span>Certificazioni</span>
         </button>
 
         <button
           className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
           style={{ backgroundColor: "#2d7044" }}
-          onClick={() => setShowMessages(!showMessages)}
+          onClick={() => {
+            toggleSection("messages");
+          }}
         >
           <svg
             width="24"
@@ -304,13 +308,15 @@ const Dashboard = () => {
               </g>
             </g>
           </svg>
-          <span>{showMessages ? "Nascondi Messaggi" : "Mostra Messaggi"}</span>
+          <span>Messaggi</span>
         </button>
 
         <button
           className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
           style={{ backgroundColor: "#2d7044" }}
-          onClick={() => setShowOrders(!showOrders)}
+          onClick={() => {
+            toggleSection("orders");
+          }}
         >
           <svg
             width="24"
@@ -325,13 +331,15 @@ const Dashboard = () => {
               <path strokeLinecap="round" d="m5 7l-.81-3.243A1 1 0 0 0 3.22 3H2m6 18h2m6 0h2" />
             </g>
           </svg>
-          <span>{showOrders ? "Nascondi Ordini utenti" : "Mostra Ordini utenti"}</span>
+          <span>Ordini utenti</span>
         </button>
 
         <button
           className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
           style={{ backgroundColor: "#2d7044" }}
-          onClick={() => setShowPromocodes(!showPromocodes)}
+          onClick={() => {
+            toggleSection("promocodes");
+          }}
         >
           <svg
             width="24"
@@ -346,13 +354,15 @@ const Dashboard = () => {
               d="M91 347v85l85-21l64 64l64-64l85 21v-85l86-22l-43-85l43-85l-86-22V48l-85 21l-64-64l-64 64l-85-21v85L5 155l43 85l-43 85zm-5-126l-19-39l34-8q15-3 23.5-14.5T133 133v-30l32 9h11q17 0 30-13l34-34l34 34q13 13 30 13q6 0 11-2l32-7v30q0 15 8.5 26.5T379 174l34 8l-19 39q-10 19 0 38l19 39l-34 8q-15 3-23.5 14.5T347 347v30l-32-9h-11q-17 0-30 13l-34 34l-34-34q-13-13-30-13q-6 0-11 2l-32 7v-30q0-15-8.5-26.5T101 306l-34-8l19-39q10-19 0-38zm133 92l100-101q14-14 0-30q-15-13-30 0l-70 71l-28-28q-15-13-30 0q-13 15 0 30z"
             />
           </svg>
-          <span>{showPromocodes ? "Nascondi Codici Promo" : "Mostra Codici Promo"}</span>
+          <span>Codici promozionali</span>
         </button>
 
         <button
           className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
           style={{ backgroundColor: "#2d7044" }}
-          onClick={() => setShowForms(!showForms)}
+          onClick={() => {
+            toggleSection("forms");
+          }}
         >
           <svg
             width="24"
@@ -383,13 +393,13 @@ const Dashboard = () => {
               />
             </g>
           </svg>
-          <span>{showForms ? "Nascondi Forms" : "Mostra Forms"}</span>
+          <span>Forms</span>
         </button>
       </div>
 
       <div className="flex flex-col">
 
-        {showNews && (
+        {activeSection === 'news' && (
           <div className="w-full mb-8">
             <h2 className="text-2xl font-bold mb-4">
               News ({totalNews} {totalNews === 1 ? "articolo" : "articoli"})
@@ -521,7 +531,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {showProducts && (
+        {activeSection === 'products' && (
           <div className="w-full">
             <h2 className="text-2xl font-bold mb-4">
               Certificazioni ({totalProducts}{" "}
@@ -732,12 +742,12 @@ const Dashboard = () => {
         )}
       </div>
 
-      {showMessages && <MessagesDashboard />}
-      {showOrders && <AllOrders />}
-      {showPromocodes && <PromoCodes />}
-      {showForms && <NewsForm />}
-      {showForms && <ProductsForm />}
-      {showForms && <PromoCodeForm />}
+      {activeSection === 'messages' && <MessagesDashboard />}
+      {activeSection === 'orders' && <AllOrders />}
+      {activeSection === 'promocodes' && <PromoCodes />}
+      {activeSection === 'forms' && <NewsForm />}
+      {activeSection === 'forms' && <ProductsForm />}
+      {activeSection === 'forms' && <PromoCodeForm />}
 
     </div>
   );
