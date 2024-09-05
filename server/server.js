@@ -2234,15 +2234,16 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
     // Esegui la query SQL corretta
     const rows = await pool.query(`
       SELECT 
-      o.id AS order_id,
-      p.category AS product_category,
-      total_score AS total_score
+          o.id AS order_id,
+          p.category AS product_category,
+          sr.total_score AS total_score,
+          sr.completed AS completed
       FROM 
           orders o
       JOIN 
           products p ON o.product_id = p.id
       LEFT JOIN 
-          survey_responses ON product_id = o.product_id
+          survey_responses sr ON sr.certification_id = o.product_id
       WHERE 
           o.user_id = $1;
     `, [user_id]);
@@ -2257,10 +2258,10 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
 
 
 app.post('/api/responses', authenticateJWT, async (req, res) => {
-  const { surveyId, pageNo, surveyData, totalScore } = req.body; // Aggiungi totalScore
+  const { surveyId, pageNo, surveyData, totalScore, completed } = req.body; // Aggiungi totalScore
   const { user_id } = req.user;
 
-  console.log("ALL", user_id, surveyId, pageNo, surveyData, totalScore); // Aggiungi totalScore
+  console.log("ALL", user_id, surveyId, pageNo, surveyData, totalScore, completed); // Aggiungi totalScore
 
   // Controllo per assicurarsi che i dati necessari siano presenti
   if (!surveyData) {
@@ -2269,16 +2270,17 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
 
   try {
     const query = `
-      INSERT INTO survey_responses (survey_id, user_id, certification_id, page_no, survey_data, total_score)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO survey_responses (survey_id, user_id, certification_id, page_no, survey_data, total_score, completed, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
       ON CONFLICT (user_id, survey_id) 
       DO UPDATE SET 
         page_no = EXCLUDED.page_no,
         survey_data = EXCLUDED.survey_data,
-        total_score = EXCLUDED.total_score
+        total_score = EXCLUDED.total_score,
+        completed = EXCLUDED.completed
       RETURNING id;
     `;
-    const values = [surveyId, user_id, 1, pageNo, surveyData, totalScore]; // Aggiungi totalScore
+    const values = [surveyId, user_id, surveyId, pageNo, surveyData, totalScore, completed]; // Aggiungi totalScore
 
     const result = await pool.query(query, values);
     res.status(201).json({ id: result.rows[0].id });

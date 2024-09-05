@@ -315,7 +315,7 @@ const UserPage = () => {
                                     <div className="pb-5">
                                         <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
                                         <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
-                                        <p className='flex flex-row gap-2'><strong>Telefono:</strong> {userInfo ? (userInfo.phone_number ? userInfo.phone_number : <div className='text-gray-400'>Inserisci il tuo numero di telefono</div>) : ''}</p>
+                                        <p className='flex flex-row gap-2'><strong>Telefono:</strong> {userInfo ? (userInfo.phone_number ? userInfo.phone_number : <span className='text-gray-400'>Inserisci il tuo numero di telefono</span>) : ''}</p>
                                     </div>
                                     <div className="flex justify-center relative top-20">
                                         <button
@@ -387,12 +387,15 @@ const UserPage = () => {
                             </div>
 
                             {surveyInfo.length > 0 && (
-                                <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-6 border border-gray-300 rounded-lg">
+                                <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-4 border border-gray-300 rounded-lg">
                                     <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
-                                    {surveyInfo.map((info) => (
+                                    {surveyInfo.map((info, index) => (
                                         <div key={info.order_id} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
                                             <div className='flex flex-col md:flex-row justify-between'>
-                                                <h2 className="text-2xl font-semibold text-gray-800 mb-2">Questionario per la categoria: {info.product_category}</h2>
+                                                <div className='flex flex-col mb-2'>
+                                                    <h2 className="text-2xl font-semibold text-gray-800">Questionario per la categoria: {info.product_category}</h2>
+                                                    <div className="text-gray-600">Stato: <span className="font-semibold text-gray-800">{info.completed ? 'Completato' : 'Non completato'}</span></div>
+                                                </div>
                                                 <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span></div>
                                             </div>
                                             <div className='flex justify-center md:justify-start'>

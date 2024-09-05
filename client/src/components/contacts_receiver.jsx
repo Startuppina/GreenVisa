@@ -98,7 +98,7 @@ const MessagesDashboard = () => {
 
     const handleSendEmail = async (email) => {
         const token = localStorage.getItem('token');
-    
+
         try {
             const response = await axios.post("http://localhost:8080/api/send-email-message", { email }, {
                 headers: {
@@ -106,12 +106,12 @@ const MessagesDashboard = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
-    
+
             if (response.status === 200) {
                 setMessagePopUp("Email di presa in carico inviata correttamente");
                 setButtonPopup(true);
             }
-    
+
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
@@ -129,7 +129,7 @@ const MessagesDashboard = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
-    
+
             if (response.status === 200) {
                 setEmailForm(false);
                 setEmailTitle("");
@@ -145,7 +145,7 @@ const MessagesDashboard = () => {
             setIsLoading(false);
         }
     };
-    
+
 
     return (
         <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
@@ -241,11 +241,11 @@ const MessagesDashboard = () => {
                                             <div className='flex justify-center'>
                                                 {isLoading ? (
                                                     <div className="flex justify-center items-center mt-5">
-                                                        <MutatingDots 
+                                                        <MutatingDots
                                                             height="100"
                                                             width="100"
                                                             color="#2d7044"
-                                                            secondaryColor= '#2d7044'
+                                                            secondaryColor='#2d7044'
                                                             radius='12.5'
                                                             ariaLabel="mutating-dots-loading"
                                                             visible={true}
@@ -261,21 +261,21 @@ const MessagesDashboard = () => {
                                                 )}
                                             </div>
                                         </form>
-                                        <div class="max-w-3xl mx-auto my-12 bg-white p-8 rounded-lg shadow-lg w-full">
-                                        <div class="text-center mb-6">
-                                            <img src="img/logo.png" alt="Green Visa" class="w-36 mx-auto"/>
+                                        <div className="max-w-3xl mx-auto my-12 bg-white p-8 rounded-lg shadow-lg w-full">
+                                            <div className="text-center mb-6">
+                                                <img src="img/logo.png" alt="Green Visa" className="w-36 mx-auto" />
+                                            </div>
+                                            <div className="text-center">
+                                                <h1 className="text-3xl font-semibold text-green-700 mb-4">{emailTitle}</h1>
+                                                <p className="text-lg text-gray-800 mb-4">Ciao username_utente,</p>
+                                                <p className="text-lg text-gray-800 mb-4">{emailContent}</p>
+                                                <p className="text-lg text-gray-800">Saluti,<br />{admin} da Green Visa</p>
+                                            </div>
+                                            <div className="text-right mt-6 text-gray-500 text-sm">
+                                                <p>Green Visa</p>
+                                                <p>La sostenibilità con un click!</p>
+                                            </div>
                                         </div>
-                                        <div class="text-center">
-                                            <h1 class="text-3xl font-semibold text-green-700 mb-4">{emailTitle}</h1>
-                                            <p class="text-lg text-gray-800 mb-4">Ciao username_utente,</p>
-                                            <p class="text-lg text-gray-800 mb-4">{emailContent}</p>
-                                            <p class="text-lg text-gray-800">Saluti,<br/>{admin} da Green Visa</p>
-                                        </div>
-                                        <div class="text-right mt-6 text-gray-500 text-sm">
-                                            <p>Green Visa</p>
-                                            <p>La sostenibilità con un click!</p>
-                                        </div>
-                                    </div>
                                     </div>
 
                                 </div>
