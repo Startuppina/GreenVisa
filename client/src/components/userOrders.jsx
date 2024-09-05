@@ -39,8 +39,8 @@ function UserOrders() {
                     <p>{message}</p>
                 ) : (
                     orders.map((order) => (
-                        <>
-                            <div key={order.order_id} className="p-4 w-full max-w-[500px] rounded-lg border-2 border-gray-400 z-10">
+                        <div key={order.order_id} >
+                            <div className="p-4 w-full max-w-[700px] rounded-lg border-2 border-gray-400 z-10">
                                 <h3 className="text-lg font-bold mb-4">Ordine {order.order_id}</h3>
                                 <div className="flex flex-col md:flex-row text-center md:text-left items-center md:items-start mb-4">
                                     <img
@@ -58,9 +58,7 @@ function UserOrders() {
                                     <p className="mb-2"><span className="font-semibold">Prezzo:</span> {order.price} €</p>
                                 </div>
                             </div>
-                            <hr className="my-4 border-1 border-black" />
-
-                        </>
+                        </div>
                     ))
                 )}
             </div>

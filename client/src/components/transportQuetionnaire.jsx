@@ -12,9 +12,6 @@ function TransportQuetionnaire({ certification_id }) {
   const { initialData, setInitialData } = useRecoveryContext(); // Stato per i dati iniziali
   const [totalScore, setTotalScore] = useState(0);
 
-  const [buttonPopup, setButtonPopup] = useState(false);
-  const [messagePopup, setMessagePopup] = useState(false);
-
   //          <p>Hai totalizzato un punteggio di: <span class="score">${totalScore}</span> punti.</p>
   const json = {
     "title": "Certificazione trasporti",
@@ -125,7 +122,7 @@ function TransportQuetionnaire({ certification_id }) {
             "items": [
               {
                 "name": "text1",
-                "title": "Autobus\n",
+                "title": "Autobus",
                 "score": 0
               },
               {
@@ -135,12 +132,12 @@ function TransportQuetionnaire({ certification_id }) {
               },
               {
                 "name": "text3",
-                "title": "Autovetture\n",
+                "title": "Autovetture",
                 "score": 0
               },
               {
                 "name": "text4",
-                "title": "Autovetture Cabrio\n",
+                "title": "Autovetture Cabrio",
                 "score": 0
               },
               {
@@ -165,7 +162,7 @@ function TransportQuetionnaire({ certification_id }) {
               },
               {
                 "name": "text9",
-                "title": "Aerotrasporti\n",
+                "title": "Aerotrasporti",
                 "score": 0
               }
             ]
@@ -430,157 +427,237 @@ function TransportQuetionnaire({ certification_id }) {
             "html": "<p style=\"font-family: Arial, sans-serif; font-size: 1em; font-weight: bold;\">\n  Indichi la tipologia di alimentazione dei mezzi in esame\n</p>\n\n"
           },
           {
-            "type": "radiogroup",
+            "type": "matrixdynamic",
             "name": "question10",
+            "description": "Per ogni riga, inserisci il numero di veicoli corrispondente al tipo di carburante selezionato dal menu a discesa\n",
             "visibleIf": "{question2.text1} notempty",
             "title": "Autobus:\n",
             "requiredIf": "{question2.text1} notempty",
-            "choices": [
+            "columns": [
               {
-                "value": "Item 1",
-                "text": "Elettrico",
-                "score": 100
+                "name": "Column 1",
+                "title": "Numero mezzi",
+                "cellType": "text"
               },
               {
-                "value": "Item 2",
-                "text": "Ibrido",
-                "score": 80
-              },
-              {
-                "value": "Item 3",
-                "text": "Benzina",
-                "score": 65
-              },
-              {
-                "value": "Item 4",
-                "text": "Diesel",
-                "score": 35
+                "name": "Column 2",
+                "title": "carburante",
+                "cellType": "dropdown",
+                "choices": [
+                  {
+                    "value": 4,
+                    "text": "Elettrico",
+                  },
+                  {
+                    "value": 10,
+                    "text": "Ibrido",
+                  },
+                  {
+                    "value": 1,
+                    "text": "Benzina",
+
+                  },
+                  {
+                    "value": 2,
+                    "text": "Diesel",
+
+                  }
+                ],
+                "storeOthersAsComment": true
               }
+            ],
+            "choices": [
+              4,
+              10,
+              1,
+              2
             ]
           },
           {
-            "type": "radiogroup",
+            "type": "matrixdynamic",
             "name": "question11",
+            "description": "Per ogni riga, inserisci il numero di veicoli corrispondente al tipo di carburante selezionato dal menu a discesa\n",
             "visibleIf": "{question2.text2} notempty",
             "title": "Minibus:\n",
             "requiredIf": "{question2.text2} notempty",
-            "choices": [
+            "columns": [
               {
-                "value": "Item 1",
-                "text": "Elettrico",
-                "score": 100
+                "name": "Column 1",
+                "title": "Numero mezzi",
+                "cellType": "text"
               },
               {
-                "value": "Item 2",
-                "text": "Ibrido",
-                "score": 80
-              },
-              {
-                "value": "Item 3",
-                "text": "Benzina",
-                "score": 65
-              },
-              {
-                "value": "Item 4",
-                "text": "Diesel",
-                "score": 35
+                "name": "Column 2",
+                "title": "Carburante",
+                "cellType": "dropdown",
+                "choices": [
+                  {
+                    "value": 4,
+                    "text": "Elettrico",
+                  },
+                  {
+                    "value": 10,
+                    "text": "Ibrido",
+                  },
+                  {
+                    "value": 1,
+                    "text": "Benzina",
+                  },
+                  {
+                    "value": 2,
+                    "text": "Diesel",
+                  }
+                ],
+                "storeOthersAsComment": true
               }
-            ]
+            ],
+            "choices": [
+              4,
+              10,
+              1,
+              2
+            ],
           },
           {
-            "type": "radiogroup",
+            "type": "matrixdynamic",
             "name": "question12",
+            "description": "Per ogni riga, inserisci il numero di veicoli corrispondente al tipo di carburante selezionato dal menu a discesa\n",
             "visibleIf": "{question2.text3} notempty or {question2.text4} notempty",
             "title": "Trasporto con autovetture:\n",
             "requiredIf": "{question2.text3} notempty or {question2.text4} notempty",
-            "choices": [
+            "columns": [
               {
-                "value": "Item 1",
-                "text": "Elettrico",
-                "score": 100
+                "name": "Column 1",
+                "title": "Numero mezzi",
+                "cellType": "text"
               },
               {
-                "value": "Item 2",
-                "text": "Ibrido",
-                "score": 80
-              },
-              {
-                "value": "Item 3",
-                "text": "Benzina",
-                "score": 65
-              },
-              {
-                "value": "Item 4",
-                "text": "Diesel",
-                "score": 35
-              },
-              {
-                "value": "Item 5",
-                "text": "Servizio carpool",
-                "score": 85
+                "name": "Column 2",
+                "title": "Carburante",
+                "cellType": "dropdown",
+                "choices": [
+                  {
+                    "value": 4,
+                    "text": "Elettrico",
+                  },
+                  {
+                    "value": 10,
+                    "text": "Ibrido",
+                  },
+                  {
+                    "value": 1,
+                    "text": "Benzina",
+                  },
+                  {
+                    "value": 2,
+                    "text": "Diesel",
+                  },
+                  {
+                    "value": 9,
+                    "text": "Servizio carpool",
+                  }
+                ],
+                "storeOthersAsComment": true
               }
-            ]
+            ],
+            "choices": [
+              4,
+              10,
+              1,
+              2,
+              9
+            ],
           },
           {
-            "type": "radiogroup",
+            "type": "matrixdynamic",
             "name": "question13",
+            "description": "Per ogni riga, inserisci il numero di veicoli corrispondente al tipo di carburante selezionato dal menu a discesa\n",
             "visibleIf": "{question2.text5} notempty or\n{question2.text6} notempty ",
             "title": "Trasporto con scooter e moto:\n",
             "requiredIf": "{question2.text5} notempty or\n{question2.text6} notempty ",
-            "choices": [
+            "columns": [
               {
-                "value": "Item 1",
-                "text": "Elettrico",
-                "score": 100
+                "name": "Column 1",
+                "title": "Quantita\n",
+                "cellType": "text"
               },
               {
-                "value": "Item 2",
-                "text": "Benzina",
-                "score": 65
-              },
-              {
-                "value": "Item 3",
-                "text": "Miscela",
-                "score": 5
+                "name": "Column 2",
+                "title": "Carburante\n",
+                "cellType": "dropdown",
+                "choices": [
+                  {
+                    "value": 4,
+                    "text": "Elettrico"
+                  },
+                  {
+                    "value": 1,
+                    "text": "Benzina"
+                  },
+                  {
+                    "value": 8,
+                    "text": "Miscela"
+                  }
+                ],
+                "storeOthersAsComment": true
               }
+            ],
+            "Choises": [
+              4,
+              1,
+              8
             ]
           },
           {
-            "type": "radiogroup",
+            "type": "matrixdynamic",
             "name": "question14",
+            "description": "Per ogni riga, inserisci il numero di veicoli corrispondente al tipo di carburante selezionato dal menu a discesa\n",
             "visibleIf": "{question2.text7} notempty ",
             "title": "Trasporto con bicilette:\n",
             "requiredIf": "{question2.text7} notempty ",
-            "choices": [
+            "columns": [
               {
-                "value": "Item 1",
-                "text": "Elettrico",
-                "score": 75
+                "name": "Column 1",
+                "title": "Quantita\n",
+                "cellType": "text"
               },
               {
-                "value": "Item 2",
-                "text": "tradizionale",
-                "score": 100
+                "name": "Column 2",
+                "title": "Tipologia",
+                "cellType": "dropdown",
+                "choices": [
+                  {
+                    "value": 11,
+                    "text": "Elettrico"
+                  },
+                  {
+                    "value": 7,
+                    "text": "Tradizionale"
+                  }
+                ],
+                "storeOthersAsComment": true
               }
+            ],
+            "Choises": [
+              11,
+              7
             ]
           },
           {
             "type": "matrixdynamic",
             "name": "question15",
+            "description": "Per ogni riga, inserisci il numero di veicoli corrispondente al tipo di carburante selezionato dal menu a discesa\n",
+            "visibleIf": "{question2.text8} notempty ",
+            "requiredIf": "{question2.text8} notempty ",
             "title": "Trasporto su acqua:",
             "columns": [
               {
                 "name": "Column 1",
-                "title": "Tipo di Mezzo",
-                "cellType": "text"
-              },
-              {
-                "name": "Column 2",
                 "title": "Quantita\n",
                 "cellType": "text"
               },
               {
-                "name": "Column 3",
+                "name": "Column 2",
                 "title": "Carburante\n",
                 "cellType": "dropdown",
                 "choices": [
@@ -597,7 +674,7 @@ function TransportQuetionnaire({ certification_id }) {
                     "text": "Gas"
                   },
                   {
-                    "value": 4,
+                    "value": 12,
                     "text": "Elettrico"
                   },
                   {
@@ -616,8 +693,9 @@ function TransportQuetionnaire({ certification_id }) {
               1,
               2,
               3,
-              4,
-              5
+              12,
+              5,
+              6
             ]
           },
           {
@@ -768,6 +846,7 @@ function TransportQuetionnaire({ certification_id }) {
     ]
   }
 
+  const survey = new Model(json);
 
   useEffect(() => {
     const fetchInfo = async () => {
@@ -811,7 +890,6 @@ function TransportQuetionnaire({ certification_id }) {
     }
   }
 
-  const survey = new Model(json);
 
   useEffect(() => {
 
@@ -822,7 +900,6 @@ function TransportQuetionnaire({ certification_id }) {
     survey.applyTheme(themeJson);
 
   }, [survey]);
-
 
   useEffect(() => {
 
@@ -869,6 +946,7 @@ function TransportQuetionnaire({ certification_id }) {
       totalScore,
       pageNo: survey.currentPageNo,
       surveyData: survey.data,
+      completed: false
     };
     submitSurveyData(data);
   }
@@ -880,6 +958,7 @@ function TransportQuetionnaire({ certification_id }) {
       totalScore,
       pageNo: survey.currentPageNo,
       surveyData: survey.data,
+      completed: true
     };
     submitSurveyData(data);
   }
@@ -924,6 +1003,7 @@ function TransportQuetionnaire({ certification_id }) {
       });
     });
 
+    const punteggioMassimo = 1237 //punteggio massimo possibile
     return (punteggioTotale);
   }
 
@@ -941,8 +1021,6 @@ function TransportQuetionnaire({ certification_id }) {
     return punteggio;
   }
 
-  let sommaMezzi = 0;
-
 
   // Funzione per calcolare il punteggio per le domande di tipo multipletext
   function calcolaPunteggioMultipletext(response, element) {
@@ -959,58 +1037,71 @@ function TransportQuetionnaire({ certification_id }) {
 
 
   const yearScores = {
-    1: 100, //2024
-    2: 95, //2023
-    3: 90, //2022
-    4: 85, //2021
-    5: 80, //2020
-    6: 50, //prima 2020
-    7: 25 //prima 2010
+    1: 100, // 2024
+    2: 95,  // 2023
+    3: 90,  // 2022
+    4: 85,  // 2021
+    5: 80,  // 2020
+    6: 50,  // prima 2020
+    7: 25   // prima 2010
   };
 
   const euroScores = {
-    1: 100, //euro 6
-    2: 75, //euro 5
-    3: 50, //euro 4 
-    4: 0, //euro 3
-    5: 0 //euro 2
+    1: 100, // euro 6
+    2: 75,  // euro 5
+    3: 50,  // euro 4 
+    4: 0,   // euro 3
+    5: 0    // euro 2
   };
 
   const fuelScores = {
-    1: 65, //benzina
-    2: 35, //diesel
-    3: 75, //gas
-    4: 85, //elettrico
-    5: 100, //vela
-    6: 100 //remi
+    1: 65,  // benzina
+    2: 35,  // diesel
+    3: 75,  // gas
+    4: 100, // elettrico
+    5: 100, // vela
+    6: 100, // remi
+    7: 100, // tradizionale (per biciclette)
+    8: 5,   // miscela (per scooter e moto)
+    9: 85,  // servizio carpool
+    10: 80, // ibrido
+    11: 75, // elettrico biciclette
+    12: 85  // elettrico barca
   };
 
   const penalitaPerAnno = {
-    1: 0,   //2024
-    2: 2,   //2023
-    3: 4,   //2022
-    4: 6,   //2021
-    5: 8,   //2020
-    6: 10,  //prima 2020
-    7: 12   //molto vecchi
+    1: 0,   // 2024
+    2: 5,   // 2023
+    3: 10,  // 2022
+    4: 15,  // 2021
+    5: 20,  // 2020
+    6: 30,  // prima 2020
+    7: 50   // molto vecchi (prima 2010)
   };
 
   const penalitaPerEuro = {
-    1: 0,   //euro 6
-    2: 2,   //euro 5
-    3: 4,   //euro 4
-    4: 6,   //euro 3
-    5: 8    //euro 2
+    1: 0,   // euro 6
+    2: 10,  // euro 5
+    3: 20,  // euro 4
+    4: 30,  // euro 3
+    5: 40   // euro 2
   };
 
   const penalitaPerCarburante = {
-    1: 10,  // benzina
-    2: 20,  // diesel
-    3: 5,   // gas
-    4: 2,   // elettrico
+    1: 15,  // benzina
+    2: 30,  // diesel
+    3: 10,  // gas
+    4: 0,   // elettrico
     5: 0,   // vela (nessuna penalità)
-    6: 0    // remi (nessuna penalità)
+    6: 0,   // remi (nessuna penalità)
+    7: 0,   // tradizionale (nessuna penalità)
+    8: 20,  // miscela (aumentata per essere più significativa)
+    9: 10,  // servizio carpool
+    10: 5,  // ibrido
+    11: 5,  // elettrico biciclette
+    12: 85  // elettrico barca
   };
+
 
 
   // Funzione per calcolare il punteggio per le domande di tipo matrixdynamic
@@ -1037,12 +1128,18 @@ function TransportQuetionnaire({ certification_id }) {
 
     // Funzione per calcolare il punteggio in base al carburante
     const calcolaPunteggioCarburante = (response) => {
-      const penalitaCarburante = penalitaPerCarburante[response["Column 3"]] || 0;
-      const punteggio = ((fuelScores[response["Column 3"]] - penalitaCarburante) * parseInt(response["Column 2"])) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio Euro
+      console.log(`Column 2: ${response["Column 2"]}`);
+      console.log(`carburante: ${fuelScores[response["Column 2"]]}`);
+      const penalitaCarburante = penalitaPerCarburante[response["Column 2"]] || 0;
+      const punteggio = ((fuelScores[response["Column 2"]] - penalitaCarburante) * parseInt(response["Column 1"])) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio Euro
       console.log(`punteggio con penalita: ${punteggio}`);
-      mezziTotali += parseInt(response["Column 2"]);
+      mezziTotali += parseInt(response["Column 1"]);
       return punteggio;
     };
+
+    if (responses === undefined) {
+      return punteggioTotale;
+    }
 
     responses.forEach(row => {
       if (element.name === 'question3' || element.name === 'question8') {
@@ -1068,7 +1165,7 @@ function TransportQuetionnaire({ certification_id }) {
           punteggioTotale += 0;
           console.log(`Domanda: ${element.name}, Risposta: No, Punteggio: 0`);
         }
-      } else if (element.name === 'question15') {
+      } else if (element.name === 'question15' || element.name === 'question14' || element.name === 'question13' || element.name === 'question12' || element.name === 'question11' || element.name === 'question10') {
         const punteggioCarburante = calcolaPunteggioCarburante(row);
         punteggioTotale += punteggioCarburante;
       }
@@ -1111,9 +1208,6 @@ function TransportQuetionnaire({ certification_id }) {
 
   return (
     <>
-      <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
-        {messagePopup}
-      </MessagePopUp>
       <Survey model={survey} />
     </>
   );

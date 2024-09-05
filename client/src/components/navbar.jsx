@@ -19,7 +19,6 @@ function Navbar() {
 
     const handleUserIconClick = async () => {
         const token = localStorage.getItem("token");
-        console.log(token);
         if (token === null) {
             navigate("/login");
         } else {
@@ -30,10 +29,10 @@ function Navbar() {
     return (
         <nav className="flex space-between center p-0 bg-transparent h-[100px] md:h-[150px]">
             <Link to="/">
-                <img 
-                    src="/img/logo.png" 
-                    alt="Green Visa Logo" 
-                    className="w-[100px] h-[100px] md:w-[150px] md:h-[150px] absolute top-0 left-4 z-10 cursor-pointer" 
+                <img
+                    src="/img/logo.png"
+                    alt="Green Visa Logo"
+                    className="w-[100px] h-[100px] md:w-[150px] md:h-[150px] absolute top-0 left-4 z-10 cursor-pointer"
                 />
             </Link>
             <div className={showMenu ? "absolute top-[30px] right-[15px]" : "hidden"}>
@@ -43,11 +42,11 @@ function Navbar() {
                     <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/Products">Entra in Green Visa</Link></li>
                     <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/Contacts">Contattaci</Link></li>
                     <li className="cursor-pointer hover:text-[#2d7044]">
-                        <img 
-                            src="/img/user-icon.png" 
-                            alt="user" 
-                            style={{ width: "30px", height: "30px" }} 
-                            onClick={handleUserIconClick} 
+                        <img
+                            src="/img/user-icon.png"
+                            alt="user"
+                            style={{ width: "30px", height: "30px" }}
+                            onClick={handleUserIconClick}
                         />
                     </li>
                 </ul>
@@ -55,21 +54,21 @@ function Navbar() {
 
             {/* Show menu button when the window is small */}
             <div className={!showMenu ? "absolute top-0 left-0 right-0 bottom-0" : "hidden"}>
-                <img 
-                    src="/img/menu.png" 
-                    alt="menu" 
-                    className="w-[35px] h-[35px] cursor-pointer absolute right-4 top-4" 
-                    onClick={() => setOpenDrawer(!openDrawer)} 
+                <img
+                    src="/img/menu.png"
+                    alt="menu"
+                    className="w-[35px] h-[35px] cursor-pointer absolute right-4 top-4"
+                    onClick={() => setOpenDrawer(!openDrawer)}
                 />
             </div>
 
             {/* Drawer */}
             <div className={"fixed top-0 right-0 h-full w-64 transform transition-transform duration-300 bg-white p-4 z-30 " + (openDrawer ? "translate-x-0" : "translate-x-full")}>
-                <img 
-                    src="/img/close.png" 
-                    alt="close" 
-                    className="w-[40px] h-[40px] cursor-pointer absolute right-4 top-4" 
-                    onClick={() => setOpenDrawer(!openDrawer)} 
+                <img
+                    src="/img/close.png"
+                    alt="close"
+                    className="w-[40px] h-[40px] cursor-pointer absolute right-4 top-4"
+                    onClick={() => setOpenDrawer(!openDrawer)}
                 />
 
                 <ul className="list-none flex flex-col gap-[20px] font-[Arial] text-[1.2em] font-bold m-0 mb-4">
@@ -78,11 +77,11 @@ function Navbar() {
                     <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/Products">Entra in Green Visa</Link></li>
                     <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/Contacts">Contattaci</Link></li>
                     <li className="cursor-pointer hover:text-[#2d7044]">
-                        <img 
-                            src="/img/user-icon.png" 
-                            alt="user" 
-                            style={{ width: "30px", height: "30px" }} 
-                            onClick={handleUserIconClick} 
+                        <img
+                            src="/img/user-icon.png"
+                            alt="user"
+                            style={{ width: "30px", height: "30px" }}
+                            onClick={handleUserIconClick}
                         />
                     </li>
                 </ul>

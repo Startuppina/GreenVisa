@@ -293,6 +293,7 @@ CREATE TABLE IF NOT EXISTS survey_responses (
     page_no INTEGER,
     survey_data JSONB,
     total_score INTEGER,
+    completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT unique_user_survey UNIQUE (user_id, survey_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
