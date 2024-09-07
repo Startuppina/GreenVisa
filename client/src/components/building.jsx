@@ -8,6 +8,7 @@ function Building() {
     const navigate = useNavigate();
     const { id } = useParams();
     const { setBuildingID } = useRecoveryContext();
+    const [averageScore, setAverageScore] = useState(0);
 
     useEffect(() => {
         const fetchBuilding = async () => {
@@ -22,6 +23,27 @@ function Building() {
                 );
                 if (response.status === 200) {
                     setBuildingData(response.data.building);
+                    console.log(response.data);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
+
+
+        const fetchBuildingScores = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8080/api/fetch-building-scores/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+
+                );
+                if (response.status === 200) {
+                    setAverageScore(response.data.averageScore);
+                    console.log(response.data);
                 }
             } catch (error) {
                 console.log(error);
@@ -29,7 +51,17 @@ function Building() {
         };
 
         fetchBuilding();
+        fetchBuildingScores();
     }, []);
+
+    const calculateTotalScoreInCents = (score) => {
+        const totalMaxScore = 69;
+        console.log("total max score:", totalMaxScore);
+
+        const scoreInCents = (score / totalMaxScore) * 100;
+
+        return Math.round(scoreInCents);
+    };
 
     return (
         <div className="text-arial text-xl">
@@ -105,6 +137,12 @@ function Building() {
                             </div>
                         </div>
                     </div>
+                </div>
+                <div className="mt-10 px-4">
+                    <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA DELL'EDIFICIO:</strong> {buildingData.buildingscore}
+                </div>
+                <div className="px-4 pb-4">
+                    <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA COMPLESSIVO DELL'EDIFICIO (in centesimi):</strong><strong> {calculateTotalScoreInCents(averageScore)} / 100</strong>
                 </div>
 
             </div>

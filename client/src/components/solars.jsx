@@ -93,6 +93,9 @@ function Solars() {
                                     <div className="">
                                         <strong>Quantita installata:</strong> {solar.installed_area} m²
                                     </div>
+                                    <div className="mt-10">
+                                        <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {solar.solarscore}
+                                    </div>
                                     <div className="flex justify-end">
                                         <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
                                             onClick={() => {
@@ -116,8 +119,9 @@ function Solars() {
                         </div>
                     </>
                 )}
-                {showSolarForm && <div className="pb-1"><SolarForm /></div>}
             </div>
+            {showSolarForm && <div className="pb-1"><SolarForm /></div>}
+
         </div>
     );
 

@@ -84,6 +84,10 @@ function BuildingFrom() {
         formData.append('led', led);
         formData.append('gasLamp', gasLamp);
 
+
+        const totalScore = calculateTotalScore(formData);
+        formData.append('buildingScore', totalScore);
+
         console.log('Form data:', formData);
 
         try {
@@ -114,6 +118,9 @@ function BuildingFrom() {
                     setLed("");
                     setGasLamp("");
                     setAddBuildingTrigger(!addBuildingTrigger);
+
+                    setMessagePopup("edificio aggiunto con successo");
+                    setButtonPopup(true);
                 }, 3000); // Caricamento finto di 2 secondi
 
                 navigate('/buildings');
@@ -144,6 +151,118 @@ function BuildingFrom() {
     const handleLightingChange = (e) => setLighting(e.target.value);
     const handleLedChange = (e) => setLed(e.target.value);
     const handleGasChange = (e) => setGasLamp(e.target.value);
+
+    const scoring = {
+        year: {
+            'Prima del 1976': 10,
+            'Tra 1976 e 1991': 13,
+            'Tra 1991 e 2004': 16,
+            'dopo il 2004': 19
+        },
+        renovation: {
+            'Edile': 19,
+            'Impiantistico': 16,
+            'No': 13
+        },
+        heating: {
+            'Radiatori': 10,
+            'Ventilconvettori': 13,
+            'Impianto ad aria canalizzato': 16,
+            'Pavimento radiante': 19
+        },
+        ventilation: {
+            'Si': 13,
+            'Si, con recupero calore': 16,
+            'No': 10
+        },
+        energyControl: {
+            'Settimanale': 16,
+            'Mensile': 13,
+            'Annuale': 10,
+            'No': 7
+        },
+        maintenance: {
+            'Settimanale': 16,
+            'Mensile': 13,
+            'Annuale': 10,
+            'No': 7
+        },
+        waterRecovery: {
+            'per l irrigazione': 13,
+            'per la cassette di scarico': 10,
+            'altro': 7,
+            'No': 0
+        },
+        electricityCounter: {
+            'da 0 a 10 kW': 25,
+            'da 10 a 20 kW': 22,
+            'da 20 a 50 kW': 19,
+            'da 50 a 100 kW': 16,
+            'oltre i 100 kW': 13
+        },
+        electricityAnalyzer: {
+            'Si': 16,
+            'Non so': 13,
+            'No': 10
+        },
+        percentageScore: {
+            'lighting': (percentage) => {
+                return Math.round((percentage / 100) * 12);  // scala il punteggio fino a 12 punti
+            },
+            'led': (percentage) => {
+                return Math.round((percentage / 100) * 36);  // scala il punteggio fino a 36 punti
+            },
+            'gas_lamp': (percentage) => {
+                return Math.round((percentage / 100) * 24);  // scala il punteggio fino a 24 punti
+            }
+        }
+    };
+
+    const calculateTotalScore = (formData) => {
+        let totalScore = 0;
+
+        // Estrai i dati dal formData
+        const name = formData.get('name');  // Nome non usato per il punteggio
+        const description = formData.get('description');  // Descrizione non usata per il punteggio
+        const year = formData.get('year');
+        const renovation = formData.get('renovation');
+        const heating = formData.get('heating');
+        const ventilation = formData.get('ventilation');
+        const energyControl = formData.get('energyControl');
+        const maintenance = formData.get('maintenance');
+        const waterRecovery = formData.get('waterRecovery');
+        const electricityCounter = formData.get('electricityCounter');
+        const electricityAnalyzer = formData.get('electricityAnalyzer');
+        const lightingPercentage = parseFloat(formData.get('lighting')) || 0;
+        const ledPercentage = parseFloat(formData.get('led')) || 0;
+        const gasLampPercentage = parseFloat(formData.get('gasLamp')) || 0;
+
+        // Calcola il punteggio totale con un peso maggiore per i LED
+        totalScore += scoring.year[year] || 0;
+        totalScore += scoring.renovation[renovation] || 0;
+        totalScore += scoring.heating[heating] || 0;
+        totalScore += scoring.ventilation[ventilation] || 0;
+        totalScore += scoring.energyControl[energyControl] || 0;
+        totalScore += scoring.maintenance[maintenance] || 0;
+        totalScore += scoring.waterRecovery[waterRecovery] || 0;
+        totalScore += scoring.electricityCounter[electricityCounter] || 0;
+        totalScore += scoring.electricityAnalyzer[electricityAnalyzer] || 0;
+        totalScore += scoring.percentageScore.lighting(lightingPercentage);
+        totalScore += scoring.percentageScore.gas_lamp(gasLampPercentage);
+
+        // Aumenta l'impatto del punteggio dei LED
+        const ledScore = scoring.percentageScore.led(ledPercentage);
+        const weightedLedScore = ledScore * 1.5; // Fattore di moltiplicazione per dare maggiore peso ai LED
+        totalScore += weightedLedScore;
+
+        return totalScore;
+    };
+
+
+
+
+
+
 
     return (
         <div className="mt-4">

@@ -20,7 +20,6 @@
       }
 
       #content {
-        min-height: 100vh;
         max-width: 100%;
         display: flex;
         flex-direction: column;
@@ -103,5 +102,8 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      const global = globalThis;
+    </script>
   </body>
 </html>
