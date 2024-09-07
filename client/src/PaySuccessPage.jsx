@@ -12,7 +12,7 @@ function PaySuccessPage() {
   useEffect(() => {
 
     createOrder();
-    remove_user_cart();
+    //remove_user_cart();
 
     localStorage.removeItem('productsIDs');
     localStorage.removeItem('codeId');
@@ -104,6 +104,7 @@ function PaySuccessPage() {
             />
           </div>
         </div>
+        {/* 
         <div className="w-full flex items-center justify-center p-8">
           <button
             className="font-bold w-auto flex justify-center items-center border-2 border-transparent rounded-xl py-4 bg-[#2d7044] text-white hover:bg-white hover:text-[#2d7044] hover:border-[#2d7044] transition-colors duration-300 ease-in-out text-xl"
@@ -112,6 +113,7 @@ function PaySuccessPage() {
             Torna a carrello
           </button>
         </div>
+        */}
       </div>
     </div>
   );

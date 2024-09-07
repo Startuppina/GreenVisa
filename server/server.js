@@ -1019,7 +1019,7 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
       case "Certificazione hotel":
         price = 350;
         break;
-      case "Certificazione spa e resort":
+      case "Certificazione spa e resorts":
         price = 350;
         break;
       case "Certificazione trasporti":
@@ -1041,7 +1041,7 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
 
     // Controllo che il prezzo sia un numero valido
     const parsedPrice = parseFloat(price);
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+    if (parsedPrice <= 0) {
       return res.status(400).json({ msg: "Prezzo non valido" });
     }
 
@@ -1181,7 +1181,7 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
       case "Certificazione hotel":
         finalPrice = pricingFunctions.getHotelPrice(option, price);
         break;
-      case "Certificazione spa e resort":
+      case "Certificazione spa e resorts":
         finalPrice = pricingFunctions.getSpaPrice(option, price);
         break;
       case "Certificazione trasporti":
@@ -2234,7 +2234,7 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
     // Esegui la query SQL corretta
     const rows = await pool.query(`
       SELECT 
-          o.id AS order_id,
+          o.product_id AS product_id,
           p.category AS product_category,
           sr.total_score AS total_score,
           sr.completed AS completed
@@ -2258,10 +2258,10 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
 
 
 app.post('/api/responses', authenticateJWT, async (req, res) => {
-  const { surveyId, pageNo, surveyData, totalScore, completed } = req.body; // Aggiungi totalScore
+  const { pageNo, certification_id, totalScore, completed, surveyData } = req.body; // Aggiungi totalScore
   const { user_id } = req.user;
 
-  console.log("ALL", user_id, surveyId, pageNo, surveyData, totalScore, completed); // Aggiungi totalScore
+  console.log("ALL", user_id, pageNo, surveyData, totalScore, completed); // Aggiungi totalScore
 
   // Controllo per assicurarsi che i dati necessari siano presenti
   if (!surveyData) {
@@ -2270,9 +2270,9 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
 
   try {
     const query = `
-      INSERT INTO survey_responses (survey_id, user_id, certification_id, page_no, survey_data, total_score, completed, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      ON CONFLICT (user_id, survey_id) 
+      INSERT INTO survey_responses (user_id, certification_id, page_no, survey_data, total_score, completed, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      ON CONFLICT (user_id, certification_id) 
       DO UPDATE SET 
         page_no = EXCLUDED.page_no,
         survey_data = EXCLUDED.survey_data,
@@ -2280,7 +2280,7 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
         completed = EXCLUDED.completed
       RETURNING id;
     `;
-    const values = [surveyId, user_id, surveyId, pageNo, surveyData, totalScore, completed]; // Aggiungi totalScore
+    const values = [user_id, certification_id, pageNo, surveyData, totalScore, completed]; // Aggiungi totalScore
 
     const result = await pool.query(query, values);
     res.status(201).json({ id: result.rows[0].id });
@@ -2291,16 +2291,18 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
 });
 
 
-app.get('/api/responses/:surveyId', authenticateJWT, async (req, res) => {
-  const { surveyId } = req.params;
+app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
+  const { certification_id } = req.query;
   const { user_id } = req.user;
+
+  console.log("ALL", user_id, certification_id);
 
   try {
     const query = `
       SELECT page_no, survey_data, total_score FROM survey_responses
-      WHERE user_id = $1 AND survey_id = $2;
+      WHERE user_id = $1 AND certification_id = $2;
     `;
-    const values = [user_id, surveyId];
+    const values = [user_id, certification_id];
 
     const result = await pool.query(query, values);
 

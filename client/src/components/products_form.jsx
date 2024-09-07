@@ -40,11 +40,11 @@ function ProductsForm() {
     const handleCodeChange = (e) => setCod(e.target.value);
     const handleCategoryChange = (e) => setCategory(e.target.value);
     const handleTagChange = (e) => setTag(e.target.value);
-    
-        
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-       
+
         setIsLoading(true);
 
         const token = localStorage.getItem("token");
@@ -74,14 +74,14 @@ function ProductsForm() {
                     setButtonPopup(true);
                     setIsLoading(false);
                     setName('');
-                    setPrice('');
+                    //setPrice('');
                     setImage(null);
                     setInfo('');
                     setCod('');
                     setCategory('');
                     setTag('');
                 }, 3000); // Caricamento finto di 2 secondi
-                
+
                 navigate("/User");
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
@@ -178,23 +178,23 @@ function ProductsForm() {
                 <div className='flex justify-center'>
                     {isLoading ? (
                         <div className="flex justify-center items-center mt-5">
-                            <MutatingDots 
+                            <MutatingDots
                                 height="100"
                                 width="100"
                                 color="#2d7044"
-                                secondaryColor= '#2d7044'
+                                secondaryColor='#2d7044'
                                 radius='12.5'
                                 ariaLabel="mutating-dots-loading"
                                 visible={true}
                             />
                         </div>
                     ) : (
-                    <button
-                        type="submit"
-                        className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
-                    >
-                        Carica
-                    </button>
+                        <button
+                            type="submit"
+                            className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                        >
+                            Carica
+                        </button>
                     )}
                 </div>
             </form>

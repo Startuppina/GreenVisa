@@ -11,7 +11,7 @@ function CategoryBasedSelect({ category, onSelectChange }) {
             { value: "100-499", label: "100-499 stanze" },
             //{ value: "201+", label: "201+ stanze" }
         ],
-        "Certificazione spa e resort": [
+        "Certificazione spa e resorts": [
             { value: "default", label: "Scegli un'opzione" },
             { value: "1-20", label: "1-20 camere" },
             { value: "21-50", label: "21-50 camere" },

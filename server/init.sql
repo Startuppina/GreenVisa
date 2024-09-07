@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    price INTEGER NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
     image VARCHAR(255) NOT NULL,
     info TEXT NOT NULL,
     cod VARCHAR(255) NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS cart (
     image VARCHAR(255) NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),  -- Assicurati che la quantità sia positiva
     option VARCHAR(255) NOT NULL,
-    price INTEGER NOT NULL,  -- Prezzo dell'articolo (al momento dell'aggiunta al carrello)
+    price DECIMAL(10,2) NOT NULL,  -- Prezzo dell'articolo (al momento dell'aggiunta al carrello)
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS cart (
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     quantity INTEGER NOT NULL,
-    price INTEGER NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
     user_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
     code_id INTEGER DEFAULT NULL, -- Il codice promozionale associato all'ordine --
@@ -287,7 +287,6 @@ CREATE TABLE IF NOT EXISTS photovoltaics (
 
 CREATE TABLE IF NOT EXISTS survey_responses (
     id SERIAL PRIMARY KEY,
-    survey_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     certification_id INTEGER NOT NULL,
     page_no INTEGER,
@@ -295,7 +294,7 @@ CREATE TABLE IF NOT EXISTS survey_responses (
     total_score INTEGER,
     completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    CONSTRAINT unique_user_survey UNIQUE (user_id, survey_id),
+    CONSTRAINT unique_user_survey UNIQUE (user_id, certification_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (certification_id) REFERENCES products(id) ON DELETE CASCADE
 );

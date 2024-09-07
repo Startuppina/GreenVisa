@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 const TextEditor = (props) => {
   const [editorValue, setEditorValue] = useState(props.value || '');
+  const quillRef = useRef(null);
 
-  // Utilizza useMemo per ottimizzare la configurazione dell'editor
   const modules = useMemo(() => ({
     toolbar: [
       [{ header: '1' }, { header: '2' }, { header: '3' }, { font: [] }],
@@ -45,29 +45,28 @@ const TextEditor = (props) => {
     setEditorValue(props.value);
   }, [props.value]);
 
-  // Gestisci i cambiamenti dell'editor
   const handleChange = (value) => {
     setEditorValue(value);
     if (props.onChange) {
-      props.onChange(value); // Chiama la funzione di callback passata dal componente genitore
+      props.onChange(value);
     }
   };
 
   return (
-<div className="w-full flex justify-center items-center rounded-2xl">
-  <div className="w-full">
-    <ReactQuill
-      value={editorValue}
-      onChange={handleChange}
-      modules={modules}
-      formats={formats}
-      theme="snow"
-      className="bg-gray-50 border border-gray-300 shadow-sm rounded-2xl" // Usa rounded-3xl per bordi più arrotondati
-    />
-  </div>
-</div>
-
+    <div className="w-full flex justify-center items-center rounded-2xl">
+      <div className="w-full">
+        <ReactQuill
+          ref={quillRef}
+          value={editorValue}
+          onChange={handleChange}
+          modules={modules}
+          formats={formats}
+          theme="snow"
+          className="bg-gray-50 border border-gray-300 shadow-sm rounded-2xl"
+        />
+      </div>
+    </div>
   );
-}
+};
 
 export default TextEditor;
