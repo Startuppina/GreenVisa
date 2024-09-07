@@ -3,6 +3,7 @@ import axios from "axios";
 import SolarForm from "./solarForm";
 import { useRecoveryContext } from "../provider/provider";
 import ConfirmPopUp from "./confirmPopUp";
+import MessagePopUp from "./messagePopUp";
 
 function Solars() {
     const [solars, setSolars] = useState([]);
@@ -12,6 +13,8 @@ function Solars() {
     const [solarToDelete, setSolarToDelete] = useState(null);
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState("");
 
     const { buildingID, refresh } = useRecoveryContext();
 
@@ -36,7 +39,8 @@ function Solars() {
                     setNumSolars(response.data.count);
                 }
             } catch (error) {
-                console.log('Error fetching plants:', error);
+                setMessagePopup('Errore durante il recupero degli impianti solari');
+                setButtonPopup(true);
             }
         };
         fetchSolars();
@@ -61,7 +65,8 @@ function Solars() {
                 setPopupConfirmDelete(false);
             }
         } catch (error) {
-            console.log(error);
+            setMessagePopup('Errore durante la cancellazione dell\'impianto solare');
+            setButtonPopup(true);
         }
     };
 
@@ -74,6 +79,9 @@ function Solars() {
             >
                 {messageConfirm}
             </ConfirmPopUp>
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup} >
+                {messagePopup}
+            </MessagePopUp>
             <div className=" bg-[#D9D9D9] rounded-lg mx-2 md:mx-14">
                 <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti Solari termici</h1>
 

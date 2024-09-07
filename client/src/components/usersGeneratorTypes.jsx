@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import MessagePopUp from './messagePopUp';
 
 export default function UsersGeneratorTypes() {
     const [score, setScore] = useState({}); // Stato per i punteggi specifici per richiesta
     const [editingId, setEditingId] = useState(null);
     const [usersGeneratorData, setUsersGeneratorData] = useState([]);
     const [showForm, setShowForm] = useState(false);
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState('');
 
     const handleScoreChange = (e) => setScore(e.target.value);
 
@@ -29,13 +32,16 @@ export default function UsersGeneratorTypes() {
 
             console.log('Risposta del server:', response.data);
             if (response.status === 200) {
-                console.log('Punteggio inviato con successo');
+                setMessagePopup('Punteggio inviato con successo');
+                setButtonPopup(true);
                 setUsersGeneratorData(usersGeneratorData.filter(data => data.plant_id !== plant_id));
             } else {
-                console.error('Errore nell\'invio del punteggio:', response.data);
+                setMessagePopup('Errore nell\'invio del punteggio');
+                setButtonPopup(true);
             }
         } catch (error) {
-            console.error('Errore durante l\'invio del punteggio:', error);
+            setMessagePopup('Errore durante l\'invio del punteggio');
+            setButtonPopup(true);
         }
     };
 
@@ -52,23 +58,22 @@ export default function UsersGeneratorTypes() {
 
                 if (response.status === 200 && Array.isArray(response.data)) {
                     setUsersGeneratorData(response.data);
-                } else {
-                    console.error('Dati non nel formato previsto:', response.data);
                 }
             } catch (error) {
-                console.error('Errore durante il recupero dei generatori degli utenti:', error);
+                setMessagePopup('Errore durante il recupero dei dati');
+                setButtonPopup(true);
             }
         };
 
         fetchUsersGeneratorData();
     }, []);
 
-    const handleEditButtonClick = (id) => {
-        setEditingId(id === editingId ? null : id);
-    };
-
     return (
         <div className="w-full mt-10 flex items-center justify-center bg-gray-100">
+            <MessagePopUp buttonPopup={buttonPopup} setButtonPopup={setButtonPopup} >
+                {messagePopup}
+            </MessagePopUp>
+
             <div className="w-full mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
                 <h1 className="text-3xl font-bold text-center mb-6">Richieste di Validazione del Tipo di Generatore</h1>
 

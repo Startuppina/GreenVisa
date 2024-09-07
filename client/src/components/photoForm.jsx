@@ -17,13 +17,13 @@ function PhotoForm() {
         if (power <= 0) {
             return 0;
         } else if (power <= 10) {
-            return 10; // Punteggio fisso per potenza fino a 5 kW
-        } else if (power <= 20) {
-            return 13; // Punteggio fisso per potenza da 6 a 10 kW
-        } else if (power <= 30) {
-            return 16; // Punteggio fisso per potenza da 11 a 20 kW
+            return 19; // Punteggio fisso per potenza fino a 5 kW
+        } else if (power >= 11 && power <= 20) {
+            return 16; // Punteggio fisso per potenza da 6 a 10 kW
+        } else if (power >= 21 && power <= 30) {
+            return 13; // Punteggio fisso per potenza da 11 a 20 kW
         } else {
-            return 19; // Punteggio fisso per potenza superiore a 20 kW
+            return 10; // Punteggio fisso per potenza superiore a 20 kW
         }
     };
 

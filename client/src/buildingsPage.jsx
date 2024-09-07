@@ -99,7 +99,7 @@ export default function Buildings() {
                         <h1 className="text-2xl font-bold text-center mb-3">Edifici: {numBuildings}</h1>
                         <div className="flex flex-wrap justify-center gap-4">
                             {buildings.map((building, index) => (
-                                <div key={building.id} className="flex flex-col items-center">
+                                <div key={index} className="flex flex-col items-center">
                                     <Link to={`/building/${building.id}`}>
                                         <div
                                             className="w-[400px] h-[200px] rounded-lg p-4 hover:transform hover:scale-105 duration-300"
@@ -129,6 +129,38 @@ export default function Buildings() {
                         {showBuildingForm && <BuildingFrom />}
                     </div>
                 )}
+                <div class="w-full mx-auto mt-10 px-20 ">
+                    <div class=" font-arial text-justify">
+                        <h1 class="text-3xl font-bold mb-6 text-center">Procedura di Inserimento dei Buildings e Impianti</h1>
+
+                        <p class="text-xl mb-4">
+                            Il sistema permette di inserire edifici e associare a ciascuno impianti di vario tipo, inclusi impianti solari e impianti fotovoltaici.
+                            Ogni impianto inserito contribuirà a determinare un punteggio complessivo di sostenibilità per l'edificio, espresso in centesimi.
+                        </p>
+
+                        <p class="text-xl mb-4">
+                            Per iniziare, dovrai creare un nuovo edificio compilando le informazioni richieste, come la descrizione e la localizzazione del building.
+                            Successivamente, potrai aggiungere impianti specifici, selezionando il tipo di impianto (es. riscaldamento, raffrescamento, acqua calda sanitaria) e
+                            inserendo i dettagli riguardanti il generatore, il tipo di combustibile, e altre caratteristiche come la fornitura di elettricità.
+                        </p>
+
+                        <p class="text-xl mb-4">
+                            Il sistema include anche la possibilità di inserire impianti solari e fotovoltaici. Questi impianti sono considerati altamente sostenibili
+                            e possono migliorare significativamente il punteggio complessivo dell'edificio. Il punteggio è calcolato in base ai dati forniti e riflette il
+                            livello di sostenibilità dell'edificio.
+                        </p>
+
+                        <p class="text-xl mb-4">
+                            È fondamentale sfruttare il sistema in modo onesto e accurato. Inserire dati reali e corretti sugli impianti e i consumi è essenziale per ottenere
+                            un risultato affidabile e veritiero. Solo con dati autentici sarà possibile determinare con precisione il livello di sostenibilità dell'edificio.
+                        </p>
+
+                        <p class="text-xl mb-4 font-bold">
+                            Ricorda: la trasparenza e l'onestà sono essenziali per contribuire al successo del sistema e migliorare l'impatto ambientale complessivo.
+                        </p>
+                    </div>
+                </div>
+
             </main >
             <Footer />
         </div >
