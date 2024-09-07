@@ -38,8 +38,8 @@ function AllOrders() {
                     <p>{message}</p>
                 ) : (
                     orders.map((order) =>
-                        <>
-                            <div key={order.order_id} className=" p-4 w-full md:w-[500px] rounded-lg border-2">
+                        <div key={order.order_id}>
+                            <div className=" p-4 w-full md:w-[500px] rounded-lg border-2">
                                 <h3 className="text-lg font-bold mb-4">Ordine {order.order_id}</h3>
                                 <div className="flex items-center mb-4">
                                     <img
@@ -49,7 +49,7 @@ function AllOrders() {
                                     />
                                     <div>
                                         <p className="text-xl font-semibold">{order.product_name}</p>
-                                        <p className="text-gray-600"><p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p></p>
+                                        <p className="text-gray-600"><span className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex justify-between">
@@ -59,7 +59,7 @@ function AllOrders() {
                             </div>
                             <hr className="my-4 border-1 border-black" />
 
-                        </>
+                        </div>
                     )
                 )}
             </div>

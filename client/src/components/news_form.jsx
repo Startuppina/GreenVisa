@@ -35,7 +35,7 @@ const NewsForm = () => {
         e.preventDefault();
 
         setIsLoading(true);
-        
+
         const sanitizedContent = sanitizeContent(content);
 
         if (!title || sanitizedContent === '' || !image) {
@@ -56,14 +56,14 @@ const NewsForm = () => {
             setButtonPopup(true);
             return;
         }
-    
+
         const formData = new FormData();
         formData.append('title', title);
         formData.append('content', content);
         formData.append('image', image); // Assicurati che questa riga non sia commentata
 
         console.log('FormData:', formData);
-    
+
         try {
             const response = await axios.post('http://localhost:8080/api/upload-news', formData, {
                 headers: {
@@ -81,24 +81,20 @@ const NewsForm = () => {
                     setContent('');
                     setImage(null);
                 }, 3000);
-                    navigate("/User");
+                navigate("/User");
             }
-    
+
             /*const contentType = response.headers.get('Content-Type');
             if (!contentType || !contentType.includes('application/json')) {
                 throw new Error('Invalid content-type: expected application/json');
             }*/
-    
-            setTitle('');
-            setContent('');
-            setImage(null);
         } catch (error) {
             setMessagePopUp(`Errore durante la pubblicazione della notizia: ${error.message}`);
             setButtonPopup(true);
             setIsLoading(false);
         }
     };
-    
+
 
     return (
         <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6">
@@ -129,28 +125,28 @@ const NewsForm = () => {
                 </div>
                 {<label className="flex flex-col w-full z-10">
                     <span className="block mb-2">Contenuto:</span>
-                    <TextEditor theme="snow" value={content} onChange={handleContentChange}/>
+                    <TextEditor theme="snow" value={content} onChange={handleContentChange} />
                 </label>}
                 <div className='flex justify-center'>
-                {isLoading ? (
+                    {isLoading ? (
                         <div className="flex justify-center items-center mt-5">
-                            <MutatingDots 
+                            <MutatingDots
                                 height="100"
                                 width="100"
                                 color="#2d7044"
-                                secondaryColor= '#2d7044'
+                                secondaryColor='#2d7044'
                                 radius='12.5'
                                 ariaLabel="mutating-dots-loading"
                                 visible={true}
                             />
                         </div>
                     ) : (
-                    <button
-                        type="submit"
-                        className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
-                    >
-                        Carica
-                    </button>
+                        <button
+                            type="submit"
+                            className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                        >
+                            Carica
+                        </button>
                     )}
                 </div>
             </form>

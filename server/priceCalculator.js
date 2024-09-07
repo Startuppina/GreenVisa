@@ -19,15 +19,17 @@ function getHotelPrice(option, price) {
 
 function getTransportPrice(option, price) {
     switch (option) {
-        case "1-50":
+        case "1-20":
             //increase price depending by case
             return price;
-        case "51-100":
+        case "21-50":
             return price * 1.4;
-        case "101-150":
+        case "51-100":
             return price * 1.6;
-        case "151-200":
+        case "101-200":
             return price * 1.8;
+        case "201+":
+            return price * 2;
         default:
             return price;
     }
@@ -35,14 +37,14 @@ function getTransportPrice(option, price) {
 
 function getIndustryPrice(option, price) {
     switch (option) {
-        case "1-50":
+        case "1-10":
             //increase price depending by case
             return price;
-        case "51-100":
+        case "11-50":
             return price * 1.4;
-        case "101-150":
+        case "51-100":
             return price * 1.6;
-        case "151-200":
+        case "101+":
             return price * 1.8;
         default:
             return 0;
@@ -51,33 +53,35 @@ function getIndustryPrice(option, price) {
 
 function getSpaPrice(option, price) {
     switch (option) {
-        case "1-50":
+        case "1-20":
             //increase price depending by case
             return price;
-        case "51-100":
+        case "21-50":
             return price * 1.4;
-        case "101-150":
+        case "51-100":
             return price * 1.6;
-        case "151-200":
+        case "101-200":
             return price * 1.8;
+        case "201+":
+            return price * 2;
         default:
-            return 0;
+            return price;
     }
 }
 
 function getStorePrice(option, price) {
     switch (option) {
-        case "1-50":
+        case "1-10":
             //increase price depending by case
             return price;
-        case "51-100":
+        case "11-50":
             return price * 1.4;
-        case "101-150":
+        case "51-100":
             return price * 1.6;
-        case "151-200":
+        case "101+":
             return price * 1.8;
         default:
-            return 0;
+            return price;
     }
 }
 
@@ -96,7 +100,7 @@ function getBarPrice(option, price) {
             price = 1015;
             return price;
         default:
-            return 0;
+            return price;
     }
 }
 

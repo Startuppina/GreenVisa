@@ -90,9 +90,8 @@ export default function Buildings() {
                     <div className="text-center mt-20">
                         <h1 className="text-2xl mb-4">Non hai ancora edifici registrati, aggiungine uno</h1>
                         <div className="flex justify-center" onClick={() => setShowBuildingForm(!showBuildingForm)}>
-                            <img src="/img/add.png" title="hospitality" className="w-[80px] md:w-[80px] transition-transform duration-300 ease-in-out hover:scale-105 rounded-lg" />
+                            <img src="/img/add.png" title="aggiungi" className="w-[80px] md:w-[80px] transition-transform duration-300 ease-in-out hover:scale-105 rounded-lg" />
                         </div>
-
                         {showBuildingForm && <BuildingFrom />}
                     </div>
                 ) : (
