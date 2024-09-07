@@ -69,11 +69,19 @@ function PlantForm() {
             generatorDescription: generatorType === "Altro" ? generatorDescription : "",
             fuelType,
             quantity,
-            electricitySupply
+            electricitySupply,
         };
 
+        const plantScore = calculateSustainabilityScore(formData);
+
+        const updatedFormData = {
+            ...formData,
+            plantScore
+        };
+
+
         try {
-            const response = await axios.post(`http://localhost:8080/api/buildings/${id}/upload/plant`, formData, {
+            const response = await axios.post(`http://localhost:8080/api/buildings/${id}/upload/plant`, updatedFormData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -85,6 +93,7 @@ function PlantForm() {
                 setButtonPopup(true);
                 setIsLoading(false);
 
+                // Reset dei dati del modulo
                 setDescription("");
                 setPlantType("");
                 setServiceType("");
@@ -117,8 +126,69 @@ function PlantForm() {
     const handleQuantityChange = (e) => setQuantity(e.target.value);
     const handleElectricitySupplyChange = (e) => setElectricitySupply(e.target.value);
 
+    const sustainabilityScores = {
+        plantTypes: {
+            'Centralizzato': 2,
+            'Autonomo': 4
+        },
+        serviceTypes: {
+            'Riscaldamento': 2,
+            'Raffrescamento': 3,
+            'Acqua calda sanitaria': 2,
+            'Altra produzione termica': 1
+        },
+        generatorTypes: {
+            'Caldaia tradizionale': 1,
+            'Caldaia condensazione': 2,
+            'Pompa di calore idronica': 4,
+            'Ibrido (Caldaia e Pompa di Calore)': 3,
+            'Teleriscaldamento': 2,
+            'Cogeneratore o Trigenerazione con Motore endotermico': 1,
+            'Cogeneratore o Trigenerazione con Microturbina': 2,
+            'Cogeneratore o Trigenerazione con Fuel Cell': 4,
+            'Altro': 1
+        },
+        fuelTypes: {
+            'Gas Naturale (Metano)': 2,
+            'GPL': 2,
+            'Gasolio': 1,
+            'Olio combustibile': 1,
+            'Pellet': 3,
+            'Cippato di legna': 3,
+            'Biogas': 4,
+            'Biodiesel': 3,
+            'Elettrico - mix generico': 3,
+            'Elettrico - 100% rinnovabili': 4
+        },
+        electricitySupplies: {
+            'Elettrico - mix generico': 3,
+            'Elettrico - 100% rinnovabili': 4
+        }
+    };
+
+    const calculateSustainabilityScore = (plant) => {
+        const baseScore = 10;
+
+        const plantTypeScore = sustainabilityScores.plantTypes[plant.plantType] || 1;
+        const serviceTypeScore = sustainabilityScores.serviceTypes[plant.serviceType] || 1;
+        const generatorTypeScore = sustainabilityScores.generatorTypes[plant.generatorType] || 1;
+        const fuelTypeScore = sustainabilityScores.fuelTypes[plant.fuelType] || 1;
+        const electricitySupplyScore = sustainabilityScores.electricitySupplies[plant.electricitySupply] || 1;
+
+        // Calcola il punteggio totale sommando i punteggi dei singoli parametri
+        let totalScore = baseScore;
+        totalScore += plantTypeScore;
+        totalScore += serviceTypeScore;
+        totalScore += generatorTypeScore;
+        totalScore += fuelTypeScore;
+        totalScore += electricitySupplyScore;
+
+        return totalScore;
+    };
+
+
     return (
-        <div className="w-full mt-4">
+        <div className="w-full mx-2">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>

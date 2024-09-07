@@ -77,7 +77,7 @@ function Plants() {
             >
                 {messageConfirm}
             </ConfirmPopUp>
-            <div className=" bg-[#D9D9D9] rounded-lg mx-2 md:mx-14">
+            <div className=" bg-[#D9D9D9] rounded-lg mx-14">
                 <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti</h1>
 
                 {numPlants === 0 ? (
@@ -86,7 +86,7 @@ function Plants() {
                         <button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>
                     </div>
                 ) : (
-                    <div className="flex flex-col mx-4 h-[45vh] overflow-y-auto mb-4">
+                    <div className="flex flex-col mx-4 h-[50vh] overflow-y-auto mb-4">
                         {plants.map((plant) => ( // Controllo per prevenire plants undefined
                             <>
                                 <div
@@ -117,6 +117,9 @@ function Plants() {
                                     <div className="">
                                         <strong>Fornitura elettrica per altri servizi nell'edificio:</strong> {plant.electricity_supply}
                                     </div>
+                                    <div className="mt-10">
+                                        <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {plant.plantscore}
+                                    </div>
                                     <div className="flex justify-end">
                                         <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
                                             onClick={() => {
@@ -139,9 +142,11 @@ function Plants() {
                             <button className="p-2 mb-4 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>
                         </div>
                     </div>
+
                 )}
-                {showPlantForm && <div className="pb-1"><PlantForm /></div>}
+
             </div>
+            {showPlantForm && (<div className="flex justify-center"><PlantForm /></div>)}
         </div >
     );
 }

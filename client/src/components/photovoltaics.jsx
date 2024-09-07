@@ -94,6 +94,9 @@ function Photovoltaics() {
                                     <div className="">
                                         <strong>Potenza installata:</strong> {photo.power} KW
                                     </div>
+                                    <div className="mt-10">
+                                        <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {photo.photovoltaicscore}
+                                    </div>
                                     <div className="flex justify-end">
                                         <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
                                             onClick={() => {
@@ -117,8 +120,9 @@ function Photovoltaics() {
                         </div>
                     </>
                 )}
-                {showPhotoForm && <div className="pb-1"><PhotoForm /></div>}
             </div>
+            {showPhotoForm && <div className="flex justify-center"><PhotoForm /></div>}
+
         </div>
     );
 

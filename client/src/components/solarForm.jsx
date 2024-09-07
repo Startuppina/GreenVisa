@@ -12,6 +12,22 @@ function SolarForm() {
 
     const { buildingID, triggerRefresh } = useRecoveryContext();
 
+    // Funzione per calcolare il punteggio di ecosostenibilità
+    const calculateEcoScore = (area) => {
+        if (area <= 0) {
+            return 0;
+        } else if (area <= 10) {
+            return 10; // Punteggio fisso per aree fino a 10 m²
+        } else if (area <= 30) {
+            return 13; // Punteggio fisso per aree da 11 a 30 m²
+        } else if (area <= 50) {
+            return 16; // Punteggio fisso per aree da 31 a 50 m²
+        } else {
+            return 19; // Punteggio fisso per aree superiori a 50 m²
+        }
+    };
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -19,8 +35,10 @@ function SolarForm() {
         const token = localStorage.getItem("token");
         const id = buildingID;
 
+        const area = parseFloat(installedArea);
         const formData = {
-            installedArea: parseFloat(installedArea)
+            installedArea: area,
+            solarScore: calculateEcoScore(area)  // Calcolo e aggiunta del punteggio di ecosostenibilità
         };
 
         try {
@@ -54,7 +72,7 @@ function SolarForm() {
     const handleInstalledAreaChange = (e) => setInstalledArea(e.target.value);
 
     return (
-        <div className="w-full mt-4">
+        <div className="w-full mx-2">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>

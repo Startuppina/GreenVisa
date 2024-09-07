@@ -1862,13 +1862,21 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       electricityAnalyzer,
       lighting,
       led,
-      gasLamp
+      gasLamp,
+      buildingScore
     } = req.body;
+
+    console.log(req.body);
 
 
     // Verifica che tutti i dati richiesti siano presenti
     if (!name || !description || !year || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !lighting || !led || !gasLamp) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
+    }
+
+    console.log("total ligting: ", parseInt(lighting) + parseInt(led) + parseInt(gasLamp));
+    if (parseInt(lighting) + parseInt(led) + parseInt(gasLamp) > 100) {
+      return res.status(400).json({ msg: "Sono consentiti solo un tipo di illuminazione" });
     }
 
     // Recupera l'ID utente dalla richiesta
@@ -1895,7 +1903,8 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       lighting,
       led,
       gasLamp,
-      electricityAnalyzer
+      electricityAnalyzer,
+      buildingScore
     ];
 
     // Esegui la query di inserimento
@@ -1915,9 +1924,10 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
         incandescent,
         led,
         gas_lamp,
-        analyzers
+        analyzers,
+        buildingScore
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
       )
     `, values);
 
@@ -2023,7 +2033,7 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    const { description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply } = req.body;
+    const { description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply, plantScore } = req.body;
 
     if (!description || !plantType || !serviceType || !generatorType || !fuelType || !quantity || !electricitySupply) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
@@ -2037,17 +2047,17 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
       return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
     }
 
-    const values = [user_id, id, description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply];
+    const values = [user_id, id, description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply, plantScore];
 
     await pool.query(`
       INSERT INTO plants (
-        user_id, building_id, description, plant_type, service_type, generator_type, generator_description, fuel_type, quantity, electricity_supply
+        user_id, building_id, description, plant_type, service_type, generator_type, generator_description, fuel_type, quantity, electricity_supply, plantScore
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
       )
     `, values);
 
-    res.status(200).json({ msg: "Pianta aggiunta con successo" });
+    res.status(200).json({ msg: "Impianto aggiunto con successo" });
   } catch (error) {
     console.error('Error adding plant:', error.message);
     res.status(500).json({ msg: "Errore interno del server" });
@@ -2092,7 +2102,7 @@ app.post("/api/buildings/:id/upload/solar", authenticateJWT, async (req, res) =>
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    const { installedArea } = req.body;
+    const { installedArea, solarScore } = req.body;
 
     if (!installedArea) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
@@ -2106,13 +2116,13 @@ app.post("/api/buildings/:id/upload/solar", authenticateJWT, async (req, res) =>
       return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
     }
 
-    const values = [id, installedArea];
+    const values = [id, installedArea, solarScore];
 
     await pool.query(`
       INSERT INTO solars (
-        building_id, installed_area
+        building_id, installed_area, solarScore
       ) VALUES (
-        $1, $2
+        $1, $2, $3
       )
     `, values);
 
@@ -2160,7 +2170,7 @@ app.post("/api/buildings/:id/upload/photovoltaic", authenticateJWT, async (req, 
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    const { power } = req.body;
+    const { power, photoScore } = req.body;
 
     if (!power) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
@@ -2174,13 +2184,13 @@ app.post("/api/buildings/:id/upload/photovoltaic", authenticateJWT, async (req, 
       return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
     }
 
-    const values = [id, power];
+    const values = [id, power, photoScore];
 
     await pool.query(`
       INSERT INTO photovoltaics (
-        building_id, power
+        building_id, power, photovoltaicScore
       ) VALUES (
-        $1, $2
+        $1, $2, $3
       )
     `, values);
 
@@ -2226,6 +2236,62 @@ app.get("/api/buildings/:id/fetch-photovoltaics", authenticateJWT, async (req, r
     res.status(500).json({ msg: "Errore interno del server" });
   }
 })
+
+app.get("/api/fetch-building-scores/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+
+    const buildingScoresResult = await pool.query(`SELECT SUM(buildingScore) AS totalScore FROM buildings WHERE user_id = $1`, [user_id]);
+    const buildingScores = parseInt(buildingScoresResult.rows[0].totalscore, 10); // Convert to integer for accuracy
+    const buildingScoresCountResult = 1;
+
+    // Calcolare la somma dei punteggi e la somma delle quantità/potenza per gli impianti
+    const plantScoresResult = await pool.query(`SELECT SUM(plantScore) AS totalScore FROM plants WHERE building_id = $1`, [id]);
+    const plantScores = parseInt(plantScoresResult.rows[0].totalscore, 10); // Convert to integer for accuracy 
+    const plantScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM plants WHERE building_id = $1`, [id])).rows[0].count, 10);
+
+
+    // Calcolare la somma dei punteggi e la somma delle aree installate per i solari
+    const solarScoresResult = await pool.query(`SELECT SUM(solarScore) AS totalScore FROM solars WHERE building_id = $1`, [id]);
+    const solarScores = parseInt(solarScoresResult.rows[0].totalscore, 10);
+    const solarScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM solars WHERE building_id = $1`, [id])).rows[0].count, 10);
+
+    // Calcolare la somma dei punteggi e la somma delle potenze per i fotovoltaici
+    const photoScoresResult = await pool.query(`SELECT SUM(photovoltaicScore) AS totalScore FROM photovoltaics WHERE building_id = $1`, [id]);
+    const photoScores = parseInt(photoScoresResult.rows[0].totalscore, 10);
+    const photoScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM photovoltaics WHERE building_id = $1`, [id])).rows[0].count, 10);
+
+    const buildingScore = buildingScoresCountResult > 0 ? buildingScores : 0;
+
+    const plantScore = plantScoresCountResult > 0 ? plantScores : 0;
+
+    const solarScore = solarScoresCountResult > 0 ? solarScores : 0;
+
+    const photoScore = photoScoresCountResult > 0 ? photoScores : 0;
+
+    console.log("scores:", buildingScore, plantScore, solarScore, photoScore);
+
+    // Calcolare il punteggio totale
+    const totalScore = buildingScore + plantScore + solarScore + photoScore;
+    const totalQuantity = 1 + plantScoresCountResult + solarScoresCountResult + photoScoresCountResult;
+    console.log("total quantity:", totalQuantity, "total score:", totalScore);
+
+    // Calcolare il punteggio medio complessivo
+    const averageScore = totalQuantity > 0 ? totalScore / totalQuantity : 0;
+
+    res.json({
+      averageScore,
+      numPlants: plantScoresCountResult,
+      numSolars: solarScoresCountResult,
+      numPhotovoltaics: photoScoresCountResult
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error fetching building scores.");
+  }
+});
+
 
 app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
   try {

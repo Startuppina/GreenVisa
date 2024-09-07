@@ -208,10 +208,11 @@ CREATE TABLE IF NOT EXISTS buildings (
     maintenance maintenance_enum NOT NULL,
     water_recovery water_recovery_enum NOT NULL,
     electricity_meter electricity_meter_enum NOT NULL,
-    incandescent VARCHAR(4) NOT NULL,
-    led VARCHAR(4) NOT NULL,
-    gas_lamp VARCHAR(4) NOT NULL,
-    analyzers analyzers_enum NOT NULL
+    incandescent DECIMAL(10, 2) NOT NULL,
+    led DECIMAL(10, 2) NOT NULL,
+    gas_lamp DECIMAL(10, 2) NOT NULL,
+    analyzers analyzers_enum NOT NULL,
+    buildingScore DECIMAL(10, 2) DEFAULT 0.0
 );
 
 CREATE TYPE plant_type_enum AS ENUM (
@@ -268,19 +269,22 @@ CREATE TABLE IF NOT EXISTS plants (
     generator_description TEXT,  -- Optional if 'Altro' is selected
     fuel_type fuel_type_enum NOT NULL,
     quantity INTEGER CHECK (quantity > 0),  -- Quantity must be a positive integer
-    electricity_supply electricity_supply_enum NOT NULL
+    electricity_supply electricity_supply_enum NOT NULL,
+    plantScore DECIMAL(10,2) DEFAULT 0.0
 );
 
 CREATE TABLE IF NOT EXISTS solars (
     id SERIAL PRIMARY KEY,
     building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
-    installed_area DECIMAL(10,2) NOT NULL CHECK (installed_area > 0) --quantita' installata--
+    installed_area DECIMAL(10,2) NOT NULL CHECK (installed_area > 0), --quantita' installata--
+    solarScore DECIMAL(10,2) DEFAULT 0.0
 );
 
 CREATE TABLE IF NOT EXISTS photovoltaics (
     id SERIAL PRIMARY KEY,
     building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
-    power DECIMAL(10,2) NOT NULL CHECK (power > 0) --potenza--
+    power DECIMAL(10,2) NOT NULL CHECK (power > 0), --potenza--
+    photovoltaicScore DECIMAL(10,2) DEFAULT 0.0
 );
 
 -------------------------------------------------------------------------------------------------------------------------

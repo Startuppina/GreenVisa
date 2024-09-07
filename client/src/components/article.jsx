@@ -51,7 +51,7 @@ function Article() {
             }
 
         };
-                    
+
 
         setNewsread();
     }, []);
@@ -114,13 +114,13 @@ function Article() {
                     className="w-full h-full object-fill rounded-lg"
                 />
             </div>
-            <div className='w-full mt-5 mb-5 text-arial text-justify text-lg md:text-xl px-4 mx-auto'>
+            <div className='w-full mt-5 mb-5 px-4 mx-auto text-lg md:text-xl text-justify'>
                 <div
                     id='content'
-                    className="prose prose-xl prose-h1:text-4xl prose-h2:text-3xl prose-p:text-xl prose-ul:pl-20 prose-ul:list-disc w-[95%] lg:w-[85%] mx-auto text-black"
                     dangerouslySetInnerHTML={{ __html: article.content }}
                 ></div>
             </div>
+
         </div>
     );
 }

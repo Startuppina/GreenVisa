@@ -12,6 +12,22 @@ function PhotoForm() {
 
     const { buildingID, triggerRefresh } = useRecoveryContext();
 
+    // Funzione per calcolare il punteggio di ecosostenibilità
+    const calculatePowerScore = (power) => {
+        if (power <= 0) {
+            return 0;
+        } else if (power <= 10) {
+            return 10; // Punteggio fisso per potenza fino a 5 kW
+        } else if (power <= 20) {
+            return 13; // Punteggio fisso per potenza da 6 a 10 kW
+        } else if (power <= 30) {
+            return 16; // Punteggio fisso per potenza da 11 a 20 kW
+        } else {
+            return 19; // Punteggio fisso per potenza superiore a 20 kW
+        }
+    };
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -20,7 +36,8 @@ function PhotoForm() {
         const id = buildingID;
 
         const formData = {
-            power: parseFloat(power)
+            power: parseFloat(power),
+            photoScore: calculatePowerScore(power)  // Calcolo e aggiunta del punteggio di ecosostenibilità
         };
 
         try {
@@ -54,7 +71,7 @@ function PhotoForm() {
     const handlePowerChange = (e) => setPower(e.target.value);
 
     return (
-        <div className="w-full mt-4">
+        <div className="w-full mx-2">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
