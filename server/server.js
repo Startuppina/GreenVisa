@@ -2242,23 +2242,24 @@ app.get("/api/fetch-building-scores/:id", authenticateJWT, async (req, res) => {
     const { id } = req.params;
     const { user_id } = req.user;
 
-    const buildingScoresResult = await pool.query(`SELECT SUM(buildingScore) AS totalScore FROM buildings WHERE user_id = $1`, [user_id]);
+    const buildingScoresResult = await pool.query(`SELECT SUM(buildingScore) AS totalScore FROM buildings WHERE user_id = $1 AND id = $2`, [user_id, id]);
     const buildingScores = parseInt(buildingScoresResult.rows[0].totalscore, 10); // Convert to integer for accuracy
     const buildingScoresCountResult = 1;
 
     // Calcolare la somma dei punteggi e la somma delle quantità/potenza per gli impianti
-    const plantScoresResult = await pool.query(`SELECT SUM(plantScore) AS totalScore FROM plants WHERE building_id = $1`, [id]);
-    const plantScores = parseInt(plantScoresResult.rows[0].totalscore, 10); // Convert to integer for accuracy 
-    const plantScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM plants WHERE building_id = $1`, [id])).rows[0].count, 10);
+    const plantScoresResult = await pool.query(`SELECT SUM(plantScore) AS totalScore FROM plants WHERE user_id = $1 AND building_id = $2`, [user_id, id]);
+    const generatorScoreResult = await pool.query(`SELECT SUM(generator_assigned_score) AS generator_assigned_score FROM plants WHERE user_id = $1 AND building_id = $2`, [user_id, id]);
+    const plantScores = parseInt(plantScoresResult.rows[0].totalscore, 10) + parseInt(generatorScoreResult.rows[0].generator_assigned_score, 10); // Convert to integer for accuracy 
+    const plantScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM plants WHERE user_id = $1 AND building_id = $2`, [user_id, id])).rows[0].count, 10);
 
 
     // Calcolare la somma dei punteggi e la somma delle aree installate per i solari
     const solarScoresResult = await pool.query(`SELECT SUM(solarScore) AS totalScore FROM solars WHERE building_id = $1`, [id]);
     const solarScores = parseInt(solarScoresResult.rows[0].totalscore, 10);
-    const solarScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM solars WHERE building_id = $1`, [id])).rows[0].count, 10);
+    const solarScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM solars WHERE building_id = $1 `, [id])).rows[0].count, 10);
 
     // Calcolare la somma dei punteggi e la somma delle potenze per i fotovoltaici
-    const photoScoresResult = await pool.query(`SELECT SUM(photovoltaicScore) AS totalScore FROM photovoltaics WHERE building_id = $1`, [id]);
+    const photoScoresResult = await pool.query(`SELECT SUM(photovoltaicScore) AS totalScore FROM photovoltaics WHERE building_id = $1 `, [id]);
     const photoScores = parseInt(photoScoresResult.rows[0].totalscore, 10);
     const photoScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM photovoltaics WHERE building_id = $1`, [id])).rows[0].count, 10);
 
@@ -2273,15 +2274,50 @@ app.get("/api/fetch-building-scores/:id", authenticateJWT, async (req, res) => {
     console.log("scores:", buildingScore, plantScore, solarScore, photoScore);
 
     // Calcolare il punteggio totale
-    const totalScore = buildingScore + plantScore + solarScore + photoScore;
-    const totalQuantity = 1 + plantScoresCountResult + solarScoresCountResult + photoScoresCountResult;
-    console.log("total quantity:", totalQuantity, "total score:", totalScore);
+    let totalScore = 0;
+    let countFactors = 0;
 
-    // Calcolare il punteggio medio complessivo
-    const averageScore = totalQuantity > 0 ? totalScore / totalQuantity : 0;
+    // Aggiungi il punteggio del building se buildingScoresCountResult non è 0
+    if (buildingScoresCountResult !== 0) {
+      totalScore += (buildingScore / buildingScoresCountResult);
+      countFactors++; // Incrementa il numero di fattori considerati
+    }
+
+    // Aggiungi il punteggio del plant se plantScoresCountResult non è 0
+    if (plantScoresCountResult !== 0) {
+      totalScore += (plantScore / plantScoresCountResult);
+      countFactors++;
+    }
+
+    // Aggiungi il punteggio del solar se solarScoresCountResult non è 0
+    if (solarScoresCountResult !== 0) {
+      totalScore += (solarScore / solarScoresCountResult);
+      countFactors++;
+    }
+
+    // Aggiungi il punteggio del photo se photoScoresCountResult non è 0
+    if (photoScoresCountResult !== 0) {
+      totalScore += (photoScore / photoScoresCountResult);
+      countFactors++;
+    }
+
+    // Se ci sono fattori considerati, calcola la media
+    if (countFactors > 0) {
+      totalScore;
+    }
+    // stampa ogni dato di totalScore 
+    console.log("building score:", buildingScore, "building count:", buildingScoresCountResult);
+    console.log("plant score:", plantScore, "plant count:", plantScoresCountResult);
+    console.log("solar score:", solarScore, "solar count:", solarScoresCountResult);
+    console.log("photo score:", photoScore, "photo count:", photoScoresCountResult);
+
+
+    console.log("total score:", totalScore);
+
+    ;
 
     res.json({
-      averageScore,
+      averageScore: totalScore,
       numPlants: plantScoresCountResult,
       numSolars: solarScoresCountResult,
       numPhotovoltaics: photoScoresCountResult

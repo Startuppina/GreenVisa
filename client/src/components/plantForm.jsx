@@ -79,10 +79,6 @@ function PlantForm() {
             plantScore
         };
 
-        {/*if (generatorDescription) {
-            sendGeneratorDescription(generatorDescription);
-        }*/}
-
 
         try {
             const response = await axios.post(`http://localhost:8080/api/buildings/${id}/upload/plant`, updatedFormData, {
@@ -120,29 +116,6 @@ function PlantForm() {
             setButtonPopup(true);
         }
     };
-
-    {/*const sendGeneratorDescription = async (description) => {
-        const token = localStorage.getItem("token");
-        const id = buildingID;
-        try {
-            const response = await axios.post(`http://localhost:8080/api/buildings/${id}/upload/generator-description`, { description }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.status === 200) {
-                setMessagePopup(response.data.msg);
-                setButtonPopup(true);
-            } else if (response.status === 400) {
-                setMessagePopup(response.data.msg);
-                setButtonPopup(true);
-            }
-        } catch (error) {
-            setMessagePopup(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
-        }
-    };*/}
 
     const handleDescriptionChange = (e) => setDescription(e.target.value);
     const handlePlantTypeChange = (e) => setPlantType(e.target.value);
@@ -202,15 +175,31 @@ function PlantForm() {
         const fuelTypeScore = sustainabilityScores.fuelTypes[plant.fuelType] || 1;
         const electricitySupplyScore = sustainabilityScores.electricitySupplies[plant.electricitySupply] || 1;
 
+        const fuelQuantityFactor = getFuelQuantityFactor(plant.quantity);
+
         // Calcola il punteggio totale sommando i punteggi dei singoli parametri
         let totalScore = baseScore;
         totalScore += plantTypeScore;
         totalScore += serviceTypeScore;
         totalScore += generatorTypeScore;
-        totalScore += fuelTypeScore;
+        totalScore += fuelQuantityFactor * fuelTypeScore;
         totalScore += electricitySupplyScore;
 
         return totalScore;
+    };
+
+    const getFuelQuantityFactor = (quantity) => {
+        if (quantity <= 100) {
+            return 1.3; // Quantità molto basse, punteggio aumentato del 30%
+        } else if (quantity > 100 && quantity <= 500) {
+            return 1.1; // Quantità basse, punteggio aumentato del 10%
+        } else if (quantity > 500 && quantity <= 1000) {
+            return 1; // Quantità moderate, nessuna variazione
+        } else if (quantity > 1000 && quantity <= 3000) {
+            return 0.8; // Quantità alte, riduce il punteggio del 20%
+        } else {
+            return 0.6; // Quantità molto elevate, riduce il punteggio del 40%
+        }
     };
 
 
@@ -280,7 +269,7 @@ function PlantForm() {
                         </label>
                         {generatorType === "Altro" && (
                             <label className="flex flex-col w-full md:w-1/2">
-                                <span className="block mb-2">Descrizione del generatore</span>
+                                <span className="block mb-2">Descrizione del generatore (punteggio assegnato a seguito di revisione)</span>
                                 <input
                                     type="text"
                                     value={generatorDescription}

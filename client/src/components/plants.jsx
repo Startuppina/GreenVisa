@@ -3,6 +3,7 @@ import axios from "axios";
 import PlantForm from "./plantForm";
 import { useRecoveryContext } from "../provider/provider";
 import ConfirmPopUp from "./confirmPopUp";
+import MessagePopUp from "./messagePopUp";
 
 function Plants() {
     const [plants, setPlants] = useState([]); // Inizializzato come array vuoto
@@ -12,6 +13,9 @@ function Plants() {
     const [plantsToDelete, setPlantsToDelete] = useState(null);
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
+
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState("");
 
 
     const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
@@ -40,7 +44,8 @@ function Plants() {
 
                 }
             } catch (error) {
-                console.log('Error fetching plants:', error);
+                setMessagePopup('Errore durante il recupero degli impianti');
+                setButtonPopup(true);
             }
         };
         fetchPlants();
@@ -64,7 +69,8 @@ function Plants() {
                 setPopupConfirmDelete(false);
             }
         } catch (error) {
-            console.log(error);
+            setMessageConfirm('Errore durante l\'eliminazione dell\'impianto');
+            setButtonPopup(true);
         }
     };
 
@@ -77,6 +83,9 @@ function Plants() {
             >
                 {messageConfirm}
             </ConfirmPopUp>
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup} >
+                {messagePopup}
+            </MessagePopUp>
             <div className=" bg-[#D9D9D9] rounded-lg mx-14">
                 <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti</h1>
 
@@ -87,56 +96,56 @@ function Plants() {
                     </div>
                 ) : (
                     <div className="flex flex-col mx-4 h-[50vh] overflow-y-auto mb-4">
-                        {plants.map((plant) => ( // Controllo per prevenire plants undefined
-                            <>
-                                <div
-                                    className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
-                                    key={plant.id}
-                                >
-                                    <div className="">
-                                        <strong>Descrizione:</strong> {plant.description}
-                                    </div>
-                                    <div className="">
-                                        <strong>Tipo di impianto:</strong> {plant.plant_type}
-                                    </div>
-                                    <div className="">
-                                        <strong>Tipo di servizio:</strong> {plant.service_type}
-                                    </div>
-                                    <div className="">
-                                        <strong>Tipo di generatore:</strong> {plant.generator_type}
-                                    </div>
-                                    <div className="">
-                                        <strong>Descrizione tipologia:</strong> {plant.generator_description}
-                                    </div>
-                                    <div className="">
-                                        <strong>Elemento consumato dal generatore:</strong> {plant.fuel_type}
-                                    </div>
-                                    <div className="">
-                                        <strong>Quantità (metano e biogas [SMC], biodiesel e GPL [litri], olio e cippato [ton], pellet [kg]):</strong> {plant.quantity}
-                                    </div>
-                                    <div className="">
-                                        <strong>Fornitura elettrica per altri servizi nell'edificio:</strong> {plant.electricity_supply}
-                                    </div>
-                                    <div className="mt-10">
-                                        <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {plant.plantscore}
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
-                                            onClick={() => {
-                                                setPlantsToDelete({
-                                                    id: plant.id,
-                                                });
-                                                setMessageConfirm(
-                                                    "Sei sicuro di voler eliminare questo impianto solare?"
-                                                );
-                                                setPopupConfirmDelete(true);
-                                            }}>
-                                            Elimina
-                                        </button>
-                                    </div>
+                        {plants.map((plant, index) => ( // Controllo per prevenire plants undefined
+                            <div
+                                className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
+                                key={plant.id}
+                            >
+                                <div className="">
+                                    <strong>Descrizione:</strong> {plant.description}
                                 </div>
-
-                            </>
+                                <div className="">
+                                    <strong>Tipo di impianto:</strong> {plant.plant_type}
+                                </div>
+                                <div className="">
+                                    <strong>Tipo di servizio:</strong> {plant.service_type}
+                                </div>
+                                <div className="">
+                                    <strong>Tipo di generatore:</strong> {plant.generator_type}
+                                </div>
+                                <div className="">
+                                    <strong>Descrizione tipologia:</strong> {plant.generator_description}
+                                </div>
+                                <div className="">
+                                    <strong>Punteggio assegnato alla tipologia di generatore (definito nella descrizione):</strong> {plant.generator_assigned_score}
+                                </div>
+                                <div className="">
+                                    <strong>Elemento consumato dal generatore:</strong> {plant.fuel_type}
+                                </div>
+                                <div className="">
+                                    <strong>Quantità (metano e biogas [SMC], biodiesel e GPL [litri], olio e cippato [ton], pellet [kg]):</strong> {plant.quantity}
+                                </div>
+                                <div className="">
+                                    <strong>Fornitura elettrica per altri servizi nell'edificio:</strong> {plant.electricity_supply}
+                                </div>
+                                <div className="mt-10">
+                                    <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {parseFloat(plant.plantscore) + parseFloat(plant.generator_assigned_score)}
+                                </div>
+                                <div className="flex justify-end">
+                                    <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
+                                        onClick={() => {
+                                            setPlantsToDelete({
+                                                id: plant.id,
+                                            });
+                                            setMessageConfirm(
+                                                "Sei sicuro di voler eliminare questo impianto solare?"
+                                            );
+                                            setPopupConfirmDelete(true);
+                                        }}>
+                                        Elimina
+                                    </button>
+                                </div>
+                            </div>
                         ))}
                         <div className="flex flex-col items-center justify-center">
                             <button className="p-2 mb-4 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>

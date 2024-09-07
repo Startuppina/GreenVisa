@@ -3,6 +3,7 @@ import axios from "axios";
 import PhotoForm from "./photoForm";
 import { useRecoveryContext } from "../provider/provider";
 import ConfirmPopUp from "./confirmPopUp";
+import MessagePopUp from "./messagePopUp";
 
 function Photovoltaics() {
     const [photovoltaics, setPhotovoltaics] = useState([]);
@@ -13,6 +14,8 @@ function Photovoltaics() {
     const [photoToDelete, setPhotoToDelete] = useState(null);
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState("");
 
     const { buildingID, refresh } = useRecoveryContext();
 
@@ -37,7 +40,8 @@ function Photovoltaics() {
                     setNumPhoto(response.data.count);
                 }
             } catch (error) {
-                console.log('Error fetching photos:', error);
+                setMessagePopup('Errore durante il recupero degli impianti fotovoltaici');
+                setButtonPopup(true);
             }
         };
         fetchPhotos();
@@ -60,9 +64,12 @@ function Photovoltaics() {
                 setPhotovoltaics(updatedPhoto);
                 setNumPhoto(updatedPhoto.length);
                 setPopupConfirmDelete(false);
+                setMessageConfirm('Impianto fotovoltaico eliminato con successo');
+                setButtonPopup(true);
             }
         } catch (error) {
-            console.log(error);
+            setMessagePopup('Errore durante l\'eliminazione dell\'impianto fotovoltaico');
+            setButtonPopup(true);
         }
     };
 
@@ -75,6 +82,9 @@ function Photovoltaics() {
             >
                 {messageConfirm}
             </ConfirmPopUp>
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
             <div className=" bg-[#D9D9D9] rounded-lg mx-2 md:mx-14">
                 <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti fotovoltaici</h1>
 
@@ -86,10 +96,10 @@ function Photovoltaics() {
                 ) : (
                     <>
                         <div className="flex flex-col mx-4 h-auto overflow-y-auto mb-4">
-                            {photovoltaics.map((photo) => (
+                            {photovoltaics.map((photo, index) => (
                                 <div
                                     className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
-                                    key={photo.id}
+                                    key={index}
                                 >
                                     <div className="">
                                         <strong>Potenza installata:</strong> {photo.power} KW

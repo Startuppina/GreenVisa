@@ -7,7 +7,7 @@ function Building() {
     const [buildingData, setBuildingData] = useState({});
     const navigate = useNavigate();
     const { id } = useParams();
-    const { setBuildingID } = useRecoveryContext();
+    const { setBuildingID, refresh } = useRecoveryContext();
     const [averageScore, setAverageScore] = useState(0);
 
     useEffect(() => {
@@ -42,7 +42,7 @@ function Building() {
 
                 );
                 if (response.status === 200) {
-                    setAverageScore(response.data.averageScore);
+                    setAverageScore(response.data);
                     console.log(response.data);
                 }
             } catch (error) {
@@ -52,14 +52,23 @@ function Building() {
 
         fetchBuilding();
         fetchBuildingScores();
-    }, []);
+    }, [refresh]);
 
-    const calculateTotalScoreInCents = (score) => {
-        const totalMaxScore = 69;
+    const calculateTotalScoreInCents = (score, numPlants, numSolars, numPhotovoltaics) => {
+        let totalMaxScore = 0;
+        if (numPlants === 0 && numSolars === 0 && numPhotovoltaics === 0) {
+            totalMaxScore = 213;
+        } else if (numSolars === 0 && numPhotovoltaics === 0) {
+            totalMaxScore = 244;
+        } else if (numPhotovoltaics === 0) {
+            totalMaxScore = 263;
+        } else {
+            totalMaxScore = 282;
+        }
+
         console.log("total max score:", totalMaxScore);
 
-        const scoreInCents = (score / totalMaxScore) * 100;
-
+        const scoreInCents = Math.round(score / totalMaxScore * 100);
         return Math.round(scoreInCents);
     };
 
@@ -142,7 +151,7 @@ function Building() {
                     <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA DELL'EDIFICIO:</strong> {buildingData.buildingscore}
                 </div>
                 <div className="px-4 pb-4">
-                    <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA COMPLESSIVO DELL'EDIFICIO (in centesimi):</strong><strong> {calculateTotalScoreInCents(averageScore)} / 100</strong>
+                    <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA COMPLESSIVO DELL'EDIFICIO (in centesimi):</strong><strong> {calculateTotalScoreInCents(averageScore.averageScore, averageScore.numPlants, averageScore.numSolars, averageScore.numPhotovoltaics)} / 100</strong>
                 </div>
 
             </div>
