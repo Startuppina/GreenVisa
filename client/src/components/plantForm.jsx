@@ -79,6 +79,10 @@ function PlantForm() {
             plantScore
         };
 
+        {/*if (generatorDescription) {
+            sendGeneratorDescription(generatorDescription);
+        }*/}
+
 
         try {
             const response = await axios.post(`http://localhost:8080/api/buildings/${id}/upload/plant`, updatedFormData, {
@@ -116,6 +120,29 @@ function PlantForm() {
             setButtonPopup(true);
         }
     };
+
+    {/*const sendGeneratorDescription = async (description) => {
+        const token = localStorage.getItem("token");
+        const id = buildingID;
+        try {
+            const response = await axios.post(`http://localhost:8080/api/buildings/${id}/upload/generator-description`, { description }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 200) {
+                setMessagePopup(response.data.msg);
+                setButtonPopup(true);
+            } else if (response.status === 400) {
+                setMessagePopup(response.data.msg);
+                setButtonPopup(true);
+            }
+        } catch (error) {
+            setMessagePopup(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+    };*/}
 
     const handleDescriptionChange = (e) => setDescription(e.target.value);
     const handlePlantTypeChange = (e) => setPlantType(e.target.value);
