@@ -258,12 +258,6 @@ function BuildingFrom() {
         return totalScore;
     };
 
-
-
-
-
-
-
     return (
         <div className="mt-4">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>

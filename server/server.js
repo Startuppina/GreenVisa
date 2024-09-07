@@ -2383,6 +2383,67 @@ app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
   }
 });
 
+app.get("/api/users-generator-types", authenticateJWT, async (req, res) => {
+  const { user_id } = req.user;
+
+  console.log("user_id:", user_id);
+
+  try {
+    const query = `
+      SELECT plants.generator_description AS generator_type, users.username AS username, users.id AS user_id, plants.id AS plant_id
+      FROM plants
+      JOIN users ON users.id = plants.user_id
+      WHERE generator_description IS NOT NULL
+      AND plants.generator_assigned_score = 0.0 ;
+    `;
+
+    const results = await pool.query(query);
+    console.log("usersGeneratorTypes:", results.rows);
+
+    if (results.rows.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+    res.status(200).json(results.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+});
+
+app.post("/api/users-assign-score", authenticateJWT, async (req, res) => {
+  const { score, requestor_id, generatorType, plant_id } = req.body;
+
+  console.log("user_id:", requestor_id);
+  console.log("score:", score);
+  console.log("score type:", typeof score);
+  console.log("generatorType:", generatorType);
+
+  try {
+    // Costruzione della query SQL parametrizzata
+    const query = `
+          UPDATE plants
+          SET generator_assigned_score = $1
+          WHERE user_id = $2
+          AND generator_description = $3
+          AND id = $4
+      `;
+
+    // Esegui la query
+    const result = await pool.query(query, [parseFloat(score), requestor_id, generatorType, plant_id]);
+
+    // Controlla se la riga è stata aggiornata
+    if (result.rowCount > 0) {
+      res.status(200).json({ message: 'Punteggio aggiornato con successo', data: result.rows[0] });
+    } else {
+      res.status(404).json({ message: 'Generatore non trovato' });
+    }
+  } catch (error) {
+    console.error('Errore durante l\'aggiornamento del punteggio:', error);
+    res.status(500).json({ message: 'Errore del server' });
+  }
+});
+
+
 
 
 

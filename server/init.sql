@@ -266,7 +266,8 @@ CREATE TABLE IF NOT EXISTS plants (
     plant_type plant_type_enum NOT NULL,
     service_type service_type_enum NOT NULL,
     generator_type generator_type_enum NOT NULL,
-    generator_description TEXT,  -- Optional if 'Altro' is selected
+    generator_description TEXT DEFAULT NULL,  -- Optional if 'Altro' is selected
+    generator_assigned_score DECIMAL(10,2) DEFAULT 0.0,
     fuel_type fuel_type_enum NOT NULL,
     quantity INTEGER CHECK (quantity > 0),  -- Quantity must be a positive integer
     electricity_supply electricity_supply_enum NOT NULL,
