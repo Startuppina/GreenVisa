@@ -2556,21 +2556,25 @@ app.post("/api/approve-second-level-request", authenticateJWT, authenticateAdmin
 
   try {
 
-    const query2 = `UPDATE second_level_certification_requests
-    SET approved = true
-    FROM second_level_certification_approvation
-    WHERE second_level_certification_approvation.request_id = $1 AND second_level_certification_approvation.user_id = $2`
-      ;
-    const values2 = [request_id, user_requestor_id];
-    await pool.query(query2, values2);
+
 
     const query = `
       INSERT INTO second_level_certification_approvation (request_id, user_id, created_at)
       VALUES ($1, $2, NOW())
       RETURNING id;
     `;
+
     const values = [request_id, user_requestor_id];
     const result = await pool.query(query, values);
+
+    const query2 = `UPDATE second_level_certification_requests
+    SET approved = true
+    WHERE id = $1 AND user_id = $2
+    `
+      ;
+    const values2 = [request_id, user_requestor_id];
+    await pool.query(query2, values2);
+
     res.status(200).json(result.rows[0]);
   } catch (err) {
     console.error("Errore nell'approvazione della richiesta di certificazione di secondo, livello", err);
@@ -2630,6 +2634,31 @@ app.put("/api/cancel-approvation/:approvation_id", authenticateJWT, async (req, 
     res.status(500).json({ error: 'Errore del server' });
   }
 })
+
+app.delete("/api/delete-second-level-request", authenticateJWT, authenticateAdmin, async (req, res) => {
+
+  const { request_id, user_requestor_id } = req.query;  // Cambia req.body con req.query
+  const { role } = req.user;
+  console.log("request_id:", request_id);
+  console.log("user_requestor_id:", user_requestor_id);
+  if (role !== "administrator") {
+    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+  }
+
+  try {
+    const query = `
+      DELETE FROM second_level_certification_requests
+      WHERE id = $1 AND user_id = $2;
+    `;
+    const values = [request_id, user_requestor_id];
+    await pool.query(query, values);
+    res.status(200).json({ message: 'Request deleted successfully' });
+  } catch (err) {
+    console.error("Errore nel fetch delle richieste di certificazione di secondo livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+});
+
 
 
 

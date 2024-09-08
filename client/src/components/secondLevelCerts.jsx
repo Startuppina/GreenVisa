@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MessagePopUp from "./messagePopUp";
+import ConfirmPopUp from "./confirmPopUp";
 import axios from 'axios';
 
 export default function SecondLevelCerts() {
@@ -8,6 +9,10 @@ export default function SecondLevelCerts() {
     const [approvedRequests, setApprovedRequests] = useState([]);
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
+    const [messageConfirm, setMessageConfirm] = useState("");
+    const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
+    const [requestToDelete, setRequestToDelete] = useState(null);
+
 
     useEffect(() => {
         const fetchRequests = async () => {
@@ -65,11 +70,51 @@ export default function SecondLevelCerts() {
         }
     };
 
+    const deleteRequest = async () => {
+        setPopupConfirmDelete(false);
+        const token = localStorage.getItem("token");
+        console.log("token :", token);
+
+        try {
+            const response = await axios.delete(`http://localhost:8080/api/delete-second-level-request`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                params: {
+                    request_id: requestToDelete.request_id,
+                    user_requestor_id: requestToDelete.user_id
+                }
+            });
+
+            if (response.status === 200) {
+                // Aggiorna le richieste e le approvazioni
+                setRequests(request.filter((req) => req.request_id !== requestToDelete.request_id));
+                setApprovedRequests(approvedRequests.filter((req) => req.request_id !== requestToDelete.request_id));
+
+                setMessagePopup("Richiesta eliminata con successo.");
+                setButtonPopup(true);
+            }
+        } catch (error) {
+            setMessagePopup("Errore durante l'eliminazione della richiesta.");
+            setButtonPopup(true);
+        }
+    };
+
+
     return (
         <>
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
+            <ConfirmPopUp
+                trigger={popupConfirmDelete}
+                setTrigger={setPopupConfirmDelete}
+                onButtonClick={deleteRequest}
+            >
+                {messageConfirm}
+            </ConfirmPopUp>
+
             <div className="w-full mt-10 flex items-center justify-center bg-gray-100 gap-4">
 
                 {/* Sezione Richieste da approvare */}
@@ -88,12 +133,22 @@ export default function SecondLevelCerts() {
                                     <p className="mb-2">Tipo di certificazione: {data.category}</p>
                                     <p className="mb-2">Data: {new Date(data.created_at).toLocaleDateString('it-IT')}</p>
 
-                                    <div className='flex justify-end'>
+                                    <div className='flex flex-row gap-2 justify-end'>
                                         <button
                                             onClick={() => approveRequest(data.request_id, data.user_id)}
                                             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300"
                                         >
                                             Approva
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setMessageConfirm("Sei sicuro di voler eliminare questa richiesta? Questa operazione non è reversibile.");
+                                                setRequestToDelete({ request_id: data.request_id, user_id: data.user_id });
+                                                setPopupConfirmDelete(true);
+                                            }}
+                                            className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-red-500 transition-colors duration-300"
+                                        >
+                                            Elimina
                                         </button>
                                     </div>
                                 </div>
@@ -117,12 +172,25 @@ export default function SecondLevelCerts() {
                                     <h3 className="text-xl font-semibold mb-2">Richiedente: {data.username}</h3>
                                     <p className="mb-2">Tipo di certificazione: {data.category}</p>
                                     <p className="mb-2">Data: {new Date(data.created_at).toLocaleDateString('it-IT')}</p>
+                                    <div className='flex justify-end'>
+                                        <button
+                                            onClick={() => {
+                                                setMessageConfirm("Sei sicuro di voler eliminare questa richiesta? Questa operazione non è reversibile.");
+                                                setRequestToDelete({ request_id: data.request_id, user_id: data.user_id });
+                                                setPopupConfirmDelete(true);
+                                            }}
+                                            className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-red-500 transition-colors duration-300"
+                                        >
+                                            Elimina
+                                        </button>
+                                    </div>
                                 </div>
+
                             ))
                         )}
                     </div>
                 </div>
-            </div>
+            </div >
         </>
     );
 }
