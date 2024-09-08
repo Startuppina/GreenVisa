@@ -1875,8 +1875,8 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
     }
 
     console.log("total ligting: ", parseInt(lighting) + parseInt(led) + parseInt(gasLamp));
-    if (parseInt(lighting) + parseInt(led) + parseInt(gasLamp) > 100) {
-      return res.status(400).json({ msg: "Sono consentiti solo un tipo di illuminazione" });
+    if (parseInt(lighting) + parseInt(led) + parseInt(gasLamp) !== 100) {
+      return res.status(400).json({ msg: "La somma delle percentuali di luci a incandescenza, led e scarica di gas deve essere 100%" });
     }
 
     // Recupera l'ID utente dalla richiesta
@@ -2446,8 +2446,13 @@ app.get("/api/users-generator-types", authenticateJWT, async (req, res) => {
   }
 });
 
-app.post("/api/users-assign-score", authenticateJWT, async (req, res) => {
+app.post("/api/users-assign-score", authenticateJWT, authenticateAdmin, async (req, res) => {
   const { score, requestor_id, generatorType, plant_id } = req.body;
+
+  const { role, user_id } = req.user;
+  if (role !== "administrator") {
+    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+  }
 
   console.log("user_id:", requestor_id);
   console.log("score:", score);
@@ -2478,6 +2483,153 @@ app.post("/api/users-assign-score", authenticateJWT, async (req, res) => {
     res.status(500).json({ message: 'Errore del server' });
   }
 });
+
+app.post("/api/second-level-certification", authenticateJWT, async (req, res) => {
+  const { userInfo, certification_id } = req.body;
+  const { user_id } = req.user;
+  console.log("user_id:", user_id);
+  console.log("certification_id:", certification_id);
+
+  try {
+    const query = `
+      INSERT INTO second_level_certification_requests (certification_id, user_id, created_at)
+      VALUES ($1, $2, NOW())
+      RETURNING id;
+    `;
+
+    const values = [certification_id, user_id];
+    const result = await pool.query(query, values);
+    res.status(201).json({ id: result.rows[0].id });
+  } catch (err) {
+    if (err.code === '23505') {  // Codice errore per violazione di vincolo unico
+      return res.status(409).json({ message: "La richiesta per questo utente e certificazione esiste già." });
+    }
+    console.error("Errore nell'inviare la richiesta di certificazione di secondo, livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+
+});
+
+app.get("/api/fetch-second-level-requests", authenticateJWT, authenticateAdmin, async (req, res) => {
+  const { role, user_id } = req.user;
+  if (role !== "administrator") {
+    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+  }
+
+  try {
+    const query = `
+      SELECT products.category AS category, users.username AS username, second_level_certification_requests.created_at AS created_at, second_level_certification_requests.id AS request_id, users.id AS user_id
+      FROM second_level_certification_requests
+      JOIN users ON users.id = second_level_certification_requests.user_id
+      JOIN products ON products.id = second_level_certification_requests.certification_id
+      WHERE approved = false
+      ;
+    `;
+    const result = await pool.query(query);
+
+    const query2 = `
+    SELECT products.category AS category, users.username AS username, second_level_certification_requests.created_at AS created_at, second_level_certification_requests.id AS request_id, users.id AS user_id
+      FROM second_level_certification_requests
+      JOIN users ON users.id = second_level_certification_requests.user_id
+      JOIN products ON products.id = second_level_certification_requests.certification_id
+      WHERE approved = true
+      ;
+    `;
+
+    const result2 = await pool.query(query2);
+    res.status(200).json({ requests: result.rows, approved: result2.rows });
+  } catch (err) {
+    console.error("Errore nel fetch delle richieste di certificazione di secondo, livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+
+});
+
+app.post("/api/approve-second-level-request", authenticateJWT, authenticateAdmin, async (req, res) => {
+  const { request_id, user_requestor_id } = req.body;
+  console.log("request_id:", request_id);
+  console.log("user_requestor_id:", user_requestor_id);
+  const { role } = req.user;
+  if (role !== "administrator") {
+    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+  }
+
+  try {
+
+    const query2 = `UPDATE second_level_certification_requests
+    SET approved = true
+    FROM second_level_certification_approvation
+    WHERE second_level_certification_approvation.request_id = $1 AND second_level_certification_approvation.user_id = $2`
+      ;
+    const values2 = [request_id, user_requestor_id];
+    await pool.query(query2, values2);
+
+    const query = `
+      INSERT INTO second_level_certification_approvation (request_id, user_id, created_at)
+      VALUES ($1, $2, NOW())
+      RETURNING id;
+    `;
+    const values = [request_id, user_requestor_id];
+    const result = await pool.query(query, values);
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error("Errore nell'approvazione della richiesta di certificazione di secondo, livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+
+
+})
+
+app.get("/api/fetch-approved-requests", authenticateJWT, async (req, res) => {
+  const { user_id } = req.user;
+
+  try {
+    const query = `
+    SELECT 
+        p.category AS category,
+        s.id AS approvation_id
+    FROM 
+        second_level_certification_approvation s
+    JOIN 
+        second_level_certification_requests r ON s.request_id = r.id
+    JOIN 
+        products p ON r.certification_id = p.id
+    WHERE s.user_id = $1 AND r.approved = true and s.is_cancelled = false
+
+    `;
+    const values = [user_id];
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(204).json({ error: 'No approved certification requests found' });
+    } else if (result.rows.length > 0) {
+      return res.status(200).json(result.rows);
+    }
+  } catch (err) {
+    console.error("Errore nel fetch delle richieste di certificazione di secondo, livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+})
+
+app.put("/api/cancel-approvation/:approvation_id", authenticateJWT, async (req, res) => {
+  const { approvation_id } = req.params;
+  const { user_id } = req.user;
+
+  try {
+
+    await pool.query(
+      `UPDATE second_level_certification_approvation
+       SET is_cancelled = TRUE
+       WHERE id = $1 AND user_id = $2`,
+      [approvation_id, user_id]
+    );
+
+    res.status(200).json({ message: 'Approvation cancelled successfully' });
+  } catch (err) {
+    console.error("Errore nel fetch delle richieste di certificazione di secondo, livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+})
 
 
 

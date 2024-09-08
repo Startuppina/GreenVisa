@@ -1,0 +1,128 @@
+import React, { useEffect, useState } from 'react';
+import MessagePopUp from "./messagePopUp";
+import axios from 'axios';
+
+export default function SecondLevelCerts() {
+
+    const [request, setRequests] = useState([]);
+    const [approvedRequests, setApprovedRequests] = useState([]);
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState("");
+
+    useEffect(() => {
+        const fetchRequests = async () => {
+            const token = localStorage.getItem("token");
+            try {
+                const response = await axios.get("http://localhost:8080/api/fetch-second-level-requests", {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 200) {
+                    setRequests(response.data.requests);
+                    setApprovedRequests(response.data.approved);
+                }
+            } catch (error) {
+                setMessagePopup("Errore durante il recupero dei dati.");
+                setButtonPopup(true);
+            }
+        };
+        fetchRequests();
+    }, []); // Rimuovi request dalle dipendenze
+
+    const approveRequest = async (request_id, user_requestor_id) => {
+        const token = localStorage.getItem("token");
+
+        try {
+            const response = await axios.post("http://localhost:8080/api/approve-second-level-request", {
+                request_id,
+                user_requestor_id
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                // Aggiorna le richieste e le approvazioni
+                const approvedRequest = request.find((req) => req.request_id === request_id);
+
+                // Rimuovi la richiesta dalle richieste in sospeso
+                setRequests(request.filter((req) => req.request_id !== request_id));
+
+                // Aggiungi la richiesta approvata alla lista delle approvate
+                setApprovedRequests([...approvedRequests, approvedRequest]);
+
+                setMessagePopup("Richiesta approvata con successo.");
+                setButtonPopup(true);
+            }
+        } catch (error) {
+            setMessagePopup("Errore durante l'approvazione della richiesta.");
+            setButtonPopup(true);
+        }
+    };
+
+    return (
+        <>
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
+            <div className="w-full mt-10 flex items-center justify-center bg-gray-100 gap-4">
+
+                {/* Sezione Richieste da approvare */}
+                <div className="w-full  h-[70vh] overflow-y-auto mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+                    <h1 className="text-3xl font-bold text-center mb-6">Richieste certificazione di secondi livello</h1>
+
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-bold mb-4">Richieste</h2>
+
+                        {request.length === 0 ? (
+                            <p>Nessun dato trovato.</p>
+                        ) : (
+                            request.map((data, index) => (
+                                <div key={index} className="border rounded-lg p-6 shadow-lg bg-gray-50 relative">
+                                    <h3 className="text-xl font-semibold mb-2">Richiedente: {data.username}</h3>
+                                    <p className="mb-2">Tipo di certificazione: {data.category}</p>
+                                    <p className="mb-2">Data: {new Date(data.created_at).toLocaleDateString('it-IT')}</p>
+
+                                    <div className='flex justify-end'>
+                                        <button
+                                            onClick={() => approveRequest(data.request_id, data.user_id)}
+                                            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300"
+                                        >
+                                            Approva
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Sezione Richieste approvate */}
+                <div className="w-full h-[70vh] overflow-y-auto mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+                    <h1 className="text-3xl font-bold text-center mb-6">Richieste approvate</h1>
+
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-bold mb-4">Richieste</h2>
+
+                        {approvedRequests.length === 0 ? (
+                            <p>Nessun dato trovato.</p>
+                        ) : (
+                            approvedRequests.map((data, index) => (
+                                <div key={index} className="border rounded-lg p-6 shadow-lg bg-gray-50 relative">
+                                    <h3 className="text-xl font-semibold mb-2">Richiedente: {data.username}</h3>
+                                    <p className="mb-2">Tipo di certificazione: {data.category}</p>
+                                    <p className="mb-2">Data: {new Date(data.created_at).toLocaleDateString('it-IT')}</p>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}

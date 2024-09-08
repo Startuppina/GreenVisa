@@ -25,7 +25,7 @@ export const RecoveryContextProvider = ({ children }) => {
             email, setEmail, OTP, setOTP, cartProducts, setCartProducts,
             quantities, setQuantities, isEmpty, setIsEmpty, codeTrigger, setCodeTrigger,
             addBuildingTrigger, setAddBuildingTrigger, buildingID, setBuildingID, refresh,
-            triggerRefresh, initialData, setInitialData
+            triggerRefresh, initialData, setInitialData,
         }}>
             {children}
         </RecoveryContext.Provider>

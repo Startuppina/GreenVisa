@@ -304,6 +304,27 @@ CREATE TABLE IF NOT EXISTS survey_responses (
     FOREIGN KEY (certification_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS second_level_certification_requests (
+    id SERIAL PRIMARY KEY,
+    certification_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    approved BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (certification_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (certification_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS second_level_certification_approvation (
+    id SERIAL PRIMARY KEY,
+    request_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    is_cancelled BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (request_id) REFERENCES second_level_certification_requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (request_id, user_id)
+);
 
 
 

@@ -289,12 +289,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "Si",
+                "text": "SI",
                 "score": 100
               },
               {
                 "value": "Item 2",
-                "text": "No",
+                "text": "NO",
                 "score": 0
               }
             ]
@@ -379,11 +379,11 @@ function TransportQuetionnaire({ certification_id }) {
                 "choices": [
                   {
                     "value": 1,
-                    "text": "Si"
+                    "text": "SI"
                   },
                   {
                     "value": 2,
-                    "text": "No"
+                    "text": "NO"
                   }
                 ],
                 "storeOthersAsComment": true
@@ -517,12 +517,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "si",
+                "text": "SI",
                 "score": 100
               },
               {
                 "value": "Item 2",
-                "text": "No",
+                "text": "NO",
                 "score": 0
               },
             ]
@@ -558,12 +558,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "si",
+                "text": "SI",
                 "score": 100
               },
               {
                 "value": "Item 2",
-                "text": "No",
+                "text": "NO",
                 "score": 0
               },
               {
@@ -582,12 +582,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "si",
+                "text": "SI",
                 "score": 35
               },
               {
                 "value": "Item 2",
-                "text": "No",
+                "text": "NO",
                 "score": 0
               }
             ]
@@ -596,16 +596,17 @@ function TransportQuetionnaire({ certification_id }) {
             "type": "radiogroup",
             "name": "question23",
             "title": "Sarebbe interessato ad una certificazione di 2° livello?",
+            "description": "ATTENZIONE: se selezioni SI manderai una richiesta di approvazione",
             "isRequired": true,
             "choices": [
               {
                 "value": "Item 1",
-                "text": "si",
+                "text": "SI",
                 "score": 35
               },
               {
                 "value": "Item 2",
-                "text": "No",
+                "text": "NO",
                 "score": 0
               }
             ]
@@ -619,12 +620,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "Si",
+                "text": "SI",
                 "score": 80
               },
               {
                 "value": "Item 2",
-                "text": "No",
+                "text": "NO",
                 "score": 0
               }
             ]
@@ -758,6 +759,22 @@ function TransportQuetionnaire({ certification_id }) {
     submitSurveyData(data);
   }
 
+  const secondLevelCertification = async (userInfo, certification_id) => {
+
+    const token = localStorage.getItem('token');
+    try {
+      await axios.post("http://localhost:8080/api/second-level-certification", { userInfo, certification_id }, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      console.log("Second Level Certification completed successfully");
+    } catch (error) {
+      console.error("Error completing Second Level Certification:", error);
+    }
+  }
+
   // Funzione per calcolare il punteggio totale
   function calcolaPunteggio(formData) {
     let punteggioTotale = 0;
@@ -811,6 +828,13 @@ function TransportQuetionnaire({ certification_id }) {
       const scelta = element.choices.find(choice => choice.value === response);
       if (scelta) {
         punteggio = scelta.score || 0;
+        if (element.name === 'question23' && scelta.text === 'SI') {
+          console.log("Sei interessato ad una certificazione di secondo livello");
+          secondLevelCertification(userInfo, certification_id);
+          console.log("UserInfo:", userInfo, "CertificationId:", certification_id);
+        } else if (element.name === 'question23' && scelta.text === 'NO') {
+          console.log("Non sei interessato ad una certificazione di secondo livello");
+        }
       }
     }
     return punteggio;

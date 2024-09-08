@@ -16,7 +16,7 @@ function Solars() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
-    const { buildingID, refresh } = useRecoveryContext();
+    const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
 
     useEffect(() => {
         const fetchSolars = async () => {
@@ -63,6 +63,8 @@ function Solars() {
                 setSolars(updatesSolars);
                 setNumSolars(updatesSolars.length);
                 setPopupConfirmDelete(false);
+
+                triggerRefresh();
             }
         } catch (error) {
             setMessagePopup('Errore durante la cancellazione dell\'impianto solare');
