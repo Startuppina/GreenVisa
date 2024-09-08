@@ -43,6 +43,7 @@ const UserPage = () => {
 
     const [isAdmin, setIsAdmin] = useState(false);
 
+
     useEffect(() => {
         const fetchInfo = async () => {
 
@@ -249,6 +250,69 @@ const UserPage = () => {
 
     const handleSwitch = (section) => {
         setActiveSection(section);
+        localStorage.setItem('activeSection', section); // Memorizza la sezione nel localStorage
+    };
+
+    useEffect(() => {
+        const storedSection = localStorage.getItem('activeSection');
+        if (storedSection) {
+            setActiveSection(storedSection);
+        } else {
+            setActiveSection('user'); // Se non c'è una sezione salvata, di default mostra la sezione 'user'
+        }
+    }, []);
+
+    const [approvations, setApprovations] = useState([]);
+
+    useEffect(() => {
+        const fetchUserApprovations = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get('http://localhost:8080/api/fetch-approved-requests', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.status === 200) {
+                    setApprovations(response.data);
+                } else if (response.status === 204) {
+                    console.log('No approvations found');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        fetchUserApprovations();
+    }, []);
+
+    const handleCancel = async (approvation_id) => {
+        const token = localStorage.getItem('token');
+
+        try {
+            // Effettua la richiesta di aggiornamento
+            const response = await axios.put(`http://localhost:8080/api/cancel-approvation/${approvation_id}`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            // Verifica che la risposta sia stata ricevuta con successo
+            if (response.status === 200) {
+                // Aggiorna lo stato per rimuovere l'approvazione cancellata
+                setApprovations((prevApprovations) =>
+                    prevApprovations.filter((approvation) => approvation.approvation_id !== approvation_id)
+                );
+            } else {
+                // Gestisci l'errore se il codice di stato non è 200
+                setMessagePopup('Errore durante la cancellazione dell\'approvazione.');
+                setButtonPopup(true);
+            }
+
+        } catch (error) {
+            // Gestisci l'errore di rete o di altro tipo
+            setMessagePopup(`Errore durante la cancellazione dell'approvazione: ${error.message}`);
+            setButtonPopup(true);
+        }
     };
 
 
@@ -397,10 +461,30 @@ const UserPage = () => {
                                                 <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span> / 100</div>
                                             </div>
                                             <div className='flex justify-center md:justify-start'>
-                                                <button className="p-2 w-auto z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
+                                                <button className="p-2 w-[235px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
                                                     <Link to={`/questionario/${info.product_category}?param1=${info.product_id}&param2=${info.product_category}`}>
                                                         {info.completed ? 'Visualizza questionario' : 'Completa questionario'}
                                                     </Link>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {approvations.length > 0 && (
+                                <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-4 border border-gray-300 rounded-lg">
+                                    <h1 className="text-3xl font-bold text-gray-800 mb-4">Hai una certificazione di secondo livello approvata</h1>
+                                    <p className='pb-4'>Inviaci nella sezione contatti il tuo indirizzo, CAP, città e numero di telefono, in modo tale da fissare un appuntamento per la certificazione di secondo livello, oppure una richiesta di cancellazione della richiesta se cambi idea.</p>
+                                    {approvations.map((data, index) => (
+                                        <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                                            <div className='flex flex-col md:flex-row justify-between'>
+                                                <div className='flex flex-col mb-2'>
+                                                    <h2 className="text-xl text-gray-800">Approvazione per la categoria: {data.category}</h2>
+
+                                                </div>
+                                                <button className="p-2 w-[200px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    onClick={() => handleCancel(data.approvation_id)}>
+                                                    Nascondi
                                                 </button>
                                             </div>
                                         </div>

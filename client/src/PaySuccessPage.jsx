@@ -12,14 +12,14 @@ function PaySuccessPage() {
   useEffect(() => {
 
     createOrder();
-    //remove_user_cart();
+    remove_user_cart();
 
     localStorage.removeItem('productsIDs');
     localStorage.removeItem('codeId');
 
     const timer = setTimeout(() => {
       navigate('/Carrello');
-    }, 50000);
+    }, 5000);
     return () => {
       clearTimeout(timer);
     }

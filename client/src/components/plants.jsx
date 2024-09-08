@@ -67,6 +67,7 @@ function Plants() {
                 setPlants(updatedPlants);
                 setNumPlants(updatedPlants.length);
                 setPopupConfirmDelete(false);
+                triggerRefresh();
             }
         } catch (error) {
             setMessageConfirm('Errore durante l\'eliminazione dell\'impianto');

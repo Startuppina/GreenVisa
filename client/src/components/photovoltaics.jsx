@@ -17,7 +17,7 @@ function Photovoltaics() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
-    const { buildingID, refresh } = useRecoveryContext();
+    const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
 
     useEffect(() => {
         const fetchPhotos = async () => {
@@ -66,6 +66,8 @@ function Photovoltaics() {
                 setPopupConfirmDelete(false);
                 setMessageConfirm('Impianto fotovoltaico eliminato con successo');
                 setButtonPopup(true);
+
+                triggerRefresh();
             }
         } catch (error) {
             setMessagePopup('Errore durante l\'eliminazione dell\'impianto fotovoltaico');
