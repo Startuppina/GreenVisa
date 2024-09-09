@@ -44,14 +44,14 @@ const app = express();
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, session-id');
   next();
 });
 
 app.options('*', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, session-id');
   res.sendStatus(204); // Status code 204: No Content
 });
 
@@ -124,6 +124,46 @@ function authenticateAdmin(req, res, next) {
   }
 }
 
+const cleanUpCart = async () => {
+  try {
+    await pool.query(`
+      DELETE FROM cart
+      WHERE session_id IS NOT NULL
+      AND user_id IS NULL
+    `);
+    console.log('Pulizia del carrello completata.');
+  } catch (error) {
+    console.error('Errore nella pulizia del carrello:', error);
+  }
+};
+
+cron.schedule('0 0 */3 * *', cleanUpCart);
+
+async function deleteExpiredPromoCodes() {
+  try {
+    const currentDate = new Date();
+    const isoDateString = currentDate.toISOString().split('.')[0] + 'Z';
+
+    const query = `
+          DELETE FROM promocodes
+          WHERE expiration <= $1
+      `;
+
+    const values = [isoDateString];
+    const result = await pool.query(query, values);
+
+    console.log(`Deleted ${result.rowCount} expired promo codes`);
+  } catch (error) {
+    console.error('Error deleting expired promo codes:', error);
+  }
+};
+
+// Pianifica l'esecuzione della pulizia ogni giorno a mezzanotte
+cron.schedule('0 0 * * *', () => {
+  console.log('Running scheduled job to delete expired promo codes');
+  deleteExpiredPromoCodes();
+});
+
 app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, res) => {
 
   try {
@@ -192,6 +232,7 @@ app.post("/api/signup", async (req, res) => {
 
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
+  const sessionID = req.header('session-id');
 
   if (!email || !password) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
@@ -219,6 +260,17 @@ app.post("/api/login", async (req, res) => {
       token = jwt.sign({ user_id: user.id, role: "administrator" }, secretKey, { expiresIn: "3d" });
     } else {
       token = jwt.sign({ user_id: user.id, role: "user" }, secretKey, { expiresIn: "3d" });
+    }
+
+    const user_id = user.id;
+    console.log("user_id:", user_id);
+    console.log("sessionID:", sessionID);
+
+    if (sessionID) {
+      // Prima assegniamo il `user_id` basato sul `sessionID`
+      await pool.query("UPDATE cart SET user_id = $1, session_id = NULL  WHERE session_id = $2", [user_id, sessionID])
+
+
     }
 
     return res
@@ -1161,11 +1213,29 @@ app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async 
   }
 });
 
-app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
+app.post("/api/cart-insertion/:id", async (req, res) => {
   try {
     const { id } = req.params; // ID del prodotto
-    const { user_id } = req.user;
-    const { name, image, price, quantity, option } = req.body;
+    const { name, image, price, quantity, option, session_id } = req.body;
+
+    if (req.headers.authorization) {
+      // Esegui il middleware di autenticazione JWT
+      await new Promise((resolve, reject) => {
+        authenticateJWT(req, res, (err) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve();
+        });
+      });
+    }
+
+    const user_id = req.user?.user_id; // Ottieni user_id se l'utente è autenticato
+
+    // Verifica se l'utente è autenticato o sta usando un session_id
+    if (!user_id && !session_id) {
+      return res.status(400).json({ msg: "Devi essere autenticato o avere un session_id per inserire nel carrello" });
+    }
 
     if (!option) {
       return res.status(400).json({ msg: "Opzione mancante. Scegline una" });
@@ -1202,47 +1272,102 @@ app.post("/api/cart-insertion/:id", authenticateJWT, async (req, res) => {
 
     console.log("Final price:", finalPrice);
 
-
     // Controlla se il prodotto esiste
-    const query = "SELECT * FROM products WHERE id = $1";
-    const values = [id];
-    const result = await pool.query(query, values);
+    const productQuery = "SELECT * FROM products WHERE id = $1";
+    const productResult = await pool.query(productQuery, [id]);
 
-    if (result.rows.length === 0) {
+    if (productResult.rows.length === 0) {
       return res.status(404).json({ msg: "Certificazione non trovata" });
     }
 
-    //constrolla se il prodotto e' gia nel carrello dell'utente
-    const query1 = "SELECT * FROM cart WHERE user_id = $1 AND product_id = $2";
-    const values1 = [user_id, id];
-    const result1 = await pool.query(query1, values1);
-    if (result1.rows.length > 0) {
-      return res.status(400).json({ msg: "La certificazione e' gia nel carrello" });
+    // Controlla se il prodotto è già nel carrello dell'utente o della sessione
+    let cartQuery;
+    let cartValues;
+
+    if (user_id) {
+      // Controllo per utenti autenticati
+      cartQuery = "SELECT * FROM cart WHERE user_id = $1 AND product_id = $2";
+      cartValues = [user_id, id];
+    } else {
+      // Controllo per utenti anonimi (basato su session_id)
+      cartQuery = "SELECT * FROM cart WHERE session_id = $1 AND product_id = $2";
+      cartValues = [session_id, id];
+    }
+
+    const cartResult = await pool.query(cartQuery, cartValues);
+
+    if (cartResult.rows.length > 0) {
+      return res.status(400).json({ msg: "La certificazione è già nel carrello" });
     }
 
     // Aggiungi il prodotto al carrello
-    const query2 = "INSERT INTO cart (user_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
-    const values2 = [user_id, id, name, image, quantity, option, finalPrice];
-    await pool.query(query2, values2);
-    res.status(200).json({ msg: "Certificazione aggiunta al carrello" });
+    let insertQuery;
+    let insertValues;
+
+    if (user_id) {
+      // Inserimento nel carrello per utenti autenticati
+      insertQuery = "INSERT INTO cart (user_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+      insertValues = [user_id, id, name, image, quantity, option, finalPrice];
+    } else {
+      // Inserimento nel carrello per utenti anonimi
+      insertQuery = "INSERT INTO cart (session_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+      insertValues = [session_id, id, name, image, quantity, option, finalPrice];
+    }
+
+    await pool.query(insertQuery, insertValues);
+
+    res.status(200).json({ msg: "Certificazione aggiunta al carrello con successo" });
   } catch (error) {
     console.error("Errore nell'aggiungere la certificazione al carrello:", error);
     res.status(500).json({ msg: "Errore nell'aggiungere la certificazione al carrello" });
   }
 });
 
-app.get("/api/fetch-user-cart", authenticateJWT, async (req, res) => {
 
+app.get("/api/fetch-user-cart", async (req, res) => {
   try {
-    const { user_id } = req.user;
 
-    const query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
-    const values = [user_id];
+
+    if (req.headers.authorization) {
+      // Esegui il middleware di autenticazione JWT
+      await new Promise((resolve, reject) => {
+        authenticateJWT(req, res, (err) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve();
+        });
+      });
+    }
+
+    const user_id = req.user?.user_id;
+    const session_id = req.header('session-id');
+    console.log("User ID:", user_id);
+    console.log("Session ID:", session_id);
+
+    /*if (!user_id && !session_id) {
+      return res.status(400).json({ msg: "Devi essere autenticato o avere un session_id per inserire nel carrello" });
+    }*/
+
+    let query;
+    let values;
+    let query2;
+
+    if (user_id) {
+      // Controllo per utenti autenticati
+      query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
+      query2 = "SELECT COUNT(*) FROM cart WHERE user_id = $1";
+      values = [user_id];
+    } else {
+      // Controllo per utenti anonimi (basato su session_id)
+      query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.session_id = $1";
+      query2 = "SELECT COUNT(*) FROM cart WHERE session_id = $1";
+      values = [session_id];
+    }
+
+
     const result = await pool.query(query, values);
-
-    const query2 = "SELECT COUNT(*) FROM cart WHERE user_id = $1";
-    const values2 = [user_id];
-    const result2 = await pool.query(query2, values2);
+    const result2 = await pool.query(query2, values);
     res.status(200).json({ cart: result.rows, count: result2.rows[0].count });
 
   } catch (error) {
@@ -1251,13 +1376,37 @@ app.get("/api/fetch-user-cart", authenticateJWT, async (req, res) => {
   }
 })
 
-app.put("/api/update-quantity/:id", authenticateJWT, async (req, res) => {
+app.put("/api/update-quantity/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { quantity } = req.body;
-    const { user_id } = req.user;
-    const query = "UPDATE cart SET quantity = $1 WHERE user_id = $2 AND product_id = $3";
-    const values = [quantity, user_id, id];
+
+    if (req.headers.authorization) {
+      // Esegui il middleware di autenticazione JWT
+      await new Promise((resolve, reject) => {
+        authenticateJWT(req, res, (err) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve();
+        });
+      });
+    }
+
+    const user_id = req.user?.user_id;
+    const session_id = req.header('session-id');
+
+    let query;
+    let values;
+
+    if (user_id) {
+      query = "UPDATE cart SET quantity = $1 WHERE user_id = $2 AND product_id = $3";
+      values = [quantity, user_id, id];
+    } else {
+      query = "UPDATE cart SET quantity = $1 WHERE session_id = $2 AND product_id = $3";
+      values = [quantity, session_id, id];
+    }
+
     await pool.query(query, values);
     res.status(200).json({ msg: "Quantità aggiornata correttamente" });
   } catch (error) {
@@ -1266,13 +1415,36 @@ app.put("/api/update-quantity/:id", authenticateJWT, async (req, res) => {
   }
 })
 
-app.delete("/api/remove-from-cart/:id", authenticateJWT, async (req, res) => {
+app.delete("/api/remove-from-cart/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('ID dai parametri della richiesta:', id);
-    const { user_id } = req.user;
-    const query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
-    const values = [user_id, id];
+
+    if (req.headers.authorization) {
+      // Esegui il middleware di autenticazione JWT
+      await new Promise((resolve, reject) => {
+        authenticateJWT(req, res, (err) => {
+          if (err) {
+            return reject(err);
+          }
+          resolve();
+        });
+      });
+    }
+
+    const user_id = req.user?.user_id;
+    const session_id = req.header('session-id');
+
+    let query;
+    let values;
+
+    if (user_id) {
+      query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
+      values = [user_id, id];
+    } else {
+      query = "DELETE FROM cart WHERE session_id = $1 AND product_id = $2";
+      values = [session_id, id];
+    }
+
     await pool.query(query, values);
     res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
   } catch (error) {
@@ -1427,8 +1599,14 @@ app.post("/api/create-promo-code", authenticateJWT, authenticateAdmin, async (re
       return res.status(400).json({ msg: "Data di inizio non corretta" });
     }
 
+    const date = new Date(expiration);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
     const query = "INSERT INTO promocodes (code, discount, used_by, start, expiration) VALUES ($1, $2, $3, $4, $5)";
-    const values = [code, discount, category, start, expiration];
+    const values = [code, discount, category, start, formattedDate];
     const result = await pool.query(query, values);
     res.status(200).json({ msg: "Codice promozionale aggiunto con successo" });
   } catch (error) {
@@ -2688,24 +2866,7 @@ app.use((err, req, res, next) => {
 })
 
 
-async function deleteExpiredPromoCodes() {
-  try {
-    const query = `
-          DELETE FROM promocodes
-          WHERE expiration < NOW()
-      `;
-    const result = await pool.query(query);
-    console.log(`Deleted ${result.rowCount} expired promo codes`);
-  } catch (error) {
-    console.error('Error deleting expired promo codes:', error);
-  }
-};
 
-// Pianifica l'esecuzione della pulizia ogni giorno a mezzanotte
-cron.schedule('0 0 * * *', () => {
-  console.log('Running scheduled job to delete expired promo codes');
-  deleteExpiredPromoCodes();
-});
 
 app.listen(port, '0.0.0.0', async () => {
   console.log(`Server in ascolto sulla porta ${port}`);

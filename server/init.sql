@@ -92,7 +92,9 @@ CREATE TABLE IF NOT EXISTS contacts (
 
 CREATE TABLE IF NOT EXISTS cart (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id INTEGER,
+    session_id VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     product_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     image VARCHAR(255) NOT NULL,
@@ -100,8 +102,19 @@ CREATE TABLE IF NOT EXISTS cart (
     option VARCHAR(255) NOT NULL,
     price DECIMAL(10,2) NOT NULL,  -- Prezzo dell'articolo (al momento dell'aggiunta al carrello)
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    
+    -- Assicurati che almeno uno tra user_id e session_id sia presente
+    CHECK (
+        (user_id IS NOT NULL AND session_id IS NULL) OR
+        (user_id IS NULL AND session_id IS NOT NULL)
+    )
 );
+
+-- Aggiungere indici per migliorare le performance di query basate su user_id e session_id
+CREATE INDEX idx_cart_user_id ON cart(user_id);
+CREATE INDEX idx_cart_session_id ON cart(session_id);
+
 
 
 CREATE TABLE IF NOT EXISTS orders (

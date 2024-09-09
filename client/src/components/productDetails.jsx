@@ -52,14 +52,29 @@ function ProductDetails() {
 
     const handleCartInsertion = async () => {
         const token = localStorage.getItem("token");
+
         console.log("Valore di valueFromSelect prima dell'invio:", valueFromSelect);
+
+        // Funzione per generare un identificatore unico (session_id) se non esiste già
+        const getSessionID = () => {
+            let sessionID = localStorage.getItem("session_id");
+            if (!sessionID) {
+                sessionID = '_' + Math.random().toString(36).substr(2, 9); // Genera session_id
+                localStorage.setItem("session_id", sessionID);
+            }
+            return sessionID;
+        };
+
+        // Controllo se l'utente è autenticato
+        const isAuthenticated = !!token;  // true se c'è un token, altrimenti false
 
         const cartData = {
             name: product.name,
             image: product.image,
             price: product.price,
             quantity: quantity,
-            option: valueFromSelect
+            option: valueFromSelect,
+            session_id: isAuthenticated ? null : getSessionID()  // Invia session_id per utenti anonimi
         };
 
         console.log(cartData);
@@ -68,7 +83,8 @@ function ProductDetails() {
             const response = await axios.post(`http://localhost:8080/api/cart-insertion/${id}`, cartData, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    // Invia il token JWT solo se l'utente è autenticato
+                    'Authorization': isAuthenticated ? `Bearer ${token}` : undefined
                 }
             });
 
@@ -77,19 +93,12 @@ function ProductDetails() {
                 setButtonPopup(true);
             }
         } catch (error) {
-
-            if (error.response && error.response.status === 401) {
-                localStorage.removeItem('token');
-                navigate('/login');
-                return;
-            } else if (error.response && error.response.status === 403) {
-                navigate('/login');
-                return;
-            }
+            // Gestione degli errori, es: token scaduto o errore generico
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
     };
+
 
     return (
         <>
