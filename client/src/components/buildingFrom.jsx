@@ -396,7 +396,7 @@ function BuildingFrom() {
                     </div>
 
                     {/* Sezione Contatori e Analizzatori */}
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                    <div className="flex flex-col md:flex-row items-center md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Contatore elettrico per l'utente</span>
                             <select
@@ -428,7 +428,7 @@ function BuildingFrom() {
                     {/* Sezione Corpi Illuminanti */}
                     <div className="mb-6">
                         <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti</h3>
-                        <div className="flex flex-col md:flex-row md:gap-4">
+                        <div className="flex flex-col md:flex-row items-center md:gap-4">
                             <label className="flex flex-col w-full md:w-1/3">
                                 <span className="block mb-2">Incandescenza (%)</span>
                                 <select

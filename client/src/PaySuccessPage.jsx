@@ -90,7 +90,7 @@ function PaySuccessPage() {
             <h1 className="w-[90%] font-arial font-bold text-4xl text-center pb-3">
               Pagamento Effettuato con successo!
             </h1>
-            <div className='text-xl text-arial text-center'>Verrai reindirizzato al questionario per il calcolo delle emissioni</div>
+            <div className='text-xl text-arial text-center w-1/2'>Nella pagina utente puoi accedere alla questionario relativo alla certificazione acquistata</div>
             <MutatingDots
               visible={true}
               height="100"

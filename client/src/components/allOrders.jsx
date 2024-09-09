@@ -57,8 +57,6 @@ function AllOrders() {
                                     <p className="mb-2"><span className="font-semibold">Prezzo:</span> {order.price} €</p>
                                 </div>
                             </div>
-                            <hr className="my-4 border-1 border-black" />
-
                         </div>
                     )
                 )}

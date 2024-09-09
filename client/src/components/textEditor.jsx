@@ -8,7 +8,7 @@ const TextEditor = ({ value, onChange, placeholder }) => {
   // Configuration for JoditEditor
   const config = useMemo(() => ({
     readonly: false, // all options from https://xdsoft.net/jodit/docs/
-    placeholder: placeholder || 'Start typing...',
+    placeholder: placeholder || 'Inizia a scrivere...',
   }), [placeholder]);
 
   useEffect(() => {

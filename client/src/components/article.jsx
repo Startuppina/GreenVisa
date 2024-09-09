@@ -78,12 +78,12 @@ function Article() {
         <div className='flex flex-col items-center justify-center p-4 w-full'>
             <div className='w-full flex flex-col items-center justify-center'>
                 <div className='flex flex-col gap-3 md:flex-row w-full md:w-[80%] items-center justify-center mb-6'>
-                    <div
+                    <button
                         className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
                         onClick={() => previousArticle(id)}
                     >
                         {"<< Precedente"}
-                    </div>
+                    </button>
                     <button
                         className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
                         onClick={() => navigate('/News')}
@@ -114,7 +114,7 @@ function Article() {
                     className="w-full h-full object-fill rounded-lg"
                 />
             </div>
-            <div className='w-full mt-5 mb-5 px-4 mx-auto text-lg md:text-xl text-justify'>
+            <div className='w-[90%] mt-20 mb-5 px-4 mx-auto text-lg md:text-xl text-justify'>
                 <div
                     id='content'
                     dangerouslySetInnerHTML={{ __html: article.content }}

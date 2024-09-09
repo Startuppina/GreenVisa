@@ -3,8 +3,9 @@ import axios from 'axios';
 import MessagePopUp from './messagePopUp';
 import ConfirmPopUp from './confirmPopUp';
 import { MutatingDots } from 'react-loader-spinner';
+import { useRecoveryContext } from '../provider/provider';
 
-const MessagesDashboard = () => {
+const MessagesDashboard = ({ sendDataToParent }) => {
     const [messages, setMessages] = useState([]);
     const [totalMessages, setTotalMessages] = useState(0);
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -145,6 +146,14 @@ const MessagesDashboard = () => {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        const sendData = () => {
+            sendDataToParent(totalMessages); // Chiamata alla funzione passata dal padre
+        };
+        sendData();
+    })
+
 
 
     return (

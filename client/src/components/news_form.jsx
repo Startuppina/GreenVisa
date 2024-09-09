@@ -101,7 +101,7 @@ const NewsForm = () => {
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
-            <h2 className="text-2xl font-bold text-center mb-4">Pubblica una notizia</h2>
+            <h2 className="text-2xl font-bold text-center mb-4">Aggiungi una notizia</h2>
             <form onSubmit={handleSubmit} className="flex flex-col ">
                 <div className="flex flex-col md:flex-row md:gap-3 mb-4">
                     <label className="flex flex-col w-full">

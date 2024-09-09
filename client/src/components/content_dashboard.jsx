@@ -29,7 +29,6 @@ const Dashboard = () => {
   const [itemToEdit, setItemToEdit] = useState(null);
 
   const [showOrders, setShowOrders] = useState(false);
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,7 +51,7 @@ const Dashboard = () => {
     };
 
     fetchNews();
-  }, [news]); // No dependencies
+  }, [news]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -215,6 +214,26 @@ const Dashboard = () => {
     setActiveSection(activeSection === section ? null : section);
   };
 
+  const [messageCountFromChild, setMessageCountFromChild] = useState("");
+  // Funzione che sarà chiamata dal figlio per inviare i dati
+  const handleDataFromChild = (data) => {
+    setMessageCountFromChild(data); // Aggiorna lo stato con i dati ricevuti
+  };
+
+  const [messageCountFromRequests, setMessageCountFromRequests] = useState("");
+
+  // Funzione che sarà chiamata dal figlio per inviare i dati
+  const handleDataFromRequests = (data) => {
+    setMessageCountFromRequests(data); // Aggiorna lo stato con i dati ricevuti
+  };
+
+  const [messageCountFromGenerators, setMessageCountFromGenerators] = useState("");
+
+  const handleDataFromGenerators = (data) => {
+    setMessageCountFromGenerators(data); // Aggiorna lo stato con i dati ricevuti
+  };
+
+
   return (
     <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
       <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
@@ -289,7 +308,7 @@ const Dashboard = () => {
         </button>
 
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
+          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-8"
           style={{ backgroundColor: "#2d7044" }}
           onClick={() => {
             toggleSection("messages");
@@ -310,7 +329,10 @@ const Dashboard = () => {
               </g>
             </g>
           </svg>
-          <span>Messaggi</span>
+          <div className="flex flex-col">
+            <span>Messaggi</span>
+            <span>Ricevuti: {messageCountFromChild ? messageCountFromChild : "controlla"}</span>
+          </div>
         </button>
 
         <button
@@ -395,7 +417,7 @@ const Dashboard = () => {
               />
             </g>
           </svg>
-          <span>Forms</span>
+          <span>Aggiungi</span>
         </button>
 
         <button
@@ -405,7 +427,6 @@ const Dashboard = () => {
             toggleSection("usersImplants");
           }}
         >
-          {/* Inserisci l'SVG corretto */}
           <svg
             width="24"
             height="24"
@@ -439,51 +460,57 @@ const Dashboard = () => {
               </g>
             </g>
           </svg>
-          <span>Generatori da approvare</span>
+          <div className="flex flex-col">
+            <span>Generatori da approvare</span>
+            <span>Ricevuti: {messageCountFromGenerators ? messageCountFromGenerators : "controlla"}</span>
+          </div>
         </button>
-
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
+          className="w-[300px] h-[100px] mb-4 p-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex items-center justify-center gap-2"
           style={{ backgroundColor: "#2d7044" }}
           onClick={() => {
             toggleSection("2ndLevelCerts");
           }}
         >
-          {/* Inserisci l'SVG corretto */}
           <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
+            viewBox="0 0 48 48"
             xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="2"
+            className="h-10 w-10 flex-shrink-0"
           >
-            <g fill="currentColor">
-              <rect
-                width="24"
-                height="24"
-                x="0"
-                y="0"
-                rx="4"
-                fill="transparent"
-                stroke="transparent"
-                strokeWidth="0"
-                strokeOpacity="100%"
-                paintOrder="stroke"
-              ></rect>
-              <g fill="#ffffff">
-                <path
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="m4 12l6 6L20 6"
-                />
-              </g>
+            <g>
+              <path
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M37.42,14.7a4.1,4.1,0,0,0-4.08-4.11h0a4.11,4.11,0,1,0,0,8.21,4.09,4.09,0,0,0,2.88-1.18,4,4,0,0,0,1.19-2.92ZM16.1,29.44l-2-2L7.9,29.42H7.7a.69.69,0,0,1-.53-.2L5.72,27.79a.7.7,0,0,1-.11-.88L7.3,24a13,13,0,0,1,10.07-6.39l2.49-.22q2.17-2.58,4-4.42A26.4,26.4,0,0,1,32,7.12a25.63,25.63,0,0,1,9.77-1.61.79.79,0,0,1,.54.22.68.68,0,0,1,.22.5A25.27,25.27,0,0,1,40.78,16,25.79,25.79,0,0,1,35,24.16c-1.23,1.24-2.71,2.57-4.42,4l-.22,2.48A13,13,0,0,1,24,40.72l-2.89,1.69a.78.78,0,0,1-.37.09.82.82,0,0,1-.52-.2l-1.45-1.46a.69.69,0,0,1-.18-.71l1.93-6.27-1.94-1.94"
+              />
+              <line
+                x1="30.62"
+                y1="28.16"
+                x2="20.52"
+                y2="33.86"
+              />
+              <line
+                x1="19.86"
+                y1="17.39"
+                x2="14.15"
+                y2="27.49"
+              />
+              <path
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13,35c4-.74,11.1-7.4,11.93-11.93C20.37,23.94,13.71,31,13,35Z"
+              />
             </g>
           </svg>
-          <span>Richieste certificazioni 2° Livello</span>
+          <div className="flex flex-col">
+            <span className="text-lg font-medium">Richieste certificazioni 2° livello</span>
+            <span>Ricevuti: {messageCountFromRequests ? messageCountFromRequests : "controlla"}</span>
+          </div>
         </button>
 
       </div>
@@ -580,11 +607,6 @@ const Dashboard = () => {
                         </div>
                         <label className="flex flex-col w-full z-10">
                           <span className="block mb-2">Contenuto:</span>
-                          {/*<ReactQuill
-                            value={itemToEdit.content || ""}
-                            onChange={handleQuillChange}
-                            className="mb-4"
-                          />*/}
                           <TextEditor value={itemToEdit.content || ""} onChange={handleQuillChange} />
                         </label>
                         <div className="flex justify-center gap-3">
@@ -833,14 +855,14 @@ const Dashboard = () => {
         )}
       </div>
 
-      {activeSection === 'messages' && <MessagesDashboard />}
+      {activeSection === 'messages' && <MessagesDashboard sendDataToParent={handleDataFromChild} />}
       {activeSection === 'orders' && <AllOrders />}
       {activeSection === 'promocodes' && <PromoCodes />}
       {activeSection === 'forms' && <NewsForm />}
       {activeSection === 'forms' && <ProductsForm />}
       {activeSection === 'forms' && <PromoCodeForm />}
-      {activeSection === 'usersImplants' && <UsersGeneratorTypes />}
-      {activeSection === '2ndLevelCerts' && <SecondLevelCerts />}
+      {activeSection === 'usersImplants' && <UsersGeneratorTypes sendDataToParent={handleDataFromGenerators} />}
+      {activeSection === '2ndLevelCerts' && <SecondLevelCerts sendDataToParent={handleDataFromRequests} />}
 
     </div>
   );

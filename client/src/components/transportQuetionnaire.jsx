@@ -198,9 +198,21 @@ function TransportQuetionnaire({ certification_id }) {
                   { "value": 5, "text": "2020" },
                   { "value": 6, "text": "Prima del 2020" },
                   { "value": 7, "text": "Prima del 2010" }
-                ]
+                ],
+                "storeOthersAsComment": true
               }
             ],
+            "choices": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            "rowCount": 1,
+
           },
           {
             "type": "matrixdynamic",
@@ -252,6 +264,7 @@ function TransportQuetionnaire({ certification_id }) {
               4,
               5
             ],
+            "rowCount": 1,
           },
           {
             "type": "radiogroup",
@@ -357,6 +370,7 @@ function TransportQuetionnaire({ certification_id }) {
               4,
               5
             ],
+            "rowCount": 1,
           },
           {
             "type": "matrixdynamic",
@@ -484,7 +498,8 @@ function TransportQuetionnaire({ certification_id }) {
               12,
               5,
               6
-            ]
+            ],
+            "rowCount": 1
           },
           {
             "type": "panel",

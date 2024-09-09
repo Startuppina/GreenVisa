@@ -174,7 +174,7 @@ CREATE TYPE maintenance_enum AS ENUM (
 );
 
 CREATE TYPE water_recovery_enum AS ENUM (
-    'per l irrigazione', 
+    'per irrigazione', 
     'per la cassette di scarico', 
     'altro', 
     'No'
