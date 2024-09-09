@@ -3,7 +3,7 @@ import MessagePopUp from "./messagePopUp";
 import ConfirmPopUp from "./confirmPopUp";
 import axios from 'axios';
 
-export default function SecondLevelCerts() {
+export default function SecondLevelCerts({ sendDataToParent }) {
 
     const [request, setRequests] = useState([]);
     const [approvedRequests, setApprovedRequests] = useState([]);
@@ -101,6 +101,12 @@ export default function SecondLevelCerts() {
         }
     };
 
+    useEffect(() => {
+        const sendData = () => {
+            sendDataToParent(request.length); // Chiamata alla funzione passata dal padre
+        };
+        sendData();
+    })
 
     return (
         <>

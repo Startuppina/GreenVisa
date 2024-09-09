@@ -447,6 +447,13 @@ const UserPage = () => {
                                 </form>
 
                             </div>
+                            <Link to="/buildings">
+                                <div className="bg-[#2d7044] text-white text-xl p-4 mx-2 md:mx-14 my-4 border border-[#0056b3] rounded-lg shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer">
+                                    <h1 className="text-2xl font-bold text-center">
+                                        I tuoi edifici
+                                    </h1>
+                                </div>
+                            </Link>
 
                             {surveyInfo.length > 0 && (
                                 <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-4 md:mx-14 my-4 border border-gray-300 rounded-lg">
@@ -491,13 +498,6 @@ const UserPage = () => {
                                     ))}
                                 </div>
                             )}
-
-
-                            <Link to="/buildings">
-                                <div className="bg-[#d9d9d9] text-arial text-xl p-4 mx-2 md:mx-14 my-4 border rounded-lg hover:trasform hover:scale-105 duration-300">
-                                    <h1 className="text-2xl font-bold text-black text-center">I tuoi edifici</h1>
-                                </div>
-                            </Link>
 
                             <Plate />
                             <UserOrders />

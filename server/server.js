@@ -1575,15 +1575,17 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
 
       const productInfo = productResult.rows[0];
 
-      if (promo && promo.used_by === "Tutti") {
-        // Applica sconto ai prodotti compatibili
-        productPrice = price * (1 - promo.discount / 100);
-      } else if (promo && promo.used_by.includes(productInfo.category)) {
-        // Applica sconto ai prodotti compatibili
-        productPrice = price * (1 - promo.discount / 100);
-      } else {
-        productPrice = price;
+      let productPrice = price; // Prezzo di default senza sconto
+
+      if (promo) {
+        if (promo.used_by === "Tutti" || promo.used_by.includes(productInfo.category)) {
+          // Applica lo sconto solo sui prodotti compatibili con il codice promozionale
+          productPrice = price * (1 - promo.discount / 100);
+        }
       }
+
+      // Arrotonda il prezzo e convertilo in centesimi
+      const finalPriceInCents = Math.round(productPrice * 100);
 
       items.push({
         price_data: {
@@ -1591,7 +1593,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
           product_data: {
             name: name,
           },
-          unit_amount: productPrice * 100, // Stripe richiede l'importo in centesimi
+          unit_amount: finalPriceInCents, // Arrotondato e convertito in centesimi
         },
         quantity: quantity,
       });
@@ -1608,8 +1610,6 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
         user_id: user_id,
         promo_code: promoCode || '',
       },
-      // Nota: Stripe non supporta direttamente l'applicazione di sconti personalizzati
-      // quindi devi calcolare l'importo finale nel server e passarlo come importo totale
     });
 
     res.status(200).json({ url: session.url });
@@ -1618,6 +1618,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
     res.status(500).json({ msg: "Errore durante la creazione della sessione di checkout" });
   }
 });
+
 
 app.post("/api/create-order", authenticateJWT, async (req, res) => {
   try {

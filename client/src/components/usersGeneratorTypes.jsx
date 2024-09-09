@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MessagePopUp from './messagePopUp';
 
-export default function UsersGeneratorTypes() {
+export default function UsersGeneratorTypes({ sendDataToParent }) {
     const [score, setScore] = useState({}); // Stato per i punteggi specifici per richiesta
     const [editingId, setEditingId] = useState(null);
     const [usersGeneratorData, setUsersGeneratorData] = useState([]);
@@ -67,6 +67,13 @@ export default function UsersGeneratorTypes() {
 
         fetchUsersGeneratorData();
     }, []);
+
+    useEffect(() => {
+        const sendData = () => {
+            sendDataToParent(usersGeneratorData.length); // Chiamata alla funzione passata dal padre
+        };
+        sendData();
+    })
 
     return (
         <div className="w-full mt-10 flex items-center justify-center bg-gray-100">
