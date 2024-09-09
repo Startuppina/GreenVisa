@@ -115,6 +115,7 @@ const UserPage = () => {
 
             if (response.status === 200) {
                 console.log('Logout effettuato con successo');
+                localStorage.removeItem('activeSection');
             } else {
                 setMessagePopup(`Errore durante l'invio della richiesta di logout: ${response.statusText}`);
                 setButtonPopup(true);

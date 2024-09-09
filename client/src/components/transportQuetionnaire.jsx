@@ -617,7 +617,7 @@ function TransportQuetionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 35
+                "score": 0
               },
               {
                 "value": "Item 2",
@@ -830,7 +830,9 @@ function TransportQuetionnaire({ certification_id }) {
       });
     });
 
-    const punteggioMassimo = 1150; //punteggio massimo possibile
+    console.log(`Punteggio totale: ${punteggioTotale}`);
+
+    const punteggioMassimo = 1115; //punteggio massimo possibile
     return Math.round((punteggioTotale / punteggioMassimo) * 100);
   }
 

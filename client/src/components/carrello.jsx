@@ -21,14 +21,19 @@ function Carrello() {
     useEffect(() => {
         const getCartProducts = async () => {
             const token = localStorage.getItem('token');
+            console.log("token: ", token);
+            const sessionID = localStorage.getItem('session_id');
+            console.log("sessionID: ", sessionID);
 
             try {
                 const response = await axios.get('http://localhost:8080/api/fetch-user-cart', {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
+                        ...(sessionID && { 'session-id': sessionID })  // Aggiungi session-id header se sessionId esiste
                     }
                 });
+
 
                 if (response.status === 200) {
                     setCartProducts(response.data.cart);
@@ -55,12 +60,14 @@ function Carrello() {
 
     const handleQuantityChange = async (productId, newQuantity) => {
         const token = localStorage.getItem('token');
+        const sessionID = localStorage.getItem('session_id');
 
         try {
             const response = await axios.put(`http://localhost:8080/api/update-quantity/${productId}`, { quantity: newQuantity }, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
+                    ...(sessionID && { 'session-id': sessionID })  // Aggiungi session-id header se sessionId esiste
                 }
             });
             if (response.status === 200) {
@@ -77,11 +84,13 @@ function Carrello() {
 
     const handleRemoveProduct = async (productId) => {
         const token = localStorage.getItem('token');
+        const sessionID = localStorage.getItem('session_id');
         try {
             const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
+                    ...(sessionID && { 'session-id': sessionID })  // Aggiungi session-id header se sessionId esiste
                 }
             });
             if (response.status === 200) {
@@ -104,6 +113,11 @@ function Carrello() {
     const handleCheckout = async () => {
         setIsLoading(true);
         const token = localStorage.getItem('token');
+
+        if (!token) {
+            navigate('/login');
+            return;
+        }
 
         const productsData = cartProducts.map(product => ({
             id: product.product_id,
@@ -264,15 +278,20 @@ function Carrello() {
                 )}
             </div>
             <div className="w-[90%] md:w-[70%] h-auto p-5 text-arial text-xl mx-auto">
-                <p>Codice Promozionale</p>
-                <div className="w-full h-auto flex flex-col md:flex-row gap-4 md:gap-12 items-center justify-between mb-10">
-                    <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5' onChange={(e) => setPromoCode(e.target.value)} />
-                    <button type="submit" className="w-full md:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" onClick={applyPromoCode}>Applica</button>
-                </div>
+                {localStorage.getItem("token") && (
+                    <>
+                        <p>Codice Promozionale</p>
+                        <div className="w-full h-auto flex flex-col md:flex-row gap-4 md:gap-12 items-center justify-between mb-10">
+                            <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5' onChange={(e) => setPromoCode(e.target.value)} />
+                            <button type="submit" className="w-full md:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" onClick={applyPromoCode}>Applica</button>
+                        </div>
+                    </>
+                )}
                 {<div className="w-full h-auto flex flex-row items-center justify-between">
                     <p>Subtotale</p>
                     <p>{calculateSubtotal().toFixed(2)} €</p>
                 </div>}
+
                 <div className="w-full h-auto flex flex-row items-center justify-between">
                     {/*promoCategory === "Tutti" && <p>- Sconto {discount}% applicato su tutti i prodotti <br /> (riduzione applicata in fase di checkout)</p>*/}
                     {promoCategory === "Tutti" && (
@@ -373,8 +392,8 @@ function Carrello() {
                                 ))
                         )
                     }
-
                 </div>
+
                 <hr className="w-full border-[1.5px] border-black" />
                 <div className="w-full h-auto flex flex-row items-center justify-between font-bold">
                     <p>Totale</p>

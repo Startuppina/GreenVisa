@@ -23,22 +23,26 @@ const Login = () => {
         e.preventDefault();
 
         const formData = { email, password };
+        const sessionID = localStorage.getItem('session_id');
 
         try {
             const response = await axios.post('http://localhost:8080/api/login', formData, {
                 headers: {
                     'Content-Type': 'application/json',
+                    ...(sessionID && { 'session-id': sessionID })
                 },
             });
 
             if (response.status === 200) {
                 console.log('Login successful:', response.data);
                 localStorage.setItem('token', response.data.token);
+                localStorage.setItem('activeSection', "user");
+                localStorage.removeItem('session_id');
 
                 // reset the form fields
                 setEmail('');
                 setPassword('');
-                
+
                 navigate('/User');
             } else {
                 console.error('Error:', response.data.msg);
@@ -60,13 +64,13 @@ const Login = () => {
                 {messagePopup}
             </MessagePopUp>
             <div className='w-full md:w-[60%] lg:w-[60%] h-auto flex flex-col items-center justify-center pb-10 bg-white rounded-lg'>
-                
+
                 <div className='relative top-2 left-3 text-arial w-full text-left text-[#2d7044] font-bold text-xl cursor-pointer'>
                     <Link to="/">Home</Link>
                 </div>
-                
+
                 <div className='flex flex-col items-center justify-center mb-10 mt-'>
-                    <img src="/img/logo.png" alt="logo" className='w-[30%] mb-5 p-0'/>
+                    <img src="/img/logo.png" alt="logo" className='w-[30%] mb-5 p-0' />
                     <p className='font-arial text-xl font-bold w-full text-center'>
                         Non sei ancora registrato? <span className='text-[#2d7044]'><Link to="/Signup">Registrati</Link></span>
                     </p>
@@ -76,13 +80,13 @@ const Login = () => {
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[80%] lg:w-[60%]'>
                             <label htmlFor="email" className='block text-xl'>Email</label>
-                            <input type="email" name="email" id="email" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handleEmailChange}/>
+                            <input type="email" name="email" id="email" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handleEmailChange} />
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[80%] lg:w-[60%]'>
                             <label htmlFor="password" className='block text-xl' >Password</label>
-                            <input type="password" name="password" id="password" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handlePasswordChange}/>
+                            <input type="password" name="password" id="password" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handlePasswordChange} />
                         </div>
                     </div>
                     <p className='font-arial text-xl w-full text-center'>Password dimenticata? <span className='text-[#2d7044]'><a onClick={navigateToOtp} className='cursor-pointer'>Clicca qui</a></span></p>
