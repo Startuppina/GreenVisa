@@ -1,10 +1,18 @@
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL, --nome e cognome del referente 
+    company_name VARCHAR(255) NOT NULL, --nome dell'azienda, ragione sociale 
     email VARCHAR(255) NOT NULL UNIQUE,
     phone_number VARCHAR(255),
+    p_iva VARCHAR(11) UNIQUE,
+    tax_code VARCHAR(16) DEFAULT NULL UNIQUE, --codice fiscale
+    legal_headquarter VARCHAR(255), -- sede legale
     administrator BOOLEAN NOT NULL,
     password_digest TEXT
+
+    CHECK (LENGTH(p_iva) = 11 AND p_iva ~ '^[0-9]+$')
+    CHECK (LENGTH(tax_code) = 16 AND tax_code ~ '^[A-Z0-9]+$')
+
 );
 
 CREATE TABLE IF NOT EXISTS news (
@@ -85,6 +93,8 @@ CREATE TABLE IF NOT EXISTS promocodes_publishment (
 CREATE TABLE IF NOT EXISTS contacts (
     id SERIAL PRIMARY KEY,
     name_surname VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) DEFAULT NULL,
+    phone_number VARCHAR(255) DEFAULT NULL,
     email VARCHAR(255) NOT NULL,
     subject VARCHAR(255) NOT NULL,
     message TEXT NOT NULL  -- Messaggio inviato dall'utente

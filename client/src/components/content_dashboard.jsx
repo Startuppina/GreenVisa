@@ -249,8 +249,7 @@ const Dashboard = () => {
 
       <div className="flex flex-wrap justify-center items-center gap-4">
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
-          style={{ backgroundColor: "#2d7044" }}
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "news" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("news");
           }}
@@ -284,8 +283,8 @@ const Dashboard = () => {
         </button>
 
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
-          style={{ backgroundColor: "#2d7044" }}
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "products" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+
           onClick={() => {
             toggleSection("products");
           }}
@@ -308,8 +307,7 @@ const Dashboard = () => {
         </button>
 
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-8"
-          style={{ backgroundColor: "#2d7044" }}
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "messages" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("messages");
           }}
@@ -336,8 +334,7 @@ const Dashboard = () => {
         </button>
 
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
-          style={{ backgroundColor: "#2d7044" }}
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "orders" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("orders");
           }}
@@ -359,8 +356,7 @@ const Dashboard = () => {
         </button>
 
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
-          style={{ backgroundColor: "#2d7044" }}
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "promocodes" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("promocodes");
           }}
@@ -382,8 +378,7 @@ const Dashboard = () => {
         </button>
 
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
-          style={{ backgroundColor: "#2d7044" }}
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "forms" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("forms");
           }}
@@ -421,8 +416,7 @@ const Dashboard = () => {
         </button>
 
         <button
-          className="w-[300px] h-[100px] mb-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex justify-center items-center gap-2"
-          style={{ backgroundColor: "#2d7044" }}
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "usersImplants" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("usersImplants");
           }}
@@ -466,8 +460,7 @@ const Dashboard = () => {
           </div>
         </button>
         <button
-          className="w-[300px] h-[100px] mb-4 p-4 rounded-lg transition-transform transform hover:scale-105 shadow-sm hover:shadow-md text-white flex items-center justify-center gap-2"
-          style={{ backgroundColor: "#2d7044" }}
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "2ndLevelCerts" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("2ndLevelCerts");
           }}
@@ -476,7 +469,7 @@ const Dashboard = () => {
             viewBox="0 0 48 48"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
-            stroke="#ffffff"
+            stroke="currentColor"
             strokeWidth="2"
             className="h-10 w-10 flex-shrink-0"
           >
@@ -507,7 +500,8 @@ const Dashboard = () => {
               />
             </g>
           </svg>
-          <div className="flex flex-col">
+
+          <div className="flex flex-col ">
             <span className="text-lg font-medium">Richieste certificazioni 2° livello</span>
             <span>Ricevuti: {messageCountFromRequests ? messageCountFromRequests : "controlla"}</span>
           </div>
@@ -864,7 +858,7 @@ const Dashboard = () => {
       {activeSection === 'usersImplants' && <UsersGeneratorTypes sendDataToParent={handleDataFromGenerators} />}
       {activeSection === '2ndLevelCerts' && <SecondLevelCerts sendDataToParent={handleDataFromRequests} />}
 
-    </div>
+    </div >
   );
 };
 
