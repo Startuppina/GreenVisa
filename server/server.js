@@ -2442,6 +2442,39 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
   }
 })
 
+app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req, res) => {
+  try {
+    const { id, plant_id } = req.params;
+    const { user_id } = req.user;
+    const { description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply, plantScore } = req.body;
+
+    if (!description || !plantType || !serviceType || !generatorType || !fuelType || !quantity || !electricitySupply) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    if (isNaN(quantity)) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
+    }
+
+    if (quantity <= 0) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
+    }
+
+    const values = [user_id, id, description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply, plantScore, plant_id];
+
+    await pool.query(`
+      UPDATE plants
+      SET description = $3, plant_type = $4, service_type = $5, generator_type = $6, generator_description = $7, fuel_type = $8, quantity = $9, electricity_supply = $10, plantScore = $11
+      WHERE user_id = $1 AND building_id = $2 AND id = $12
+    `, values);
+
+    res.status(200).json({ msg: "Impianto aggiornato con successo" });
+  } catch (error) {
+    console.error('Error updating plant:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
 app.get("/api/buildings/:id/fetch-plants", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
@@ -2510,6 +2543,40 @@ app.post("/api/buildings/:id/upload/solar", authenticateJWT, async (req, res) =>
     res.status(500).json({ msg: "Errore interno del server" });
   }
 
+})
+
+app.put("/api/buildings/:id/update/solar/:solarID", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    const { installedArea, solarScore } = req.body;
+    const { solarID } = req.params;
+
+    if (!installedArea) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    if (isNaN(installedArea)) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
+    }
+
+    if (installedArea <= 0) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
+    }
+
+    const values = [installedArea, solarScore, id, solarID];
+
+    await pool.query(`
+      UPDATE solars
+      SET installed_area = $1, solarScore = $2
+      WHERE id = $3 AND building_id = $4
+    `, values);
+
+    res.status(200).json({ msg: "Impianto solare aggiornato con successo" });
+  } catch (error) {
+    console.error('Error updating solar:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
 })
 
 app.delete("/api/delete-solar/:id", authenticateJWT, async (req, res) => {
@@ -2593,6 +2660,39 @@ app.delete("/api/delete-photovoltaic/:id", authenticateJWT, async (req, res) => 
     res.status(500).json({ msg: "Errore interno del server" });
   }
 
+
+})
+
+app.put("/api/buildings/:id/update-photovoltaic/:photoID", authenticateJWT, async (req, res) => {
+  try {
+    const { id, photoID } = req.params;
+    const { user_id } = req.user;
+    const { power, photoScore } = req.body;
+
+
+    if (!power) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    if (isNaN(power)) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
+    }
+
+    if (power <= 0) {
+      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
+    }
+
+    const values = [power, photoScore, photoID, id];
+    await pool.query(`
+      UPDATE photovoltaics
+      SET power = $1, photovoltaicScore = $2
+      WHERE id = $3 AND building_id = $4
+    `, values);
+    res.status(200).json({ msg: "Impianto fotovoltaico aggiornato con successo" });
+  } catch (error) {
+    console.error('Error updating photovoltaic:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
 
 })
 

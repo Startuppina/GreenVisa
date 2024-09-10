@@ -9,6 +9,7 @@ function Photovoltaics() {
     const [photovoltaics, setPhotovoltaics] = useState([]);
     const [numPhoto, setNumPhoto] = React.useState(0);
     const [showPhotoForm, setShowPhotoForm] = React.useState(false);
+    const [showPhotoFormModifier, setShowPhotoFormModifier] = React.useState(null);
 
 
     const [photoToDelete, setPhotoToDelete] = useState(null);
@@ -75,6 +76,10 @@ function Photovoltaics() {
         }
     };
 
+    const cancelEdit = () => {
+        setShowPhotoFormModifier(null);
+    };
+
     return (
         <div className="text-arial text-xl mt-4 mb-4">
             <ConfirmPopUp
@@ -88,7 +93,31 @@ function Photovoltaics() {
                 {messagePopup}
             </MessagePopUp>
             <div className=" bg-[#D9D9D9] rounded-lg mx-2 md:mx-14">
-                <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti fotovoltaici</h1>
+                <div className="flex flex-row justify-between">
+                    <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti fotovoltaici</h1>
+                    <div className="flex flex-col items-center justify-center m-2">
+                        <button
+                            className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
+                            onClick={() => setShowPhotoForm(!showPhotoForm)}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="2"
+                                stroke="currentColor"
+                                className="w-6 h-6"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M12 4.5v15m7.5-7.5h-15"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+
+                </div>
 
                 {numPhoto === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
@@ -97,7 +126,7 @@ function Photovoltaics() {
                     </div>
                 ) : (
                     <>
-                        <div className="flex flex-col mx-4 h-auto overflow-y-auto mb-4">
+                        <div className="flex flex-col mx-4 max-h-[70vh] overflow-y-auto mb-4">
                             {photovoltaics.map((photo, index) => (
                                 <div
                                     className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
@@ -109,7 +138,11 @@ function Photovoltaics() {
                                     <div className="mt-10">
                                         <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {photo.photovoltaicscore}
                                     </div>
-                                    <div className="flex justify-end">
+                                    <div className="flex justify-end gap-2">
+                                        <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
+                                            onClick={() => setShowPhotoFormModifier(showPhotoFormModifier === photo.id ? null : photo.id)}                                    >
+                                            {showPhotoFormModifier === photo.id ? 'Annulla' : 'Modifica'}
+                                        </button>
                                         <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
                                             onClick={() => {
                                                 setPhotoToDelete({
@@ -123,17 +156,14 @@ function Photovoltaics() {
                                             Elimina
                                         </button>
                                     </div>
-
+                                    {showPhotoFormModifier === photo.id && <PhotoForm photo={photo} isEdit={true} onButtonClick={cancelEdit} />}
                                 </div>
                             ))}
-                        </div>
-                        <div className="flex flex-col items-center justify-center">
-                            <button className="p-2 mb-4 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPhotoForm(!showPhotoForm)}>Aggiungi un impianto fotovoltaico</button>
                         </div>
                     </>
                 )}
             </div>
-            {showPhotoForm && <div className="flex justify-center"><PhotoForm /></div>}
+            {showPhotoForm && <div className="flex justify-center"><PhotoForm photo="empty" isEdit={false} /></div>}
 
         </div>
     );
