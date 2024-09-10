@@ -47,7 +47,7 @@ const UserPage = () => {
     const handleCompanyNameChange = (e) => setNewCompanyName(e.target.value);
     const handleLegalHeadquarterChange = (e) => setNewLegalHeadquarter(e.target.value);
     const handlePivaChange = (e) => setNewPiva(e.target.value);
-    const handleTaxCodeChange = (e) => setNewTaxCode(e.target.value);
+    const handleTaxCodeChange = (e) => setNewTaxCode(e.target.value.toUpperCase());
 
     const [isAdmin, setIsAdmin] = useState(false);
 
@@ -208,6 +208,7 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Username aggiornato con successo");
                 setButtonPopup(true);
+                setNewUsername('');
                 setTrigger(!trigger);
                 setUserInfo({ ...userInfo, username: newUsername });
             }
@@ -233,6 +234,7 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Telefono aggiornato con successo");
                 setButtonPopup(true);
+                setNewPhone('');
                 setTrigger(!trigger);
                 setUserInfo({ ...userInfo, phone_number: response.data.newPhone });
             }
@@ -257,6 +259,7 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Email aggiornata con successo");
                 setButtonPopup(true);
+                setNewEmail('');
                 setTrigger(!trigger);
                 setUserInfo({ ...userInfo, email: response.data.email || newEmail });
             }
@@ -280,6 +283,7 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Nome azienda aggiornato con successo");
                 setButtonPopup(true);
+                setNewCompanyName('');
                 setTrigger(!trigger);
                 setUserInfo({ ...userInfo, company_name: newCompanyName });
             }
@@ -303,6 +307,7 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Partita IVA aggiornata con successo");
                 setButtonPopup(true);
+                setNewPiva('');
                 setTrigger(!trigger);
                 setUserInfo({ ...userInfo, p_iva: newPiva });
             }
@@ -326,6 +331,7 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Codice fiscale aggiornato con successo");
                 setButtonPopup(true);
+                setNewTaxCode('');
                 setTrigger(!trigger);
                 setUserInfo({ ...userInfo, tax_code: newTaxCode });
             }
@@ -348,6 +354,7 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Sede legale aggiornata con successo");
                 setButtonPopup(true);
+                setNewLegalHeadquarter('');
                 setTrigger(!trigger);
                 setUserInfo({ ...userInfo, legal_headquarter: newLegalHeadquarter });
             }
@@ -684,7 +691,7 @@ const UserPage = () => {
                                                 id="tax_code"
                                                 value={newTaxCode}
                                                 onChange={handleTaxCodeChange}
-                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3"
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3 uppercase"
                                             />
                                             <div className='flex justify-center'>
                                                 <input

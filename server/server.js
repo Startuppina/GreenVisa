@@ -2225,6 +2225,98 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
   }
 });
 
+app.put("/api/edit-building", authenticateJWT, async (req, res) => {
+  try {
+    // Estrai i dati dal corpo della richiesta
+    const {
+      id,
+      name,
+      description,
+      year,
+      renovation,
+      heating,
+      ventilation,
+      energyControl,
+      maintenance,
+      waterRecovery,
+      electricityCounter,
+      electricityAnalyzer,
+      lighting,
+      led,
+      gasLamp,
+      buildingScore,
+    } = req.body;
+
+    console.log(req.body);
+
+    // Verifica che tutti i dati richiesti siano presenti
+    if (!id || !name || !description || !year || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !lighting || !led || !gasLamp) {
+      return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
+    }
+
+    // Verifica che la somma delle percentuali sia 100
+    if (parseInt(lighting) + parseInt(led) + parseInt(gasLamp) !== 100) {
+      return res.status(400).json({ msg: "La somma delle percentuali di luci a incandescenza, led e scarica di gas deve essere 100%" });
+    }
+
+    // Recupera l'ID utente dalla richiesta
+    const userId = req.user.user_id;
+
+    // Verifica che l'ID utente sia valido
+    if (!userId) {
+      return res.status(401).json({ msg: "Utente non autenticato" });
+    }
+
+    // Prepara i valori per l'aggiornamento
+    const values = [
+      name,
+      description,
+      year,
+      renovation,
+      heating,
+      ventilation,
+      energyControl,
+      maintenance,
+      waterRecovery,
+      electricityCounter,
+      lighting,
+      led,
+      gasLamp,
+      electricityAnalyzer,
+      buildingScore,
+      id
+    ];
+
+    // Esegui la query di aggiornamento
+    await pool.query(`
+      UPDATE buildings SET
+        name = $1,
+        description = $2,
+        construction_year = $3,
+        renovation = $4,
+        heat_distribution = $5,
+        ventilation = $6,
+        energy_control = $7,
+        maintenance = $8,
+        water_recovery = $9,
+        electricity_meter = $10,
+        incandescent = $11,
+        led = $12,
+        gas_lamp = $13,
+        analyzers = $14,
+        buildingScore = $15
+      WHERE id = $16
+    `, values);
+
+    // Rispondi con successo
+    res.status(200).json({ msg: "Edificio aggiornato con successo" });
+  } catch (error) {
+    console.error('Error updating building:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+
 app.delete("/api/delete-building/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
