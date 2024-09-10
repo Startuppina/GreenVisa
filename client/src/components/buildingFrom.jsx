@@ -5,21 +5,22 @@ import { MutatingDots } from "react-loader-spinner";
 import { useNavigate } from "react-router-dom";
 import { useRecoveryContext } from "../provider/provider";
 
-function BuildingFrom() {
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [year, setYear] = useState("");
-    const [renovation, setRenovation] = useState("");
-    const [heating, setHeating] = useState("");
-    const [ventilation, setVentilation] = useState("");
-    const [energyControl, setEnergyControl] = useState("");
-    const [maintenance, setMaintenance] = useState("");
-    const [waterRecovery, setWaterRecovery] = useState("");
-    const [electricityCounter, setElectricityCounter] = useState("");
-    const [electricityAnalyzer, setElectricityAnalyzer] = useState("");
-    const [lighting, setLighting] = useState("");
-    const [led, setLed] = useState("");
-    const [gasLamp, setGasLamp] = useState("");
+function BuildingFrom({ buildingData = 'empty', isEdit }) {
+    const [buildingID, setBuildingID] = useState(buildingData.id || 0);
+    const [name, setName] = useState(buildingData.name || "");
+    const [description, setDescription] = useState(buildingData.description || "");
+    const [year, setYear] = useState(buildingData.construction_year || "");
+    const [renovation, setRenovation] = useState(buildingData.renovation || "");
+    const [heating, setHeating] = useState(buildingData.heat_distribution || "");
+    const [ventilation, setVentilation] = useState(buildingData.ventilation || "");
+    const [energyControl, setEnergyControl] = useState(buildingData.energy_control || "");
+    const [maintenance, setMaintenance] = useState(buildingData.maintenance || "");
+    const [waterRecovery, setWaterRecovery] = useState(buildingData.water_recovery || "");
+    const [electricityCounter, setElectricityCounter] = useState(buildingData.electricity_meter || "");
+    const [electricityAnalyzer, setElectricityAnalyzer] = useState(buildingData.analyzers || "");
+    const [lighting, setLighting] = useState(parseInt(buildingData.incandescent) || "");
+    const [led, setLed] = useState(parseInt(buildingData.led) || "");
+    const [gasLamp, setGasLamp] = useState(parseInt(buildingData.gas_lamp) || "");
     const [isLoading, setIsLoading] = useState(false);
 
     const [years, setYears] = useState([]);
@@ -35,12 +36,13 @@ function BuildingFrom() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
 
-    const { addBuildingTrigger, setAddBuildingTrigger } = useRecoveryContext();
+    const { addBuildingTrigger, setAddBuildingTrigger, triggerRefresh } = useRecoveryContext();
 
 
     const navigate = useNavigate();
 
     useEffect(() => {
+        console.log("buildingData: ", buildingData);
         const fetchSelectOptions = async () => {
             try {
                 const response = await axios.get('http://localhost:8080/api/building-options');
@@ -61,7 +63,75 @@ function BuildingFrom() {
         fetchSelectOptions();
     }, []);
 
+    const handleUpdateBuilding = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        const token = localStorage.getItem("token");
+
+        const formData = new FormData();
+        formData.append('id', buildingID);
+        formData.append('name', name);
+        formData.append('description', description);
+        formData.append('year', year);
+        formData.append('renovation', renovation);
+        formData.append('heating', heating);
+        formData.append('ventilation', ventilation);
+        formData.append('energyControl', energyControl);
+        formData.append('maintenance', maintenance);
+        formData.append('waterRecovery', waterRecovery);
+        formData.append('electricityCounter', electricityCounter);
+        formData.append('electricityAnalyzer', electricityAnalyzer);
+        formData.append('lighting', lighting);
+        formData.append('led', led);
+        formData.append('gasLamp', gasLamp);
+        const totalScore = calculateTotalScore(formData);
+        formData.append('buildingScore', totalScore);
+
+        console.log('Form data:', formData);
+
+        try {
+            const response = await axios.put('http://localhost:8080/api/edit-building', formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.status === 200) {
+                setTimeout(() => {
+                    setMessagePopup(response.data.msg);
+                    setButtonPopup(true);
+                    setIsLoading(false);
+                    // Reset dei campi e aggiornamento dello stato
+                    triggerRefresh();
+
+                    setMessagePopup("Edificio aggiornato con successo");
+                    setButtonPopup(true);
+                }, 3000); // Caricamento finto di 3 secondi
+
+                return;
+            } else {
+                console.log('Error:', response.data.msg);
+                setMessagePopup(response.data.msg);
+                setButtonPopup(true);
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.log('Error:', error);
+            setMessagePopup(error.response?.data?.msg || "Errore durante l'aggiornamento");
+            setButtonPopup(true);
+            setIsLoading(false);
+        }
+    };
+
+
     const handleSubmit = async (e) => {
+
+        if (isEdit) {
+            handleUpdateBuilding(e);
+            return;
+        }
         e.preventDefault();
 
         setIsLoading(true);
@@ -121,7 +191,7 @@ function BuildingFrom() {
 
                     setMessagePopup("edificio aggiunto con successo");
                     setButtonPopup(true);
-                }, 3000); // Caricamento finto di 2 secondi
+                }, 3000); // Caricamento finto di 3 secondi
 
                 navigate('/buildings');
             } else if (response.status === 400) {
@@ -259,11 +329,11 @@ function BuildingFrom() {
     };
 
     return (
-        <div className="mt-4">
+        <div className="mt-4 flex justify-center">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
-            <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border border-gray-300 shadow-xl">
+            <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border bg-white border-gray-300 shadow-xl">
                 <h2 className="text-2xl font-bold text-center mb-6">Inserisci un nuovo edificio</h2>
                 <form onSubmit={handleSubmit} className="flex flex-col">
                     {/* Sezione Informazioni Generali */}
@@ -281,7 +351,7 @@ function BuildingFrom() {
                             <span className="block mb-2">Descrizione</span>
                             <input
                                 type="text"
-                                value={description}
+                                value={buildingData.description || description}
                                 onChange={handleDescriptionChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             />

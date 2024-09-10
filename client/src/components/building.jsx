@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRecoveryContext } from "../provider/provider";
+import BuildingFrom from "./buildingFrom";
 
 function Building() {
     const [buildingData, setBuildingData] = useState({});
@@ -9,6 +10,7 @@ function Building() {
     const { id } = useParams();
     const { setBuildingID, refresh } = useRecoveryContext();
     const [averageScore, setAverageScore] = useState(0);
+    const [showModifierBuildingForm, setShowModifierBuildingForm] = useState(false);
 
     useEffect(() => {
         const fetchBuilding = async () => {
@@ -134,18 +136,26 @@ function Building() {
                             </div>
                             <div className="flex justify-between">
                                 <span className="font-semibold">Illuminazione:</span>
-                                <span id="lighting">{buildingData.incandescent}</span>
+                                <span id="lighting">{buildingData.incandescent}%</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="font-semibold">LED:</span>
-                                <span id="led">{buildingData.led}</span>
+                                <span id="led">{buildingData.led}%</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="font-semibold">Lampade a Gas:</span>
-                                <span id="gas-lamp">{buildingData.gas_lamp}</span>
+                                <span id="gas-lamp">{buildingData.gas_lamp}%</span>
                             </div>
                         </div>
                     </div>
+                </div>
+                <div className="flex justify-center">
+                    <button
+                        className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                        onClick={() => setShowModifierBuildingForm(!showModifierBuildingForm)}
+                    >
+                        Modifica
+                    </button>
                 </div>
                 <div className="mt-10 px-4">
                     <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA DELL'EDIFICIO:</strong> {buildingData.buildingscore}
@@ -153,7 +163,12 @@ function Building() {
                 <div className="px-4 pb-4">
                     <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA COMPLESSIVO DELL'EDIFICIO (in centesimi):</strong><strong> {calculateTotalScoreInCents(averageScore.averageScore, averageScore.numPlants, averageScore.numSolars, averageScore.numPhotovoltaics)} / 100</strong>
                 </div>
-
+                {showModifierBuildingForm && (
+                    <BuildingFrom
+                        buildingData={buildingData}
+                        isEdit={true}
+                    />
+                )}
             </div>
         </div>
     );

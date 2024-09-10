@@ -126,7 +126,7 @@ export default function Buildings() {
                         <div className="flex justify-center mt-20" onClick={() => setShowBuildingForm(!showBuildingForm)}>
                             <img src="/img/add.png" title="hospitality" className="w-[80px] md:w-[80px] transition-transform duration-300 ease-in-out hover:scale-105 rounded-lg" />
                         </div>
-                        {showBuildingForm && <BuildingFrom />}
+                        {showBuildingForm && <BuildingFrom buildingData="empty" isEdit={false} />}
                     </div>
                 )}
                 <div class="w-full mx-auto mt-10 px-20 ">

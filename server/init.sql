@@ -231,9 +231,9 @@ CREATE TABLE IF NOT EXISTS buildings (
     maintenance maintenance_enum NOT NULL,
     water_recovery water_recovery_enum NOT NULL,
     electricity_meter electricity_meter_enum NOT NULL,
-    incandescent DECIMAL(10, 2) NOT NULL,
-    led DECIMAL(10, 2) NOT NULL,
-    gas_lamp DECIMAL(10, 2) NOT NULL,
+    incandescent INTEGER NOT NULL,
+    led INTEGER NOT NULL,
+    gas_lamp INTEGER NOT NULL,
     analyzers analyzers_enum NOT NULL,
     buildingScore DECIMAL(10, 2) DEFAULT 0.0
 );
