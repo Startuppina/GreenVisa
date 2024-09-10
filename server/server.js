@@ -186,10 +186,10 @@ app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, r
 
 
 app.post("/api/signup", async (req, res) => {
-  const { username, email, password, phone } = req.body;
+  const { username, company_name, email, password, phone } = req.body;
 
   // Validazione
-  if (!email || !password || !username || !phone) {
+  if (!email || !company_name || !password || !username || !phone) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
   } else if (!passwordCheck(password)) { //implement password check defined below
     return res
@@ -217,8 +217,8 @@ app.post("/api/signup", async (req, res) => {
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
     await pool.query(
-      "INSERT INTO users (username, email, phone_number, administrator, password_digest) VALUES ($1, $2, $3, false, $4)",
-      [username, email, newPhone, hashedPassword]
+      "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+      [username, company_name, email, newPhone, null, null, null, false, hashedPassword]
     );
 
     return res.status(200).json({ msg: "Utente registrato" });
@@ -428,6 +428,107 @@ app.put("/api/update-email", authenticateJWT, async (req, res) => {
     res.status(500).json({ message: "Errore interno del server" });
   }
 })
+
+app.put("/api/update-company-name", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { company_name } = req.body;
+
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
+
+    await pool.query("UPDATE users SET company_name = $1 WHERE id = $2", [
+      company_name,
+      user_id,
+    ]);
+
+    res.status(200).json({ message: "Nome azienda aggiornato con successo" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+});
+
+app.put("/api/update-piva", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { piva } = req.body;
+
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
+
+    if (!pivaCheck(piva)) {
+      return res.status(400).json({ message: "Partita IVA non valida" });
+    }
+
+    await pool.query("UPDATE users SET p_iva = $1 WHERE id = $2", [
+      piva,
+      user_id,
+    ]);
+
+    res.status(200).json({ message: "Partita IVA aggiornata con successo" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+});
+
+app.put("/api/update-tax-code", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { tax_code } = req.body;
+
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
+
+    if (!cfCheck(tax_code)) {
+      return res.status(400).json({ message: "Codice fiscale non valido" });
+    }
+
+    await pool.query("UPDATE users SET tax_code = $1 WHERE id = $2", [
+      tax_code,
+      user_id,
+    ]);
+
+    res.status(200).json({ message: "Codice fiscale aggiornato con successo" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+});
+
+app.put("/api/update-legal-headquarter", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { legal_headquarter } = req.body;
+
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
+
+    await pool.query("UPDATE users SET legal_headquarter = $1 WHERE id = $2", [
+      legal_headquarter,
+      user_id,
+    ]);
+
+    res.status(200).json({ message: "Sede legale aggiornata con successo" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+});
+
 
 app.post("/api/send_email", async (req, res) => {
   try {
@@ -1455,10 +1556,11 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
 
 app.post("/api/send-message", async (req, res) => {
   try {
-    const { name, email, subject, message } = req.body;
+    const { name, email, company_name, phone, subject, message } = req.body;
+
     //const { user_id } = req.user;
-    const query = "INSERT INTO contacts (name_surname, email, subject, message) VALUES ($1, $2, $3, $4)";
-    const values = [name, email, subject, message];
+    const query = "INSERT INTO contacts (name_surname, email, company_name, phone_number, subject, message) VALUES ($1, $2, $3, $4, $5, $6)";
+    const values = [name, email, company_name, phone, subject, message];
     await pool.query(query, values);
     res.status(200).json({ msg: "Messaggio inviato con successo" });
   } catch (error) {
@@ -1883,7 +1985,10 @@ app.get("/api/all-orders", authenticateJWT, authenticateAdmin, async (req, res) 
     }
 
     const query = `
-          SELECT 
+          SELECT
+              users.username AS username,
+              users.company_name AS company_name, 
+              users.phone_number AS phone_number,
               orders.id AS order_id, 
               orders.quantity AS quantity, 
               orders.price AS price, 
@@ -1894,6 +1999,8 @@ app.get("/api/all-orders", authenticateJWT, authenticateAdmin, async (req, res) 
               orders 
           JOIN 
               products ON orders.product_id = products.id
+          JOIN
+              users ON orders.user_id = users.id
       `;
     const result = await pool.query(query);
 
@@ -2605,7 +2712,7 @@ app.get("/api/users-generator-types", authenticateJWT, async (req, res) => {
 
   try {
     const query = `
-      SELECT plants.generator_description AS generator_type, users.username AS username, users.id AS user_id, plants.id AS plant_id
+      SELECT users.username AS username, users.company_name AS company_name, users.phone_number AS phone_number, plants.generator_description AS generator_type, users.username AS username, users.id AS user_id, plants.id AS plant_id
       FROM plants
       JOIN users ON users.id = plants.user_id
       WHERE generator_description IS NOT NULL
@@ -2697,7 +2804,7 @@ app.get("/api/fetch-second-level-requests", authenticateJWT, authenticateAdmin, 
 
   try {
     const query = `
-      SELECT products.category AS category, users.username AS username, second_level_certification_requests.created_at AS created_at, second_level_certification_requests.id AS request_id, users.id AS user_id
+      SELECT users.username AS username, users.company_name AS company_name, users.phone_number, products.category AS category, users.username AS username, second_level_certification_requests.created_at AS created_at, second_level_certification_requests.id AS request_id, users.id AS user_id
       FROM second_level_certification_requests
       JOIN users ON users.id = second_level_certification_requests.user_id
       JOIN products ON products.id = second_level_certification_requests.certification_id
@@ -2707,7 +2814,7 @@ app.get("/api/fetch-second-level-requests", authenticateJWT, authenticateAdmin, 
     const result = await pool.query(query);
 
     const query2 = `
-    SELECT products.category AS category, users.username AS username, second_level_certification_requests.created_at AS created_at, second_level_certification_requests.id AS request_id, users.id AS user_id
+    SELECT users.username AS username, users.company_name AS company_name, users.phone_number, products.category AS category, users.username AS username, second_level_certification_requests.created_at AS created_at, second_level_certification_requests.id AS request_id, users.id AS user_id
       FROM second_level_certification_requests
       JOIN users ON users.id = second_level_certification_requests.user_id
       JOIN products ON products.id = second_level_certification_requests.certification_id
@@ -2860,6 +2967,17 @@ function phoneCheck(phone) {
   return re.test(String(phone).toLowerCase());
 }
 
+function pivaCheck(piva) {
+  const pivaRegex = /^[0-9]{11}$/;  // Deve essere composto da 11 numeri
+  return pivaRegex.test(piva);
+}
+
+function cfCheck(cf) {
+  //const cfRegex = /^[A-Z0-9]{16}$/; // Deve essere composto da 16 caratteri alfanumerici
+  const cfRegex = /^[A-Za-z]{6}[0-9]{2}[A-Za-z]{1}[0-9]{2}[A-Za-z]{1}[0-9]{3}[A-Za-z]{1}$/
+  return cfRegex.test(cf);
+}
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Qualcosa è andato storto!" });
@@ -2878,9 +2996,9 @@ app.listen(port, '0.0.0.0', async () => {
       // Nessun amministratore trovato, quindi creane uno
       const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Modifica la password e il salt come necessario
       await pool.query(
-        `INSERT INTO users(username, email, phone_number, administrator, password_digest)
-         VALUES($1, $2, $3, $4, $5)`,
-        [process.env.USERNAME_ADMIN, process.env.EMAIL_ADMIN, null, true, hashedPassword]
+        `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest)
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [process.env.USERNAME_ADMIN, "green_visa", process.env.EMAIL_ADMIN, null, null, null, null, true, hashedPassword]
       );
       console.log('Admin creato con successo.');
     } else {

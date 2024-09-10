@@ -5,6 +5,8 @@ import MessagePopUp from "./messagePopUp";
 function Contacts() {
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
+    const [company_name, setCompany_name] = React.useState('');
+    const [phone, setPhone] = React.useState('');
     const [message, setMessage] = React.useState('');
     const [subject, setSubject] = React.useState('');
     const [buttonPopup, setButtonPopup] = React.useState(false);
@@ -23,16 +25,28 @@ function Contacts() {
         setSubject(event.target.value);
     };
 
+    const handleCompanyNameChange = (event) => {
+        setCompany_name(event.target.value);
+    };
+
+    const handlePhoneChange = (event) => {
+        setPhone(event.target.value);
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         console.log('Name:', name);
         console.log('Email:', email);
+        console.log('Company Name:', company_name);
+        console.log('Phone:', phone);
         console.log('Message:', message);
         console.log('Subject:', subject);
 
         const contactData = {
             name,
             email,
+            company_name,
+            phone,
             subject,
             message,
         };
@@ -43,7 +57,7 @@ function Contacts() {
                     'Content-Type': 'application/json',
                 }
             });
-            
+
             if (response.status === 200) {
                 setMessagePopup(response.data.msg);
                 setButtonPopup(true);
@@ -51,6 +65,7 @@ function Contacts() {
                 // Opzionalmente, puoi resettare i campi del modulo qui
                 setName('');
                 setEmail('');
+                setCompany_name('');
                 setMessage('');
                 setSubject('');
             }
@@ -64,9 +79,9 @@ function Contacts() {
     return (
         <>
             <div className="w-full min-h-screen md:bg-[url('/img/login.jpg')] sm:bg-white bg-cover bg-center bg-no-repeat flex items-center justify-center md:p-8">
-            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
-                {messagePopup}
-            </MessagePopUp>
+                <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                    {messagePopup}
+                </MessagePopUp>
                 <div className="p-6 bg-white w-full md:w-[80%] md:min-h-[60%] md:rounded-lg">
                     <h1 className="font-arial text-2xl md:text-3xl text-center font-bold mb-5">CONTATTACI VIA EMAIL</h1>
                     <div className="flex flex-col md:flex-row items-center justify-between">
@@ -79,6 +94,14 @@ function Contacts() {
                                 <div className='mb-5'>
                                     <label htmlFor="email" className='font-arial text-xl font-bold text-start block mb-2'>Email</label>
                                     <input type="email" name="email" id="email" className='w-full p-2 bg-[#d9d9d9]' value={email} onChange={handleEmailChange} />
+                                </div>
+                                <div className='mb-5'>
+                                    <label htmlFor="company_name" className='font-arial text-xl font-bold text-start block mb-2'>Ragione sociale</label>
+                                    <input type="company_name" name="company_name" id="company_name" className='w-full p-2 bg-[#d9d9d9]' value={company_name} onChange={handleCompanyNameChange} />
+                                </div>
+                                <div className='mb-5'>
+                                    <label htmlFor="phone" className='font-arial text-xl font-bold text-start block mb-2'>Telefono</label>
+                                    <input type="phone" name="phone" id="phone" className='w-full p-2 bg-[#d9d9d9]' value={phone} onChange={handlePhoneChange} />
                                 </div>
                                 <div className='mb-5'>
                                     <label htmlFor="subject" className='font-arial text-xl font-bold text-start block mb-2'>Soggetto</label>

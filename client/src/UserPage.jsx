@@ -23,6 +23,10 @@ const UserPage = () => {
     const [newPhone, setNewPhone] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [showModifier, setShowModifier] = useState(false);
+    const [newCompanyName, setNewCompanyName] = useState('');
+    const [newLegalHeadquarter, setNewLegalHeadquarter] = useState('');
+    const [newPiva, setNewPiva] = useState('');
+    const [newTaxCode, setNewTaxCode] = useState('');
     const navigate = useNavigate();
 
     const [showUserInfo, setShowUserInfo] = useState(true);
@@ -40,9 +44,20 @@ const UserPage = () => {
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
     const handlePhoneChange = (value) => setNewPhone(value);
     const handleEmailChange = (e) => setNewEmail(e.target.value);
+    const handleCompanyNameChange = (e) => setNewCompanyName(e.target.value);
+    const handleLegalHeadquarterChange = (e) => setNewLegalHeadquarter(e.target.value);
+    const handlePivaChange = (e) => setNewPiva(e.target.value);
+    const handleTaxCodeChange = (e) => setNewTaxCode(e.target.value);
 
     const [isAdmin, setIsAdmin] = useState(false);
 
+    const [userInfoComplete, setUserInfoComplete] = useState(false);
+    const [trigger, setTrigger] = useState(false);
+
+    const isUserInfoComplete = (userInfo) => {
+        console.log("userInfo:", userInfo.phone_number, userInfo.legal_headquarter, userInfo.tax_code, userInfo.piva);
+        return userInfo.phone_number === null || userInfo.legal_headquarter === null || userInfo.tax_code === null || userInfo.p_iva === undefined
+    };
 
     useEffect(() => {
         const fetchInfo = async () => {
@@ -56,6 +71,8 @@ const UserPage = () => {
 
                 if (response.status === 200) {
                     setUserInfo(response.data);
+                    setUserInfoComplete(isUserInfoComplete(response.data));
+                    console.log("userInfoComplete:", userInfoComplete);
                     if (response.data.administrator) {
                         setIsAdmin(true);
                     }
@@ -103,7 +120,7 @@ const UserPage = () => {
         fetchOrdersCategory();
 
 
-    }, []);
+    }, [trigger]);
 
     const logout = async () => {
         try {
@@ -191,10 +208,11 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Username aggiornato con successo");
                 setButtonPopup(true);
+                setTrigger(!trigger);
                 setUserInfo({ ...userInfo, username: newUsername });
             }
         } catch (error) {
-            setMessagePopup(`Errore durante l'aggiornamento del nome utente: ${error.message}`);
+            setMessagePopup(error.response?.data?.message || error.message);
             setButtonPopup(true);
         }
     };
@@ -215,10 +233,11 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Telefono aggiornato con successo");
                 setButtonPopup(true);
+                setTrigger(!trigger);
                 setUserInfo({ ...userInfo, phone_number: response.data.newPhone });
             }
         } catch (error) {
-            setMessagePopup(`Errore durante l'aggiornamento del numero di telefono: ${error.message}`);
+            setMessagePopup(error.response?.data?.message || error.message);
             setButtonPopup(true);
         }
     };
@@ -238,14 +257,105 @@ const UserPage = () => {
             if (response.status === 200) {
                 setMessagePopup("Email aggiornata con successo");
                 setButtonPopup(true);
+                setTrigger(!trigger);
                 setUserInfo({ ...userInfo, email: response.data.email || newEmail });
             }
 
         } catch (error) {
-            setMessagePopup(`Errore durante l'aggiornamento dell'email: ${error.message}`);
+            setMessagePopup(error.response?.data?.message || error.message);
             setButtonPopup(true);
         }
     };
+
+    const handleCompanyNameModifier = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        try {
+            const response = await axios.put('http://localhost:8080/api/update-company-name', { company_name: newCompanyName }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.status === 200) {
+                setMessagePopup("Nome azienda aggiornato con successo");
+                setButtonPopup(true);
+                setTrigger(!trigger);
+                setUserInfo({ ...userInfo, company_name: newCompanyName });
+            }
+        } catch (error) {
+            setMessagePopup(error.response?.data?.message || error.message);
+            setButtonPopup(true);
+        }
+    }
+
+    const handlePivaModifier = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await axios.put('http://localhost:8080/api/update-piva', { piva: newPiva }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.status === 200) {
+                setMessagePopup("Partita IVA aggiornata con successo");
+                setButtonPopup(true);
+                setTrigger(!trigger);
+                setUserInfo({ ...userInfo, p_iva: newPiva });
+            }
+        } catch (error) {
+            setMessagePopup(error.response?.data?.message || error.message);
+            setButtonPopup(true);
+        }
+    }
+
+    const handleTaxCodeModifier = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await axios.put('http://localhost:8080/api/update-tax-code', { tax_code: newTaxCode }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.status === 200) {
+                setMessagePopup("Codice fiscale aggiornato con successo");
+                setButtonPopup(true);
+                setTrigger(!trigger);
+                setUserInfo({ ...userInfo, tax_code: newTaxCode });
+            }
+        } catch (error) {
+            setMessagePopup(error.response?.data?.message || error.message);
+            setButtonPopup(true);
+        }
+    }
+
+    const handleLegalHeadquarterModifier = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        try {
+            const response = await axios.put('http://localhost:8080/api/update-legal-headquarter', { legal_headquarter: newLegalHeadquarter }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.status === 200) {
+                setMessagePopup("Sede legale aggiornata con successo");
+                setButtonPopup(true);
+                setTrigger(!trigger);
+                setUserInfo({ ...userInfo, legal_headquarter: newLegalHeadquarter });
+            }
+        } catch (error) {
+            setMessagePopup(`Errore durante l'aggiornamento della sede legale: ${error.message}`);
+            setButtonPopup(true);
+        }
+    }
 
     const [activeSection, setActiveSection] = useState('user'); // Stato per tenere traccia della sezione attiva
 
@@ -253,6 +363,9 @@ const UserPage = () => {
         setActiveSection(section);
         localStorage.setItem('activeSection', section); // Memorizza la sezione nel localStorage
     };
+
+    const [activeInput, setActiveInput] = useState(null);
+
 
     useEffect(() => {
         const storedSection = localStorage.getItem('activeSection');
@@ -317,6 +430,7 @@ const UserPage = () => {
     };
 
 
+
     return (
         <div className="flex flex-col min-h-screen">
             <ScrollToTop />
@@ -370,17 +484,25 @@ const UserPage = () => {
 
                     {activeSection === 'user' && (
                         <div>
+                            {userInfoComplete && (
+                                <p className="text-center text-red-500 font bold text-xl uppercase mb-4">Completa il tuo account</p>
+                            )}
 
-
-                            <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 md:mx-14 h-[600px] lg:h-[300px]">
+                            <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 md:mx-14 h-[600px] lg:h-[330px]">
                                 <div className="w-full bg-[#d9d9d9] p-4 rounded-lg flex-1">
                                     <h2 className="text-2xl font-bold">Informazioni personali</h2>
                                     <div className="pb-5">
                                         <p><strong>Username:</strong> {userInfo ? userInfo.username : ''}</p>
+                                        <p><strong>Ragione sociale:</strong> {userInfo ? userInfo.company_name : ''}</p>
                                         <p><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
                                         <p className='flex flex-row gap-2'><strong>Telefono:</strong> {userInfo ? (userInfo.phone_number ? userInfo.phone_number : <span className='text-gray-400'>Inserisci il tuo numero di telefono</span>) : ''}</p>
+                                        <p className='flex flex-row gap-2'><strong>Partita IVA:</strong> {userInfo ? (userInfo.p_iva ? userInfo.p_iva : <span className='text-gray-400'>Inserisci la tua partita IVA</span>) : ''}</p>
+                                        <p className='flex flex-row gap-2'><strong>Codice fiscale:</strong> {userInfo ? (userInfo.tax_code ? userInfo.tax_code : <span className='text-gray-400'>Inserisci il tuo codice fiscale</span>) : ''}</p>
+                                        <p className='flex flex-row gap-2'><strong>Sede legale:</strong> {userInfo ? (userInfo.legal_headquarter ? userInfo.legal_headquarter : <span className='text-gray-400'>Inserisci la tua sede legale</span>) : ''}</p>
+
+
                                     </div>
-                                    <div className="flex justify-center relative top-20">
+                                    <div className="flex justify-center">
                                         <button
                                             className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                             onClick={() => setShowModifier(!showModifier)}
@@ -392,62 +514,212 @@ const UserPage = () => {
                                 <CodeUsage />
                             </div>
 
-                            <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 mx-2 md:mx-14 my-4 border shadow-lg rounded-lg ${showModifier ? '' : 'hidden'}`}>
-                                <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
+                            {showModifier && (
 
-                                <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleUsernameModifier}>
-                                    <label htmlFor="username" className="block mb-2">Username</label>
-                                    <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
-                                        <input
-                                            type="text"
-                                            id="username"
-                                            value={newUsername}
-                                            onChange={handleUsernameChange}
-                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                                        />
-                                        <div className='flex justify-center'>
-                                            <input type='submit' value='Modifica username' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
-                                        </div>
+                                <div className={`flex flex-col items-center justify-center text-arial text-xl p-4 mx-2 md:mx-14 my-4 border shadow-lg rounded-lg`}>
+                                    <h2 className="text-3xl font-bold text-black text-center pb-10">Modifica credenziali</h2>
+
+                                    {/* Bottoni di navigazione per le sezioni */}
+                                    <div className="flex flex-wrap justify-center mb-8 gap-3">
+                                        <button
+                                            className={`p-2 text-sm w-auto ${activeInput === 'username' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            onClick={() => setActiveInput('username')}
+                                        >
+                                            Modifica Username
+                                        </button>
+                                        <button
+                                            className={`p-2 text-sm w-auto ${activeInput === 'company' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            onClick={() => setActiveInput('company')}
+                                        >
+                                            Modifica Ragione Sociale
+                                        </button>
+                                        <button
+                                            className={`p-2 text-sm w-auto ${activeInput === 'email' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            onClick={() => setActiveInput('email')}
+                                        >
+                                            Modifica Email
+                                        </button>
+                                        <button
+                                            className={`p-2 text-sm w-auto ${activeInput === 'phone' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            onClick={() => setActiveInput('phone')}
+                                        >
+                                            Modifica Telefono
+                                        </button>
+                                        <button
+                                            className={`p-2 text-sm w-auto ${activeInput === 'piva' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            onClick={() => setActiveInput('piva')}
+                                        >
+                                            Modifica Partita IVA
+                                        </button>
+                                        <button
+                                            className={`p-2 text-sm w-auto ${activeInput === 'tax_code' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            onClick={() => setActiveInput('tax_code')}
+                                        >
+                                            Modifica Codice Fiscale
+                                        </button>
+                                        <button
+                                            className={`p-2 text-sm w-auto ${activeInput === 'headquarter' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            onClick={() => setActiveInput('headquarter')}
+                                        >
+                                            Modifica Sede Legale
+                                        </button>
                                     </div>
 
-                                </form>
 
-                                <form className='mx-auto md:w-[80%]' onSubmit={handlePhoneModifier}>
-                                    <label htmlFor="phone" className="block mb-2">Telefono</label>
-                                    <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
-                                        <PhoneInput
-                                            country={'it'}
-                                            value={newPhone}
-                                            onChange={handlePhoneChange}
-                                            buttonClass='w-[45px] p-2 bg-gray-50'
-                                            dropdownClass='w-full p-2 bg-gray-50'
-                                            inputStyle={{ width: '100%', height: '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
-                                            preferredCountries={['it']}
-                                        />
-                                        <div className='flex justify-center'>
-                                            <input type='submit' value='Modifica telefono' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
-                                        </div>
-                                    </div>
-                                </form>
+                                    {/* Sezione per Modifica Username */}
+                                    {activeInput === 'username' && (
+                                        <form onSubmit={handleUsernameModifier} className='mb-6 w-full md:w-[50%]'>
+                                            <label htmlFor="username" className="block mb-2">Username</label>
+                                            <input
+                                                type="text"
+                                                id="username"
+                                                value={newUsername}
+                                                onChange={handleUsernameChange}
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3"
+                                            />
+                                            <div className='flex justify-center'>
+                                                <input
+                                                    type='submit'
+                                                    value='Modifica username'
+                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                />
+                                            </div>
+                                        </form>
+                                    )}
 
-                                <form className='mx-auto md:w-[80%] mb-4' onSubmit={handleEmailModifier}>
-                                    <label htmlFor="email" className="block mb-2">email</label>
-                                    <div className='flex flex-col md:flex-row gap-3 items-center justify-center'>
-                                        <input
-                                            type="email"
-                                            id="email"
-                                            value={newEmail}
-                                            onChange={handleEmailChange}
-                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                                        />
-                                        <div className='flex justify-center'>
-                                            <input type='submit' value='Modifica email' className="my-3 p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
-                                        </div>
-                                    </div>
+                                    {/* Sezione per Modifica Ragione Sociale */}
+                                    {activeInput === 'company' && (
+                                        <form onSubmit={handleCompanyNameModifier} className='mb-6 w-full md:w-[50%]'>
+                                            <label htmlFor="company_name" className="block mb-2">Ragione Sociale</label>
+                                            <input
+                                                type="text"
+                                                id="company_name"
+                                                value={newCompanyName}
+                                                onChange={handleCompanyNameChange}
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3"
+                                            />
+                                            <div className='flex justify-center'>
+                                                <input
+                                                    type='submit'
+                                                    value='Modifica ragione sociale'
+                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                />
+                                            </div>
+                                        </form>
+                                    )}
 
-                                </form>
+                                    {/* Sezione per Modifica Email */}
+                                    {activeInput === 'email' && (
+                                        <form onSubmit={handleEmailModifier} className='mb-6 w-full md:w-[50%]'>
+                                            <label htmlFor="email" className="block mb-2">Email</label>
+                                            <input
+                                                type="email"
+                                                id="email"
+                                                value={newEmail}
+                                                onChange={handleEmailChange}
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3"
+                                            />
+                                            <div className='flex justify-center'>
+                                                <input
+                                                    type='submit'
+                                                    value='Modifica email'
+                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                />
+                                            </div>
+                                        </form>
+                                    )}
 
-                            </div>
+                                    {/* Sezione per Modifica Telefono */}
+                                    {activeInput === 'phone' && (
+                                        <form onSubmit={handlePhoneModifier} className='mb-6 w-full md:w-[50%]'>
+                                            <label htmlFor="phone" className="block mb-2">Telefono</label>
+                                            <PhoneInput
+                                                country={'it'}
+                                                value={newPhone}
+                                                onChange={handlePhoneChange}
+                                                buttonClass='w-[45px] p-2 bg-gray-50'
+                                                dropdownClass='w-full p-2 bg-gray-50'
+                                                inputStyle={{ width: '100%', height: '50px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                                                preferredCountries={['it']}
+                                            />
+                                            <div className='flex justify-center'>
+                                                <input
+                                                    type='submit'
+                                                    value='Modifica telefono'
+                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                />
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    {/* Sezione per Modifica Partita IVA */}
+                                    {activeInput === 'piva' && (
+                                        <form onSubmit={handlePivaModifier} className='mb-6 w-full md:w-[50%]'>
+                                            <label htmlFor="p_iva" className="block mb-2">Partita IVA</label>
+                                            <input
+                                                type="text"
+                                                id="p_iva"
+                                                value={newPiva}
+                                                onChange={handlePivaChange}
+                                                maxlength="11"
+
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3"
+                                            />
+                                            <div className='flex justify-center'>
+                                                <input
+                                                    type='submit'
+                                                    value='Modifica partita IVA'
+                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                />
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    {/* Sezione per Modifica Codice Fiscale */}
+                                    {activeInput === 'tax_code' && (
+                                        <form onSubmit={handleTaxCodeModifier} className='mb-6 w-full md:w-[50%]'>
+                                            <label htmlFor="tax_code" className="block mb-2">Codice Fiscale</label>
+                                            <input
+                                                type="text"
+                                                id="tax_code"
+                                                value={newTaxCode}
+                                                onChange={handleTaxCodeChange}
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3"
+                                            />
+                                            <div className='flex justify-center'>
+                                                <input
+                                                    type='submit'
+                                                    value='Modifica codice fiscale'
+                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                />
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    {/* Sezione per Modifica Sede Legale */}
+                                    {activeInput === 'headquarter' && (
+                                        <form onSubmit={handleLegalHeadquarterModifier} className='mb-6 w-full md:w-[50%]'>
+                                            <label htmlFor="legal_headquarter" className="block mb-2">Sede Legale</label>
+                                            <input
+                                                type="text"
+                                                id="legal_headquarter"
+                                                value={newLegalHeadquarter}
+                                                onChange={handleLegalHeadquarterChange}
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3"
+                                            />
+                                            <div className='flex justify-center'>
+                                                <input
+                                                    type='submit'
+                                                    value='Modifica sede legale'
+                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                />
+                                            </div>
+                                        </form>
+                                    )}
+
+                                </div>
+                            )}
+
                             <Link to="/buildings">
                                 <div className="bg-[#2d7044] text-white text-xl p-4 mx-2 md:mx-14 my-4 border border-[#0056b3] rounded-lg shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer">
                                     <h1 className="text-2xl font-bold text-center">
@@ -516,7 +788,7 @@ const UserPage = () => {
 
 
                 </div>
-            </main>
+            </main >
             <div className='flex flex-col md:flex-row gap-3 justify-center mb-4 mt-1'>
                 <div className="w-full md:w-[20%] flex justify-center">
                     <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>

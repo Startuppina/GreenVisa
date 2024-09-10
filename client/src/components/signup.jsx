@@ -17,10 +17,12 @@ const Signup = () => {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
     const [acceptedTerms, setAcceptedTerms] = useState(false); // Gestisci il checkbox dei termini
+    const [company_name, setCompany_name] = useState('');
 
     const navigate = useNavigate();
 
     const handleUsernameChange = (e) => setUsername(e.target.value);
+    const handleCompanyNameChange = (e) => setCompany_name(e.target.value);
     const handlePhoneChange = (value) => setPhone(value);
     const handleEmailChange = (e) => setEmail(e.target.value);
     const handlePasswordChange = (e) => setPassword(e.target.value);
@@ -40,7 +42,7 @@ const Signup = () => {
 
         setPhone(`+${phone}`);
 
-        const formData = { username, email, password, phone };
+        const formData = { username, company_name, email, password, phone };
 
         try {
             const response = await axios.post('http://localhost:8080/api/signup', formData, {
@@ -53,14 +55,15 @@ const Signup = () => {
 
                 //reset fields
                 setUsername('');
+                setCompany_name('');
                 setPhone('');
                 setEmail('');
                 setPassword('');
                 setConfirmPassword('');
                 setAcceptedTerms(false);
-                
+
                 navigate('/login');
-            } 
+            }
 
         } catch (error) {
             setMessagePopup(error.response?.data?.msg || error.message);
@@ -82,14 +85,25 @@ const Signup = () => {
                 </div>
                 <form onSubmit={handleSubmit} className='w-full'>
                     <div className='flex flex-col items-center justify-center mb-5'>
-                        <div className='w-[80%] lg:w-[60%]'>
-                            <label htmlFor="username" className='block text-xl'>Username</label>
+                        <div className='w-[80%] lg:w-[60%] mb-5'>
+                            <label htmlFor="username" className='block text-xl'>Nome e cognome del referente</label>
                             <input
                                 type="text"
                                 name="username"
                                 id="username"
                                 value={username}
                                 onChange={handleUsernameChange}
+                                className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5'
+                            />
+                        </div>
+                        <div className='w-[80%] lg:w-[60%]'>
+                            <label htmlFor="username" className='block text-xl'>Ragione sociale</label>
+                            <input
+                                type="text"
+                                name="company_name"
+                                id="company_name"
+                                value={company_name}
+                                onChange={handleCompanyNameChange}
                                 className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5'
                             />
                         </div>
@@ -109,16 +123,16 @@ const Signup = () => {
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[80%] lg:w-[60%]'>
-                            <label htmlFor="phone" className='block text-xl'>Telefono</label>                            
+                            <label htmlFor="phone" className='block text-xl'>Telefono</label>
                             <PhoneInput
                                 country={'it'}
                                 value={phone}
                                 onChange={handlePhoneChange}
                                 buttonClass='w-[45px] p-2 bg-gray-50'
                                 dropdownClass='w-full p-2 bg-gray-50'
-                                inputStyle={{ width: '100%', height : '42px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                                inputStyle={{ width: '100%', height: '42px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
                                 preferredCountries={['it']}
-                            />                           
+                            />
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5 relative'>
@@ -126,29 +140,29 @@ const Signup = () => {
                             <div className='flex items-center justify-between'>
                                 <div className='flex items-center gap-1'>
                                     <label htmlFor="password" className='block text-xl'>Password</label>
-                                    <svg 
-                                        className='cursor-pointer ml-2' 
-                                        onClick={togglePassInfo} 
-                                        xmlns="http://www.w3.org/2000/svg" 
-                                        width="24" 
-                                        height="24" 
-                                        viewBox="0 0 24 24" 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        strokeWidth="2" 
-                                        strokeLinecap="round" 
+                                    <svg
+                                        className='cursor-pointer ml-2'
+                                        onClick={togglePassInfo}
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
                                         strokeLinejoin="round"
                                     >
                                         <circle cx="12" cy="12" r="10"></circle>
                                         <line x1="12" y1="16" x2="12" y2="12"></line>
                                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                                     </svg>
-                                    
+
                                 </div>
                                 <div className='flex items-center gap-2'>
-                                        <span className='text-black'>Mostra password</span>
-                                        <input type="checkbox" name="showPassword" id="showPassword" onClick={toggleShowPassword} className='cursor-pointer' />
-                                    </div>
+                                    <span className='text-black'>Mostra password</span>
+                                    <input type="checkbox" name="showPassword" id="showPassword" onClick={toggleShowPassword} className='cursor-pointer' />
+                                </div>
                             </div>
                             <div className='relative'>
                                 <input
@@ -193,10 +207,10 @@ const Signup = () => {
                             <label htmlFor="terms" className="text-black">
                                 Accetto i{" "}
                                 <a
-                                className="text-[#2d7044] hover:underline"
-                                href="#"
+                                    className="text-[#2d7044] hover:underline"
+                                    href="#"
                                 >
-                                Termini e Condizioni
+                                    Termini e Condizioni
                                 </a>
                             </label>
                         </div>

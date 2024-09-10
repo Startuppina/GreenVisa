@@ -92,6 +92,9 @@ export default function UsersGeneratorTypes({ sendDataToParent }) {
                         Array.isArray(usersGeneratorData) && usersGeneratorData.map((data, index) => (
                             <div key={index} className="border rounded-lg p-6 shadow-lg bg-gray-50 relative">
                                 <h3 className="text-xl font-semibold mb-2">Richiedente: {data.username}</h3>
+                                <p>Utente: {data.username}</p>
+                                <p>Ragione sociale: {data.company_name}</p>
+                                <p>Telefono: {data.phone_number !== null ? data.phone_number : "Non specificato"}</p>
                                 <p className="mb-2">Tipo di Generatore: {data.generator_type}</p>
 
                                 <div className='flex justify-end'>

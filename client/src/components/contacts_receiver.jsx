@@ -187,6 +187,14 @@ const MessagesDashboard = ({ sendDataToParent }) => {
                                 <p className="text-lg">{message.email}</p>
                             </div>
                             <div className="mb-3">
+                                <h2 className="text-xl font-bold">Ragione sociale</h2>
+                                <p className="text-lg">{message.company_name !== "" ? message.company_name : "Non specificato"}</p>
+                            </div>
+                            <div className="mb-3">
+                                <h2 className="text-xl font-bold">Telefono</h2>
+                                <p className="text-lg">{message.phone_number !== "" ? message.phone_number : "Non specificato"}</p>
+                            </div>
+                            <div className="mb-3">
                                 <h2 className="text-xl font-bold">Soggetto</h2>
                                 <p className="text-lg">{message.subject}</p>
                             </div>

@@ -136,13 +136,16 @@ export default function SecondLevelCerts({ sendDataToParent }) {
                             request.map((data, index) => (
                                 <div key={index} className="border rounded-lg p-6 shadow-lg bg-gray-50 relative">
                                     <h3 className="text-xl font-semibold mb-2">Richiedente: {data.username}</h3>
+                                    <p>Utente: {data.username}</p>
+                                    <p>Ragione sociale: {data.company_name}</p>
+                                    <p>Telefono: {data.phone_number !== null ? data.phone_number : "Non specificato"}</p>
                                     <p className="mb-2">Tipo di certificazione: {data.category}</p>
                                     <p className="mb-2">Data: {new Date(data.created_at).toLocaleDateString('it-IT')}</p>
 
                                     <div className='flex flex-row gap-2 justify-end'>
                                         <button
                                             onClick={() => approveRequest(data.request_id, data.user_id)}
-                                            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300"
+                                            className="bg-blue-500 border-2 border-blue-500 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300"
                                         >
                                             Approva
                                         </button>
@@ -176,6 +179,9 @@ export default function SecondLevelCerts({ sendDataToParent }) {
                             approvedRequests.map((data, index) => (
                                 <div key={index} className="border rounded-lg p-6 shadow-lg bg-gray-50 relative">
                                     <h3 className="text-xl font-semibold mb-2">Richiedente: {data.username}</h3>
+                                    <p>Utente: {data.username}</p>
+                                    <p>Ragione sociale: {data.company_name}</p>
+                                    <p>Telefono: {data.phone_number !== null ? data.phone_number : "Non specificato"}</p>
                                     <p className="mb-2">Tipo di certificazione: {data.category}</p>
                                     <p className="mb-2">Data: {new Date(data.created_at).toLocaleDateString('it-IT')}</p>
                                     <div className='flex justify-end'>
