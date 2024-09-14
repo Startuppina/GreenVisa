@@ -69,8 +69,8 @@ const Login = () => {
                     <Link to="/">Home</Link>
                 </div>
 
-                <div className='flex flex-col items-center justify-center mb-10 mt-'>
-                    <img src="/img/logo.png" alt="logo" className='w-[30%] mb-5 p-0' />
+                <div className='flex flex-col items-center justify-center mb-5 mt-4'>
+                    <img src="/img/logo.png" alt="logo" className='w-[35%] max-w-[200px] mb-5 p-0' />
                     <p className='font-arial text-xl font-bold w-full text-center'>
                         Non sei ancora registrato? <span className='text-[#2d7044]'><Link to="/Signup">Registrati</Link></span>
                     </p>

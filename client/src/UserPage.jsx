@@ -798,13 +798,13 @@ const UserPage = () => {
             </main >
             <div className='flex flex-col md:flex-row gap-3 justify-center mb-4 mt-1'>
                 <div className="w-full md:w-[20%] flex justify-center">
-                    <button className='p-2 w-full z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>
+                    <button className='p-2 w-[90%] z-10 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleLogOut}>
                         Esci
                     </button>
                 </div>
                 {!isAdmin && (
                     <div className="w-full md:w-[20%] flex justify-center">
-                        <button className='p-2 w-full z-10 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleDeleteAccount}>
+                        <button className='p-2 w-[90%]   z-10 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black' onClick={handleDeleteAccount}>
                             Elimina account
                         </button>
                     </div>

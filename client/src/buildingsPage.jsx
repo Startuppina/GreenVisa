@@ -89,10 +89,28 @@ export default function Buildings() {
                 {numBuildings === 0 ? (
                     <div className="text-center mt-20">
                         <h1 className="text-2xl mb-4">Non hai ancora edifici registrati, aggiungine uno</h1>
-                        <div className="flex justify-center" onClick={() => setShowBuildingForm(!showBuildingForm)}>
-                            <img src="/img/add.png" title="aggiungi" className="w-[80px] md:w-[80px] transition-transform duration-300 ease-in-out hover:scale-105 rounded-lg" />
+                        <div className="flex flex-col items-center justify-center m-2">
+                            <button
+                                className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
+                                onClick={() => setShowBuildingForm(!showBuildingForm)}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="2"
+                                    stroke="currentColor"
+                                    className="w-6 h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 4.5v15m7.5-7.5h-15"
+                                    />
+                                </svg>
+                            </button>
                         </div>
-                        {showBuildingForm && <BuildingFrom />}
+                        {showBuildingForm && <BuildingFrom buildingData="empty" isEdit={false} />}
                     </div>
                 ) : (
                     <div className="text-center mt-10">
@@ -123,8 +141,26 @@ export default function Buildings() {
                                 </div>
                             ))}
                         </div>
-                        <div className="flex justify-center mt-20" onClick={() => setShowBuildingForm(!showBuildingForm)}>
-                            <img src="/img/add.png" title="hospitality" className="w-[80px] md:w-[80px] transition-transform duration-300 ease-in-out hover:scale-105 rounded-lg" />
+                        <div className="flex flex-col items-center justify-center m-2">
+                            <button
+                                className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
+                                onClick={() => setShowBuildingForm(!showBuildingForm)}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="2"
+                                    stroke="currentColor"
+                                    className="w-6 h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 4.5v15m7.5-7.5h-15"
+                                    />
+                                </svg>
+                            </button>
                         </div>
                         {showBuildingForm && <BuildingFrom buildingData="empty" isEdit={false} />}
                     </div>

@@ -22,22 +22,6 @@ const port = 8080;
 const email_sender = process.env.EMAIL_SENDER;
 const pass_sender = process.env.PASS_SENDER;
 
-// Funzione per ritentare la connessione al database
-async function connectWithRetry() {
-  let client;
-  for (let i = 0; i < 10; i++) {
-    try {
-      client = await pool.connect();
-      return client;
-    } catch (error) {
-      console.error('Errore di connessione al database, ritentando...', error);
-      await new Promise(resolve => setTimeout(resolve, 5000)); // Ritenta dopo 5 secondi
-    }
-  }
-  throw new Error('Impossibile connettersi al database dopo diversi tentativi');
-}
-
-
 const app = express();
 
 // Middleware per il CORS
@@ -1314,7 +1298,7 @@ app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async 
   }
 });
 
-app.post("/api/cart-insertion/:id", async (req, res) => {
+app.post("/api/insertion/:id", async (req, res) => {
   try {
     const { id } = req.params; // ID del prodotto
     const { name, image, price, quantity, option, session_id } = req.body;
@@ -1538,6 +1522,7 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
     let query;
     let values;
 
+
     if (user_id) {
       query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
       values = [user_id, id];
@@ -1546,7 +1531,7 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
       values = [session_id, id];
     }
 
-    await pool.query(query, values);
+    const result = await pool.query(query, values);
     res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
   } catch (error) {
     console.error("Errore nel rimuovere il prodotto dal carrello:", error);
@@ -2021,6 +2006,14 @@ app.delete("/api/remove-user-cart", authenticateJWT, async (req, res) => {
 
   try {
     const { user_id } = req.user;
+
+    // fetch image from cart table
+    const queryCart = "SELECT image FROM cart WHERE user_id = $1";
+    const valuesCart = [user_id];
+    const resultCart = await pool.query(queryCart, valuesCart);
+    const image = resultCart.rows[0].image;
+
+
     const query = "DELETE FROM cart WHERE user_id = $1";
     const values = [user_id];
     await pool.query(query, values);

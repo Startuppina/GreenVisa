@@ -650,7 +650,7 @@ const Dashboard = () => {
                   key={productItem.id}
                   className="border rounded-lg p-4 shadow-lg bg-white mb-8"
                 >
-                  <div className="flex  gap-20 items-center">
+                  <div className="flex flex-col md:flex-row md:gap-20 items-center">
                     <div className="flex flex-col">
                       <h3 className="text-xl font-bold mb-2">
                         Nome: {productItem.name}

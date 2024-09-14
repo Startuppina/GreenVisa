@@ -102,28 +102,55 @@ function ProductDetails() {
 
     return (
         <>
-            <div className="w-full h-auto flex flex-col lg:flex-row items-center mx-auto justify-center p-8">
+            <div className="w-full h-auto flex flex-col lg:flex-row items-center justify-center mx-auto p-4 lg:p-8 gap-6">
                 <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                     {messagePopUp}
                 </MessagePopUp>
-                <div className="w-[400px] h-[300px] overflow-hidden ">
-                    <img src={`http://localhost:8080/uploaded_img/${product.image}`} alt={product.name} className="w-full h-full object-cover rounded-lg" />
+
+                {/* Sezione immagine prodotto */}
+                <div className="w-full max-w-xs lg:max-w-md h-[250px] sm:h-[300px] lg:h-[400px] overflow-hidden">
+                    <img
+                        src={`http://localhost:8080/uploaded_img/${product.image}`}
+                        alt={product.name}
+                        className="w-full h-full object-cover rounded-lg"
+                    />
                 </div>
-                <div className="w-full md:w-[40%] p-4 lg:pl-20 flex flex-col items-center text-arial text-xl text-center">
-                    <h1 className="text-arial text-2xl text-center font-bold pb-5 w-full">{product.name}</h1>
+
+                {/* Sezione descrizione prodotto */}
+                <div className="w-full max-w-lg p-4 flex flex-col items-center text-arial text-lg sm:text-xl text-center">
+                    <h1 className="text-2xl font-bold pb-4 w-full">{product.name}</h1>
                     <p className="m-4">{getPriceCategory(product.category)}</p>
-                    <p className="pb-5 w-[70%]">{product.info}</p>
-                    <CategoryBasedSelect onSelectChange={handleSelectChange} value={valueFromSelect} category={category} />
-                    <div className="flex flex-row items-center justify-center gap-5">
-                        <QuantitySelector onValueChange={handleQuantityChange} value={quantity} />
-                        <button className="m-3 font-arial font-semibold text-xl w-auto p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                    <p className="pb-5 w-full sm:w-[80%] lg:w-[70%]">{product.info}</p>
+
+                    {/* Select per categoria e selezione quantità */}
+                    <CategoryBasedSelect
+                        onSelectChange={handleSelectChange}
+                        value={valueFromSelect}
+                        category={category}
+                    />
+
+                    <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4 mt-4">
+                        <QuantitySelector
+                            onValueChange={handleQuantityChange}
+                            value={quantity}
+                        />
+                        <button
+                            className="font-arial font-semibold text-lg sm:text-xl w-auto px-4 py-2 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                             onClick={handleCartInsertion}
-                        >Aggiungi al carrello</button>
+                        >
+                            Aggiungi al carrello
+                        </button>
                     </div>
 
-                    <div className="font-arial text-xl text-black text-center"> COD: {product.cod} <br /> Categoria: {product.category} <br /> Tag: {product.tag} </div>
+                    {/* Dettagli aggiuntivi */}
+                    <div className="mt-5 font-arial text-lg sm:text-xl text-black text-center">
+                        COD: {product.cod} <br />
+                        Categoria: {product.category} <br />
+                        Tag: {product.tag}
+                    </div>
                 </div>
             </div>
+
             <div className="w-full h-auto md:p-8 text-arial text-xl text-black text-center flex flex-col gap-5 items-center">
                 <h1 className="text-2xl font-bold">Info</h1>
                 <p className="p-4 w-full lg:w-[40%] text-justify">Dopo l’acquisto riceverai sulla tua mail un link univoco e privato che ti darà accesso al questionario che ci consentirà di calcolare in tempo reale le emissioni di CO2 della tua struttura/azienda.</p>

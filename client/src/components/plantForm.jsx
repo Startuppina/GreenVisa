@@ -221,6 +221,68 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick = 'empty' }) {
         }
     };
 
+
+    /*const sustainabilityScores = {
+        plantTypes: {
+            'Centralizzato': 2,
+            'Autonomo': 4
+        },
+        serviceTypes: {
+            'Riscaldamento': 2,
+            'Raffrescamento': 3,
+            'Acqua calda sanitaria': 2,
+            'Altra produzione termica': 1
+        },
+        generatorTypes: {
+            'Centralizzato': {
+                'Caldaia tradizionale': 1,
+                'Caldaia condensazione': 2,
+                'Pompa di calore idronica': 4,
+                'Ibrido (Caldaia e Pompa di Calore)': 3,
+                'Cogeneratore o Trigenerazione con Motore endotermico': 1,
+                'Cogeneratore o Trigenerazione con Microturbina': 2,
+                'Cogeneratore o Trigenerazione con Fuel Cell': 4,
+                'Teleriscaldamento': 2,
+                'Bolitore elettrico': 1,
+                'Altro': 1
+            },
+            'Autonomo': {
+                'Caldaia tradizionale': 1,
+                'Caldaia condensazione': 2,
+                'Pompa di calore idronica': 4,
+                'split': 1,
+                'Ibrido (Caldaia e Pompa di Calore)': 3,
+                'Bolitore elettrico': 1,
+                'Altro': 1
+            },
+        },
+        fuelTypes: {
+            'Gas Naturale (Metano)': 2,
+            'GPL': 2,
+            'Gasolio': 1,
+            'Olio combustibile': 1,
+            'Pellet': 3,
+            'Cippato di legna': 3,
+            'Biogas': 4,
+            'Biodiesel': 3,
+            'Elettrico - mix generico': 3,
+            'Elettrico - 100% rinnovabili': 4,
+            'Energia termica': 1
+        },
+        electricitySupplies: {
+            'Elettrico - mix generico': 3,
+            'Elettrico - 100% rinnovabili': 4
+        }
+    };*/
+
+    /*
+    const generatorOptions = plantType ?
+        Object.entries(sustainabilityScores.generatorTypes[plantType]).map(([key, value]) => (
+            <option key={key} value={key}>{key}</option>
+        )) : [];*/
+
+
+
     const calculateSustainabilityScore = (plant) => {
         const baseScore = 10;
 
@@ -242,6 +304,29 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick = 'empty' }) {
 
         return totalScore;
     };
+
+    /*IDEA PER CALCOLARE IL PUNTEGGIO DATA UNA COMBINAZIONE DI VALORI INSEIRIT DALL'UTENTE
+
+    const combinationScores = {
+    'Autonomo|Ibrido (Caldaia e Pompa di Calore)|Gas Naturale (Metano)': 8,
+    'Autonomo|Pompa di calore idronica|GPL': 7,
+    'Centralizzato|Caldaia condensazione|Pellet': 9,
+    'Centralizzato|Pompa di calore idronica|Elettrico - 100% rinnovabili': 10,
+    // Aggiungi tutte le altre combinazioni qui
+    // 'plantType|generatorType|fuelType': score
+};
+
+const calculateSustainabilityScore = (plant) => {
+    // Crea la chiave per la combinazione specifica
+    const combinationKey = `${plant.plantType}|${plant.generatorType}|${plant.fuelType}`;
+
+    // Cerca il punteggio basato sulla combinazione, se esiste, altrimenti restituisci un punteggio di default
+    const totalScore = combinationScores[combinationKey] || 1; // 1 come punteggio di default se la combinazione non è trovata
+
+    return totalScore;
+};
+
+*/
 
     const getFuelQuantityFactor = (quantity) => {
         if (quantity <= 100) {
@@ -317,6 +402,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick = 'empty' }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona tipo di generatore</option>
+                                {/*generatorOptions*/}
                                 {generatorTypes.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}

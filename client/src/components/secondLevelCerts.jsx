@@ -121,7 +121,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
                 {messageConfirm}
             </ConfirmPopUp>
 
-            <div className="w-full mt-10 flex items-center justify-center bg-gray-100 gap-4">
+            <div className="w-full mt-10 flex flex-col md:flex-row items-center justify-center bg-gray-100 gap-4">
 
                 {/* Sezione Richieste da approvare */}
                 <div className="w-full  h-[70vh] overflow-y-auto mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">

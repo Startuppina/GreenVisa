@@ -22,16 +22,16 @@ function Protocolli() {
                     <strong>HOSPITALITY</strong>: hotel, B&B, residence e qualsiasi struttura ricettiva.<br />
                     <strong>SPA & WELLNESS</strong>: centri wellness, piscine ed ogni edificio dedicato al relax e alla cura della persona.<br />
                     <strong>TRASPORTI</strong>: ridurre le emissioni in un settore fondamentale per le organizzazione rappresenta una sfida al giorno d’oggi.<br />
-                    <strong>INDUSTRY</strong>: misurazione scientifica di qualsiasi sito produttivo, tenendo conto delle specificità dei macchinari utilizzati e delle filiera oggetto dello studio.<br />
+                    <strong>INDUSTRY</strong>: misurazione scientifica di qualsiasi sito produttivo, tenendo conto delle specificità dei macchinari utilizzati e della filiera oggetto dello studio.<br />
                     <strong>STORE</strong>: dedicato a qualsiasi struttura per la vendita, dalla piccola bottega al grande centro commerciale.<br />
                     <strong>BAR & REASTAURANT</strong>: dedicato a risortanti, bar, pub e strutture dedicate a ricevimenti.<br /><br />
 
-                    Il protocollo, come previsto dai più <strong>rigorosi standard internazionali</strong>, 
-                    si basa su <strong>dati certi e facilmente reperibili che riguardano 
-                    l’edificio, gli impianti presenti</strong> (caldaie o altri sistemi per 
-                    il riscaldamento, sistemi per il raffrescamento e per la produzione di 
-                    acqua calda sanitaria, più eventuali impianti fotovoltaici) <strong>e i 
-                    vettori energetici</strong> che alimentano i sistemi.
+                    Il protocollo, come previsto dai più <strong>rigorosi standard internazionali</strong>,
+                    si basa su <strong>dati certi e facilmente reperibili che riguardano
+                        l’edificio, gli impianti presenti</strong> (caldaie o altri sistemi per
+                    il riscaldamento, sistemi per il raffrescamento e per la produzione di
+                    acqua calda sanitaria, più eventuali impianti fotovoltaici) <strong>e i
+                        vettori energetici</strong> che alimentano i sistemi.
                 </p>
             </div>
         </div>
