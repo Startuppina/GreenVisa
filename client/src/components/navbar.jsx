@@ -53,7 +53,7 @@ function Navbar() {
             </div>
 
             {/* Show menu button when the window is small */}
-            <div className={!showMenu ? "absolute top-0 left-0 right-0 bottom-0" : "hidden"}>
+            <div className={!showMenu ? "" : "hidden"}>
                 <img
                     src="/img/menu.png"
                     alt="menu"
@@ -61,6 +61,7 @@ function Navbar() {
                     onClick={() => setOpenDrawer(!openDrawer)}
                 />
             </div>
+
 
             {/* Drawer */}
             <div className={"fixed top-0 right-0 h-full w-64 transform transition-transform duration-300 bg-white p-4 z-30 " + (openDrawer ? "translate-x-0" : "translate-x-full")}>

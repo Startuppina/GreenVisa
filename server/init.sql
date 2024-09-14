@@ -254,6 +254,8 @@ CREATE TYPE generator_type_enum AS ENUM (
     'Caldaia tradizionale', 
     'Caldaia condensazione', 
     'Pompa di calore idronica', 
+    'split',
+    'Bollitore elettrico',
     'Ibrido (Caldaia e Pompa di Calore)', 
     'Teleriscaldamento', 
     'Cogeneratore o Trigenerazione con Motore endotermico',
@@ -272,7 +274,8 @@ CREATE TYPE fuel_type_enum AS ENUM (
     'Biogas', 
     'Biodiesel', 
     'Elettrico - mix generico', 
-    'Elettrico - 100% rinnovabili'
+    'Elettrico - 100% rinnovabili',
+    'Energia termica'
 );
 
 CREATE TYPE electricity_supply_enum AS ENUM (
