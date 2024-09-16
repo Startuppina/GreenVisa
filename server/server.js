@@ -513,6 +513,21 @@ app.put("/api/update-legal-headquarter", authenticateJWT, async (req, res) => {
   }
 });
 
+app.get("/api/fetch-users", authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+
+    if (req.user.role !== "administrator") {
+      return res.status(401).json({ message: "Non sei autorizzato" });
+    }
+
+    const result = await pool.query("SELECT * FROM users order by id ASC");
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+})
+
 
 app.post("/api/send_email", async (req, res) => {
   try {

@@ -1,45 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import MessagePopUp from './messagePopUp';
-import ConfirmPopUp from './confirmPopUp';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import MessagePopUp from "./messagePopUp";
 import { MutatingDots } from 'react-loader-spinner';
-import { useRecoveryContext } from '../provider/provider';
 
-const MessagesDashboard = () => {
-    const [messages, setMessages] = useState([]);
-    const [totalMessages, setTotalMessages] = useState(0);
-    const [buttonPopup, setButtonPopup] = useState(false);
-    const [messagePopUp, setMessagePopUp] = useState("");
-    const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
-    const [messageToDelete, setMessageToDelete] = useState(null);
-    const [emailForm, setEmailForm] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-
+function AllUsers() {
+    const [users, setUsers] = useState([]);
+    const [showEmailForm, setShowEmailForm] = useState(false);
     const [emailTitle, setEmailTitle] = useState("");
     const [emailContent, setEmailContent] = useState("");
-    const [currentMessageEmail, setCurrentMessageEmail] = useState("");
     const [admin, setAdmin] = useState('');
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopUp, setMessagePopUp] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleTitleChange = (e) => setEmailTitle(e.target.value);
     const handleContentChange = (e) => setEmailContent(e.target.value);
+    const [currentMessageEmail, setCurrentMessageEmail] = useState("");
+
+
 
     useEffect(() => {
-        const fetchMessages = async () => {
-            const token = localStorage.getItem('token');
-
+        const fetchUsers = async () => {
+            const token = localStorage.getItem("token");
             try {
-                const response = await axios.get('http://localhost:8080/api/messages', {
+                const response = await axios.get("http://localhost:8080/api/fetch-users", {
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
                 if (response.status === 200) {
-                    setMessages(response.data.messages);
-                    setTotalMessages(response.data.count);
+                    setUsers(response.data);
                 }
             } catch (error) {
-                setMessagePopUp("Errore durante il recupero dei messaggi");
+                setMessagePopUp("Errore durante il recupero degli utenti");
                 setButtonPopup(true);
             }
         };
@@ -63,65 +56,15 @@ const MessagesDashboard = () => {
             }
         }
 
-        fetchMessages();
         fetchAdminUsername();
+        fetchUsers();
     }, []);
-
-    const deleteMessage = async () => {
-        if (!messageToDelete) return;
-
-        const { id } = messageToDelete;
-        const token = localStorage.getItem('token');
-
-        try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-message/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.status === 200) {
-                setMessages(prevMessages => prevMessages.filter(message => message.id !== id));
-                setTotalMessages(prevTotalMessages => prevTotalMessages - 1);
-                setPopupConfirmDelete(false);
-            }
-        } catch (error) {
-            setMessagePopUp("Errore durante la cancellazione del messaggio");
-            setButtonPopup(true);
-        }
-    };
-
-    const handleDelete = (id) => {
-        setMessageToDelete({ id });
-        setMessagePopUp("Sei sicuro di voler eliminare questo messaggio?");
-        setPopupConfirmDelete(true);
-    };
-
-    const handleSendEmail = async (email) => {
-        const token = localStorage.getItem('token');
-
-        try {
-            const response = await axios.post("http://localhost:8080/api/send-email-message", { email }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.status === 200) {
-                setMessagePopUp("Email di presa in carico inviata correttamente");
-                setButtonPopup(true);
-            }
-
-        } catch (error) {
-            setMessagePopUp(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
-        }
-    };
 
     const sendResponse = async (e) => {
         e.preventDefault();
+
         setIsLoading(true);
+
         const token = localStorage.getItem('token');
         try {
             const response = await axios.post("http://localhost:8080/api/send-message-response", { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
@@ -132,93 +75,83 @@ const MessagesDashboard = () => {
             });
 
             if (response.status === 200) {
-                setEmailForm(false);
-                setEmailTitle("");
-                setEmailContent("");
-                setMessagePopUp("Messaggio inviato correttamente");
-                setButtonPopup(true);
+                setTimeout(() => {
+                    setEmailTitle("");
+                    setIsLoading(false);
+                    setEmailContent("");
+                    setMessagePopUp("Messaggio inviato correttamente");
+                    setButtonPopup(true);
+                }, 3000);
+
             }
 
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
-        } finally {
-            setIsLoading(false);
         }
     };
 
-
     return (
         <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
-            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
-                {messagePopUp}
-            </MessagePopUp>
-            <ConfirmPopUp
-                trigger={popupConfirmDelete}
-                setTrigger={setPopupConfirmDelete}
-                onButtonClick={deleteMessage}
-            >
-                {messagePopUp}
-            </ConfirmPopUp>
             <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl px-10 py-6">
-                <h1 className="text-2xl font-bold text-black text-center pb-10">Messaggi degli Utenti</h1>
-
-                <div className="mb-6">
-                    <p className="text-xl font-semibold">Messaggi totali: {totalMessages}</p>
-                </div>
+                <h1 className="text-2xl font-bold text-black text-center pb-10">Dettagli Utente</h1>
 
                 <div className="space-y-4">
-                    {messages.map(message => (
-                        <div key={message.id} className="bg-white p-4 rounded-lg shadow-md border">
-                            <div className="mb-3">
-                                <h2 className="text-xl font-bold">Nome e Cognome</h2>
-                                <p className="text-lg">{message.name_surname}</p>
+                    {users.map(user => (
+                        <div key={user.id} className="bg-white p-4 rounded-lg shadow-md border">
+                            <div className="w-full">
+                                <div className="flex flex-col md:flex-row md:justify-between mb-4">
+                                    <div className="mb-3 md:mb-0 md:w-2/3">
+                                        <h2 className="text-xl font-bold">Nome e Cognome del referente</h2>
+                                        <p className="text-lg">{user.username}</p>
+                                    </div>
+                                    <div className="mb-3 md:mb-0 md:w-2/3">
+                                        <h2 className="text-xl font-bold">Email</h2>
+                                        <p className="text-lg">{user.email}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col md:flex-row md:justify-between mb-4">
+                                    <div className="mb-3 md:mb-0 md:w-2/3">
+                                        <h2 className="text-xl font-bold">Nome Azienda</h2>
+                                        <p className="text-lg">{user.company_name !== null ? user.company_name : "Non specificato"}</p>
+                                    </div>
+                                    <div className="mb-3 md:mb-0 md:w-2/3">
+                                        <h2 className="text-xl font-bold">Telefono</h2>
+                                        <p className="text-lg">{user.phone_number !== null ? user.phone_number : "Non specificato"}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col md:flex-row md:justify-between mb-4">
+                                    <div className="mb-3 md:mb-0 md:w-2/3">
+                                        <h2 className="text-xl font-bold">Partita IVA</h2>
+                                        <p className="text-lg">{user.p_iva !== null ? user.p_iva : "Non specificata"}</p>
+                                    </div>
+                                    <div className="mb-3 md:mb-0 md:w-2/3">
+                                        <h2 className="text-xl font-bold">Codice Fiscale</h2>
+                                        <p className="text-lg">{user.tax_code !== null ? user.tax_code : "Non specificato"}</p>
+                                    </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <h2 className="text-xl font-bold">Sede Legale</h2>
+                                    <p className="text-lg">{user.legal_headquarter !== null ? user.legal_headquarter : "Non specificata"}</p>
+                                </div>
                             </div>
-                            <div className="mb-3">
-                                <h2 className="text-xl font-bold">Email</h2>
-                                <p className="text-lg">{message.email}</p>
-                            </div>
-                            <div className="mb-3">
-                                <h2 className="text-xl font-bold">Ragione sociale</h2>
-                                <p className="text-lg">{message.company_name !== "" ? message.company_name : "Non specificato"}</p>
-                            </div>
-                            <div className="mb-3">
-                                <h2 className="text-xl font-bold">Telefono</h2>
-                                <p className="text-lg">{message.phone_number !== "" ? message.phone_number : "Non specificato"}</p>
-                            </div>
-                            <div className="mb-3">
-                                <h2 className="text-xl font-bold">Soggetto</h2>
-                                <p className="text-lg">{message.subject}</p>
-                            </div>
-                            <div className="mb-3">
-                                <h2 className="text-xl font-bold">Messaggio</h2>
-                                <p className="text-lg">{message.message}</p>
-                            </div>
+
                             <div className="flex justify-end mt-4 gap-3">
                                 <button
-                                    onClick={() => handleDelete(message.id)}
-                                    className="bg-red-500 border-red-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-red-500 transition-colors duration-300 ease-in-out"
-                                >
-                                    Elimina
-                                </button>
-                                <button
-                                    onClick={() => handleSendEmail(message.email)}
+                                    onClick={() => {
+                                        setCurrentMessageEmail(user.email);
+                                        setShowEmailForm(!showEmailForm);
+                                    }}
                                     className="bg-blue-500 border-blue-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out"
                                 >
-                                    Conferma ricezione
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setCurrentMessageEmail(message.email);
-                                        setEmailForm(!emailForm);
-                                    }}
-                                    className="bg-green-500 border-green-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-green-500 transition-colors duration-300 ease-in-out"
-                                >
-                                    Rispondi
+                                    Invia Email
                                 </button>
                             </div>
 
-                            {emailForm && (
+                            {showEmailForm && (
                                 <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border  px-10 py-6">
                                     <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                                         {messagePopUp}
@@ -288,13 +221,16 @@ const MessagesDashboard = () => {
                                     </div>
 
                                 </div>
+
                             )}
                         </div>
+
                     ))}
                 </div>
             </div>
         </div>
-    );
-};
 
-export default MessagesDashboard;
+    );
+}
+
+export default AllUsers;

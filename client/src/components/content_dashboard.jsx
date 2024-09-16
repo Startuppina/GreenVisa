@@ -13,12 +13,15 @@ import "react-quill/dist/quill.snow.css";
 import { useNavigate } from "react-router-dom";
 import UsersGeneratorTypes from "./usersGeneratorTypes";
 import SecondLevelCerts from "./secondLevelCerts";
+import AllUsers from "./allUsers";
 
 const Dashboard = () => {
   const [news, setNews] = useState([]);
   const [products, setProducts] = useState([]);
   const [totalNews, setTotalNews] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [totalMessages, setTotalMessages] = useState(0);
+  const [totalRequests, setTotalRequests] = useState(0);
   const [categories, setCategories] = useState([]);
 
   const [buttonPopup, setButtonPopup] = useState(false);
@@ -50,7 +53,47 @@ const Dashboard = () => {
       }
     };
 
+    const fetchMessages = async () => {
+      const token = localStorage.getItem('token');
+
+      try {
+        const response = await axios.get('http://localhost:8080/api/messages', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.status === 200) {
+          setTotalMessages(response.data.count);
+        }
+      } catch (error) {
+        setMessagePopUp("Errore durante il recupero dei messaggi");
+        setButtonPopup(true);
+      }
+    };
+
+    const fetchRequests = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await axios.get("http://localhost:8080/api/fetch-second-level-requests", {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 200) {
+          setTotalRequests(response.data.requests.length + response.data.approved.length);
+        }
+      } catch (error) {
+        setMessagePopup("Errore durante il recupero dei dati.");
+        setButtonPopup(true);
+      }
+    };
+
     fetchNews();
+    fetchMessages();
+    fetchRequests();
   }, [news]);
 
   useEffect(() => {
@@ -214,12 +257,6 @@ const Dashboard = () => {
     setActiveSection(activeSection === section ? null : section);
   };
 
-  const [messageCountFromChild, setMessageCountFromChild] = useState("");
-  // Funzione che sarà chiamata dal figlio per inviare i dati
-  const handleDataFromChild = (data) => {
-    setMessageCountFromChild(data); // Aggiorna lo stato con i dati ricevuti
-  };
-
   const [messageCountFromRequests, setMessageCountFromRequests] = useState("");
 
   // Funzione che sarà chiamata dal figlio per inviare i dati
@@ -248,6 +285,39 @@ const Dashboard = () => {
       </ConfirmPopUp>
 
       <div className="flex flex-wrap justify-center items-center gap-4">
+        <button
+          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "users" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("users");
+          }}
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-8 w-8"
+          >
+            <path
+              d="M5 21h12a4 4 0 0 0 4-4V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v13c0 1.657-.343 3-2 3Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M3 10a2 2 0 0 1 2-2h2v10.5c0 1.38-.62 2.5-2 2.5s-2-1.12-2-2.5V10Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="12" cy="8" r="1" fill="currentColor" />
+            <path d="M11 14h6m-6 3h3" stroke="currentColor" strokeWidth="2" />
+          </svg>
+          <span>Utenti registrati</span>
+        </button>
         <button
           className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "news" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
@@ -305,31 +375,42 @@ const Dashboard = () => {
           </svg>
           <span>Certificazioni</span>
         </button>
-
         <button
-          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "messages" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          className={`relative w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "messages" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'
+            } gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("messages");
           }}
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8"
-          >
-            <g fill="#feffff">
-              <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2">
-                <path strokeLinejoin="round" d="M14 19c3.771 0 5.657 0 6.828-1.172C22 16.657 22 14.771 22 11c0-3.771 0-5.657-1.172-6.828C19.657 3 17.771 3 14 3h-4C6.229 3 4.343 3 3.172 4.172C2 5.343 2 7.229 2 11c0 3.771 0 5.657 1.172 6.828c.653.654 1.528.943 2.828 1.07" />
-                <path d="M12 11v.01M8 11v.01m8-.01v.01M14 19c-1.236 0-2.598.5-3.841 1.145c-1.998 1.037-2.997 1.556-3.489 1.225c-.492-.33-.399-1.355-.212-3.404L6.5 17.5" />
+          {totalMessages > 0 && (
+            <span className="absolute bottom-[70px] left-[270px] bg-red-500 text-white px-3 py-1 rounded-full">
+              {totalMessages}
+            </span>
+          )}
+
+          <div className="flex justify-center items-center">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8 ml-4"
+            >
+              <g fill="#feffff">
+                <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2">
+                  <path
+                    strokeLinejoin="round"
+                    d="M14 19c3.771 0 5.657 0 6.828-1.172C22 16.657 22 14.771 22 11c0-3.771 0-5.657-1.172-6.828C19.657 3 17.771 3 14 3h-4C6.229 3 4.343 3 3.172 4.172C2 5.343 2 7.229 2 11c0 3.771 0 5.657 1.172 6.828c.653.654 1.528.943 2.828 1.07"
+                  />
+                  <path d="M12 11v.01M8 11v.01m8-.01v.01M14 19c-1.236 0-2.598.5-3.841 1.145c-1.998 1.037-2.997 1.556-3.489 1.225c-.492-.33-.399-1.355-.212-3.404L6.5 17.5" />
+                </g>
               </g>
-            </g>
-          </svg>
-          <div className="flex flex-col">
-            <span>Messaggi</span>
-            <span>Ricevuti: {messageCountFromChild ? messageCountFromChild : "controlla"}</span>
+            </svg>
+
+            <div className="flex flex-col ml-2">
+              <span className="mb-2">Messaggi</span>
+            </div>
           </div>
         </button>
 
@@ -460,50 +541,48 @@ const Dashboard = () => {
           </div>
         </button>
         <button
-          className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "2ndLevelCerts" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          className={`relative w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "2ndLevelCerts" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'
+            } hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
             toggleSection("2ndLevelCerts");
           }}
         >
-          <svg
-            viewBox="0 0 48 48"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="h-10 w-10 flex-shrink-0"
-          >
-            <g>
-              <path
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M37.42,14.7a4.1,4.1,0,0,0-4.08-4.11h0a4.11,4.11,0,1,0,0,8.21,4.09,4.09,0,0,0,2.88-1.18,4,4,0,0,0,1.19-2.92ZM16.1,29.44l-2-2L7.9,29.42H7.7a.69.69,0,0,1-.53-.2L5.72,27.79a.7.7,0,0,1-.11-.88L7.3,24a13,13,0,0,1,10.07-6.39l2.49-.22q2.17-2.58,4-4.42A26.4,26.4,0,0,1,32,7.12a25.63,25.63,0,0,1,9.77-1.61.79.79,0,0,1,.54.22.68.68,0,0,1,.22.5A25.27,25.27,0,0,1,40.78,16,25.79,25.79,0,0,1,35,24.16c-1.23,1.24-2.71,2.57-4.42,4l-.22,2.48A13,13,0,0,1,24,40.72l-2.89,1.69a.78.78,0,0,1-.37.09.82.82,0,0,1-.52-.2l-1.45-1.46a.69.69,0,0,1-.18-.71l1.93-6.27-1.94-1.94"
-              />
-              <line
-                x1="30.62"
-                y1="28.16"
-                x2="20.52"
-                y2="33.86"
-              />
-              <line
-                x1="19.86"
-                y1="17.39"
-                x2="14.15"
-                y2="27.49"
-              />
-              <path
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13,35c4-.74,11.1-7.4,11.93-11.93C20.37,23.94,13.71,31,13,35Z"
-              />
-            </g>
-          </svg>
+          {totalRequests > 0 && (
+            <span className="absolute bottom-[70px] left-[270px] bg-red-500 text-white px-3 py-1 rounded-full">
+              {totalRequests}
+            </span>
+          )}
 
-          <div className="flex flex-col ">
-            <span className="text-lg font-medium">Richieste certificazioni 2° livello</span>
-            <span>Ricevuti: {messageCountFromRequests ? messageCountFromRequests : "controlla"}</span>
+          <div className="flex items-center justify-start h-full px-4">
+            <svg
+              viewBox="0 0 48 48"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="h-10 w-10 flex-shrink-0 mr-4"
+            >
+              <g>
+                <path
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M37.42,14.7a4.1,4.1,0,0,0-4.08-4.11h0a4.11,4.11,0,1,0,0,8.21,4.09,4.09,0,0,0,2.88-1.18,4,4,0,0,0,1.19-2.92ZM16.1,29.44l-2-2L7.9,29.42H7.7a.69.69,0,0,1-.53-.2L5.72,27.79a.7.7,0,0,1-.11-.88L7.3,24a13,13,0,0,1,10.07-6.39l2.49-.22q2.17-2.58,4-4.42A26.4,26.4,0,0,1,32,7.12a25.63,25.63,0,0,1,9.77-1.61.79.79,0,0,1,.54.22.68.68,0,0,1,.22.5A25.27,25.27,0,0,1,40.78,16,25.79,25.79,0,0,1,35,24.16c-1.23,1.24-2.71,2.57-4.42,4l-.22,2.48A13,13,0,0,1,24,40.72l-2.89,1.69a.78.78,0,0,1-.37.09.82.82,0,0,1-.52-.2l-1.45-1.46a.69.69,0,0,1-.18-.71l1.93-6.27-1.94-1.94"
+                />
+                <line x1="30.62" y1="28.16" x2="20.52" y2="33.86" />
+                <line x1="19.86" y1="17.39" x2="14.15" y2="27.49" />
+                <path
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13,35c4-.74,11.1-7.4,11.93-11.93C20.37,23.94,13.71,31,13,35Z"
+                />
+              </g>
+            </svg>
+
+            <div className="flex flex-col justify-center">
+              <span className="text-lg font-medium">Richieste certificazioni 2° livello</span>
+            </div>
           </div>
         </button>
 
@@ -849,7 +928,8 @@ const Dashboard = () => {
         )}
       </div>
 
-      {activeSection === 'messages' && <MessagesDashboard sendDataToParent={handleDataFromChild} />}
+      {activeSection === 'users' && <AllUsers />}
+      {activeSection === 'messages' && <MessagesDashboard />}
       {activeSection === 'orders' && <AllOrders />}
       {activeSection === 'promocodes' && <PromoCodes />}
       {activeSection === 'forms' && <NewsForm />}
