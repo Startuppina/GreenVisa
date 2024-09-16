@@ -529,46 +529,46 @@ const UserPage = () => {
                                     {/* Bottoni di navigazione per le sezioni */}
                                     <div className="flex flex-wrap justify-center mb-8 gap-3">
                                         <button
-                                            className={`p-2 text-sm w-auto ${activeInput === 'username' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'username' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                                             onClick={() => setActiveInput('username')}
                                         >
-                                            Modifica Username
+                                            Username
                                         </button>
                                         <button
-                                            className={`p-2 text-sm w-auto ${activeInput === 'company' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'company' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                                             onClick={() => setActiveInput('company')}
                                         >
-                                            Modifica Ragione Sociale
+                                            Ragione Sociale
                                         </button>
                                         <button
-                                            className={`p-2 text-sm w-auto ${activeInput === 'email' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'email' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                                             onClick={() => setActiveInput('email')}
                                         >
-                                            Modifica Email
+                                            Email
                                         </button>
                                         <button
-                                            className={`p-2 text-sm w-auto ${activeInput === 'phone' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'phone' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                                             onClick={() => setActiveInput('phone')}
                                         >
-                                            Modifica Telefono
+                                            Telefono
                                         </button>
                                         <button
-                                            className={`p-2 text-sm w-auto ${activeInput === 'piva' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'piva' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                                             onClick={() => setActiveInput('piva')}
                                         >
-                                            Modifica Partita IVA
+                                            Partita IVA
                                         </button>
                                         <button
-                                            className={`p-2 text-sm w-auto ${activeInput === 'tax_code' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'tax_code' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                                             onClick={() => setActiveInput('tax_code')}
                                         >
-                                            Modifica Codice Fiscale
+                                            Codice Fiscale
                                         </button>
                                         <button
-                                            className={`p-2 text-sm w-auto ${activeInput === 'headquarter' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                            className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'headquarter' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                                             onClick={() => setActiveInput('headquarter')}
                                         >
-                                            Modifica Sede Legale
+                                            Sede Legale
                                         </button>
                                     </div>
 
@@ -588,7 +588,7 @@ const UserPage = () => {
                                                 <input
                                                     type='submit'
                                                     value='Modifica username'
-                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="mt-3 p-3 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 />
                                             </div>
                                         </form>
@@ -609,7 +609,7 @@ const UserPage = () => {
                                                 <input
                                                     type='submit'
                                                     value='Modifica ragione sociale'
-                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="mt-3 p-3 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 />
                                             </div>
                                         </form>
@@ -630,7 +630,7 @@ const UserPage = () => {
                                                 <input
                                                     type='submit'
                                                     value='Modifica email'
-                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="mt-3 p-3 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 />
                                             </div>
                                         </form>
@@ -653,7 +653,7 @@ const UserPage = () => {
                                                 <input
                                                     type='submit'
                                                     value='Modifica telefono'
-                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="mt-3 p-3 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 />
                                             </div>
                                         </form>
@@ -676,7 +676,7 @@ const UserPage = () => {
                                                 <input
                                                     type='submit'
                                                     value='Modifica partita IVA'
-                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="mt-3 p-3 auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 />
                                             </div>
                                         </form>
@@ -697,7 +697,7 @@ const UserPage = () => {
                                                 <input
                                                     type='submit'
                                                     value='Modifica codice fiscale'
-                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="mt-3 p-3 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 />
                                             </div>
                                         </form>
@@ -718,7 +718,7 @@ const UserPage = () => {
                                                 <input
                                                     type='submit'
                                                     value='Modifica sede legale'
-                                                    className="mt-3 p-3 w-[50%] bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="mt-3 p-3 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 />
                                             </div>
                                         </form>
@@ -747,7 +747,7 @@ const UserPage = () => {
                                                 </div>
                                                 <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span> / 100</div>
                                             </div>
-                                            <div className='flex justify-center md:justify-start'>
+                                            <div className='flex justify-center md:justify-start mt-2 md:mt-0'>
                                                 <button className="p-2 w-[235px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
                                                     <Link to={`/questionario/${info.product_category}?param1=${info.product_id}&param2=${info.product_category}`}>
                                                         {info.completed ? 'Visualizza questionario' : 'Completa questionario'}

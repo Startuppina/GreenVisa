@@ -1,6 +1,7 @@
 import React from "react";
 import axios from "axios";
 import MessagePopUp from "./messagePopUp";
+import PhoneInput from "react-phone-input-2";
 
 function Contacts() {
     const [name, setName] = React.useState('');
@@ -29,8 +30,8 @@ function Contacts() {
         setCompany_name(event.target.value);
     };
 
-    const handlePhoneChange = (event) => {
-        setPhone(event.target.value);
+    const handlePhoneChange = (value) => {
+        setPhone(value);
     };
 
     const handleSubmit = async (event) => {
@@ -89,27 +90,37 @@ function Contacts() {
                             <form onSubmit={handleSubmit} className="w-full">
                                 <div className='mb-5'>
                                     <label htmlFor="name" className='font-arial text-xl font-bold text-start block mb-2'>Nome e cognome</label>
-                                    <input type="text" name="name" id="name" className='w-full p-2 bg-[#d9d9d9]' value={name} onChange={handleNameChange} />
+                                    <input type="text" name="name" id="name" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5" value={name} onChange={handleNameChange} />
                                 </div>
                                 <div className='mb-5'>
                                     <label htmlFor="email" className='font-arial text-xl font-bold text-start block mb-2'>Email</label>
-                                    <input type="email" name="email" id="email" className='w-full p-2 bg-[#d9d9d9]' value={email} onChange={handleEmailChange} />
+                                    <input type="email" name="email" id="email" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5" value={email} onChange={handleEmailChange} />
                                 </div>
                                 <div className='mb-5'>
                                     <label htmlFor="company_name" className='font-arial text-xl font-bold text-start block mb-2'>Ragione sociale</label>
-                                    <input type="company_name" name="company_name" id="company_name" className='w-full p-2 bg-[#d9d9d9]' value={company_name} onChange={handleCompanyNameChange} />
+                                    <input type="company_name" name="company_name" id="company_name" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5" value={company_name} onChange={handleCompanyNameChange} />
                                 </div>
                                 <div className='mb-5'>
-                                    <label htmlFor="phone" className='font-arial text-xl font-bold text-start block mb-2'>Telefono</label>
-                                    <input type="phone" name="phone" id="phone" className='w-full p-2 bg-[#d9d9d9]' value={phone} onChange={handlePhoneChange} />
+                                    <div className="w-full">
+                                        <label htmlFor="phone" className="font-arial text-xl font-bold text-start block mb-2">Telefono</label>
+                                        <PhoneInput
+                                            country={'it'}
+                                            value={phone}
+                                            onChange={handlePhoneChange}
+                                            buttonClass="w-[45px] p-2 bg-gray-50"
+                                            dropdownClass="w-full p-2 bg-gray-50"
+                                            inputStyle={{ width: '100%', height: '42px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                                            preferredCountries={['it']}
+                                        />
+                                    </div>
                                 </div>
                                 <div className='mb-5'>
                                     <label htmlFor="subject" className='font-arial text-xl font-bold text-start block mb-2'>Soggetto</label>
-                                    <input type="text" name="subject" id="subject" className='w-full p-2 bg-[#d9d9d9]' value={subject} onChange={handleSubjectChange} />
+                                    <input type="text" name="subject" id="subject" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5" value={subject} onChange={handleSubjectChange} />
                                 </div>
                                 <div className='mb-5'>
                                     <label htmlFor="message" className='font-arial text-xl font-bold text-start block mb-2'>Messaggio</label>
-                                    <textarea name="message" id="message" className='w-full h-44 p-2 bg-[#d9d9d9] resize-none' value={message} onChange={handleMessageChange}></textarea>
+                                    <textarea name="message" id="message" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5 resize-none" value={message} onChange={handleMessageChange}></textarea>
                                 </div>
                                 <div className='flex justify-center'>
                                     <input type="submit" value="Invia" className="mt-7 font-arial font-semibold text-xl w-[70%] md:text-2xl md:w-[50%] lg:text-2xl lg:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
