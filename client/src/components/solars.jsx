@@ -75,8 +75,8 @@ function Solars() {
     };
 
     const cancelEdit = () => {
-        console.log('Cancellazione annullata');
         setShowSolarFormModifier(false);
+        setShowSolarForm(false);
     };
 
     return (
@@ -121,7 +121,7 @@ function Solars() {
                 {numSolars === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
                         <div className="text-center pb-4">Nessun impianto solare presente</div>
-                        <button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowSolarForm(!showSolarForm)}>Aggiungi un impianto solare</button>
+                        {/*<button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowSolarForm(!showSolarForm)}>Aggiungi un impianto solare</button>*/}
                     </div>
                 ) : (
                     <>
@@ -133,9 +133,6 @@ function Solars() {
                                 >
                                     <div className="">
                                         <strong>Quantita installata:</strong> {solar.installed_area} m²
-                                    </div>
-                                    <div className="mt-10">
-                                        <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {solar.solarscore}
                                     </div>
                                     <div className="flex justify-end gap-2">
                                         <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
@@ -164,7 +161,7 @@ function Solars() {
                     </>
                 )}
             </div>
-            {showSolarForm && <div className="pb-1"><SolarForm solar="empty" isEdit={false} /></div>}
+            {showSolarForm && <div className="pb-1"><SolarForm allSolarsData={solars} solar="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
 
         </div>
     );

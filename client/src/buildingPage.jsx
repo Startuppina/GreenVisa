@@ -8,6 +8,7 @@ import Building from "./components/building";
 import Plants from "./components/plants";
 import Solars from "./components/solars";
 import Photovoltaics from "./components/photovoltaics";
+import Consumption from "./components/comsumption";
 
 
 function BuildingPage() {
@@ -34,13 +35,22 @@ function BuildingPage() {
                 </button>
 
                 <button
+                    className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'consumi' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                    onClick={() => {
+                        toggleSection("consumi");
+                    }}
+                >
+                    <span className="text-arial text-xl">Consumi annui</span>
+                </button>
+
+                <button
                     className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'solari' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
 
                     onClick={() => {
                         toggleSection("solari");
                     }}
                 >
-                    <span className="text-arial text-xl">Impainti solari termici</span>
+                    <span className="text-arial text-xl">Impianti solari termici</span>
                 </button>
 
                 <button
@@ -53,6 +63,7 @@ function BuildingPage() {
                 </button>
             </div>
             {activeSection === "impianti" && <Plants />}
+            {activeSection === "consumi" && <Consumption />}
             {activeSection === "solari" && <Solars />}
             {activeSection === "fotovoltaici" && <Photovoltaics />}
             <Footer />

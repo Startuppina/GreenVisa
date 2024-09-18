@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { useRecoveryContext } from "../provider/provider";
 
 function MessagePopUp(props) {
   const [position, setPosition] = useState({ top: '50%', left: '50%' });
+  const { triggerRefresh } = useRecoveryContext();
 
   const updatePosition = () => {
     const viewportHeight = window.innerHeight;
@@ -39,7 +41,10 @@ function MessagePopUp(props) {
         <div className="w-full h-auto flex items-center justify-center">
           <button
             className="w-[40%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
-            onClick={() => props.setTrigger(false)}
+            onClick={() => {
+              props.setTrigger(false)
+              //triggerRefresh();
+            }}
           >
             Ok
           </button>

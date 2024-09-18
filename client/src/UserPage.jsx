@@ -732,6 +732,7 @@ const UserPage = () => {
                                     <h1 className="text-2xl font-bold text-center">
                                         I tuoi edifici
                                     </h1>
+                                    <p className="text-center">Accedi</p>
                                 </div>
                             </Link>
 

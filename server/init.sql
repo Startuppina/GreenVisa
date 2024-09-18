@@ -156,131 +156,38 @@ CREATE TABLE IF NOT EXISTS credit_cards (
 
 -- BUILDINGS INPIANTI SOLARI E FOTOVOLTAICI DI UN UTENTE --
 
-CREATE TYPE construction_year_enum AS ENUM (
-    'Prima del 1976', 
-    'Tra 1976 e 1991', 
-    'Tra 1991 e 2004', 
-    'dopo il 2004'
-);
-
-CREATE TYPE renovation_enum AS ENUM (
-    'Edile', 
-    'Impiantistico', 
-    'No'
-);
-
-CREATE TYPE heat_distribution_enum AS ENUM (
-    'Radiatori', 
-    'Ventilconvettori', 
-    'Impianto ad aria canalizzato', 
-    'Pavimento radiante'
-);
-
-CREATE TYPE ventilation_enum AS ENUM (
-    'Si', 
-    'Si, con recupero calore', 
-    'No'
-);
-
-CREATE TYPE energy_control_enum AS ENUM (
-    'Settimanale', 
-    'Mensile', 
-    'Annuale', 
-    'No'
-);
-
-CREATE TYPE maintenance_enum AS ENUM (
-    'Settimanale', 
-    'Mensile', 
-    'Annuale', 
-    'No'
-);
-
-CREATE TYPE water_recovery_enum AS ENUM (
-    'per irrigazione', 
-    'per la cassette di scarico', 
-    'altro', 
-    'No'
-);
-
-CREATE TYPE electricity_meter_enum AS ENUM (
-    'da 0 a 10 kW', 
-    'da 10 a 20 kW', 
-    'da 20 a 50 kW', 
-    'da 50 a 100 kW', 
-    'oltre i 100 kW'
-);
-
-CREATE TYPE analyzers_enum AS ENUM (
-    'Si', 
-    'No', 
-    'Non so'
-);
-
 
 CREATE TABLE IF NOT EXISTS buildings (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     user_id INTEGER REFERENCES users(id),  -- Assumendo che tu abbia una tabella 'users' con una colonna 'id'
-    description TEXT NOT NULL,
-    construction_year construction_year_enum NOT NULL,
-    renovation renovation_enum NOT NULL,
-    heat_distribution heat_distribution_enum NOT NULL,
-    ventilation ventilation_enum NOT NULL,
-    energy_control energy_control_enum NOT NULL,
-    maintenance maintenance_enum NOT NULL,
-    water_recovery water_recovery_enum NOT NULL,
-    electricity_meter electricity_meter_enum NOT NULL,
+    --description TEXT NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    usage VARCHAR(50) NOT NULL,
+    construction_year VARCHAR(50) NOT NULL,
+    renovation VARCHAR(50) NOT NULL,
+    heat_distribution VARCHAR(50) NOT NULL,
+    ventilation VARCHAR(50) NOT NULL,
+    energy_control VARCHAR(50) NOT NULL,
+    maintenance VARCHAR(50) NOT NULL,
+    electricity_forniture VARCHAR(50) NOT NULL,
+    water_recovery VARCHAR(50) NOT NULL,
+    electricity_meter VARCHAR(50) NOT NULL,
     incandescent INTEGER NOT NULL,
     led INTEGER NOT NULL,
     gas_lamp INTEGER NOT NULL,
-    analyzers analyzers_enum NOT NULL,
-    buildingScore DECIMAL(10, 2) DEFAULT 0.0
+    analyzers VARCHAR(50) NOT NULL,
+    autoLightingControlSystem VARCHAR(50) NOT NULL
+   -- buildingScore DECIMAL(10, 2) DEFAULT 0.0
 );
 
-CREATE TYPE plant_type_enum AS ENUM (
-    'Centralizzato', 
-    'Autonomo'
-);
-
-CREATE TYPE service_type_enum AS ENUM (
-    'Riscaldamento', 
-    'Raffrescamento', 
-    'Acqua calda sanitaria', 
-    'Altra produzione termica'
-);
-
-CREATE TYPE generator_type_enum AS ENUM (
-    'Caldaia tradizionale', 
-    'Caldaia condensazione', 
-    'Pompa di calore idronica', 
-    'split',
-    'Bollitore elettrico',
-    'Ibrido (Caldaia e Pompa di Calore)', 
-    'Teleriscaldamento', 
-    'Cogeneratore o Trigenerazione con Motore endotermico',
-    'Cogeneratore o Trigenerazione con Microturbina',
-    'Cogeneratore o Trigenerazione con Fuel Cell',
-    'Altro'
-);
-
-CREATE TYPE fuel_type_enum AS ENUM (
-    'Gas Naturale (Metano)', 
-    'GPL', 
-    'Gasolio', 
-    'Olio combustibile', 
-    'Pellet', 
-    'Cippato di legna', 
-    'Biogas', 
-    'Biodiesel', 
-    'Elettrico - mix generico', 
-    'Elettrico - 100% rinnovabili',
-    'Energia termica'
-);
-
-CREATE TYPE electricity_supply_enum AS ENUM (
-    'Elettrico - mix generico', 
-    'Elettrico - 100% rinnovabili'
+CREATE TABLE IF NOT EXISTS user_consumptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- assuming you have a users table with an id field
+    building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
+    energy_source VARCHAR(50) NOT NULL,
+    consumption DECIMAL(10, 2) NOT NULL
 );
 
 
@@ -289,29 +196,29 @@ CREATE TABLE IF NOT EXISTS plants (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- assuming you have a users table with an id field
     building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
     description TEXT NOT NULL,
-    plant_type plant_type_enum NOT NULL,
-    service_type service_type_enum NOT NULL,
-    generator_type generator_type_enum NOT NULL,
+    plant_type VARCHAR(50) NOT NULL,
+    service_type VARCHAR(50) NOT NULL,
+    generator_type VARCHAR(50) NOT NULL,
     generator_description TEXT DEFAULT NULL,  -- Optional if 'Altro' is selected
     generator_assigned_score DECIMAL(10,2) DEFAULT 0.0,
-    fuel_type fuel_type_enum NOT NULL,
-    quantity INTEGER CHECK (quantity > 0),  -- Quantity must be a positive integer
-    electricity_supply electricity_supply_enum NOT NULL,
-    plantScore DECIMAL(10,2) DEFAULT 0.0
+    fuel_type VARCHAR(50) NOT NULL
+    --quantity INTEGER CHECK (quantity > 0),  -- Quantity must be a positive integer
+    --electricity_supply VARCHAR(50) NOT NULL,
+    --plantScore DECIMAL(10,2) DEFAULT 0.0
 );
 
 CREATE TABLE IF NOT EXISTS solars (
     id SERIAL PRIMARY KEY,
     building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
-    installed_area DECIMAL(10,2) NOT NULL CHECK (installed_area > 0), --quantita' installata--
-    solarScore DECIMAL(10,2) DEFAULT 0.0
+    installed_area DECIMAL(10,2) NOT NULL CHECK (installed_area > 0) --quantita' installata--
+    --solarScore DECIMAL(10,2) DEFAULT 0.0
 );
 
 CREATE TABLE IF NOT EXISTS photovoltaics (
     id SERIAL PRIMARY KEY,
     building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
-    power DECIMAL(10,2) NOT NULL CHECK (power > 0), --potenza--
-    photovoltaicScore DECIMAL(10,2) DEFAULT 0.0
+    power DECIMAL(10,2) NOT NULL CHECK (power > 0) --potenza--
+    --photovoltaicScore DECIMAL(10,2) DEFAULT 0.0
 );
 
 -------------------------------------------------------------------------------------------------------------------------

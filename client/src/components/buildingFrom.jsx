@@ -8,8 +8,10 @@ import { useRecoveryContext } from "../provider/provider";
 function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const [buildingID, setBuildingID] = useState(buildingData.id || 0);
     const [name, setName] = useState(buildingData.name || "");
-    const [description, setDescription] = useState(buildingData.description || "");
+    const [address, setAddress] = useState(buildingData.address || "");
+    const [usage, setUsage] = useState(buildingData.usage || "");
     const [year, setYear] = useState(buildingData.construction_year || "");
+    const [location, setLocation] = useState(buildingData.location || "");
     const [renovation, setRenovation] = useState(buildingData.renovation || "");
     const [heating, setHeating] = useState(buildingData.heat_distribution || "");
     const [ventilation, setVentilation] = useState(buildingData.ventilation || "");
@@ -21,17 +23,9 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const [lighting, setLighting] = useState(parseInt(buildingData.incandescent) || "");
     const [led, setLed] = useState(parseInt(buildingData.led) || "");
     const [gasLamp, setGasLamp] = useState(parseInt(buildingData.gas_lamp) || "");
+    const [electricForniture, setElectricForniture] = useState(buildingData.electricity_forniture || "");
+    const [autoLightingControlSystem, setAutoLightingControlSystem] = useState(buildingData.autolightingcontrolsystem || "");
     const [isLoading, setIsLoading] = useState(false);
-
-    const [years, setYears] = useState([]);
-    const [renovations, setRenovations] = useState([]);
-    const [heatings, setHeatings] = useState([]);
-    const [ventilations, setVentilations] = useState([]);
-    const [energies, setEnergies] = useState([]);
-    const [maintinances, setMaintinances] = useState([]);
-    const [recoveries, setRecoveries] = useState([]);
-    const [electricityCounters, setElectricityCounters] = useState([]);
-    const [analyzers, setAnalyzers] = useState([]);
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
@@ -40,28 +34,6 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
 
     const navigate = useNavigate();
-
-    useEffect(() => {
-        console.log("buildingData: ", buildingData);
-        const fetchSelectOptions = async () => {
-            try {
-                const response = await axios.get('http://localhost:8080/api/building-options');
-                setYears(response.data.construction_years);
-                setRenovations(response.data.renovations);
-                setHeatings(response.data.heat_distributions);
-                setVentilations(response.data.ventilations);
-                setEnergies(response.data.energy_controls);
-                setMaintinances(response.data.maintenances);
-                setRecoveries(response.data.water_recoveries);
-                setElectricityCounters(response.data.electricity_meters);
-                setAnalyzers(response.data.analyzers);
-            } catch (error) {
-                console.log(error);
-            }
-        };
-
-        fetchSelectOptions();
-    }, []);
 
     const handleUpdateBuilding = async (e) => {
         e.preventDefault();
@@ -72,7 +44,10 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         const formData = new FormData();
         formData.append('id', buildingID);
         formData.append('name', name);
-        formData.append('description', description);
+        //formData.append('description', description);
+        formData.append('address', address);
+        formData.append('usage', usage);
+        formData.append('location', location);
         formData.append('year', year);
         formData.append('renovation', renovation);
         formData.append('heating', heating);
@@ -82,11 +57,13 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         formData.append('waterRecovery', waterRecovery);
         formData.append('electricityCounter', electricityCounter);
         formData.append('electricityAnalyzer', electricityAnalyzer);
+        formData.append('autoLightingControlSystem', autoLightingControlSystem);
+        formData.append('electricForniture', electricForniture);
         formData.append('lighting', lighting);
         formData.append('led', led);
         formData.append('gasLamp', gasLamp);
-        const totalScore = calculateTotalScore(formData);
-        formData.append('buildingScore', totalScore);
+        //const totalScore = calculateTotalScore(formData);
+        //formData.append('buildingScore', totalScore);
 
         console.log('Form data:', formData);
 
@@ -139,8 +116,12 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         const token = localStorage.getItem("token");
 
         const formData = new FormData();
+        formData.append('id', buildingID);
         formData.append('name', name);
-        formData.append('description', description);
+        //formData.append('description', description);
+        formData.append('address', address);
+        formData.append('usage', usage);
+        formData.append('location', location);
         formData.append('year', year);
         formData.append('renovation', renovation);
         formData.append('heating', heating);
@@ -150,13 +131,15 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         formData.append('waterRecovery', waterRecovery);
         formData.append('electricityCounter', electricityCounter);
         formData.append('electricityAnalyzer', electricityAnalyzer);
+        formData.append('autoLightingControlSystem', autoLightingControlSystem);
+        formData.append('electricForniture', electricForniture);
         formData.append('lighting', lighting);
         formData.append('led', led);
         formData.append('gasLamp', gasLamp);
 
 
-        const totalScore = calculateTotalScore(formData);
-        formData.append('buildingScore', totalScore);
+        //const totalScore = calculateTotalScore(formData);
+        //formData.append('buildingScore', totalScore);
 
         console.log('Form data:', formData);
 
@@ -174,8 +157,11 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     setButtonPopup(true);
                     setIsLoading(false);
                     setName("");
-                    setDescription("");
+                    //setDescription("");
+                    setAddress("");
+                    setUsage("");
                     setYear("");
+                    setLocation("");
                     setRenovation("");
                     setHeating("");
                     setVentilation("");
@@ -184,6 +170,8 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     setWaterRecovery("");
                     setElectricityCounter("");
                     setElectricityAnalyzer("");
+                    setAutoLightingControlSystem("");
+                    setElectricForniture("");
                     setLighting("");
                     setLed("");
                     setGasLamp("");
@@ -208,8 +196,11 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
     // Funzioni handleChange per aggiornare gli stati
     const handleNameChange = (e) => setName(e.target.value);
-    const handleDescriptionChange = (e) => setDescription(e.target.value);
+    //const handleDescriptionChange = (e) => setDescription(e.target.value);
+    const handleAddressChange = (e) => setAddress(e.target.value);
+    const handleUsageChange = (e) => setUsage(e.target.value);
     const handleYearChange = (e) => setYear(e.target.value);
+    const handleLocationChange = (e) => setLocation(e.target.value);
     const handleRenovationChange = (e) => setRenovation(e.target.value);
     const handleHeatingChange = (e) => setHeating(e.target.value);
     const handleVentilationChange = (e) => setVentilation(e.target.value);
@@ -221,8 +212,10 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const handleLightingChange = (e) => setLighting(e.target.value);
     const handleLedChange = (e) => setLed(e.target.value);
     const handleGasChange = (e) => setGasLamp(e.target.value);
+    const handleElectricFornitureChange = (e) => setElectricForniture(e.target.value);
+    const handleAutoLightingControlSystemChange = (e) => setAutoLightingControlSystem(e.target.value);
 
-    const scoring = {
+    /*const scoring = {
         year: {
             'Prima del 1976': 10,
             'Tra 1976 e 1991': 13,
@@ -326,7 +319,90 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         totalScore += weightedLedScore;
 
         return totalScore;
-    };
+    };*/
+
+
+    const options = [
+        {
+            location: [
+                "Umbria",
+                "Lazio",
+                "Toscana",
+                "Piemonte",
+                "Lombardia",
+                "Emilia-Romagna",
+                "Trentino-Alto Adige",
+                "Veneto",
+                "Puglia",
+                "Calabria",
+                "Sicilia",
+                "Sardegna",
+                "Friuli-Venezia Giulia"
+            ],
+            construction_year: [
+                "Prima del 1976",
+                "Tra 1976 e 1991",
+                "Tra 1991 e 2004",
+                "dopo il 2004"
+            ],
+            renovation: [
+                "Edile",
+                "Impiantistico",
+                "No"
+            ],
+            heat_distribution: [
+                "Radiatori",
+                "Ventilconvettori",
+                "Impianto ad aria canalizzato",
+                "Pavimento radiante"
+            ],
+            ventilation: [
+                "Si",
+                "Si, con recupero calore",
+                "No"
+            ],
+            energy_control: [
+                "Settimanale",
+                "Mensile",
+                "Annuale",
+                "No"
+            ],
+            maintenance: [
+                "Settimanale",
+                "Mensile",
+                "Annuale",
+                "No"
+            ],
+            water_recovery: [
+                "per l'irrigazione",
+                "per la cassette di scarico",
+                "altro",
+                "No"
+            ],
+            electricity_meter: [
+                "da 0 a 10 kW",
+                "da 10 a 20 kW",
+                "da 20 a 50 kW",
+                "da 50 a 100 kW",
+                "oltre i 100 kW"
+            ],
+            analyzers: [
+                "Si",
+                "No",
+                "Non so"
+            ],
+            electric_forniture: [
+                "elettrico - mix generico",
+                "elettrico - 100% rinnovabili",
+            ],
+            automaticLightingControlSystems: [
+                "Si",
+                "No",
+                "Non so"
+            ]
+        }
+    ];
+
 
     return (
         <div className="mt-4 flex justify-center">
@@ -348,19 +424,45 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                             />
                         </label>
                         <label className="flex flex-col w-full md:w-1/2">
-                            <span className="block mb-2">Descrizione</span>
+                            <span className="block mb-2">Locazione della struttura</span>
+                            <select
+                                value={location}
+                                onChange={handleLocationChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            >
+                                <option value="" disabled>Seleziona anno</option>
+                                {options[0].location.map((cat, index) => (
+                                    <option key={index} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+
+                    {/* Sezione Anno di Costruzione */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                        <label className="flex flex-col w-full md:w-1/2">
+                            <span className="block mb-2">Indirizzo</span>
                             <input
                                 type="text"
-                                value={buildingData.description || description}
-                                onChange={handleDescriptionChange}
+                                value={address || ''}
+                                onChange={handleAddressChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            />
+                        </label>
+                        <label className="flex flex-col w-full md:w-1/2">
+                            <span className="block mb-2">Destinazione d'uso</span>
+                            <input
+                                type="text"
+                                value={usage || ''}
+                                onChange={handleUsageChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             />
                         </label>
                     </div>
 
-                    {/* Sezione Anno di Costruzione */}
-                    <div className="mb-6">
-                        <label className="flex flex-col w-full">
+                    {/* Sezione Anno di Costruzione e Ristrutturazioni */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                        <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Anno di costruzione</span>
                             <select
                                 value={year}
@@ -368,15 +470,11 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona anno</option>
-                                {years.map((cat, index) => (
+                                {options[0].construction_year.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
                         </label>
-                    </div>
-
-                    {/* Sezione Ristrutturazioni e Altri Parametri */}
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Ristrutturazioni (M)</span>
                             <select
@@ -385,11 +483,15 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona tipo di ristrutturazione</option>
-                                {renovations.map((cat, index) => (
+                                {options[0].renovation.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
                         </label>
+                    </div>
+
+                    {/* Sezione Riscaldamento e Ventilazione */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Diffusione calore (M)</span>
                             <select
@@ -398,15 +500,11 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona tipo di riscaldamento</option>
-                                {heatings.map((cat, index) => (
+                                {options[0].heat_distribution.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
                         </label>
-                    </div>
-
-                    {/* Sezione Ventilazione e Controlli */}
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Ventilazione meccanica controllata</span>
                             <select
@@ -415,11 +513,15 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona</option>
-                                {ventilations.map((cat, index) => (
+                                {options[0].ventilation.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
                         </label>
+                    </div>
+
+                    {/* Sezione Controllo dei Consumie e Manutenzioni */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Controllo dei consumi</span>
                             <select
@@ -428,15 +530,11 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona</option>
-                                {energies.map((cat, index) => (
+                                {options[0].energy_control.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
                         </label>
-                    </div>
-
-                    {/* Sezione Manutenzioni e Recupero Acqua */}
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Manutenzione periodica dell'impianto</span>
                             <select
@@ -445,11 +543,15 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona</option>
-                                {maintinances.map((cat, index) => (
+                                {options[0].maintenance.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
                         </label>
+                    </div>
+
+                    {/* Sezione Recupero Acqua e Contatori */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Sistema di recupero acqua piovana (M)</span>
                             <select
@@ -458,15 +560,11 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona</option>
-                                {recoveries.map((cat, index) => (
+                                {options[0].water_recovery.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
                         </label>
-                    </div>
-
-                    {/* Sezione Contatori e Analizzatori */}
-                    <div className="flex flex-col md:flex-row items-center md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Contatore elettrico per l'utente</span>
                             <select
@@ -475,7 +573,89 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona</option>
-                                {electricityCounters.map((cat, index) => (
+                                {options[0].electricity_meter.map((cat, index) => (
+                                    <option key={index} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+
+                    {/* Sezione Fornitura Elettrica e Corpi Illuminanti */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                        <label className="flex flex-col w-full md:w-1/2">
+                            <span className="block mb-2">Fornitura elettrica dell'edificio</span>
+                            <select
+                                value={electricForniture}
+                                onChange={handleElectricFornitureChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            >
+                                <option value="" disabled>Seleziona</option>
+                                {options[0].electric_forniture.map((cat, index) => (
+                                    <option key={index} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+
+                    <div className="mb-6">
+                        <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti</h3>
+                        <div className="flex flex-col md:flex-row md:gap-4">
+                            <label className="flex flex-col w-full md:w-1/3">
+                                <div className="flex flex-col items-center space-y-4">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        value={lighting}
+                                        onChange={handleLightingChange}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                                    />
+                                    <div className="text-2xl font-bold text-gray-900">{lighting}%</div>
+                                </div>
+                            </label>
+                            <label className="flex flex-col w-full md:w-1/3">
+                                <div className="flex flex-col items-center space-y-4">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        value={led}
+                                        onChange={handleLedChange}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                                    />
+                                    <div className="text-2xl font-bold text-gray-900">{led}%</div>
+                                </div>
+                            </label>
+                            <label className="flex flex-col w-full md:w-1/3">
+                                <div className="flex flex-col items-center space-y-4">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        value={gasLamp}
+                                        onChange={handleGasChange}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                                    />
+                                    <div className="text-2xl font-bold text-gray-900">{gasLamp}%</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Sezione Sistemi di Controllo */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                        <label className="flex flex-col w-full md:w-1/2">
+                            <span className="block mb-2">Sistemi di regolazione e controllo automatici dei corpi illuminanti</span>
+                            <select
+                                value={autoLightingControlSystem}
+                                onChange={handleAutoLightingControlSystemChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            >
+                                <option value="" disabled>Seleziona</option>
+                                {options[0].automaticLightingControlSystems.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
@@ -488,83 +668,12 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona</option>
-                                {analyzers.map((cat, index) => (
+                                {options[0].analyzers.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
                         </label>
                     </div>
-
-                    {/* Sezione Corpi Illuminanti */}
-                    <div className="mb-6">
-                        <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti</h3>
-                        <div className="flex flex-col md:flex-row items-center md:gap-4">
-                            <label className="flex flex-col w-full md:w-1/3">
-                                <span className="block mb-2">Incandescenza (%)</span>
-                                <select
-                                    value={lighting}
-                                    onChange={handleLightingChange}
-                                    className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                                >
-                                    <option value="" disabled>Seleziona</option>
-                                    <option value="0">0%</option>
-                                    <option value="10">10%</option>
-                                    <option value="20">20%</option>
-                                    <option value="30">30%</option>
-                                    <option value="40">40%</option>
-                                    <option value="50">50%</option>
-                                    <option value="60">60%</option>
-                                    <option value="70">70%</option>
-                                    <option value="80">80%</option>
-                                    <option value="90">90%</option>
-                                    <option value="100">100%</option>
-                                </select>
-                            </label>
-                            <label className="flex flex-col w-full md:w-1/3">
-                                <span className="block mb-2">Led (%)</span>
-                                <select
-                                    value={led}
-                                    onChange={handleLedChange}
-                                    className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                                >
-                                    <option value="" disabled>Seleziona</option>
-                                    <option value="0">0%</option>
-                                    <option value="10">10%</option>
-                                    <option value="20">20%</option>
-                                    <option value="30">30%</option>
-                                    <option value="40">40%</option>
-                                    <option value="50">50%</option>
-                                    <option value="60">60%</option>
-                                    <option value="70">70%</option>
-                                    <option value="80">80%</option>
-                                    <option value="90">90%</option>
-                                    <option value="100">100%</option>
-                                </select>
-                            </label>
-                            <label className="flex flex-col w-full md:w-1/3">
-                                <span className="block mb-2">Lampada a scarica di gas (%)</span>
-                                <select
-                                    value={gasLamp}
-                                    onChange={handleGasChange}
-                                    className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                                >
-                                    <option value="" disabled>Seleziona</option>
-                                    <option value="0">0%</option>
-                                    <option value="10">10%</option>
-                                    <option value="20">20%</option>
-                                    <option value="30">30%</option>
-                                    <option value="40">40%</option>
-                                    <option value="50">50%</option>
-                                    <option value="60">60%</option>
-                                    <option value="70">70%</option>
-                                    <option value="80">80%</option>
-                                    <option value="90">90%</option>
-                                    <option value="100">100%</option>
-                                </select>
-                            </label>
-                        </div>
-                    </div>
-
 
                     {/* Bottone di Invio */}
                     <div className="flex justify-center">
@@ -593,8 +702,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
             </div>
         </div>
     );
-
-
 }
+
 
 export default BuildingFrom;
