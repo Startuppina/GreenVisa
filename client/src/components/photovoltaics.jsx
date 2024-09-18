@@ -65,7 +65,7 @@ function Photovoltaics() {
                 setPhotovoltaics(updatedPhoto);
                 setNumPhoto(updatedPhoto.length);
                 setPopupConfirmDelete(false);
-                setMessageConfirm('Impianto fotovoltaico eliminato con successo');
+                setMessagePopup('Impianto fotovoltaico eliminato con successo');
                 setButtonPopup(true);
 
                 triggerRefresh();
@@ -122,7 +122,7 @@ function Photovoltaics() {
                 {numPhoto === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
                         <div className="text-center pb-4">Nessun impianto fotovoltaico presente</div>
-                        <button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPhotoForm(!showPhotoForm)}>Aggiungi un impianto fotovoltaico</button>
+                        {/*<button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPhotoForm(!showPhotoForm)}>Aggiungi un impianto fotovoltaico</button>*/}
                     </div>
                 ) : (
                     <>
@@ -134,9 +134,6 @@ function Photovoltaics() {
                                 >
                                     <div className="">
                                         <strong>Potenza installata:</strong> {photo.power} KW
-                                    </div>
-                                    <div className="mt-10">
-                                        <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {photo.photovoltaicscore}
                                     </div>
                                     <div className="flex justify-end gap-2">
                                         <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
@@ -163,7 +160,7 @@ function Photovoltaics() {
                     </>
                 )}
             </div>
-            {showPhotoForm && <div className="flex justify-center"><PhotoForm photo="empty" isEdit={false} /></div>}
+            {showPhotoForm && <div className="flex justify-center"><PhotoForm allPhotosData={photovoltaics} photo="empty" isEdit={false} /></div>}
 
         </div>
     );

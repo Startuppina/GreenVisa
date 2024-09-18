@@ -34,7 +34,7 @@ function Building() {
 
 
 
-        const fetchBuildingScores = async () => {
+        /*const fetchBuildingScores = async () => {
             try {
                 const response = await axios.get(`http://localhost:8080/api/fetch-building-scores/${id}`, {
                     headers: {
@@ -50,13 +50,13 @@ function Building() {
             } catch (error) {
                 console.log(error);
             }
-        };
+        };*/
 
         fetchBuilding();
-        fetchBuildingScores();
+        //fetchBuildingScores();
     }, [refresh]);
 
-    const calculateTotalScoreInCents = (score, numPlants, numSolars, numPhotovoltaics) => {
+    /*const calculateTotalScoreInCents = (score, numPlants, numSolars, numPhotovoltaics) => {
         let totalMaxScore = 0;
         if (numPlants === 0 && numSolars === 0 && numPhotovoltaics === 0) {
             totalMaxScore = 213;
@@ -72,7 +72,7 @@ function Building() {
 
         const scoreInCents = Math.round(score / totalMaxScore * 100);
         return Math.round(scoreInCents);
-    };
+    };*/
 
     return (
         <div className="text-arial text-xl">
@@ -89,8 +89,16 @@ function Building() {
                                 <span id="building-name">{buildingData.name}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">Descrizione:</span>
-                                <span id="description">{buildingData.description}</span>
+                                <span className="font-semibold">locazione:</span>
+                                <span id="construction-year">{buildingData.location}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Indirizzo:</span>
+                                <span id="description">{buildingData.address}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Destinazione d'uso:</span>
+                                <span id="description">{buildingData.usage}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="font-semibold">Anno di Costruzione:</span>
@@ -119,8 +127,12 @@ function Building() {
                     <div className="w-full lg:w-1/2 p-4">
                         <div className="max-w-4xl mx-auto space-y-4">
                             <div className="flex justify-between">
-                                <span className="font-semibold">Manutenzione:</span>
+                                <span className="font-semibold">Manutenzione periodica dell'impianto:</span>
                                 <span id="maintenance">{buildingData.maintenance}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Fornitura elettrica dell'edificio:</span>
+                                <span id="maintenance">{buildingData.electricity_forniture}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="font-semibold">Recupero Acqua:</span>
@@ -135,10 +147,6 @@ function Building() {
                                 <span id="electricity-analyzer">{buildingData.analyzers}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">Illuminazione:</span>
-                                <span id="lighting">{buildingData.incandescent}%</span>
-                            </div>
-                            <div className="flex justify-between">
                                 <span className="font-semibold">LED:</span>
                                 <span id="led">{buildingData.led}%</span>
                             </div>
@@ -146,23 +154,31 @@ function Building() {
                                 <span className="font-semibold">Lampade a Gas:</span>
                                 <span id="gas-lamp">{buildingData.gas_lamp}%</span>
                             </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Sistemi di regolazione e controllo automatici dei corpi illuminanti:</span>
+                                <span id="lighting">{buildingData.autolightingcontrolsystem}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Lampade a incandescenza:</span>
+                                <span id="lighting">{buildingData.incandescent}%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div className="flex justify-center">
                     <button
-                        className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                        className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mb-4"
                         onClick={() => setShowModifierBuildingForm(!showModifierBuildingForm)}
                     >
                         Modifica
                     </button>
                 </div>
-                <div className="mt-10 px-4">
+                {/*<div className="mt-10 px-4">
                     <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA DELL'EDIFICIO:</strong> {buildingData.buildingscore}
                 </div>
                 <div className="px-4 pb-4">
                     <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA COMPLESSIVO DELL'EDIFICIO (in centesimi):</strong><strong> {calculateTotalScoreInCents(averageScore.averageScore, averageScore.numPlants, averageScore.numSolars, averageScore.numPhotovoltaics)} / 100</strong>
-                </div>
+                </div>*/}
                 {showModifierBuildingForm && (
                     <BuildingFrom
                         buildingData={buildingData}

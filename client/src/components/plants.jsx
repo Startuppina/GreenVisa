@@ -78,6 +78,7 @@ function Plants() {
 
     const cancelEdit = () => {
         setShowPlantFormModifier(null);
+        setShowPlantForm(false);
     };
 
     return (
@@ -121,10 +122,10 @@ function Plants() {
                 {numPlants === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
                         <div className="text-center pb-4">Nessun impianto presente</div>
-                        <button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>
+                        {/*<button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>*/}
                     </div>
                 ) : (
-                    <div className="flex flex-col mx-4 h-[70vh] overflow-y-auto mb-4">
+                    <div className="flex flex-col mx-4 max-h-[70vh] overflow-y-auto mb-4">
                         {plants.map((plant, index) => ( // Controllo per prevenire plants undefined
                             <div
                                 className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
@@ -151,7 +152,7 @@ function Plants() {
                                 <div className="">
                                     <strong>Elemento consumato dal generatore:</strong> {plant.fuel_type}
                                 </div>
-                                <div className="">
+                                {/*<div className="">
                                     <strong>Quantità (metano e biogas [SMC], biodiesel e GPL [litri], olio e cippato [ton], pellet [kg]):</strong> {plant.quantity}
                                 </div>
                                 <div className="">
@@ -159,7 +160,7 @@ function Plants() {
                                 </div>
                                 <div className="mt-10">
                                     <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {parseFloat(plant.plantscore) + parseFloat(plant.generator_assigned_score)}
-                                </div>
+                                </div>*/}
                                 <div className="flex justify-end gap-2">
                                     <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
                                         onClick={() => setShowPlantFormModifier(showPlantFormModifier === plant.id ? null : plant.id)}                                    >
@@ -186,7 +187,7 @@ function Plants() {
                 )}
 
             </div>
-            {showPlantForm && (<div className="flex justify-center"><PlantForm plant="empty" isEdit={false} /></div>)}
+            {showPlantForm && (<div className="flex justify-center"><PlantForm plant="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
         </div >
     );
 }

@@ -4,8 +4,8 @@ import MessagePopUp from "./messagePopUp";
 import { MutatingDots } from "react-loader-spinner";
 import { useRecoveryContext } from "../provider/provider";
 
-function PhotoForm({ photo = 'empty', isEdit, onButtonClick = "empty" }) {
-    const [power, setPower] = useState(photo.power || 0);
+function PhotoForm({ allPhotosData = 'empty', photo = 'empty', isEdit, onButtonClick }) {
+    const [power, setPower] = useState(photo.power || "");
     const [isLoading, setIsLoading] = useState(false);
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
@@ -13,7 +13,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = "empty" }) {
     const { buildingID, triggerRefresh } = useRecoveryContext();
 
     // Funzione per calcolare il punteggio di ecosostenibilità
-    const calculatePowerScore = (power) => {
+    /*const calculatePowerScore = (power) => {
         if (power <= 0) {
             return 0;
         } else if (power <= 10) {
@@ -25,7 +25,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = "empty" }) {
         } else {
             return 10; // Punteggio fisso per potenza superiore a 20 kW
         }
-    };
+    };*/
 
     const handleUpdatePhoto = async () => {
         const token = localStorage.getItem("token");
@@ -33,7 +33,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = "empty" }) {
 
         const formData = {
             power: parseFloat(power),
-            photoScore: calculatePowerScore(power)  // Calcolo e aggiunta del punteggio di ecosostenibilità
+            //photoScore: calculatePowerScore(power)  // Calcolo e aggiunta del punteggio di ecosostenibilità
         };
 
         try {
@@ -45,12 +45,15 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = "empty" }) {
             });
 
             if (response.status === 200) {
-                setMessagePopup(response.data.msg);
-                setButtonPopup(true);
-                setIsLoading(false);
-                setPower(""); // Clear form field
+                setTimeout(() => {
+                    setMessagePopup(response.data.msg);
+                    setButtonPopup(true);
+                    setIsLoading(false);
+                    setPower(""); // Clear form field
 
-                triggerRefresh();
+                    triggerRefresh();
+
+                }, 3000);
 
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
@@ -77,7 +80,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = "empty" }) {
 
         const formData = {
             power: parseFloat(power),
-            photoScore: calculatePowerScore(power)  // Calcolo e aggiunta del punteggio di ecosostenibilità
+            //photoScore: calculatePowerScore(power)  // Calcolo e aggiunta del punteggio di ecosostenibilità
         };
 
         try {
@@ -89,12 +92,15 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = "empty" }) {
             });
 
             if (response.status === 200) {
-                setMessagePopup(response.data.msg);
-                setButtonPopup(true);
-                setIsLoading(false);
-                setPower(""); // Clear form field
+                setTimeout(() => {
+                    setMessagePopup(response.data.msg);
+                    setButtonPopup(true);
+                    setIsLoading(false);
+                    setPower(""); // Clear form field
 
-                triggerRefresh();
+                    triggerRefresh();
+
+                }, 3000);
 
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
@@ -150,8 +156,14 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = "empty" }) {
                             <div className=" w-full flex justify-center items-center mt-5 gap-3">
                                 <button
                                     type="submit"
-                                    className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                    //disabled={isEdit === false && allPhotosData.length !== 0}
+                                    /*className={`mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 rounded-lg border-2 transition-colors duration-300 ease-in-out ${isEdit === false && allPhotosData.length !== 0
+                                        ? 'bg-gray-300 text-gray-700 cursor-not-allowed border-gray-300'
+                                        : 'bg-[#2d7044] text-white border-transparent hover:border-[#2d7044] hover:bg-white hover:text-[#2d7044]'
+                                        }`}*/
+                                    className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 rounded-lg border-2 transition-colors duration-300 ease-in-out bg-[#2d7044] text-white border-transparent hover:border-[#2d7044] hover:bg-white hover:text-[#2d7044]"
                                 >
+                                    {/*isEdit === false && allPhotosData.length !== 0 ? 'Disabilitato' : 'Carica'*/}
                                     Carica
                                 </button>
                                 <button

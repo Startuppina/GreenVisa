@@ -78,7 +78,7 @@ const authenticateJWT = (req, res, next) => {
 
         if (err.name === "TokenExpiredError") {
           // Token scaduto
-          return res.status(401).json({ msg: "Token scaduto" });
+          return res.status(401).json({ msg: "Sessione scaduta, rieffettua il login per continuare" });
         }
 
         return res.sendStatus(403); // Token non valido per altri motivi
@@ -2096,56 +2096,16 @@ app.post("/api/send-message-response", authenticateJWT, authenticateAdmin, async
 
 })
 
-app.get('/api/building-options', async (req, res) => {
-  try {
-    // Funzione per ottenere i valori degli enum
-    const getEnumValues = async (enumType) => {
-      const query = `SELECT unnest(enum_range(NULL::${enumType})) AS value`;
-      const result = await pool.query(query);
-      return result.rows.map(row => row.value);
-    };
-
-    // Ottieni i valori di ciascun enum
-    const [years, renovations, heatDistributions, ventilations, energyControls, maintenances, waterRecoveries, electricityMeters, analyzers] = await Promise.all([
-      getEnumValues('construction_year_enum'),
-      getEnumValues('renovation_enum'),
-      getEnumValues('heat_distribution_enum'),
-      getEnumValues('ventilation_enum'),
-      getEnumValues('energy_control_enum'),
-      getEnumValues('maintenance_enum'),
-      getEnumValues('water_recovery_enum'),
-      getEnumValues('electricity_meter_enum'),
-      getEnumValues('analyzers_enum'),
-    ]);
-
-    // Crea l'oggetto di risposta JSON
-    const response = {
-      construction_years: years,
-      renovations: renovations,
-      heat_distributions: heatDistributions,
-      ventilations: ventilations,
-      energy_controls: energyControls,
-      maintenances: maintenances,
-      water_recoveries: waterRecoveries,
-      electricity_meters: electricityMeters,
-      analyzers: analyzers,
-    };
-
-    // Restituisci la risposta JSON
-    res.json(response);
-  } catch (error) {
-    console.error('Error fetching options:', error);
-    res.status(500).send('Server Error');
-  }
-});
 
 app.post("/api/upload-building", authenticateJWT, async (req, res) => {
   try {
     // Estrai i dati dal corpo della richiesta
     const {
       name,
-      description,
+      address,
+      usage,
       year,
+      location,
       renovation,
       heating,
       ventilation,
@@ -2157,14 +2117,16 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       lighting,
       led,
       gasLamp,
-      buildingScore
+      autoLightingControlSystem,
+      electricForniture
+      //buildingScore
     } = req.body;
 
     console.log(req.body);
 
 
     // Verifica che tutti i dati richiesti siano presenti
-    if (!name || !description || !year || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !lighting || !led || !gasLamp) {
+    if (!name || !address || !usage || !year || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
@@ -2185,45 +2147,56 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
     const values = [
       name,
       userId,
-      description,
+      address,
+      usage,
+      location,
       year,
       renovation,
       heating,
       ventilation,
       energyControl,
       maintenance,
+      electricForniture,
       waterRecovery,
       electricityCounter,
       lighting,
       led,
       gasLamp,
       electricityAnalyzer,
-      buildingScore
+      autoLightingControlSystem,
+      //buildingScore // Aggiungi questo se vuoi includerlo
     ];
 
+
     // Esegui la query di inserimento
-    await pool.query(`
-      INSERT INTO buildings (
+    const query = `
+    INSERT INTO buildings (
         name,
         user_id,
-        description,
+        address,
+        usage,
+        location,
         construction_year,
         renovation,
         heat_distribution,
         ventilation,
         energy_control,
         maintenance,
+        electricity_forniture,
         water_recovery,
         electricity_meter,
         incandescent,
         led,
         gas_lamp,
         analyzers,
-        buildingScore
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-      )
-    `, values);
+        autoLightingControlSystem
+    ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+    )
+  `;
+
+    await pool.query(query, values);
+
 
     // Rispondi con successo
     res.status(200).json({ msg: "Edificio caricato con successo" });
@@ -2239,8 +2212,10 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
     const {
       id,
       name,
-      description,
+      address,
+      usage,
       year,
+      location,
       renovation,
       heating,
       ventilation,
@@ -2252,13 +2227,15 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       lighting,
       led,
       gasLamp,
-      buildingScore,
+      autoLightingControlSystem,
+      electricForniture
+      //buildingScore
     } = req.body;
 
     console.log(req.body);
 
     // Verifica che tutti i dati richiesti siano presenti
-    if (!id || !name || !description || !year || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !lighting || !led || !gasLamp) {
+    if (!id || !name || !address || !usage || !year || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
@@ -2278,43 +2255,53 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
     // Prepara i valori per l'aggiornamento
     const values = [
       name,
-      description,
+      userId,
+      address,
+      usage,
+      location,
       year,
       renovation,
       heating,
       ventilation,
       energyControl,
       maintenance,
+      electricForniture,
       waterRecovery,
       electricityCounter,
       lighting,
       led,
       gasLamp,
       electricityAnalyzer,
-      buildingScore,
+      autoLightingControlSystem,
       id
     ];
 
     // Esegui la query di aggiornamento
     await pool.query(`
-      UPDATE buildings SET
+      UPDATE buildings
+      SET
         name = $1,
-        description = $2,
-        construction_year = $3,
-        renovation = $4,
-        heat_distribution = $5,
-        ventilation = $6,
-        energy_control = $7,
-        maintenance = $8,
-        water_recovery = $9,
-        electricity_meter = $10,
-        incandescent = $11,
-        led = $12,
-        gas_lamp = $13,
-        analyzers = $14,
-        buildingScore = $15
-      WHERE id = $16
-    `, values);
+        user_id = $2,
+        address = $3,
+        usage = $4,
+        location = $5,
+        construction_year = $6,
+        renovation = $7,
+        heat_distribution = $8,
+        ventilation = $9,
+        energy_control = $10,
+        maintenance = $11,
+        electricity_forniture = $12,
+        water_recovery = $13,
+        electricity_meter = $14,
+        incandescent = $15,
+        led = $16,
+        gas_lamp = $17,
+        analyzers = $18,
+        autoLightingControlSystem = $19
+      WHERE id = $20
+  `, values);
+
 
     // Rispondi con successo
     res.status(200).json({ msg: "Edificio aggiornato con successo" });
@@ -2379,67 +2366,45 @@ app.get("/api/fetch-building/:id", authenticateJWT, async (req, res) => {
   }
 })
 
-app.get("/api/plant-options", authenticateJWT, async (req, res) => {
-  try {
-    // Funzione per ottenere i valori degli enum
-    const getEnumValues = async (enumType) => {
-      const query = `SELECT unnest(enum_range(NULL::${enumType})) AS value`;
-      const result = await pool.query(query);
-      return result.rows.map(row => row.value);
-    };
-
-    // Ottieni i valori di ciascun enum
-    const [plant_type, service_type, generator_type, fuel_type, electricity_supply] = await Promise.all([
-      getEnumValues('plant_type_enum'),
-      getEnumValues('service_type_enum'),
-      getEnumValues('generator_type_enum'),
-      getEnumValues('fuel_type_enum'),
-      getEnumValues('electricity_supply_enum'),
-    ]);
-
-    // Crea l'oggetto di risposta JSON
-    const response = {
-      plant_type: plant_type,
-      service_type: service_type,
-      generator_type: generator_type,
-      fuel_type: fuel_type,
-      electricity_supply: electricity_supply
-    };
-
-    // Restituisci la risposta JSON
-    res.json(response);
-  } catch (error) {
-    console.error('Error fetching options:', error);
-    res.status(500).send('Server Error');
-  }
-
-})
 
 app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    const { description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply, plantScore } = req.body;
+    const {
+      description,
+      plantType,
+      serviceType,
+      generatorType,
+      generatorDescription,
+      fuelType,
+      //quantity, 
+      //electricitySupply, 
+      //plantScore 
+    } = req.body;
 
-    if (!description || !plantType || !serviceType || !generatorType || !fuelType || !quantity || !electricitySupply) {
+    if (!description || !plantType || !serviceType || !generatorType || !fuelType) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
     }
 
-    if (isNaN(quantity)) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
-    }
-
-    if (quantity <= 0) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
-    }
-
-    const values = [user_id, id, description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply, plantScore];
+    const values = [
+      user_id, id,
+      description,
+      plantType,
+      serviceType,
+      generatorType,
+      generatorDescription,
+      fuelType,
+      //quantity, 
+      //electricitySupply, 
+      //plantScore
+    ];
 
     await pool.query(`
       INSERT INTO plants (
-        user_id, building_id, description, plant_type, service_type, generator_type, generator_description, fuel_type, quantity, electricity_supply, plantScore
+        user_id, building_id, description, plant_type, service_type, generator_type, generator_description, fuel_type
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+        $1, $2, $3, $4, $5, $6, $7, $8
       )
     `, values);
 
@@ -2454,25 +2419,40 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
   try {
     const { id, plant_id } = req.params;
     const { user_id } = req.user;
-    const { description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply, plantScore } = req.body;
+    const {
+      description,
+      plantType,
+      serviceType,
+      generatorType,
+      generatorDescription,
+      fuelType,
+      //quantity, 
+      //electricitySupply, 
+      //plantScore 
+    } = req.body;
 
-    if (!description || !plantType || !serviceType || !generatorType || !fuelType || !quantity || !electricitySupply) {
+    if (!description || !plantType || !serviceType || !generatorType) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
     }
 
-    if (isNaN(quantity)) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
-    }
-
-    if (quantity <= 0) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
-    }
-
-    const values = [user_id, id, description, plantType, serviceType, generatorType, generatorDescription, fuelType, quantity, electricitySupply, plantScore, plant_id];
+    const values = [
+      user_id,
+      id,
+      description,
+      plantType,
+      serviceType,
+      generatorType,
+      generatorDescription,
+      fuelType,
+      //quantity, 
+      //electricitySupply, 
+      //plantScore, 
+      plant_id
+    ];
 
     await pool.query(`
       UPDATE plants
-      SET description = $3, plant_type = $4, service_type = $5, generator_type = $6, generator_description = $7, fuel_type = $8, quantity = $9, electricity_supply = $10, plantScore = $11
+      SET description = $3, plant_type = $4, service_type = $5, generator_type = $6, generator_description = $7, fuel_type = $8
       WHERE user_id = $1 AND building_id = $2 AND id = $12
     `, values);
 
@@ -2517,11 +2497,106 @@ app.delete("/api/delete-plant/:id", authenticateJWT, async (req, res) => {
   }
 });
 
+app.get("/api/:buildingID/fetch-user-energies", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { buildingID } = req.params;
+    console.log('buildingID:', buildingID);
+
+    const rows = await pool.query(`SELECT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2 AND fuel_type <> 'Elettrico'`, [user_id, buildingID]);
+    res.status(200).json({ energies: rows.rows });
+  } catch (error) {
+    console.error('Error fetching energies:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.post("/api/:buildingID/add-consumption", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { buildingID } = req.params;
+    const { energy_source, consumption } = req.body; // Ora `consumptions` è un array
+
+
+    if (!energy_source || !consumption) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi per ogni consumo" });
+    }
+
+    //check if the consumption already exists
+
+    const rows = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2 AND energy_source = $3`, [user_id, buildingID, energy_source]);
+
+    if (rows.rowCount > 0) {
+      return res.status(400).json({ msg: "Hai già aggiunto questo consumo" });
+    }
+
+    const values = [user_id, buildingID, energy_source, consumption];
+    await pool.query(`
+        INSERT INTO user_consumptions (user_id, building_id, energy_source, consumption)
+        VALUES ($1, $2, $3, $4)
+      `, values);
+
+
+    res.status(200).json({ msg: "Consumo aggiunto con successo" });
+
+  } catch (error) {
+    console.error('Error adding consumption:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+app.get("/api/:buildingID/fetch-consumption-data", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { buildingID } = req.params;
+    console.log('buildingID:', buildingID);
+
+    const rows = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2`, [user_id, buildingID]);
+    res.status(200).json({ consumptions: rows.rows });
+  } catch (error) {
+    console.error('Error fetching consumption data:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.put("/api/:buildingID/modify-consumption/:consumptionId", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { buildingID } = req.params;
+    const { consumptionId } = req.params;
+    const { energy_source, consumption } = req.body;
+
+    await pool.query(`UPDATE user_consumptions SET energy_source = $1, consumption = $2 WHERE id = $3 AND building_id = $4 AND user_id = $5`, [energy_source, consumption, consumptionId, buildingID, user_id]);
+    res.status(200).json({ msg: "Consumo modificato con successo" });
+  } catch (error) {
+    console.error('Error modifying consumption:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.delete("/api/:buildingID/delete-consumption/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { buildingID } = req.params;
+    const { id } = req.params;
+
+    console.log('buildingID:', buildingID);
+    console.log('consumption id:', id);
+    console.log('user_id:', user_id);
+
+    await pool.query(`DELETE FROM user_consumptions WHERE id = $1 AND building_id = $2 AND user_id = $3`, [id, buildingID, user_id]);
+    res.status(200).json({ msg: "Consumo eliminato con successo" });
+  } catch (error) {
+    console.error('Error deleting consumption:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
 app.post("/api/buildings/:id/upload/solar", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    const { installedArea, solarScore } = req.body;
+    const { installedArea } = req.body;
 
     if (!installedArea) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
@@ -2535,13 +2610,13 @@ app.post("/api/buildings/:id/upload/solar", authenticateJWT, async (req, res) =>
       return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
     }
 
-    const values = [id, installedArea, solarScore];
+    const values = [id, installedArea];
 
     await pool.query(`
       INSERT INTO solars (
-        building_id, installed_area, solarScore
+        building_id, installed_area
       ) VALUES (
-        $1, $2, $3
+        $1, $2
       )
     `, values);
 
@@ -2557,7 +2632,7 @@ app.put("/api/buildings/:id/update/solar/:solarID", authenticateJWT, async (req,
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    const { installedArea, solarScore } = req.body;
+    const { installedArea } = req.body;
     const { solarID } = req.params;
 
     if (!installedArea) {
@@ -2572,12 +2647,12 @@ app.put("/api/buildings/:id/update/solar/:solarID", authenticateJWT, async (req,
       return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
     }
 
-    const values = [installedArea, solarScore, id, solarID];
+    const values = [installedArea, solarID, id];
 
     await pool.query(`
       UPDATE solars
-      SET installed_area = $1, solarScore = $2
-      WHERE id = $3 AND building_id = $4
+      SET installed_area = $1
+      WHERE id = $2 AND building_id = $3
     `, values);
 
     res.status(200).json({ msg: "Impianto solare aggiornato con successo" });
@@ -2623,7 +2698,7 @@ app.post("/api/buildings/:id/upload/photovoltaic", authenticateJWT, async (req, 
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    const { power, photoScore } = req.body;
+    const { power } = req.body;
 
     if (!power) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
@@ -2637,13 +2712,13 @@ app.post("/api/buildings/:id/upload/photovoltaic", authenticateJWT, async (req, 
       return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
     }
 
-    const values = [id, power, photoScore];
+    const values = [id, power];
 
     await pool.query(`
       INSERT INTO photovoltaics (
-        building_id, power, photovoltaicScore
+        building_id, power
       ) VALUES (
-        $1, $2, $3
+        $1, $2
       )
     `, values);
 
@@ -2675,7 +2750,7 @@ app.put("/api/buildings/:id/update-photovoltaic/:photoID", authenticateJWT, asyn
   try {
     const { id, photoID } = req.params;
     const { user_id } = req.user;
-    const { power, photoScore } = req.body;
+    const { power } = req.body;
 
 
     if (!power) {
@@ -2690,11 +2765,11 @@ app.put("/api/buildings/:id/update-photovoltaic/:photoID", authenticateJWT, asyn
       return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
     }
 
-    const values = [power, photoScore, photoID, id];
+    const values = [power, photoID, id];
     await pool.query(`
       UPDATE photovoltaics
-      SET power = $1, photovoltaicScore = $2
-      WHERE id = $3 AND building_id = $4
+      SET power = $1
+      WHERE id = $2 AND building_id = $3
     `, values);
     res.status(200).json({ msg: "Impianto fotovoltaico aggiornato con successo" });
   } catch (error) {
@@ -2723,7 +2798,7 @@ app.get("/api/buildings/:id/fetch-photovoltaics", authenticateJWT, async (req, r
   }
 })
 
-app.get("/api/fetch-building-scores/:id", authenticateJWT, async (req, res) => {
+/*app.get("/api/fetch-building-scores/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
@@ -2812,7 +2887,7 @@ app.get("/api/fetch-building-scores/:id", authenticateJWT, async (req, res) => {
     console.error(error);
     res.status(500).send("Error fetching building scores.");
   }
-});
+});*/
 
 
 app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
