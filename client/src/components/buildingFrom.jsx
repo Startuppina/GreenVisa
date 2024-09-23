@@ -325,19 +325,26 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const options = [
         {
             location: [
-                "Umbria",
-                "Lazio",
-                "Toscana",
-                "Piemonte",
-                "Lombardia",
                 "Emilia-Romagna",
+                "Friuli-Venezia Giulia",
+                "Lombardia",
+                "Liguria",
+                "Piemonte",
                 "Trentino-Alto Adige",
+                "Valle d'Aosta",
                 "Veneto",
-                "Puglia",
+                "Lazio",
+                "Marche",
+                "Toscana",
+                "Umbria",
+                "Abruzzo",
+                "Basilicata",
+                "Campania",
                 "Calabria",
+                "Molise",
+                "Puglia",
                 "Sicilia",
-                "Sardegna",
-                "Friuli-Venezia Giulia"
+                "Sardegna"
             ],
             construction_year: [
                 "Prima del 1976",
