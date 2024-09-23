@@ -9,14 +9,21 @@ import Plants from "./components/plants";
 import Solars from "./components/solars";
 import Photovoltaics from "./components/photovoltaics";
 import Consumption from "./components/comsumption";
+import { EmissionsCalculator } from "./components/emissionsCalculator";
+import { useRecoveryContext } from "./provider/provider";
 
 
 function BuildingPage() {
     const [activeSection, setActiveSection] = useState(null);
+    const { buildingID } = useRecoveryContext();
 
     const toggleSection = (section) => {
         setActiveSection(activeSection === section ? null : section);
     };
+
+    const handleEmissionsResult = () => {
+        return EmissionsCalculator(buildingID);
+    }
 
     return (
         <div>
@@ -66,6 +73,15 @@ function BuildingPage() {
             {activeSection === "consumi" && <Consumption />}
             {activeSection === "solari" && <Solars />}
             {activeSection === "fotovoltaici" && <Photovoltaics />}
+            <div className="w-full flex justify-center items-center mt-5 gap-3 mb-5">
+                <button
+                    type="submit"
+                    className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                    onClick={handleEmissionsResult}
+                >
+                    Calcola le emissioni
+                </button>
+            </div>
             <Footer />
         </div>
     )

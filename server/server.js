@@ -2798,6 +2798,57 @@ app.get("/api/buildings/:id/fetch-photovoltaics", authenticateJWT, async (req, r
   }
 })
 
+app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, res) => {
+  try {
+    const { buildingID } = req.params;
+    const { user_id } = req.user;
+
+    //fetch building data
+    const buildingData = await pool.query(`SELECT * FROM buildings WHERE id = $1`, [buildingID]);
+
+    if (buildingData.rows.length === 0) {
+      return res.status(404).json({ msg: "Edificio non trovato" });
+    }
+
+    const building = buildingData.rows[0];
+
+    //Fetch solars and photovoltaics data fo user and building 
+    const rows = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [buildingID]);
+    const query2 = "SELECT COUNT(*) FROM photovoltaics WHERE building_id = $1";
+    const totalPower = await pool.query(`SELECT SUM(power) FROM photovoltaics WHERE building_id = $1`, [buildingID]);
+    console.log(totalPower);
+    const values2 = [buildingID];
+    const result2 = await pool.query(query2, values2);
+    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+
+    const rows2 = await pool.query(`SELECT * FROM solars WHERE building_id = $1`, [buildingID]);
+    const query3 = "SELECT COUNT(*) FROM solars WHERE building_id = $1";
+    const totalIstalledArea = await pool.query(`SELECT SUM(installed_area) FROM solars WHERE building_id = $1`, [buildingID]);
+    console.log(totalIstalledArea);
+    const values3 = [buildingID];
+    const result3 = await pool.query(query3, values3);
+    const count2 = parseInt(result3.rows[0].count, 10); // Convert to integer for accuracy
+
+    const solaData = {
+      solars: rows2.rows,
+      count2: count2,
+      totalIstalledArea: totalIstalledArea.rows[0].sum
+    };
+
+    const photoData = {
+      photovoltaics: rows.rows,
+      count: count,
+      totalPower: totalPower.rows[0].sum
+    };
+
+    res.status(200).json({ buildingData: building, solaData: solaData, photoData: photoData });
+
+  } catch (error) {
+    console.error('Error fetching photovoltaics:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
 /*app.get("/api/fetch-building-scores/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
