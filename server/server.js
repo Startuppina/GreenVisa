@@ -2841,7 +2841,13 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
       totalPower: totalPower.rows[0].sum
     };
 
-    res.status(200).json({ buildingData: building, solaData: solaData, photoData: photoData });
+    //fetch user consumptions
+    const query4 = "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2";
+    const values4 = [user_id, buildingID];
+    const result4 = await pool.query(query4, values4);
+    const consumptions = result4.rows;
+
+    res.status(200).json({ buildingData: building, solaData: solaData, photoData: photoData, consumptionsData: consumptions });
 
   } catch (error) {
     console.error('Error fetching photovoltaics:', error.message);
