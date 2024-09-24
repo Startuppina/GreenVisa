@@ -5,6 +5,7 @@ export async function EmissionsCalculator(buildingID) {
     let buildingData = {};
     let solarData = {};
     let photoData = {};
+    let consumptionsData = {};
 
     let buildingLocation = "";
 
@@ -59,9 +60,11 @@ export async function EmissionsCalculator(buildingID) {
             buildingData = response.data.buildingData;
             solarData = response.data.solaData;
             photoData = response.data.photoData;
+            consumptionsData = response.data.consumptionsData;
             console.log("BuildingData:", buildingData);
             console.log("SolaData:", solarData);
             console.log("PhotoData:", photoData);
+            console.log("ConsumptionsData:", consumptionsData);
         }
 
     } catch (error) {
@@ -125,7 +128,7 @@ export async function EmissionsCalculator(buildingID) {
         "Gasolio": 0.860,        // mc
         "Olio combustibile": 0.980, // t
         "Pellet": 0.40,          // t
-        "Cippato di legna": 0.20,           // t
+        "Cippato di legna": 0.20, // t
         "Biogas": 0.00052,       // Sm³
         "elettricitaRete": 0.00025, // kWh
         "elettricitaFotovoltaico": 0.00025, // kWh
@@ -149,13 +152,48 @@ export async function EmissionsCalculator(buildingID) {
         "elettricitaFotovoltaico": 0.0  // tons CO2 eq/tep
     };
 
+    //conversione TEP per le fonti non rinnovabili ed elettricità generica + calcolo emissioni CO2 per ogni fonte
 
+    let CO2SourceEmissions = [];
+    for (let i = 0; i < consumptionsData.length; i++) {
+        if (consumptionsData[i].energy_source === "Elettricità") {
+            CO2SourceEmissions.push(consumptionsData[i].consumption * conversionFactors["elettricitaRete"] * emissionsCO2["elettricitaRete"]);
+        } else {
+            CO2SourceEmissions.push(consumptionsData[i].consumption * conversionFactors[consumptionsData[i].energy_source] * emissionsCO2[consumptionsData[i].energy_source]);
+        }
+    }
+
+    console.log("tepConversions:", CO2SourceEmissions);
+
+
+    //conversione TEP per le fonti rinnovabili + calcolo emissioni CO2 per ogni fonte rinnovabile
+    const solarEmissions = solarCalculation * conversionFactors["pannelliSolariTermici"] * emissionsCO2["pannelliSolariTermici"];
+    const photoEmissions = photoCalculation * conversionFactors["elettricitaFotovoltaico"] * emissionsCO2["elettricitaFotovoltaico"]; //devono essere arrotondati?
+    console.log("solarTep:", solarEmissions);
+    console.log("photoTep:", photoEmissions);
+
+    //total CO2 emissions
+    const totalCO2Emissions = solarEmissions + photoEmissions + CO2SourceEmissions.reduce((a, b) => a + b, 0);
+    console.log("totalCO2Emissions:", totalCO2Emissions);
+
+    //PHASE3: source marks 
+    const sourceMarks = {
+        "Gas Naturale (Metano)": 3,
+        "GPL": 2,
+        "Gasolio": 1,
+        "Olio combustibile": 0,
+        "Pellet": 8,
+        "Cippato di legna": 9,
+        "Biogas": 8,
+        "elettricitaRete": 7,
+        "elettricitaFotovoltaico": 10,
+        "Teleriscaldamento": 6,
+        "pannelliSolariTermici": 0.000187
+    };
 
 
 
     return (
         console.log("Emissioni calcolate")
-
-
     );
 }
