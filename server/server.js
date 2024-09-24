@@ -1313,7 +1313,7 @@ app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async 
   }
 });
 
-app.post("/api/insertion/:id", async (req, res) => {
+app.post("/api/cart-insertion/:id", async (req, res) => {
   try {
     const { id } = req.params; // ID del prodotto
     const { name, image, price, quantity, option, session_id } = req.body;
@@ -1758,6 +1758,7 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
 
   try {
     const { code } = req.body;
+    const { user_id } = req.user;
 
     if (!code) {
       return res.status(400).json({ msg: "Nessun codice inserito" });
@@ -1771,15 +1772,27 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
 
     if (result.rows.length > 0) {
 
-      res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
+      if (used_by === "Tutti") {
+        return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
+      }
+
+      const queryCheck = await pool.query("SELECT category FROM cart JOIN products on cart.product_id = products.id WHERE cart.user_id = $1", [user_id]);
+      const cartCategories = queryCheck.rows.map(row => row.category); // Array di categorie prodotti nel carrello
+      if (cartCategories.includes(used_by)) {
+        return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
+      } else {
+        return res.status(400).json({ msg: "Codice non valido per le certificazioni inserite nel carrello" });
+
+      }
+
     } else {
-      res.status(400).json({ msg: "Codice non valido" }); // Cambiato a 400 per errore client
+      return res.status(400).json({ msg: "Codice non esistente" }); // Cambiato a 400 per errore client
     }
+
   } catch (error) {
     console.error("Errore nell'inserimento del codice:", error);
     res.status(500).json({ msg: "Errore" });
   }
-
 
 })
 
