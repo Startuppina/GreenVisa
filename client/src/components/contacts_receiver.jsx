@@ -149,7 +149,7 @@ const MessagesDashboard = () => {
 
 
     return (
-        <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
+        <div className="flex flex-col h-auto w-full md:w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
@@ -160,7 +160,7 @@ const MessagesDashboard = () => {
             >
                 {messagePopUp}
             </ConfirmPopUp>
-            <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl px-10 py-6">
+            <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
                 <h1 className="text-2xl font-bold text-black text-center pb-10">Messaggi degli Utenti</h1>
 
                 <div className="mb-6">
@@ -194,7 +194,7 @@ const MessagesDashboard = () => {
                                 <h2 className="text-xl font-bold">Messaggio</h2>
                                 <p className="text-lg">{message.message}</p>
                             </div>
-                            <div className="flex justify-end mt-4 gap-3">
+                            <div className="flex flex-wrap justify-end mt-4 gap-3">
                                 <button
                                     onClick={() => handleDelete(message.id)}
                                     className="bg-red-500 border-red-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-red-500 transition-colors duration-300 ease-in-out"
@@ -203,7 +203,7 @@ const MessagesDashboard = () => {
                                 </button>
                                 <button
                                     onClick={() => handleSendEmail(message.email)}
-                                    className="bg-blue-500 border-blue-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out"
+                                    className="w-[41%] md:w-auto bg-blue-500 border-blue-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out truncate"
                                 >
                                     Conferma ricezione
                                 </button>

@@ -117,7 +117,7 @@ function PhotoForm({ allPhotosData = 'empty', photo = 'empty', isEdit, onButtonC
     const handlePowerChange = (e) => setPower(e.target.value);
 
     return (
-        <div className="w-full mx-2">
+        <div className="w-full mx-auto flex justify-center">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>

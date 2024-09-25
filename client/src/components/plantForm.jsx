@@ -260,7 +260,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
     )?.options || [];
 
     return (
-        <div className="w-full mx-2 flex justify-center">
+        <div className="w-full mx-auto flex justify-center">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>

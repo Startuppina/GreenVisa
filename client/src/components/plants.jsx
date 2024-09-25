@@ -93,7 +93,7 @@ function Plants() {
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup} >
                 {messagePopup}
             </MessagePopUp>
-            <div className=" bg-[#D9D9D9] rounded-lg mx-14">
+            <div className=" bg-[#D9D9D9] rounded-lg mx-2 lg:mx-14">
                 <div className="flex flex-row justify-between">
                     <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti</h1>
                     <div className="flex flex-col items-center justify-center m-2">

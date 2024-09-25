@@ -76,12 +76,12 @@ export default function UsersGeneratorTypes({ sendDataToParent }) {
     })
 
     return (
-        <div className="w-full mt-10 flex items-center justify-center bg-gray-100">
+        <div className="w-full mt-10 flex items-center justify-center">
             <MessagePopUp buttonPopup={buttonPopup} setButtonPopup={setButtonPopup} >
                 {messagePopup}
             </MessagePopUp>
 
-            <div className="w-full mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+            <div className="w-full mx-auto p-6 border border-gray-300 rounded-lg shadow-md">
                 <h1 className="text-3xl font-bold text-center mb-6">Richieste di Validazione del Tipo di Generatore</h1>
 
                 <div className="space-y-6">
@@ -100,7 +100,7 @@ export default function UsersGeneratorTypes({ sendDataToParent }) {
                                 <div className='flex justify-end'>
                                     <button
                                         onClick={() => setShowForm(!showForm)}
-                                        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300"
+                                        className="bg-blue-500 border-2 border-blue-500 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300"
                                     >
                                         {showForm ? 'Annulla' : 'Assegna Punteggio'}
                                     </button>

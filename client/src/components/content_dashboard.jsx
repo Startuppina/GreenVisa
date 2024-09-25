@@ -284,7 +284,7 @@ const Dashboard = () => {
         {messageConfirm}
       </ConfirmPopUp>
 
-      <div className="flex flex-wrap justify-center items-center gap-4">
+      <div className={`flex flex-wrap justify-center items-center gap-4 ${window.innerWidth < 1024 ? 'hidden' : 'block'}`}>
         <button
           className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "users" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
           onClick={() => {
@@ -588,6 +588,105 @@ const Dashboard = () => {
 
       </div>
 
+      <div className={`flex flex-wrap justify-center items-center gap-4 ${window.innerWidth < 1024 ? 'block' : 'hidden'}`}>
+        <button
+          className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "users" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("users");
+          }}
+        >
+          <span className="truncate">Utenti registrati</span>
+        </button>
+        <button
+          className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "news" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("news");
+          }}
+        >
+          <span className="truncate">News</span>
+        </button>
+
+        <button
+          className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "products" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("products");
+          }}
+        >
+          <span className="truncate">Certificazioni</span>
+        </button>
+        <button
+          className={`relative w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "messages" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("messages");
+          }}
+        >
+          {totalMessages > 0 && (
+            <span className="absolute bottom-[40px] left-[125px] bg-red-500 text-white px-3 py-1 rounded-full">
+              {totalMessages}
+            </span>
+          )}
+          <div className="flex justify-center items-center">
+            <div className="flex flex-col ml-2">
+              <span className="truncate">Messaggi</span>
+            </div>
+          </div>
+        </button>
+
+        <button
+          className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "orders" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("orders");
+          }}
+        >
+          <span className="truncate">Ordini utenti</span>
+        </button>
+
+        <button
+          className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "promocodes" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("promocodes");
+          }}
+        >
+          <span className="truncate">Codici promozionali</span>
+        </button>
+
+        <button
+          className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "forms" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("forms");
+          }}
+        >
+          <span className="truncate">Aggiungi</span>
+        </button>
+
+        <button
+          className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "usersImplants" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("usersImplants");
+          }}
+        >
+          <span className="overflow-hidden whitespace-nowrap text-ellipsis">Generatori da approvare</span>
+        </button>
+
+        <button
+          className={`relative w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "2ndLevelCerts" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          onClick={() => {
+            toggleSection("2ndLevelCerts");
+          }}
+        >
+          {totalRequests > 0 && (
+            <span className="absolute top-[-20px] right-[-10px] bg-red-500 text-white px-3 py-1 rounded-full text-xl">
+              {totalRequests}
+            </span>
+          )}
+          <span className="overflow-hidden whitespace-nowrap text-ellipsis">
+            Certificati secondo livello
+          </span>
+        </button>
+
+
+      </div>
+
       <div className="flex flex-col">
 
         {activeSection === 'news' && (
@@ -627,7 +726,7 @@ const Dashboard = () => {
                         onClick={() => {
                           handleEdit(newsItem, "news");
                         }}
-                        className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044] transition-colors duration-300 ease-in-out"
+                        className="bg-[#2d7044] text-white px-4 py-2 rounded-lg hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044] transition-colors duration-300 ease-in-out"
                       >
                         Modifica
                       </button>
@@ -639,7 +738,7 @@ const Dashboard = () => {
                           );
                           setPopupConfirmDelete(true);
                         }}
-                        className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded hover:border-red-500 hover:text-red-500 hover:bg-white transition-colors duration-300 ease-in-out"
+                        className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded-lg hover:border-red-500 hover:text-red-500 hover:bg-white transition-colors duration-300 ease-in-out"
                       >
                         Elimina
                       </button>
@@ -777,7 +876,7 @@ const Dashboard = () => {
                     <>
                       <button
                         onClick={() => handleEdit(productItem, "product")}
-                        className="bg-[#2d7044] text-white px-4 py-2 rounded hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044] transition-colors duration-300 ease-in-out"
+                        className="bg-[#2d7044] text-white px-4 py-2 rounded-lg hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044] transition-colors duration-300 ease-in-out"
                       >
                         Modifica
                       </button>
@@ -792,7 +891,7 @@ const Dashboard = () => {
                           );
                           setPopupConfirmDelete(true);
                         }}
-                        className="z-20 bg-red-500 text-white px-4 py-2 rounded border-2 border-red-500 hover:text-red-500 hover:bg-white transition-colors duration-300 ease-in-out"
+                        className="z-20 bg-red-500 text-white px-4 py-2 rounded-lg border-2 border-red-500 hover:text-red-500 hover:bg-white transition-colors duration-300 ease-in-out"
                       >
                         Elimina
                       </button>

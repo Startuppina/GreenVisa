@@ -41,7 +41,7 @@ function PromoCodes() {
                     })));
                     navigate("/User");
                 }
-                
+
             } catch (error) {
                 console.error(error);
             }
@@ -70,7 +70,7 @@ function PromoCodes() {
                 },
             });
             if (response.status === 200) {
-                setPromoCodes(prevPromoCodes => 
+                setPromoCodes(prevPromoCodes =>
                     prevPromoCodes.filter(code => code.id !== promoCodeToDelete)
                 );
                 setPopupConfirmDelete(false);  // Chiudi il popup di conferma
@@ -84,7 +84,7 @@ function PromoCodes() {
             setButtonPopup(true);
         }
     };
-    
+
 
     const publishCode = async () => {
         const token = localStorage.getItem("token");
@@ -110,7 +110,7 @@ function PromoCodes() {
     const colors = ["#2d7044", "#1e90ff", "#ff6347", "#ffd700", "#32cd32", "#a52a2a", "#ff00ff", "#7b68ee"]; // Array di colori
 
     return (
-        <div className="p-4 flex flex-wrap justify-center items-center gap-4 w-[98.5%] rounded-2xl border shadow-xl mb-8">
+        <div className="p-4 flex flex-wrap justify-center items-center gap-4 w-[98.5%] h-[40vh] overflow-y-auto rounded-2xl border shadow-xl mb-8 mx-auto">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
@@ -130,41 +130,87 @@ function PromoCodes() {
             </ConfirmPopUp>
             {promoCodes.length > 0 ? (
                 promoCodes.map((code, index) => (
-                    <div className="flex flex-col items-center" key={code.id}>
-                        <div
-                            className="w-[200px] h-[200px] text-white rounded-lg flex flex-col items-center justify-center p-4 cursor-pointer transform transition-transform duration-300 hover:scale-105 shadow-lg hover:shadow-2xl"
-                            style={{ backgroundColor: colors[index % colors.length] }} // Applica un colore diverso
-                            onClick={() => handleToggleDetails(code.id)}
-                        >
-                            <h1 className="text-4xl font-extrabold text-center tracking-wider">{code.code}</h1>
-                            {visibleDetails === code.id && (
-                                <>
-                                    <p className="text-center text-sm mt-2">Utilizzato da: <strong>{code.used_by}</strong></p>
-                                    <p className="text-center text-lg font-bold mt-2">Sconto: {code.discount}%</p>
-                                    <p className="text-center text-xs mt-1">Valido dal {code.start} <br />al {code.expiration}</p>
-                                </>
-                            )}
-                        </div>
-                        <div className="flex gap-3">
-                            <button className="bg-red-500 text-white border-2 border-red-500 rounded-lg p-2 mt-2 transform transition-colors duration-300 ease-in-out hover:text-red-500 hover:bg-white" 
-                                onClick={() => {
-                                    setPromoCodeToDelete(code.id);
-                                    setMessageConfirm("Sei sicuro di voler eliminare questo codice?");
-                                    setPopupConfirmDelete(true);
-                                }}
+                    <div className="w-full md:w-auto flex flex-col items-center" key={code.id}>
+                        {window.innerWidth >= 768 && (
+                            <>
+                                <div
+                                    className="w-[95vw] md:w-[30vh] h-[200px] text-white rounded-lg flex flex-col items-center justify-center p-4 cursor-pointer transform transition-transform duration-300 hover:scale-105 shadow-lg hover:shadow-2xl"
+                                    style={{ backgroundColor: colors[index % colors.length] }} // Applica un colore diverso
+                                    onClick={() => handleToggleDetails(code.id)}
+                                >
+                                    <h1 className="text-4xl font-extrabold text-center tracking-wider">{code.code}</h1>
+                                    {visibleDetails === code.id && (
+                                        <>
+                                            <p className="text-center text-sm mt-2">Utilizzato da: <strong>{code.used_by}</strong></p>
+                                            <p className="text-center text-lg font-bold mt-2">Sconto: {code.discount}%</p>
+                                            <p className="text-center text-xs mt-1">Valido dal {code.start} <br />al {code.expiration}</p>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="flex gap-3">
+                                    <button className="z-10 bg-red-500 text-white border-2 border-red-500 rounded-lg p-2 mt-2 transform transition-colors duration-300 ease-in-out hover:text-red-500 hover:bg-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Evita l'attivazione di handleToggleDetail
+                                            setPromoCodeToDelete(code.id);
+                                            setMessageConfirm("Sei sicuro di voler eliminare questo codice?");
+                                            setPopupConfirmDelete(true);
+                                        }}
+                                    >
+                                        Elimina
+                                    </button>
+                                    <button className="z-10 bg-blue-500 text-white border-2 border-blue-500 rounded-lg p-2 mt-2 transform transition-colors duration-300 ease-in-out hover:text-blue-500 hover:bg-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPromoCodeToPublish(code.id);
+                                            setMessageConfirm("Sei sicuro di voler rendere accessibile questo codice promozionale?");
+                                            setPopupConfirmPublish(true);
+                                        }}
+                                    >
+                                        Pubblica
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                        {window.innerWidth < 768 && (
+                            <div
+                                className="w-full  text-white rounded-lg flex flex-col items-center justify-center p-4 cursor-pointer transform transition-transform duration-300 hover:scale-105 shadow-lg hover:shadow-2xl"
+                                style={{ backgroundColor: colors[index % colors.length] }} // Applica un colore diverso
+                                onClick={() => handleToggleDetails(code.id)}
                             >
-                                Elimina
-                            </button>
-                            <button className="bg-blue-500 text-white border-2 border-blue-500 rounded-lg p-2 mt-2 transform transition-colors duration-300 ease-in-out hover:text-blue-500 hover:bg-white" 
-                                onClick={() => {
-                                    setPromoCodeToPublish(code.id);
-                                    setMessageConfirm("Sei sicuro di voler rendere accessibile questo codice promozionale?");
-                                    setPopupConfirmPublish(true);
-                                }}
-                            >
-                                Pubblica
-                            </button>
-                        </div>
+                                <h1 className="text-4xl font-extrabold text-center tracking-wider">{code.code}</h1>
+                                {visibleDetails === code.id && (
+                                    <>
+                                        <p className="text-center text-sm mt-2">Utilizzato da: <strong>{code.used_by}</strong></p>
+                                        <p className="text-center text-lg font-bold mt-2">Sconto: {code.discount}%</p>
+                                        <p className="text-center text-xs mt-1">Valido dal {code.start} <br />al {code.expiration}</p>
+                                    </>
+                                )}
+                                <div className="flex gap-3">
+                                    <button className="bg-red-500 text-white border-2 border-red-500 rounded-lg p-2 mt-2 transform transition-colors duration-300 ease-in-out hover:text-red-500 hover:bg-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPromoCodeToDelete(code.id);
+                                            setMessageConfirm("Sei sicuro di voler eliminare questo codice?");
+                                            setPopupConfirmDelete(true);
+                                        }}
+                                    >
+                                        Elimina
+                                    </button>
+                                    <button className="bg-blue-500 text-white border-2 border-blue-500 rounded-lg p-2 mt-2 transform transition-colors duration-300 ease-in-out hover:text-blue-500 hover:bg-white"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPromoCodeToPublish(code.id);
+                                            setMessageConfirm("Sei sicuro di voler rendere accessibile questo codice promozionale?");
+                                            setPopupConfirmPublish(true);
+                                        }}
+                                    >
+                                        Pubblica
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+
                     </div>
                 ))
             ) : (

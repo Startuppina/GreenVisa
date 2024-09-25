@@ -4,15 +4,15 @@ function Plate() {
 
     return (
         <div className="p-6 rounded-lg mx-4 md:mx-14 mt-4 text-xl ">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div className="flex flex-col lg:flex-row gap-8 items-center">
                 <div className="w-full h-auto flex justify-center">
-                    <img src="/img/plate.png" alt="plate" className="max-w-full max-h-[300px] object-cover rounded-lg shadow-md transform transition-transform hover:scale-105" />
+                    <img src="/img/plate.png" alt="plate" className="min-w-[300px] min-h-[200px] max-h-[300px] object-cover rounded-lg shadow-md transform transition-transform hover:scale-105" />
                 </div>
                 <div className="flex flex-col items-start gap-6">
                     <h1 className="font-bold text-2xl lg:text-3xl text-center lg:text-left text-[#333]">
                         Acquista la tua targa per la certificazione GREEN VISA
                     </h1>
-                    <div className="text-3xl font-semibold text-center lg:text-left text-[#2d7044]">
+                    <div className="w-full text-3xl font-semibold text-center lg:text-left text-[#2d7044]">
                         29,00 €
                     </div>
                     <p className="leading-relaxed text-justify text-[#555]">

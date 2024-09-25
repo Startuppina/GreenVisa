@@ -302,12 +302,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "SI",
+                "text": "Si",
                 "score": 100
               },
               {
                 "value": "Item 2",
-                "text": "NO",
+                "text": "No",
                 "score": 0
               }
             ]
@@ -393,11 +393,11 @@ function TransportQuetionnaire({ certification_id }) {
                 "choices": [
                   {
                     "value": 1,
-                    "text": "SI"
+                    "text": "Si"
                   },
                   {
                     "value": 2,
-                    "text": "NO"
+                    "text": "No"
                   }
                 ],
                 "storeOthersAsComment": true
@@ -532,12 +532,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "SI",
+                "text": "Si",
                 "score": 100
               },
               {
                 "value": "Item 2",
-                "text": "NO",
+                "text": "No",
                 "score": 0
               },
             ]
@@ -550,7 +550,7 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "si",
+                "text": "Si",
                 "score": 100
               },
               {
@@ -573,12 +573,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "SI",
+                "text": "Si",
                 "score": 100
               },
               {
                 "value": "Item 2",
-                "text": "NO",
+                "text": "No",
                 "score": 0
               },
               {
@@ -597,12 +597,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "SI",
+                "text": "Si",
                 "score": 35
               },
               {
                 "value": "Item 2",
-                "text": "NO",
+                "text": "No",
                 "score": 0
               }
             ]
@@ -611,17 +611,17 @@ function TransportQuetionnaire({ certification_id }) {
             "type": "radiogroup",
             "name": "question23",
             "title": "Sarebbe interessato ad una certificazione di 2° livello?",
-            "description": "ATTENZIONE: se selezioni SI manderai una richiesta di approvazione",
+            "description": "ATTENZIONE: se selezioni Si manderai una richiesta di approvazione",
             "isRequired": true,
             "choices": [
               {
                 "value": "Item 1",
-                "text": "SI",
+                "text": "Si",
                 "score": 0
               },
               {
                 "value": "Item 2",
-                "text": "NO",
+                "text": "No",
                 "score": 0
               }
             ]
@@ -635,12 +635,12 @@ function TransportQuetionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "SI",
+                "text": "Si",
                 "score": 80
               },
               {
                 "value": "Item 2",
-                "text": "NO",
+                "text": "No",
                 "score": 0
               }
             ]
@@ -845,11 +845,11 @@ function TransportQuetionnaire({ certification_id }) {
       const scelta = element.choices.find(choice => choice.value === response);
       if (scelta) {
         punteggio = scelta.score || 0;
-        if (element.name === 'question23' && scelta.text === 'SI') {
+        if (element.name === 'question23' && scelta.text === 'Si') {
           console.log("Sei interessato ad una certificazione di secondo livello");
           secondLevelCertification(userInfo, certification_id);
           console.log("UserInfo:", userInfo, "CertificationId:", certification_id);
-        } else if (element.name === 'question23' && scelta.text === 'NO') {
+        } else if (element.name === 'question23' && scelta.text === 'No') {
           console.log("Non sei interessato ad una certificazione di secondo livello");
         }
       }
