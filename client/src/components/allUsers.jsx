@@ -92,8 +92,8 @@ function AllUsers() {
     };
 
     return (
-        <div className="flex flex-col h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
-            <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl px-10 py-6">
+        <div className="flex flex-col h-auto w-full md:w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
+            <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
                 <h1 className="text-2xl font-bold text-black text-center pb-10">Dettagli Utente</h1>
 
                 <div className="space-y-4">
@@ -203,21 +203,24 @@ function AllUsers() {
                                                 )}
                                             </div>
                                         </form>
-                                        <div className="max-w-3xl mx-auto my-12 bg-white p-8 rounded-lg shadow-lg w-full">
-                                            <div className="text-center mb-6">
-                                                <img src="img/logo.png" alt="Green Visa" className="w-36 mx-auto" />
+
+                                        {window.innerWidth > 768 && (
+                                            <div className="max-w-3xl mx-auto my-12 bg-white p-8 rounded-lg shadow-lg w-full">
+                                                <div className="text-center mb-6">
+                                                    <img src="img/logo.png" alt="Green Visa" className="w-36 mx-auto" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <h1 className="text-3xl font-semibold text-green-700 mb-4">{emailTitle}</h1>
+                                                    <p className="text-lg text-gray-800 mb-4">Ciao username_utente,</p>
+                                                    <p className="text-lg text-gray-800 mb-4">{emailContent}</p>
+                                                    <p className="text-lg text-gray-800">Saluti,<br />{admin} da Green Visa</p>
+                                                </div>
+                                                <div className="text-right mt-6 text-gray-500 text-sm">
+                                                    <p>Green Visa</p>
+                                                    <p>La sostenibilità con un click!</p>
+                                                </div>
                                             </div>
-                                            <div className="text-center">
-                                                <h1 className="text-3xl font-semibold text-green-700 mb-4">{emailTitle}</h1>
-                                                <p className="text-lg text-gray-800 mb-4">Ciao username_utente,</p>
-                                                <p className="text-lg text-gray-800 mb-4">{emailContent}</p>
-                                                <p className="text-lg text-gray-800">Saluti,<br />{admin} da Green Visa</p>
-                                            </div>
-                                            <div className="text-right mt-6 text-gray-500 text-sm">
-                                                <p>Green Visa</p>
-                                                <p>La sostenibilità con un click!</p>
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
 
                                 </div>

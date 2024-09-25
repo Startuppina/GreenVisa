@@ -122,6 +122,7 @@ function Carrello() {
         const productsData = cartProducts.map(product => ({
             id: product.product_id,
             name: product.name,
+            image: product.image,
             price: product.price,
             quantity: quantities[product.product_id]
         }));
@@ -225,14 +226,38 @@ function Carrello() {
     const calculateDiscount = (price) => {
         return price * (discount / 100);
     }
+
     const calculateTotal = () => {
-        const subtotal = calculateSubtotal();
+        const subtotal = calculateSubtotal(); // Calcola il subtotale
+        let totalDiscount = 0; // Inizializza il totale degli sconti
+
+        // Applica sconto a tutti i prodotti se il promoCategory è "Tutti"
         if (promoCategory === "Tutti") {
-            return subtotal - calculateDiscount(subtotal); // Applica lo sconto su tutto il totale
+            totalDiscount = calculateDiscount(subtotal); // Sconto totale
         } else {
-            return subtotal;
+            // Applica sconto per categoria specifica
+            cartProducts.forEach(product => {
+                if (product.category === promoCategory) {
+                    // Calcola lo sconto per il prodotto
+                    totalDiscount += calculateDiscount(product.price * (quantities[product.product_id] || 1));
+                }
+            });
         }
+
+        return subtotal - totalDiscount; // Sottrai il totale degli sconti dal subtotale
     };
+
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth); // Stato per tenere traccia della larghezza della finestra per mostrare o meno userData modifier in un certo modo
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+
+        window.addEventListener('resize', handleResize);
+
+        // Cleanup the event listener on component unmount
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
 
     return (
         <div className="w-full min-h-screen">
@@ -248,7 +273,7 @@ function Carrello() {
                     </div>
                 ) : (
                     cartProducts.map((product) => (
-                        <React.Fragment key={product.product_id}>
+                        <div key={product.product_id}>
                             <div className="w-full h-auto flex flex-col md:flex-row items-center justify-center px-5 mx-auto gap-5 transition-all duration-500 ease-out">
                                 <div className="w-[250px] h-[200px] overflow-hidden mt-3 mb-3">
                                     <img
@@ -258,22 +283,31 @@ function Carrello() {
                                     />
                                 </div>
                                 <div className="w-full md:w-[60%] p-4 flex flex-col gap-5 text-arial text-xl text-left">
-                                    <div className="flex flex-col lg:flex-row items-start justify-between">
-                                        <p className="font-bold text-left">{product.name}</p>
-                                        <p className="flex items-end">{(product.price * (quantities[product.product_id] || 1)).toFixed(2)} €</p> {/* Calcolo dinamico del prezzo totale */}
+                                    <div className="w-full flex justify-between items-start">
+                                        <div className="w-full lg:w-[70%] flex flex-row lg:flex-col justify-between items-center lg:items-start">
+                                            <div className="w-full flex flex-col items-start">
+                                                <p className="font-bold text-left">{product.name}</p>
+                                                <p className={windowWidth < 1024 ? "flex items-end" : "hidden"}>{(product.price * (quantities[product.product_id] || 1)).toFixed(2)} €</p> {/* Calcolo dinamico del prezzo totale */}
+                                                <p>{getDescrizioneCategoria(product.category, product.option)}</p>
+                                            </div>
+                                            <div>
+
+                                                <div className="">
+                                                    <QuantitySelector
+                                                        value={quantities[product.product_id] || 1}
+                                                        onValueChange={(newQuantity) => handleQuantityChange(product.product_id, newQuantity)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className={windowWidth >= 1024 ? "flex items-end" : "hidden"}>{(product.price * (quantities[product.product_id] || 1)).toFixed(2)} €</p> {/* Calcolo dinamico del prezzo totale */}
                                     </div>
-                                    <p>{getDescrizioneCategoria(product.category, product.option)}</p>
-                                    <div className="">
-                                        <QuantitySelector
-                                            value={quantities[product.product_id] || 1}
-                                            onValueChange={(newQuantity) => handleQuantityChange(product.product_id, newQuantity)}
-                                        />
-                                    </div>
+
                                     <div onClick={() => handleRemoveProduct(product.product_id)} className="underline text-[#2d7044] hover:text-red-500 cursor-pointer transition-colors duration-300 ease-in-out">Rimuovi articolo</div>
                                 </div>
                             </div>
                             <hr className="w-full md:w-[80%] border-b-2 border-black mx-auto" />
-                        </React.Fragment>
+                        </div>
                     ))
                 )}
             </div>
@@ -311,7 +345,7 @@ function Carrello() {
                                     <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
                                         <div>Sconto {discount}% applicato su {product.name}</div>
                                         <div>
-                                            -{(product.price * (discount / 100) * (product.quantity || 1)).toFixed(2)} €
+                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
                                         </div>
                                     </div>
                                 ))
@@ -326,7 +360,7 @@ function Carrello() {
                                     <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
                                         <div>Sconto {discount}% applicato su {product.name}</div>
                                         <div>
-                                            -{(product.price * (discount / 100) * (product.quantity || 1)).toFixed(2)} €
+                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
                                         </div>
                                     </div>
                                 ))
@@ -341,7 +375,7 @@ function Carrello() {
                                     <div key={product.id}>
                                         <div>Sconto {discount}% applicato su {product.name}</div>
                                         <div>
-                                            -{(product.price * (discount / 100) * (product.quantity || 1)).toFixed(2)} €
+                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
                                         </div>
                                     </div>
                                 ))
@@ -356,7 +390,7 @@ function Carrello() {
                                     <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
                                         <div>Sconto {discount}% applicato su {product.name}</div>
                                         <div>
-                                            -{(product.price * (discount / 100) * (product.quantity || 1)).toFixed(2)} €
+                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
                                         </div>
                                     </div>
                                 ))
@@ -371,7 +405,7 @@ function Carrello() {
                                     <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
                                         <div>Sconto {discount}% applicato su {product.name}</div>
                                         <div>
-                                            -{(product.price * (discount / 100) * (product.quantity || 1)).toFixed(2)} €
+                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
                                         </div>
                                     </div>
                                 ))
@@ -386,7 +420,7 @@ function Carrello() {
                                     <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
                                         <div>Sconto {discount}% applicato su {product.name}</div>
                                         <div>
-                                            -{(product.price * (discount / 100) * (product.quantity || 1)).toFixed(2)} €
+                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
                                         </div>
                                     </div>
                                 ))
@@ -423,7 +457,7 @@ function Carrello() {
                     </button>
                 )}
             </div>
-        </div>
+        </div >
     );
 }
 

@@ -1855,7 +1855,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
     const items = [];
 
     for (const product of products) {
-      const { id, name, price, quantity } = product;
+      const { id, name, image, price, quantity } = product;
 
       // Recupera informazioni sul prodotto dal database
       const productQuery = "SELECT * FROM products WHERE id = $1";
@@ -1879,12 +1879,17 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
 
       // Arrotonda il prezzo e convertilo in centesimi
       const finalPriceInCents = Math.round(productPrice * 100);
+      //console.log("product image: ", image)
+      //const path = `http://localhost:8080/uploaded_img/${image}`
+      //console.log("path: ", path)
+
 
       items.push({
         price_data: {
           currency: 'eur', // Cambia la valuta se necessario
           product_data: {
-            name: name,
+            name: name
+            //images: [path],
           },
           unit_amount: finalPriceInCents, // Arrotondato e convertito in centesimi
         },
@@ -1897,8 +1902,8 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       payment_method_types: ['card'],
       line_items: items,
       mode: 'payment',
-      success_url: "http://localhost:3000/PaymentSuccess",
-      cancel_url: "http://localhost:3000/Carrello",
+      success_url: `${process.env.CLIENT_URL}/PaymentSuccess`,
+      cancel_url: `${process.env.CLIENT_URL}/Carrello`,
       metadata: {
         user_id: user_id,
         promo_code: promoCode || '',

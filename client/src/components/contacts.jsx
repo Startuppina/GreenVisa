@@ -79,11 +79,11 @@ function Contacts() {
 
     return (
         <>
-            <div className="w-full min-h-screen md:bg-[url('/img/login.jpg')] sm:bg-white bg-cover bg-center bg-no-repeat flex items-center justify-center md:p-8">
+            <div className="w-full min-h-screen md:bg-[url('/img/login.jpg')] bg-[#f6f3f3] bg-cover bg-center bg-no-repeat flex items-center justify-center md:p-8">
                 <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                     {messagePopup}
                 </MessagePopUp>
-                <div className="p-6 bg-white w-full md:w-[80%] md:min-h-[60%] md:rounded-lg">
+                <div className="p-6 bg-[#f6f3f3] md:bg-white w-full md:w-[80%] md:min-h-[60%] md:rounded-lg">
                     <h1 className="font-arial text-2xl md:text-3xl text-center font-bold mb-5">CONTATTACI VIA EMAIL</h1>
                     <div className="flex flex-col md:flex-row items-center justify-between">
                         <div className="w-full md:w-[48%] p-4">

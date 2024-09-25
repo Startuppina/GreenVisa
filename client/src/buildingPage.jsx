@@ -25,50 +25,106 @@ function BuildingPage() {
         return EmissionsCalculator(buildingID);
     }
 
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth); // Stato per tenere traccia della larghezza della finestra per mostrare o meno userData modifier in un certo modo
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+
+        window.addEventListener('resize', handleResize);
+
+        // Cleanup the event listener on component unmount
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
         <div>
             <ScrollToTop />
             <Navbar />
             <Building />
 
-            <div className="flex flex-wrap justify-center items-center gap-4 mt-10">
-                <button
-                    className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'impianti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                    onClick={() => {
-                        toggleSection("impianti");
-                    }}
-                >
-                    <span className="text-arial text-xl">Impianti</span>
-                </button>
+            {windowWidth >= 1024 ? (
+                <div className="flex flex-wrap justify-center items-center gap-4 mt-10">
+                    <button
+                        className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'impianti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                        onClick={() => {
+                            toggleSection("impianti");
+                        }}
+                    >
+                        <span className="text-arial text-xl">Impianti</span>
+                    </button>
 
-                <button
-                    className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'consumi' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                    onClick={() => {
-                        toggleSection("consumi");
-                    }}
-                >
-                    <span className="text-arial text-xl">Consumi annui</span>
-                </button>
+                    <button
+                        className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'consumi' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                        onClick={() => {
+                            toggleSection("consumi");
+                        }}
+                    >
+                        <span className="text-arial text-xl">Consumi annui</span>
+                    </button>
 
-                <button
-                    className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'solari' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                    <button
+                        className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'solari' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
 
-                    onClick={() => {
-                        toggleSection("solari");
-                    }}
-                >
-                    <span className="text-arial text-xl">Impianti solari termici</span>
-                </button>
+                        onClick={() => {
+                            toggleSection("solari");
+                        }}
+                    >
+                        <span className="text-arial text-xl">Impianti solari termici</span>
+                    </button>
 
-                <button
-                    className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'fotovoltaici' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                    onClick={() => {
-                        toggleSection("fotovoltaici");
-                    }}
-                >
-                    <span className="text-arial text-xl">Impianti fotovoltaici</span>
-                </button>
-            </div>
+                    <button
+                        className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'fotovoltaici' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                        onClick={() => {
+                            toggleSection("fotovoltaici");
+                        }}
+                    >
+                        <span className="text-arial text-xl">Impianti fotovoltaici</span>
+                    </button>
+                </div>
+
+            ) : (
+                <div className={`flex flex-wrap justify-center items-center gap-4 mt-10 ${window.innerWidth < 1024 ? 'block' : 'hidden'}`}>
+                    <button
+                        className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'impianti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                        onClick={() => {
+                            toggleSection("impianti");
+                        }}
+                    >
+                        <span className="text-arial text-xl">Impianti</span>
+                    </button>
+
+                    <button
+                        className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'consumi' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                        onClick={() => {
+                            toggleSection("consumi");
+                        }}
+                    >
+                        <span className="text-arial text-xl">Consumi annui</span>
+                    </button>
+
+                    <button
+                        className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'solari' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+
+                        onClick={() => {
+                            toggleSection("solari");
+                        }}
+                    >
+                        <span className="text-arial text-xl">Impianti solari termici</span>
+                    </button>
+
+                    <button
+                        className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'fotovoltaici' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                        onClick={() => {
+                            toggleSection("fotovoltaici");
+                        }}
+                    >
+                        <span className="text-arial text-xl">Impianti fotovoltaici</span>
+                    </button>
+                </div>
+
+            )}
+
+
             {activeSection === "impianti" && <Plants />}
             {activeSection === "consumi" && <Consumption />}
             {activeSection === "solari" && <Solars />}
@@ -76,7 +132,7 @@ function BuildingPage() {
             <div className="w-full flex justify-center items-center mt-5 gap-3 mb-5">
                 <button
                     type="submit"
-                    className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                    className="mt-7 font-arial text-xl w-[50%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700"
                     onClick={handleEmissionsResult}
                 >
                     Calcola le emissioni

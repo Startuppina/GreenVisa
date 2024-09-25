@@ -31,7 +31,7 @@ function UserOrders() {
     }, []);
 
     return (
-        <div className='h-[350px] bg-[#d9d9d9] p-4 rounded-lg mx-2 md:mx-14 overflow-x-auto mt-4'>
+        <div className='h-[350px] bg-[#d9d9d9] p-4 rounded-lg mx-2 lg:mx-14 overflow-x-auto mt-4'>
             <h2 className='text-2xl font-bold mb-4'>I tuoi ordini</h2>
 
             <div className="flex flex-wrap gap-4">
@@ -39,9 +39,9 @@ function UserOrders() {
                     <p>{message}</p>
                 ) : (
                     orders.map((order) => (
-                        <div key={order.order_id} >
-                            <div className="p-4 w-full max-w-[700px] rounded-lg border-2 border-gray-400 z-10">
-                                <h3 className="text-lg font-bold mb-4">Ordine {order.order_id}</h3>
+                        <div key={order.order_id} className="w-full">
+                            <div className="p-4 w-full lg:w-[400px] rounded-lg border-2 border-gray-400 z-10 flex flex-col items-center">
+                                <h3 className="w-full text-start text-lg font-bold mb-4">Ordine {order.order_id}</h3>
                                 <div className="flex flex-col md:flex-row text-center md:text-left items-center md:items-start mb-4">
                                     <img
                                         src={`http://localhost:8080/uploaded_img/${order.product_image}`}
@@ -53,9 +53,9 @@ function UserOrders() {
                                         <p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p>
                                     </div>
                                 </div>
-                                <div className="flex flex-col md:flex-row justify-between">
-                                    <p className="mb-2"><span className="font-semibold">Quantità:</span> {order.quantity}</p>
-                                    <p className="mb-2"><span className="font-semibold">Prezzo:</span> {order.price} €</p>
+                                <div className="w-full flex flex-col md:flex-row justify-between">
+                                    <p className="mb-2 text-center"><span className="font-semibold ">Quantità:</span> {order.quantity}</p>
+                                    <p className="mb-2 text-center"><span className="font-semibold ">Prezzo:</span> {order.price} €</p>
                                 </div>
                             </div>
                         </div>

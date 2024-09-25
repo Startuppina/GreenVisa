@@ -412,11 +412,11 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
 
     return (
-        <div className="mt-4 flex justify-center">
+        <div className="flex justify-center">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
-            <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border bg-white border-gray-300 shadow-xl">
+            <div className="w-[98.5%] mx-auto md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border bg-white border-gray-300 shadow-xl">
                 <h2 className="text-2xl font-bold text-center mb-6">{isEdit ? 'Modifica Edificio' : 'Aggiungi un nuovo Edificio'}</h2>
                 <form onSubmit={handleSubmit} className="flex flex-col">
                     {/* Sezione Informazioni Generali */}
@@ -608,7 +608,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                         <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti</h3>
                         <div className="flex flex-col md:flex-row md:gap-4">
                             <label className="flex flex-col w-full md:w-1/3">
-                                <div className="flex flex-col items-center space-y-4">
+                                <div className="flex flex-col items-center space-y-4 mb-2">
                                     <input
                                         type="range"
                                         min="0"
@@ -622,7 +622,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 </div>
                             </label>
                             <label className="flex flex-col w-full md:w-1/3">
-                                <div className="flex flex-col items-center space-y-4">
+                                <div className="flex flex-col items-center space-y-4 mb-2">
                                     <input
                                         type="range"
                                         min="0"
@@ -636,7 +636,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 </div>
                             </label>
                             <label className="flex flex-col w-full md:w-1/3">
-                                <div className="flex flex-col items-center space-y-4">
+                                <div className="flex flex-col items-center space-y-4 mb-2">
                                     <input
                                         type="range"
                                         min="0"
@@ -683,7 +683,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     </div>
 
                     {/* Bottone di Invio */}
-                    <div className="flex justify-center">
+                    <div className="flex justify-center gap-2">
                         {isLoading ? (
                             <div className="flex justify-center items-center mt-5">
                                 <MutatingDots

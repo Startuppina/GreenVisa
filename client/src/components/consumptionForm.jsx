@@ -247,11 +247,11 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
 
     return (
-        <div className="w-[99%] mx-2 flex justify-center">
+        <div className="w-[99%] mx-auto flex justify-center">
             <MessagePopUp trigger={buttonPopUp} setTrigger={setButtonPopUp}>
                 {messagePopUp}
             </MessagePopUp>
-            <div className="w-full mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border border-gray-300 shadow-xl bg-[#f6f3f3] mb-4">
+            <div className="w-full mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-4 py-6 border border-gray-300 shadow-xl bg-[#f6f3f3] mb-4">
 
                 {/* Modalità modifica */}
                 {isEdit && (
@@ -282,17 +282,17 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
                                                 />
                                             </div>
                                         ) : (
-                                            <div className="w-full flex justify-center items-center mt-5 gap-3">
+                                            <div className="w-full flex flex-col md:flex-row justify-center items-center mt-5 gap-3">
                                                 <button
                                                     type="submit"
-                                                    className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="font-arial text-xl w-[60%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 >
                                                     Salva
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={onButtonClick}
-                                                    className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-gray-500 text-white rounded-lg border-2 border-transparent hover:border-gray-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-gray-500"
+                                                    className=" font-arial text-xl w-[60%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-gray-500 text-white rounded-lg border-2 border-transparent hover:border-gray-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-gray-500"
                                                 >
                                                     Annulla
                                                 </button>
@@ -327,17 +327,17 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
                                                 />
                                             </div>
                                         ) : (
-                                            <div className="w-full flex justify-center items-center mt-5 gap-3">
+                                            <div className="w-full flex flex-col md:flex-row justify-center items-center mt-5 gap-3">
                                                 <button
                                                     type="submit"
-                                                    className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                                    className="font-arial text-xl w-[60%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                                                 >
                                                     Salva
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={onButtonClick}
-                                                    className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-gray-500 text-white rounded-lg border-2 border-transparent hover:border-gray-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-gray-500"
+                                                    className=" font-arial text-xl w-[60%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-gray-500 text-white rounded-lg border-2 border-transparent hover:border-gray-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-gray-500"
                                                 >
                                                     Annulla
                                                 </button>

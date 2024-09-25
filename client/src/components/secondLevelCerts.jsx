@@ -124,7 +124,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
             <div className="w-full mt-10 flex flex-col md:flex-row items-center justify-center bg-gray-100 gap-4">
 
                 {/* Sezione Richieste da approvare */}
-                <div className="w-full  h-[70vh] overflow-y-auto mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+                <div className="w-full h-[50vh] md:h-[70vh] overflow-y-auto mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
                     <h1 className="text-3xl font-bold text-center mb-6">Richieste certificazione di secondi livello</h1>
 
                     <div className="space-y-6">
@@ -167,7 +167,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
                 </div>
 
                 {/* Sezione Richieste approvate */}
-                <div className="w-full h-[70vh] overflow-y-auto mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+                <div className="w-full h-[50vh] md:h-[70vh] overflow-y-auto mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
                     <h1 className="text-3xl font-bold text-center mb-6">Richieste approvate</h1>
 
                     <div className="space-y-6">

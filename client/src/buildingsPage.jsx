@@ -118,27 +118,39 @@ export default function Buildings() {
                         <div className="flex flex-wrap justify-center gap-4">
                             {buildings.map((building, index) => (
                                 <div key={index} className="flex flex-col items-center">
-                                    <Link to={`/building/${building.id}`}>
-                                        <div
-                                            className="w-[400px] h-[200px] rounded-lg p-4 hover:transform hover:scale-105 duration-300"
-                                            style={{ backgroundColor: generateColor(index) }}
-                                        >
-                                            <div className="font-bold h-full flex items-center justify-center text-2xl uppercase">{building.name}</div>
+
+                                    <div
+                                        className="w-[95vw] lg:w-[400px] h-auto rounded-lg p-4 hover:transform hover:scale-105 duration-300"
+                                        style={{ backgroundColor: generateColor(index) }}
+                                    >
+                                        <div className="font-bold flex items-center justify-center text-2xl uppercase">
+                                            {building.name}
                                         </div>
-                                    </Link>
-                                    <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
-                                        onClick={() => {
-                                            setBuildingToDelete({
-                                                id: building.id,
-                                            });
-                                            setMessageConfirm(
-                                                "Sei sicuro di voler eliminare questo Edificio?"
-                                            );
-                                            setPopupConfirmDelete(true);
-                                        }}>
-                                        Elimina
-                                    </button>
+                                        <div className="flex justify-center gap-4">
+                                            <Link to={`/building/${building.id}`}>
+                                                <button className="p-2 w-24 mt-3 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700"
+                                                >
+                                                    Accedi
+                                                </button>
+                                            </Link>
+                                            <button
+                                                className="p-2 w-24 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500"
+                                                onClick={() => {
+                                                    setBuildingToDelete({ id: building.id });
+                                                    setMessageConfirm("Sei sicuro di voler eliminare questo Edificio?");
+                                                    setPopupConfirmDelete(true);
+                                                }}
+                                            >
+                                                Elimina
+                                            </button>
+                                        </div>
+
+                                    </div>
+
+
+
                                 </div>
+
                             ))}
                         </div>
                         <div className="flex flex-col items-center justify-center m-2">
@@ -164,14 +176,15 @@ export default function Buildings() {
                         </div>
                         {showBuildingForm && <BuildingFrom buildingData="empty" isEdit={false} />}
                     </div>
-                )}
-                <div class="w-full mx-auto mt-10 px-20 ">
+                )
+                }
+                <div class="w-full mx-auto mt-10 px-4 lg:px-20 ">
                     <div class=" font-arial text-justify">
                         <h1 class="text-3xl font-bold mb-6 text-center">Procedura di Inserimento dei Buildings e Impianti</h1>
 
                         <p class="text-xl mb-4">
                             Il sistema permette di inserire edifici e associare a ciascuno impianti di vario tipo, inclusi impianti solari e impianti fotovoltaici.
-                            Ogni impianto inserito contribuirà a determinare un punteggio complessivo di sostenibilità per l'edificio, espresso in centesimi.
+                            Ogni impianto inserito contribuirà a determinare le emissioni di CO2 per l'edificio.
                         </p>
 
                         <p class="text-xl mb-4">
@@ -182,7 +195,7 @@ export default function Buildings() {
 
                         <p class="text-xl mb-4">
                             Il sistema include anche la possibilità di inserire impianti solari e fotovoltaici. Questi impianti sono considerati altamente sostenibili
-                            e possono migliorare significativamente il punteggio complessivo dell'edificio. Il punteggio è calcolato in base ai dati forniti e riflette il
+                            e possono migliorare le emissioni dell'edificio. Le emissioni sono calcolate in base ai dati forniti e riflette il
                             livello di sostenibilità dell'edificio.
                         </p>
 

@@ -7,7 +7,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import ConfirmPopUp from "./confirmPopUp";
-import  getPriceCategory  from "./getPriceCategory";
+import getPriceCategory from "./getPriceCategory";
 
 const NextArrow = (props) => {
     const { onClick } = props;
@@ -59,12 +59,12 @@ function Products() {
 
             try {
                 const response = await axios.get("http://localhost:8080/api/products-info", {
-                    params: {order: productOrdering},
+                    params: { order: productOrdering },
                     headers: {
                         'Content-Type': 'application/json',
                     }
                 });
-                
+
                 if (response.status === 200) {
                     setNumProducts(response.data.numProducts);
                     if (response.data.numProducts > 0) {
@@ -116,13 +116,13 @@ function Products() {
 
             if (response.status === 200) {
                 navigate(0);
-            } 
+            }
 
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
         }
-        
+
     };
 
     const settings = {
@@ -141,7 +141,7 @@ function Products() {
         setValue(event.target.value);
 
         if (event.target.value === "price-asc") {
-            setProductOrdering("asc");        
+            setProductOrdering("asc");
         } else if (event.target.value === "price-desc") {
             setProductOrdering("desc");
         } else if (event.target.value === "default") {
@@ -158,14 +158,14 @@ function Products() {
                 trigger={popupConfirmDelete}
                 setTrigger={setPopupConfirmDelete}
                 onButtonClick={deleteProduct}>
-                {messageConfirm }
+                {messageConfirm}
             </ConfirmPopUp>
             <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-8 pb-12 md:rounded-lg md:m-4">  {/* Adjusted padding */}
                 {haveProducts === false ? (
                     <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center">
                         <p>Nessuna certificazione ancora disponibile</p>
                         <svg width="200" height="200" xmlns='http://www.w3.org/2000/svg'>
-                            <image href="./public/sad.svg" width="200" height="200"/>
+                            <image href="./public/sad.svg" width="200" height="200" />
                         </svg>
                     </div>
                 ) : (

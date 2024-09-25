@@ -23,6 +23,7 @@ import { RecoveryContextProvider } from './provider/provider.jsx';
 import Buildings from './buildingsPage.jsx';
 import BuildingPage from './buildingPage.jsx';
 import QuestionnairePage from './questionnairePage.jsx';
+import NotFoundPage from './notFoundPage.jsx';
 
 
 const router = createBrowserRouter([
@@ -106,6 +107,11 @@ const router = createBrowserRouter([
     path: "/questionario/:category",
     element: <QuestionnairePage />,
   },
+  {
+    // Catch-all route for unmatched paths
+    path: "*",
+    element: <NotFoundPage />,
+  }
 ]);
 
 {/*<React.StrictMode>

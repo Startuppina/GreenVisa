@@ -128,7 +128,7 @@ function SolarForm({ allSolarsData = "empty", solar = 'empty', isEdit, onButtonC
     const handleInstalledAreaChange = (e) => setInstalledArea(e.target.value);
 
     return (
-        <div className="w-full mx-2 flex justify-center">
+        <div className="w-full mx-auto flex justify-center">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
