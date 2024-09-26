@@ -24,6 +24,7 @@ import Buildings from './buildingsPage.jsx';
 import BuildingPage from './buildingPage.jsx';
 import QuestionnairePage from './questionnairePage.jsx';
 import NotFoundPage from './notFoundPage.jsx';
+import UserBuldingsPageAdmin from './userBuldingsPageAdmin.jsx';
 
 
 const router = createBrowserRouter([
@@ -111,6 +112,10 @@ const router = createBrowserRouter([
     // Catch-all route for unmatched paths
     path: "*",
     element: <NotFoundPage />,
+  },
+  {
+    path: "/user-buildings/:id/:username",
+    element: <UserBuldingsPageAdmin />,
   }
 ]);
 

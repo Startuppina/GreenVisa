@@ -126,15 +126,15 @@ cron.schedule('0 0 */3 * *', cleanUpCart);
 async function deleteExpiredPromoCodes() {
   try {
     const currentDate = new Date();
-    const isoDateString = currentDate.toISOString().split('.')[0] + 'Z';
+    const isoDateString = currentDate.toISOString(); // Senza rimuovere i millisecondi e senza aggiungere 'Z'
 
     const query = `
           DELETE FROM promocodes
-          WHERE expiration <= $1
+          WHERE expiration <= NOW()
       `;
 
     const values = [isoDateString];
-    const result = await pool.query(query, values);
+    const result = await pool.query(query);
 
     console.log(`Deleted ${result.rowCount} expired promo codes`);
   } catch (error) {
@@ -142,8 +142,8 @@ async function deleteExpiredPromoCodes() {
   }
 };
 
-// Pianifica l'esecuzione della pulizia ogni giorno a mezzanotte
-cron.schedule('0 0 * * *', () => {
+// Pianifica l'esecuzione della pulizia ogni 60 minuti. ORA è CONFIGURATO OGNI MINUTO PER TEST, rimettere poi '0 * * * *'
+cron.schedule('* * * * *', () => {
   console.log('Running scheduled job to delete expired promo codes');
   deleteExpiredPromoCodes();
 });
@@ -2148,10 +2148,11 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
+    /*
     console.log("total ligting: ", parseInt(lighting) + parseInt(led) + parseInt(gasLamp));
     if (parseInt(lighting) + parseInt(led) + parseInt(gasLamp) !== 100) {
       return res.status(400).json({ msg: "La somma delle percentuali di luci a incandescenza, led e scarica di gas deve essere 100%" });
-    }
+    }*/
 
     // Recupera l'ID utente dalla richiesta
     const userId = req.user.user_id;
@@ -2257,10 +2258,11 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
-    // Verifica che la somma delle percentuali sia 100
+
+    /*
     if (parseInt(lighting) + parseInt(led) + parseInt(gasLamp) !== 100) {
       return res.status(400).json({ msg: "La somma delle percentuali di luci a incandescenza, led e scarica di gas deve essere 100%" });
-    }
+    }*/
 
     // Recupera l'ID utente dalla richiesta
     const userId = req.user.user_id;
@@ -3295,7 +3297,100 @@ app.delete("/api/delete-second-level-request", authenticateJWT, authenticateAdmi
   }
 });
 
+app.get("/api/fetch-user-info-by-buildings", authenticateJWT, authenticateAdmin, async (req, res) => {
 
+  const { role } = req.user;
+
+  if (role !== "administrator") {
+    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+  }
+
+  try {
+
+    const query = "SELECT * FROM users WHERE id IN (SELECT DISTINCT user_id FROM buildings);";
+    const result = await pool.query(query);
+
+    if (result.rows.length === 0) {
+      return res.status(204).json({ error: 'Nessun utente trovato' });
+    } else if (result.rows.length > 0) {
+      return res.status(200).json(result.rows);
+    }
+  } catch (err) {
+    console.error("Errore nel fetch delle richieste di certificazione di secondo livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+})
+
+app.get("/api/fetch-user-buildings/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
+
+  const { role } = req.user;
+  const { id } = req.params;
+
+  if (role !== "administrator") {
+    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+  }
+
+  try {
+
+    const query = "SELECT * FROM buildings WHERE user_id = $1;";
+    const values = [id];
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(204).json({ error: 'Nessun edificio trovato' });
+    } else if (result.rows.length > 0) {
+      return res.status(200).json(result.rows);
+    }
+  } catch (err) {
+    console.error("Errore nel fetch delle richieste di certificazione di secondo livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+
+})
+
+app.get("/api/fetch-building-plants-solars-photos/:id/:buildingID", authenticateJWT, authenticateAdmin, async (req, res) => {
+
+  const { role } = req.user;
+  const { id, buildingID } = req.params;
+  console.log("buildingID:", buildingID);
+  console.log("id:", id);
+
+  if (role !== "administrator") {
+    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+  }
+
+  try {
+
+    //fetch plants
+    const query = "SELECT * FROM plants WHERE user_id = $1 AND building_id = $2;";
+    const values = [id, buildingID];
+    const result = await pool.query(query, values);
+
+    //fetch solars
+    const query2 = "SELECT * FROM solars WHERE building_id = $1;";
+    const values2 = [buildingID];
+    const result2 = await pool.query(query2, values2);
+
+    //fetch photovoltaics
+    const query3 = "SELECT * FROM photovoltaics WHERE building_id = $1;";
+    const values3 = [buildingID];
+    const result3 = await pool.query(query3, values3);
+
+    //fetch user consumptions
+    const query4 = "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2;";
+    const values4 = [id, buildingID];
+    const result4 = await pool.query(query4, values4);
+
+    if (result.rows.length === 0) {
+      return res.status(204).json({ error: 'Alcuni dati non trovati' });
+    } else if (result.rows.length > 0) {
+      return res.status(200).json({ plants: result.rows, solars: result2.rows, photovoltaics: result3.rows, consumptions: result4.rows });
+    }
+  } catch (err) {
+    console.error("Errore nel fetch delle richieste di certificazione di secondo livello", err);
+    res.status(500).json({ error: 'Errore del server' });
+  }
+})
 
 
 

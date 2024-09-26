@@ -89,7 +89,7 @@ export default function Buildings() {
                 {numBuildings === 0 ? (
                     <div className="text-center mt-20">
                         <h1 className="text-2xl mb-4">Non hai ancora edifici registrati, aggiungine uno</h1>
-                        <div className="flex flex-col items-center justify-center m-2">
+                        <div className="flex flex-col items-center justify-center m-2 mt-5">
                             <button
                                 className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
                                 onClick={() => setShowBuildingForm(!showBuildingForm)}
@@ -153,7 +153,7 @@ export default function Buildings() {
 
                             ))}
                         </div>
-                        <div className="flex flex-col items-center justify-center m-2">
+                        <div className="flex flex-col items-center justify-center m-2 mt-5">
                             <button
                                 className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
                                 onClick={() => setShowBuildingForm(!showBuildingForm)}

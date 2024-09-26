@@ -6,7 +6,7 @@ import { themeJson } from "../surveyTheme";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
 
-function TransportQuetionnaire({ certification_id }) {
+function TransportQuestionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
   const [initialData, setInitialData] = useState({}); // Stato per i dati iniziali
   const [totalScore, setTotalScore] = useState(0);
@@ -183,7 +183,14 @@ function TransportQuetionnaire({ certification_id }) {
                 "title": "Numero Mezzi",
                 "cellType": "number",
                 "min": 1,
-                "isRequired": true
+                "isRequired": true,
+                "minValue": 0, // Solo numeri positivi
+                "validators": [
+                  {
+                    "type": "numeric",
+                    "text": "Inserire un numero valido."
+                  }
+                ],
               },
               {
                 "name": "Column 2",
@@ -225,7 +232,14 @@ function TransportQuetionnaire({ certification_id }) {
                 "name": "Column 1",
                 "title": "Numero mezzi",
                 "cellType": "number",
-                "isRequired": true
+                "isRequired": true,
+                "minValue": 0, // Solo numeri positivi
+                "validators": [
+                  {
+                    "type": "numeric",
+                    "text": "Inserire un numero valido."
+                  }
+                ],
               },
               {
                 "name": "Column 2",
@@ -324,6 +338,13 @@ function TransportQuetionnaire({ certification_id }) {
                 "title": "Mumero mezzi",
                 "cellType": "number",
                 "isRequired": true,
+                "minValue": 0, // Solo numeri positivi
+                "validators": [
+                  {
+                    "type": "numeric",
+                    "text": "Inserire un numero valido."
+                  }
+                ],
               },
               {
                 "name": "Column 2",
@@ -383,7 +404,14 @@ function TransportQuetionnaire({ certification_id }) {
                 "name": "Column 1",
                 "title": "Numero mezzi",
                 "cellType": "number",
-                "isRequired": true
+                "isRequired": true,
+                "minValue": 0, // Solo numeri positivi
+                "validators": [
+                  {
+                    "type": "numeric",
+                    "text": "Inserire un numero valido."
+                  }
+                ],
               },
               {
                 "name": "Column 2",
@@ -461,7 +489,14 @@ function TransportQuetionnaire({ certification_id }) {
                 "name": "Column 1",
                 "title": "Numero mezzi",
                 "cellType": "number",
-                "isRequired": true
+                "isRequired": true,
+                "minValue": 0, // Solo numeri positivi
+                "validators": [
+                  {
+                    "type": "numeric",
+                    "text": "Inserire un numero valido."
+                  }
+                ],
               },
               {
                 "name": "Column 2",
@@ -1049,4 +1084,4 @@ function TransportQuetionnaire({ certification_id }) {
   );
 }
 
-export default TransportQuetionnaire;
+export default TransportQuestionnaire;

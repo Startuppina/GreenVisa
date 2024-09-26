@@ -605,48 +605,39 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     </div>
 
                     <div className="mb-6">
-                        <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti</h3>
+                        <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti (inserisci il numero di lampadine)</h3>
                         <div className="flex flex-col md:flex-row md:gap-4">
                             <label className="flex flex-col w-full md:w-1/3">
                                 <div className="flex flex-col items-center space-y-4 mb-2">
+                                    <div className="text-xl text-gray-900">Lampadine a incandescenza</div>
                                     <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        step="1"
+                                        type="text"
                                         value={lighting}
                                         onChange={handleLightingChange}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                     />
-                                    <div className="text-2xl font-bold text-gray-900">{lighting}%</div>
                                 </div>
                             </label>
                             <label className="flex flex-col w-full md:w-1/3">
                                 <div className="flex flex-col items-center space-y-4 mb-2">
+                                    <div className="text-xl text-gray-900">Lampadine a led</div>
                                     <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        step="1"
+                                        type="text"
                                         value={led}
                                         onChange={handleLedChange}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                     />
-                                    <div className="text-2xl font-bold text-gray-900">{led}%</div>
                                 </div>
                             </label>
                             <label className="flex flex-col w-full md:w-1/3">
                                 <div className="flex flex-col items-center space-y-4 mb-2">
+                                    <div className="text-xl text-gray-900">Lampadine a scarica di gas</div>
                                     <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        step="1"
+                                        type="text"
                                         value={gasLamp}
                                         onChange={handleGasChange}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                     />
-                                    <div className="text-2xl font-bold text-gray-900">{gasLamp}%</div>
                                 </div>
                             </label>
                         </div>

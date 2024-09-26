@@ -115,20 +115,20 @@ function Building() {
                                 <span id="electricity-analyzer">{buildingData.analyzers}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">LED:</span>
-                                <span id="led">{buildingData.led}%</span>
+                                <span className="font-semibold">Numero lampade a incandescenza:</span>
+                                <span id="lighting">{buildingData.incandescent}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">Lampade a Gas:</span>
-                                <span id="gas-lamp">{buildingData.gas_lamp}%</span>
+                                <span className="font-semibold">Numero lampade a LED:</span>
+                                <span id="led">{buildingData.led}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Numero lampade a gas:</span>
+                                <span id="gas-lamp">{buildingData.gas_lamp}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="font-semibold">Sistemi di regolazione e controllo automatici dei corpi illuminanti:</span>
                                 <span id="lighting">{buildingData.autolightingcontrolsystem}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-semibold">Lampade a incandescenza:</span>
-                                <span id="lighting">{buildingData.incandescent}%</span>
                             </div>
                         </div>
                     </div>
