@@ -1,5 +1,5 @@
 import React from "react";
-import TransportQuetionnaire from "./components/transportQuetionnaire.jsx"
+import TransportQuestionnaire from "./components/transportQuestionnaire.jsx";
 import WellnessQuestionnaire from "./components/wellnessQuestionnaire.jsx";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
@@ -20,7 +20,7 @@ function QuestionnairePage() {
             <ScrollToTop />
             <Navbar />
             <main className="h-screen">
-                {category === "Certificazione trasporti" && <TransportQuetionnaire certification_id={param1} />}
+                {category === "Certificazione trasporti" && <TransportQuestionnaire certification_id={param1} />}
                 {category === "Certificazione spa e resorts" && <WellnessQuestionnaire certification_id={param1} />}
             </main>
             <Footer />
