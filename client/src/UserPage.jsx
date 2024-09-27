@@ -313,7 +313,7 @@ const UserPage = () => {
                     )}
 
                     {activeSection === 'user' && (
-                        <div>
+                        <div >
                             {userInfoComplete && (
                                 <p className="text-center text-red-500 font bold text-xl uppercase mb-4">Hai delle informazioni mancanti. Completa il tuo account</p>
                             )}

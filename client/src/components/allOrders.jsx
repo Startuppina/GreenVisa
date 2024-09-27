@@ -30,7 +30,7 @@ function AllOrders() {
     }, []);
 
     return (
-        <div className='w-full md:w-[98.5%] h-[430px] overflow-y-auto mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-5 py-6'>
+        <div className='w-full md:w-[98.5%] h-[430px] overflow-y-auto mx-auto font-arial text-xl m-4 rounded-2xl border shadow-xl px-5 py-6'>
             <h2 className='text-2xl font-bold mb-4'>Ordini degli Utenti</h2>
 
             <div className="flex flex-wrap gap-4">

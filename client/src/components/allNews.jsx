@@ -159,7 +159,7 @@ function AllNews() {
     }, 300);
 
     return (
-        <div className="w-full mb-8 border rounded-lg shadow-lg p-4">
+        <div className="w-full mb-8 border rounded-2xl shadow-lg p-4 h-[60vh] overflow-y-auto">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
@@ -173,137 +173,144 @@ function AllNews() {
             <h2 className="text-2xl font-bold mb-4">
                 News ({totalNews} {totalNews === 1 ? "articolo" : "articoli"})
             </h2>
-            <div className="mb-4">
-                <input
-                    type="text"
-                    placeholder="Cerca per titolo"
-                    value={searchTerm}
-                    onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        handleSearchChange(e.target.value); // Chiama la funzione di ricerca
-                    }}
-                    className="w-full md:w-[30%] p-2 border border-gray-300 rounded-lg mb-10"
-                />
-            </div>
-            <div className="grid grid-cols-1 gap-6">
-                {filteredNews.map((newsItem, index) => (
-                    <div
-                        key={index}
-                        className="border rounded-lg p-4 shadow-lg bg-white"
-                    >
-                        <div className="flex flex-col items-start w-full md:flex-row gap-10">
-                            <div className="flex flex-col w-[20%]">
-                                <h3 className="text-2xl font-bold mb-2 w-full">
-                                    {newsItem.title}
-                                </h3>
-                                <div className="mb-2 w-[150px] h-[150px]">
-                                    <img
-                                        src={`http://localhost:8080/uploaded_img/${newsItem.image}`}
-                                        alt={newsItem.title}
-                                        className="w-full h-full object-cover rounded mb-2"
-                                    />
+            {totalNews > 0 && (
+                <div className="mb-4">
+                    <input
+                        type="text"
+                        placeholder="Cerca per titolo"
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            handleSearchChange(e.target.value); // Chiama la funzione di ricerca
+                        }}
+                        className="w-full md:w-[400px] p-2 border border-gray-300 rounded-lg mb-10"
+                    />
+                </div>
+            )}
+
+            {filteredNews.length === 0 ? (
+                <p className="text-center text-gray-500">Nessuna notizia trovata</p>
+            ) : (
+                <div className="grid grid-cols-1 gap-6">
+                    {filteredNews.map((newsItem, index) => (
+                        <div
+                            key={index}
+                            className="border rounded-lg p-4 shadow-lg bg-white"
+                        >
+                            <div className="flex flex-col items-start w-full md:flex-row gap-10">
+                                <div className="flex flex-col w-[20%]">
+                                    <h3 className="text-2xl font-bold mb-2 w-full">
+                                        {newsItem.title}
+                                    </h3>
+                                    <div className="mb-2 w-[150px] h-[150px]">
+                                        <img
+                                            src={`http://localhost:8080/uploaded_img/${newsItem.image}`}
+                                            alt={newsItem.title}
+                                            className="w-full h-full object-cover rounded mb-2"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="mb-2">
+                                    <div
+                                        className="prose lg:prose-xl prose-h1:text-3xl prose-h2:text-2xl prose-p:text-lg prose-ul:pl-5 prose-ul:list-disc w-full mx-auto text-black h-[30vh] overflow-y-auto"
+                                        dangerouslySetInnerHTML={{ __html: newsItem.content }}
+                                    ></div>
                                 </div>
                             </div>
-                            <div className="mb-2">
-                                <div
-                                    className="prose lg:prose-xl prose-h1:text-3xl prose-h2:text-2xl prose-p:text-lg prose-ul:pl-5 prose-ul:list-disc w-full mx-auto text-black h-[30vh] overflow-y-auto"
-                                    dangerouslySetInnerHTML={{ __html: newsItem.content }}
-                                ></div>
+                            <div className="flex justify-end space-x-2">
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            handleEdit(newsItem, "news");
+                                            setCurrentNewsToEdit(currentNewsToEdit === newsItem.id ? null : newsItem.id)
+                                        }}
+                                        className="bg-[#2d7044] text-white px-4 py-2 rounded-lg hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044] transition-colors duration-300 ease-in-out"
+                                    >
+                                        Modifica
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setItemToDelete({ id: newsItem.id });
+                                            setMessageConfirm(
+                                                "Sei sicuro di voler eliminare questa notizia?"
+                                            );
+                                            setPopupConfirmDelete(true);
+                                        }}
+                                        className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded-lg hover:border-red-500 hover:text-red-500 hover:bg-white transition-colors duration-300 ease-in-out"
+                                    >
+                                        Elimina
+                                    </button>
+                                </>
                             </div>
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                            <>
-                                <button
-                                    onClick={() => {
-                                        handleEdit(newsItem, "news");
-                                        setCurrentNewsToEdit(currentNewsToEdit === newsItem.id ? null : newsItem.id)
-                                    }}
-                                    className="bg-[#2d7044] text-white px-4 py-2 rounded-lg hover:text-[#2d7044] hover:bg-white border-2 border-[#2d7044] transition-colors duration-300 ease-in-out"
-                                >
-                                    Modifica
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setItemToDelete({ id: newsItem.id });
-                                        setMessageConfirm(
-                                            "Sei sicuro di voler eliminare questa notizia?"
-                                        );
-                                        setPopupConfirmDelete(true);
-                                    }}
-                                    className="bg-red-500 border-2 border-red-500 text-white px-4 py-2 rounded-lg hover:border-red-500 hover:text-red-500 hover:bg-white transition-colors duration-300 ease-in-out"
-                                >
-                                    Elimina
-                                </button>
-                            </>
-                        </div>
-                        {currentNewsToEdit === newsItem.id && itemToEdit && (
-                            <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6">
-                                <h2 className="text-2xl font-bold text-center mb-4">
-                                    Modifica Notizia
-                                </h2>
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
+                            {currentNewsToEdit === newsItem.id && itemToEdit && (
+                                <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6">
+                                    <h2 className="text-2xl font-bold text-center mb-4">
+                                        Modifica Notizia
+                                    </h2>
+                                    <form
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
 
-                                    }}
-                                    className="flex flex-col"
-                                >
-                                    <div className="flex flex-col md:flex-row md:gap-3 mb-4">
-                                        <label className="flex flex-col w-full">
-                                            <span className="block mb-2">Titolo</span>
-                                            <input
-                                                type="text"
-                                                name="title"
-                                                value={itemToEdit.title || ""}
-                                                onChange={handleChange}
-                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
-                                            />
+                                        }}
+                                        className="flex flex-col"
+                                    >
+                                        <div className="flex flex-col md:flex-row md:gap-3 mb-4">
+                                            <label className="flex flex-col w-full">
+                                                <span className="block mb-2">Titolo</span>
+                                                <input
+                                                    type="text"
+                                                    name="title"
+                                                    value={itemToEdit.title || ""}
+                                                    onChange={handleChange}
+                                                    className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
+                                                />
+                                            </label>
+                                            <label className="flex flex-col w-full">
+                                                <span className="block mb-2">Immagine</span>
+                                                <input
+                                                    type="file"
+                                                    name="image"
+                                                    onChange={handleFileChange}
+                                                    className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 z-10"
+                                                />
+                                            </label>
+                                        </div>
+                                        <label className="flex flex-col w-full z-10">
+                                            <span className="block mb-2">Contenuto:</span>
+                                            <TextEditor value={itemToEdit.content || ""} onChange={handleQuillChange} />
                                         </label>
-                                        <label className="flex flex-col w-full">
-                                            <span className="block mb-2">Immagine</span>
-                                            <input
-                                                type="file"
-                                                name="image"
-                                                onChange={handleFileChange}
-                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 z-10"
-                                            />
-                                        </label>
-                                    </div>
-                                    <label className="flex flex-col w-full z-10">
-                                        <span className="block mb-2">Contenuto:</span>
-                                        <TextEditor value={itemToEdit.content || ""} onChange={handleQuillChange} />
-                                    </label>
-                                    <div className="flex justify-center gap-3">
-                                        <button
-                                            type="submit"
-                                            onClick={() => {
-                                                // Imposta l'item da modificare
-                                                setItemToEdit((prevItem) => ({
-                                                    ...prevItem,
-                                                    id: newsItem.id,
-                                                }));
+                                        <div className="flex justify-center gap-3">
+                                            <button
+                                                type="submit"
+                                                onClick={() => {
+                                                    // Imposta l'item da modificare
+                                                    setItemToEdit((prevItem) => ({
+                                                        ...prevItem,
+                                                        id: newsItem.id,
+                                                    }));
 
-                                                // Chiama la funzione saveEdit
-                                                saveEdit();
-                                            }}
-                                            className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] "
-                                        >
-                                            Salva
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={cancelEdit}
-                                            className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-gray-500 text-white rounded-lg border-2 border-transparent hover:border-gray-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-gray-500"
-                                        >
-                                            Annulla
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+                                                    // Chiama la funzione saveEdit
+                                                    saveEdit();
+                                                }}
+                                                className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] "
+                                            >
+                                                Salva
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={cancelEdit}
+                                                className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-gray-500 text-white rounded-lg border-2 border-transparent hover:border-gray-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-gray-500"
+                                            >
+                                                Annulla
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

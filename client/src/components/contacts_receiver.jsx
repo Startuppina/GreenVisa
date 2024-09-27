@@ -149,7 +149,7 @@ const MessagesDashboard = () => {
 
 
     return (
-        <div className="flex flex-col h-auto w-full md:w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
+        <div className="flex flex-col h-auto w-full md:w-[98.5%] mx-auto font-arial text-xl m-4">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>

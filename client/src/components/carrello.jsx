@@ -311,152 +311,155 @@ function Carrello() {
                     ))
                 )}
             </div>
-            <div className="w-[90%] md:w-[70%] h-auto p-5 text-arial text-xl mx-auto">
-                {localStorage.getItem("token") && (
-                    <>
-                        <p>Codice Promozionale</p>
-                        <div className="w-full h-auto flex flex-col md:flex-row gap-4 md:gap-12 items-center justify-between mb-10">
-                            <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5' onChange={(e) => setPromoCode(e.target.value)} />
-                            <button type="submit" className="w-full md:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" onClick={applyPromoCode}>Applica</button>
-                        </div>
-                    </>
-                )}
-                {<div className="w-full h-auto flex flex-row items-center justify-between">
-                    <p>Subtotale</p>
-                    <p>{calculateSubtotal().toFixed(2)} €</p>
-                </div>}
-
-                <div className="w-full h-auto flex flex-row items-center justify-between">
-                    {/*promoCategory === "Tutti" && <p>- Sconto {discount}% applicato su tutti i prodotti <br /> (riduzione applicata in fase di checkout)</p>*/}
-                    {promoCategory === "Tutti" && (
-                        <div className="w-full flex flex-col md:flex-row justify-between">
-                            <div>Sconto {discount}% applicato su tutte le certificazioni</div>
-                            <div>
-                                -{(calculateSubtotal() * (discount / 100)).toFixed(2)} €
+            {isEmpty ? null : (
+                <div className="w-[90%] md:w-[70%] h-auto p-5 text-arial text-xl mx-auto">
+                    {localStorage.getItem("token") && (
+                        <>
+                            <p>Codice Promozionale</p>
+                            <div className="w-full h-auto flex flex-col md:flex-row gap-4 md:gap-12 items-center justify-between mb-10">
+                                <input type="text" id="promocode" name="promocode" className='bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5' onChange={(e) => setPromoCode(e.target.value)} />
+                                <button type="submit" className="w-full md:w-[30%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" onClick={applyPromoCode}>Applica</button>
                             </div>
-                        </div>
-
+                        </>
                     )}
-                    {
-                        promoCategory === "Certificazione trasporti" && (
-                            cartProducts
-                                .filter(product => product.category === "Certificazione trasporti")
-                                .map(product => (
-                                    <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
-                                        <div>Sconto {discount}% applicato su {product.name}</div>
-                                        <div>
-                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                    {<div className="w-full h-auto flex flex-row items-center justify-between">
+                        <p>Subtotale</p>
+                        <p>{calculateSubtotal().toFixed(2)} €</p>
+                    </div>}
+
+                    <div className="w-full h-auto flex flex-row items-center justify-between">
+                        {/*promoCategory === "Tutti" && <p>- Sconto {discount}% applicato su tutti i prodotti <br /> (riduzione applicata in fase di checkout)</p>*/}
+                        {promoCategory === "Tutti" && (
+                            <div className="w-full flex flex-col md:flex-row justify-between">
+                                <div>Sconto {discount}% applicato su tutte le certificazioni</div>
+                                <div>
+                                    -{(calculateSubtotal() * (discount / 100)).toFixed(2)} €
+                                </div>
+                            </div>
+
+                        )}
+                        {
+                            promoCategory === "Certificazione trasporti" && (
+                                cartProducts
+                                    .filter(product => product.category === "Certificazione trasporti")
+                                    .map(product => (
+                                        <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
+                                            <div>Sconto {discount}% applicato su {product.name}</div>
+                                            <div>
+                                                -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                        )
-                    }
+                                    ))
+                            )
+                        }
 
-                    {
-                        promoCategory === "Certificazione spa e resorts" && (
-                            cartProducts
-                                .filter(product => product.category === "Certificazione spa e resorts")
-                                .map(product => (
-                                    <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
-                                        <div>Sconto {discount}% applicato su {product.name}</div>
-                                        <div>
-                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                        {
+                            promoCategory === "Certificazione spa e resorts" && (
+                                cartProducts
+                                    .filter(product => product.category === "Certificazione spa e resorts")
+                                    .map(product => (
+                                        <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
+                                            <div>Sconto {discount}% applicato su {product.name}</div>
+                                            <div>
+                                                -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                        )
-                    }
+                                    ))
+                            )
+                        }
 
-                    {
-                        promoCategory === "Certificazione hotel" && (
-                            cartProducts
-                                .filter(product => product.category === "Certificazione hotel")
-                                .map(product => (
-                                    <div key={product.id}>
-                                        <div>Sconto {discount}% applicato su {product.name}</div>
-                                        <div>
-                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                        {
+                            promoCategory === "Certificazione hotel" && (
+                                cartProducts
+                                    .filter(product => product.category === "Certificazione hotel")
+                                    .map(product => (
+                                        <div key={product.id}>
+                                            <div>Sconto {discount}% applicato su {product.name}</div>
+                                            <div>
+                                                -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                        )
-                    }
+                                    ))
+                            )
+                        }
 
-                    {
-                        promoCategory === "Certificazione industria" && (
-                            cartProducts
-                                .filter(product => product.category === "Certificazione industria")
-                                .map(product => (
-                                    <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
-                                        <div>Sconto {discount}% applicato su {product.name}</div>
-                                        <div>
-                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                        {
+                            promoCategory === "Certificazione industria" && (
+                                cartProducts
+                                    .filter(product => product.category === "Certificazione industria")
+                                    .map(product => (
+                                        <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
+                                            <div>Sconto {discount}% applicato su {product.name}</div>
+                                            <div>
+                                                -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                        )
-                    }
+                                    ))
+                            )
+                        }
 
-                    {
-                        promoCategory === "Certificazione store e retail" && (
-                            cartProducts
-                                .filter(product => product.category === "Certificazione store e retail")
-                                .map(product => (
-                                    <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
-                                        <div>Sconto {discount}% applicato su {product.name}</div>
-                                        <div>
-                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                        {
+                            promoCategory === "Certificazione store e retail" && (
+                                cartProducts
+                                    .filter(product => product.category === "Certificazione store e retail")
+                                    .map(product => (
+                                        <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
+                                            <div>Sconto {discount}% applicato su {product.name}</div>
+                                            <div>
+                                                -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                        )
-                    }
+                                    ))
+                            )
+                        }
 
-                    {
-                        promoCategory === "Certificazione bar e ristoranti" && (
-                            cartProducts
-                                .filter(product => product.category === "Certificazione bar e ristoranti")
-                                .map(product => (
-                                    <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
-                                        <div>Sconto {discount}% applicato su {product.name}</div>
-                                        <div>
-                                            -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                        {
+                            promoCategory === "Certificazione bar e ristoranti" && (
+                                cartProducts
+                                    .filter(product => product.category === "Certificazione bar e ristoranti")
+                                    .map(product => (
+                                        <div key={product.id} className="w-full flex flex-col md:flex-row justify-between">
+                                            <div>Sconto {discount}% applicato su {product.name}</div>
+                                            <div>
+                                                -{(product.price * (discount / 100) * (quantities[product.product_id] || 1)).toFixed(2)} €
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                        )
-                    }
-                </div>
-
-                <hr className="w-full border-[1.5px] border-black" />
-                <div className="w-full h-auto flex flex-row items-center justify-between font-bold">
-                    <p>Totale</p>
-                    {/*<p>{(calculateTotal() - calculateDiscount()).toFixed(2)} €</p>*/}
-                    <p>{calculateTotal().toFixed(2)} €</p>
-                </div>
-
-                {isLoading ? (
-                    <div className="flex justify-center items-center mt-5">
-                        <MutatingDots
-                            height="100"
-                            width="100"
-                            color="#2d7044"
-                            secondaryColor='#2d7044'
-                            radius='12.5'
-                            ariaLabel="mutating-dots-loading"
-                            visible={true}
-                        />
+                                    ))
+                            )
+                        }
                     </div>
-                ) : (
-                    <button
-                        type="submit"
-                        className="relative left-[50%] translate-x-[-50%] w-full md:w-auto mt-5 p-1 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black"
-                        onClick={handleCheckout}
-                    >
-                        Concludi il pagamento
-                    </button>
-                )}
-            </div>
+
+                    <hr className="w-full border-[1.5px] border-black" />
+                    <div className="w-full h-auto flex flex-row items-center justify-between font-bold">
+                        <p>Totale</p>
+                        {/*<p>{(calculateTotal() - calculateDiscount()).toFixed(2)} €</p>*/}
+                        <p>{calculateTotal().toFixed(2)} €</p>
+                    </div>
+
+                    {isLoading ? (
+                        <div className="flex justify-center items-center mt-5">
+                            <MutatingDots
+                                height="100"
+                                width="100"
+                                color="#2d7044"
+                                secondaryColor='#2d7044'
+                                radius='12.5'
+                                ariaLabel="mutating-dots-loading"
+                                visible={true}
+                            />
+                        </div>
+                    ) : (
+                        <button
+                            type="submit"
+                            className="relative left-[50%] translate-x-[-50%] w-full md:w-auto mt-5 p-1 bg-black text-white rounded-lg border-2 border-transparent hover:border-black transition-colors duration-300 ease-in-out hover:bg-white hover:text-black"
+                            onClick={handleCheckout}
+                        >
+                            Concludi il pagamento
+                        </button>
+                    )}
+                </div>
+            )}
+
         </div >
     );
 }
