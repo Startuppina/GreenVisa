@@ -76,12 +76,12 @@ export default function UsersGeneratorTypes({ sendDataToParent }) {
     })
 
     return (
-        <div className="w-full mt-10 flex items-center justify-center">
+        <div className="w-full flex items-center justify-center">
             <MessagePopUp buttonPopup={buttonPopup} setButtonPopup={setButtonPopup} >
                 {messagePopup}
             </MessagePopUp>
 
-            <div className="w-full mx-auto p-6 border border-gray-300 rounded-lg shadow-md">
+            <div className="w-full mx-auto p-6 border border-gray-300 rounded-2xl shadow-md">
                 <h1 className="text-3xl font-bold text-center mb-6">Richieste di Validazione del Tipo di Generatore</h1>
 
                 <div className="space-y-6">
