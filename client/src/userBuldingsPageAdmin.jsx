@@ -4,7 +4,6 @@ import axios from "axios";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import ScrollToTop from "./components/scrollToTop";
-import { useRecoveryContext } from "./provider/provider";
 
 function UserBuldingsPageAdmin() {
     const [userBuildings, setUserBuildings] = useState([]);
@@ -15,7 +14,6 @@ function UserBuldingsPageAdmin() {
     const [buildingPhotos, setBuildingPhotos] = useState([]);
     const [selectedBuildingId, setSelectedBuildingId] = useState(null); // ID dell'edificio selezionato
     const { id, username } = useParams();
-    const [showText, setShowText] = useState(false);
 
     useEffect(() => {
         const fetchUserBuildings = async () => {

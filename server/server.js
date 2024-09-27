@@ -201,7 +201,7 @@ app.post("/api/signup", async (req, res) => {
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
     await pool.query(
-      "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+      "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
       [username, company_name, email, newPhone, null, null, null, false, hashedPassword]
     );
 
@@ -3316,7 +3316,7 @@ app.get("/api/fetch-user-info-by-buildings", authenticateJWT, authenticateAdmin,
       return res.status(200).json(result.rows);
     }
   } catch (err) {
-    console.error("Errore nel fetch delle richieste di certificazione di secondo livello", err);
+    console.error("Errore nel fetch dei dati", err);
     res.status(500).json({ error: 'Errore del server' });
   }
 })
@@ -3342,7 +3342,7 @@ app.get("/api/fetch-user-buildings/:id", authenticateJWT, authenticateAdmin, asy
       return res.status(200).json(result.rows);
     }
   } catch (err) {
-    console.error("Errore nel fetch delle richieste di certificazione di secondo livello", err);
+    console.error("Errore nel fetch dei dati", err);
     res.status(500).json({ error: 'Errore del server' });
   }
 
@@ -3387,10 +3387,12 @@ app.get("/api/fetch-building-plants-solars-photos/:id/:buildingID", authenticate
       return res.status(200).json({ plants: result.rows, solars: result2.rows, photovoltaics: result3.rows, consumptions: result4.rows });
     }
   } catch (err) {
-    console.error("Errore nel fetch delle richieste di certificazione di secondo livello", err);
+    console.error("Errore nel fetch dei dati", err);
     res.status(500).json({ error: 'Errore del server' });
   }
 })
+
+
 
 
 
