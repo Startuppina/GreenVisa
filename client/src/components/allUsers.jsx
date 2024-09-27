@@ -3,6 +3,19 @@ import axios from "axios";
 import MessagePopUp from "./messagePopUp";
 import { MutatingDots } from 'react-loader-spinner';
 
+// Funzione debounce
+const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            func(...args);
+        }, delay);
+    };
+};
+
 function AllUsers() {
     const [users, setUsers] = useState([]);
     const [showEmailForm, setShowEmailForm] = useState(false);
@@ -12,12 +25,13 @@ function AllUsers() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopUp, setMessagePopUp] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState(""); // Stato per il termine di ricerca
+    const [filteredUsers, setFilteredUsers] = useState([]); // Stato per gli utenti filtrati
 
     const handleTitleChange = (e) => setEmailTitle(e.target.value);
     const handleContentChange = (e) => setEmailContent(e.target.value);
     const [currentMessageEmail, setCurrentMessageEmail] = useState("");
-
-
+    const [currentEmailFormUserId, setCurrentEmailFormUserId] = useState(null); // Stato per memorizzare l'ID utente
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -30,6 +44,7 @@ function AllUsers() {
                 });
                 if (response.status === 200) {
                     setUsers(response.data);
+                    setFilteredUsers(response.data); // Imposta gli utenti filtrati inizialmente
                 }
             } catch (error) {
                 setMessagePopUp("Errore durante il recupero degli utenti");
@@ -49,7 +64,6 @@ function AllUsers() {
                 if (response.status === 200) {
                     setAdmin(response.data.username);
                 }
-
             } catch (error) {
                 setMessagePopUp("Errore durante il recupero dell'username dell'amministratore");
                 setButtonPopup(true);
@@ -60,11 +74,17 @@ function AllUsers() {
         fetchUsers();
     }, []);
 
+    // Funzione di ricerca debounced
+    const handleSearchChange = debounce((searchTerm) => {
+        setFilteredUsers(users.filter(user =>
+            user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        ));
+    }, 300);
+
     const sendResponse = async (e) => {
         e.preventDefault();
-
         setIsLoading(true);
-
         const token = localStorage.getItem('token');
         try {
             const response = await axios.post("http://localhost:8080/api/send-message-response", { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
@@ -73,7 +93,6 @@ function AllUsers() {
                     'Authorization': `Bearer ${token}`
                 }
             });
-
             if (response.status === 200) {
                 setTimeout(() => {
                     setEmailTitle("");
@@ -82,9 +101,7 @@ function AllUsers() {
                     setMessagePopUp("Messaggio inviato correttamente");
                     setButtonPopup(true);
                 }, 3000);
-
             }
-
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
@@ -96,8 +113,22 @@ function AllUsers() {
             <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
                 <h1 className="text-2xl font-bold text-black text-center pb-10">Dettagli Utente</h1>
 
+                {/* Campo di ricerca */}
+                <div className="mb-4">
+                    <input
+                        type="text"
+                        placeholder="Cerca per nome o email"
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            handleSearchChange(e.target.value); // Chiama la funzione di ricerca
+                        }}
+                        className="w-full md:w-[30%] p-2 border border-gray-300 rounded-lg mb-10"
+                    />
+                </div>
+
                 <div className="space-y-4">
-                    {users.map(user => (
+                    {filteredUsers.map(user => (
                         <div key={user.id} className="bg-white p-4 rounded-lg shadow-md border">
                             <div className="w-full">
                                 <div className="flex flex-col md:flex-row md:justify-between mb-4">
@@ -143,16 +174,17 @@ function AllUsers() {
                                 <button
                                     onClick={() => {
                                         setCurrentMessageEmail(user.email);
-                                        setShowEmailForm(!showEmailForm);
+                                        setCurrentEmailFormUserId(currentEmailFormUserId === user.id ? null : user.id); // Mostra il form solo per l'utente corrente
                                     }}
                                     className="bg-blue-500 border-blue-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out"
                                 >
-                                    Invia Email
+                                    {currentEmailFormUserId === user.id ? "Chiudi" : "Rispondi con una email"}
                                 </button>
+
                             </div>
 
-                            {showEmailForm && (
-                                <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border  px-10 py-6">
+                            {currentEmailFormUserId === user.id && (
+                                <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border px-10 py-6">
                                     <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                                         {messagePopUp}
                                     </MessagePopUp>
@@ -224,15 +256,12 @@ function AllUsers() {
                                     </div>
 
                                 </div>
-
                             )}
                         </div>
-
                     ))}
                 </div>
             </div>
         </div>
-
     );
 }
 
