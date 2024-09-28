@@ -81,7 +81,7 @@ function Building() {
                                 <span id="heat-distribution">{buildingData.heat_distribution}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">Ventilazione:</span>
+                                <span className="font-semibold">Ventilazione Meccanica Controllata:</span>
                                 <span id="ventilation">{buildingData.ventilation}</span>
                             </div>
                             <div className="flex justify-between">

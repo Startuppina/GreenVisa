@@ -110,7 +110,7 @@ function PromoCodes() {
     const colors = ["#2d7044", "#1e90ff", "#ff6347", "#ffd700", "#32cd32", "#a52a2a", "#ff00ff", "#7b68ee"]; // Array di colori
 
     return (
-        <div className="w-full md:w-[98.5%] h-[430px] overflow-y-auto mx-auto font-arial text-xl m-4 rounded-2xl border shadow-xl px-5 py-6">
+        <div className="w-full h-[430px] overflow-y-auto mx-auto font-arial text-xl rounded-2xl border shadow-xl px-5 py-6">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>

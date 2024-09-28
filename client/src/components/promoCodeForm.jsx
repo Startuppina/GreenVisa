@@ -79,7 +79,7 @@ function PromoCodeForm() {
         }
     }
     return (
-        <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6">
+        <div className="w-full mx-auto font-arial text-xl rounded-2xl border shadow-xl px-10 py-6">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>

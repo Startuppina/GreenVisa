@@ -2473,7 +2473,7 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
     await pool.query(`
       UPDATE plants
       SET description = $3, plant_type = $4, service_type = $5, generator_type = $6, generator_description = $7, fuel_type = $8
-      WHERE user_id = $1 AND building_id = $2 AND id = $12
+      WHERE user_id = $1 AND building_id = $2 AND id = $9
     `, values);
 
     res.status(200).json({ msg: "Impianto aggiornato con successo" });
@@ -2523,7 +2523,7 @@ app.get("/api/:buildingID/fetch-user-energies", authenticateJWT, async (req, res
     const { buildingID } = req.params;
     console.log('buildingID:', buildingID);
 
-    const rows = await pool.query(`SELECT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2 AND fuel_type <> 'Elettrico'`, [user_id, buildingID]);
+    const rows = await pool.query(`SELECT DISTINCT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2 AND fuel_type <> 'Elettrico'`, [user_id, buildingID]);
     res.status(200).json({ energies: rows.rows });
   } catch (error) {
     console.error('Error fetching energies:', error.message);
@@ -2849,6 +2849,12 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     const result3 = await pool.query(query3, values3);
     const count2 = parseInt(result3.rows[0].count, 10); // Convert to integer for accuracy
 
+    //fetch building plants
+    const query = "SELECT * FROM plants WHERE building_id = $1 AND user_id = $2";
+    const values = [buildingID, user_id];
+    const result = await pool.query(query, values);
+    const plants = result.rows;
+
     const solaData = {
       solars: rows2.rows,
       count2: count2,
@@ -2867,7 +2873,7 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     const result4 = await pool.query(query4, values4);
     const consumptions = result4.rows;
 
-    res.status(200).json({ buildingData: building, solaData: solaData, photoData: photoData, consumptionsData: consumptions });
+    res.status(200).json({ buildingData: building, plants: plants, solaData: solaData, photoData: photoData, consumptionsData: consumptions });
 
   } catch (error) {
     console.error('Error fetching photovoltaics:', error.message);

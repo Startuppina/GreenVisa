@@ -96,7 +96,7 @@ function ProductsForm() {
     };
 
     return (
-        <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border border-gray-300 shadow-xl">
+        <div className="w-full mx-auto m-4 rounded-2xl font-arial text-xl px-10 py-6  border-gray-300 shadow-xl">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>

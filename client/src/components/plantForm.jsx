@@ -244,7 +244,6 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                 "Pellet",
                 "Cippato di legna",
                 "Biogas",
-                "Biodiesel",
                 "Elettrico",
                 "Energia termica"
             ],

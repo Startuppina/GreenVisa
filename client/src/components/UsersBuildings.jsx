@@ -73,7 +73,7 @@ function UsersBuildings() {
     };
 
     return (
-        <div className="flex flex-col h-[60vh] w-full md:w-[98.5%] overflow-y-auto mx-auto font-arial text-xl">
+        <div className="flex flex-col h-[60vh] w-full overflow-y-auto mx-auto font-arial text-xl">
             <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
                 <h1 className="text-2xl font-bold text-black text-center pb-5">Edifici degli utenti</h1>
                 <p className="text-xl text-center mb-4">In questa sezione sono presenti tutti gli utenti che hanno registrato almeno un edificio</p>
