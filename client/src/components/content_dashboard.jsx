@@ -726,7 +726,7 @@ const Dashboard = () => {
               </svg>
             </button>
             <span className={`transition-opacity duration-300 ease-in-out ${activeSection === "forms" || visible === "forms" ? 'opacity-100' : 'opacity-0'}`}>
-              Moduli
+              Aggiungi
             </span>
           </div>
 
@@ -830,6 +830,7 @@ const Dashboard = () => {
               Certificati di 2° Livello
             </span>
           </div>
+
         </div>
 
         <div className={`flex flex-wrap justify-center items-center gap-4 ${window.innerWidth < 1024 ? 'block' : 'hidden'}`}>

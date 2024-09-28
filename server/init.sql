@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS plants (
     description TEXT NOT NULL,
     plant_type VARCHAR(50) NOT NULL,
     service_type VARCHAR(50) NOT NULL,
-    generator_type VARCHAR(50) NOT NULL,
+    generator_type VARCHAR(255) NOT NULL,
     generator_description TEXT DEFAULT NULL,  -- Optional if 'Altro' is selected
     generator_assigned_score DECIMAL(10,2) DEFAULT 0.0,
     fuel_type VARCHAR(50) NOT NULL

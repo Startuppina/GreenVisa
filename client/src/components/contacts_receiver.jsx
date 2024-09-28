@@ -149,7 +149,7 @@ const MessagesDashboard = () => {
 
 
     return (
-        <div className="flex flex-col h-auto w-full md:w-[98.5%] mx-auto font-arial text-xl m-4">
+        <div className="flex flex-col h-auto w-full mx-auto font-arial text-xl">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
@@ -203,7 +203,8 @@ const MessagesDashboard = () => {
                                 </button>
                                 <button
                                     onClick={() => handleSendEmail(message.email)}
-                                    className="w-[41%] md:w-auto bg-blue-500 border-blue-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out truncate"
+                                    className={` ${emailForm ? "bg-gray-500 border-gray-500 text-white" : "bg-blue-500 border-blue-500 text-white hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out"} w-[41%] md:w-auto border-2  px-4 py-2 rounded-lg truncate`}
+                                    disabled={emailForm === true}
                                 >
                                     Conferma ricezione
                                 </button>

@@ -109,7 +109,7 @@ function AllUsers() {
     };
 
     return (
-        <div className="flex flex-col h-[70vh] overflow-y-auto w-full md:w-[98.5%] mx-auto font-arial text-xl m-4">
+        <div className="flex flex-col h-[70vh] overflow-y-auto w-full  mx-auto font-arial text-xl">
             <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
                 <h1 className="text-2xl font-bold text-black text-center pb-10">Utenti registrati</h1>
 

@@ -159,7 +159,7 @@ function AllNews() {
     }, 300);
 
     return (
-        <div className="w-full mb-8 border rounded-2xl shadow-lg p-4 h-[60vh] overflow-y-auto">
+        <div className="w-full mb-8 border rounded-2xl shadow-lg p-4 h-[100vh] overflow-y-auto">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
