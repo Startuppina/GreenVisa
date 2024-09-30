@@ -79,7 +79,6 @@ function BuildingResults() {
         else return "#b71c1c";
     };
 
-
     const getOverallEvaluation = (finalVote) => {
         if (finalVote >= 9) return "Eccellente";
         else if (finalVote >= 8) return "Buono";
