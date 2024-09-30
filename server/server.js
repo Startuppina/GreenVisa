@@ -2123,6 +2123,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       address,
       usage,
       year,
+      area,
       location,
       renovation,
       heating,
@@ -2144,7 +2145,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
 
 
     // Verifica che tutti i dati richiesti siano presenti
-    if (!name || !address || !usage || !year || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+    if (!name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
@@ -2170,6 +2171,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       usage,
       location,
       year,
+      area,
       renovation,
       heating,
       ventilation,
@@ -2196,6 +2198,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
         usage,
         location,
         construction_year,
+        area,
         renovation,
         heat_distribution,
         ventilation,
@@ -2210,7 +2213,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
         analyzers,
         autoLightingControlSystem
     ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
     )
   `;
 
@@ -2234,6 +2237,7 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       address,
       usage,
       year,
+      area,
       location,
       renovation,
       heating,
@@ -2254,7 +2258,7 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
     console.log(req.body);
 
     // Verifica che tutti i dati richiesti siano presenti
-    if (!id || !name || !address || !usage || !year || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+    if (!id || !name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
@@ -2280,6 +2284,7 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       usage,
       location,
       year,
+      area,
       renovation,
       heating,
       ventilation,
@@ -2306,20 +2311,21 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
         usage = $4,
         location = $5,
         construction_year = $6,
-        renovation = $7,
-        heat_distribution = $8,
-        ventilation = $9,
-        energy_control = $10,
-        maintenance = $11,
-        electricity_forniture = $12,
-        water_recovery = $13,
-        electricity_meter = $14,
-        incandescent = $15,
-        led = $16,
-        gas_lamp = $17,
-        analyzers = $18,
-        autoLightingControlSystem = $19
-      WHERE id = $20
+        area = $7,
+        renovation = $8,
+        heat_distribution = $9,
+        ventilation = $10,
+        energy_control = $11,
+        maintenance = $12,
+        electricity_forniture = $13,
+        water_recovery = $14,
+        electricity_meter = $15,
+        incandescent = $16,
+        led = $17,
+        gas_lamp = $18,
+        analyzers = $19,
+        autoLightingControlSystem = $20
+      WHERE id = $21
   `, values);
 
 
@@ -3402,7 +3408,7 @@ app.put("/api/insert-results/:buildingID", authenticateJWT, async (req, res) => 
 
   const { user_id } = req.user;
   const { buildingID } = req.params;
-  const { finalVote, totalCO2Emissions } = req.body;
+  const { finalVote, totalCO2Emissions, areaCO2Emissions } = req.body;
   console.log("buildingID:", buildingID);
   console.log("user_id:", user_id);
   console.log("finalVote:", finalVote);
@@ -3410,7 +3416,7 @@ app.put("/api/insert-results/:buildingID", authenticateJWT, async (req, res) => 
 
 
   try {
-    await pool.query(`UPDATE buildings SET  emissionMark = $1, emissionCO2 = $2, results_visible = true WHERE id = $3 AND user_id = $4`, [finalVote, totalCO2Emissions, buildingID, user_id]);
+    await pool.query(`UPDATE buildings SET  emissionMark = $1, emissionCO2 = $2, areaEmissionCO2 = $3, results_visible = true WHERE id = $4 AND user_id = $5`, [finalVote, totalCO2Emissions, areaCO2Emissions, buildingID, user_id]);
     res.status(200).json({ msg: "Risultati inseriti con successo" });
   } catch (error) {
     console.error('Error inserting results:', error.message);
@@ -3427,7 +3433,7 @@ app.get("/api/fetch-results/:buildingID", authenticateJWT, async (req, res) => {
 
 
   try {
-    const query = "SELECT emissionMark, emissionCO2, results_visible FROM buildings WHERE id = $1 AND user_id = $2;";
+    const query = "SELECT emissionMark, emissionCO2, areaEmissionCO2, results_visible FROM buildings WHERE id = $1 AND user_id = $2;";
     const values = [buildingID, user_id];
     const result = await pool.query(query, values);
     if (result.rows.length === 0) {

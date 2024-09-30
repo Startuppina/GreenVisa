@@ -11,6 +11,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const [address, setAddress] = useState(buildingData.address || "");
     const [usage, setUsage] = useState(buildingData.usage || "");
     const [year, setYear] = useState(buildingData.construction_year || "");
+    const [area, setArea] = useState(buildingData.area || "");
     const [location, setLocation] = useState(buildingData.location || "");
     const [renovation, setRenovation] = useState(buildingData.renovation || "");
     const [heating, setHeating] = useState(buildingData.heat_distribution || "");
@@ -49,6 +50,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         formData.append('usage', usage);
         formData.append('location', location);
         formData.append('year', year);
+        formData.append('area', area);
         formData.append('renovation', renovation);
         formData.append('heating', heating);
         formData.append('ventilation', ventilation);
@@ -62,8 +64,6 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         formData.append('lighting', lighting);
         formData.append('led', led);
         formData.append('gasLamp', gasLamp);
-        //const totalScore = calculateTotalScore(formData);
-        //formData.append('buildingScore', totalScore);
 
         console.log('Form data:', formData);
 
@@ -123,6 +123,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         formData.append('usage', usage);
         formData.append('location', location);
         formData.append('year', year);
+        formData.append('area', area);
         formData.append('renovation', renovation);
         formData.append('heating', heating);
         formData.append('ventilation', ventilation);
@@ -136,10 +137,6 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         formData.append('lighting', lighting);
         formData.append('led', led);
         formData.append('gasLamp', gasLamp);
-
-
-        //const totalScore = calculateTotalScore(formData);
-        //formData.append('buildingScore', totalScore);
 
         console.log('Form data:', formData);
 
@@ -161,6 +158,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     setAddress("");
                     setUsage("");
                     setYear("");
+                    setArea("");
                     setLocation("");
                     setRenovation("");
                     setHeating("");
@@ -201,6 +199,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const handleUsageChange = (e) => setUsage(e.target.value);
     const handleYearChange = (e) => setYear(e.target.value);
     const handleLocationChange = (e) => setLocation(e.target.value);
+    const handleAreaChange = (e) => setArea(e.target.value);
     const handleRenovationChange = (e) => setRenovation(e.target.value);
     const handleHeatingChange = (e) => setHeating(e.target.value);
     const handleVentilationChange = (e) => setVentilation(e.target.value);
@@ -214,113 +213,6 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const handleGasChange = (e) => setGasLamp(e.target.value);
     const handleElectricFornitureChange = (e) => setElectricForniture(e.target.value);
     const handleAutoLightingControlSystemChange = (e) => setAutoLightingControlSystem(e.target.value);
-
-    /*const scoring = {
-        year: {
-            'Prima del 1976': 10,
-            'Tra 1976 e 1991': 13,
-            'Tra 1991 e 2004': 16,
-            'dopo il 2004': 19
-        },
-        renovation: {
-            'Edile': 19,
-            'Impiantistico': 16,
-            'No': 13
-        },
-        heating: {
-            'Radiatori': 10,
-            'Ventilconvettori': 13,
-            'Impianto ad aria canalizzato': 16,
-            'Pavimento radiante': 19
-        },
-        ventilation: {
-            'Si': 13,
-            'Si, con recupero calore': 16,
-            'No': 10
-        },
-        energyControl: {
-            'Settimanale': 16,
-            'Mensile': 13,
-            'Annuale': 10,
-            'No': 7
-        },
-        maintenance: {
-            'Settimanale': 16,
-            'Mensile': 13,
-            'Annuale': 10,
-            'No': 7
-        },
-        waterRecovery: {
-            'per l irrigazione': 13,
-            'per la cassette di scarico': 10,
-            'altro': 7,
-            'No': 0
-        },
-        electricityCounter: {
-            'da 0 a 10 kW': 25,
-            'da 10 a 20 kW': 22,
-            'da 20 a 50 kW': 19,
-            'da 50 a 100 kW': 16,
-            'oltre i 100 kW': 13
-        },
-        electricityAnalyzer: {
-            'Si': 16,
-            'Non so': 13,
-            'No': 10
-        },
-        percentageScore: {
-            'lighting': (percentage) => {
-                return Math.round((percentage / 100) * 12);  // scala il punteggio fino a 12 punti
-            },
-            'led': (percentage) => {
-                return Math.round((percentage / 100) * 36);  // scala il punteggio fino a 36 punti
-            },
-            'gas_lamp': (percentage) => {
-                return Math.round((percentage / 100) * 24);  // scala il punteggio fino a 24 punti
-            }
-        }
-    };
-
-    const calculateTotalScore = (formData) => {
-        let totalScore = 0;
-
-        // Estrai i dati dal formData
-        const name = formData.get('name');  // Nome non usato per il punteggio
-        const description = formData.get('description');  // Descrizione non usata per il punteggio
-        const year = formData.get('year');
-        const renovation = formData.get('renovation');
-        const heating = formData.get('heating');
-        const ventilation = formData.get('ventilation');
-        const energyControl = formData.get('energyControl');
-        const maintenance = formData.get('maintenance');
-        const waterRecovery = formData.get('waterRecovery');
-        const electricityCounter = formData.get('electricityCounter');
-        const electricityAnalyzer = formData.get('electricityAnalyzer');
-        const lightingPercentage = parseFloat(formData.get('lighting')) || 0;
-        const ledPercentage = parseFloat(formData.get('led')) || 0;
-        const gasLampPercentage = parseFloat(formData.get('gasLamp')) || 0;
-
-        // Calcola il punteggio totale con un peso maggiore per i LED
-        totalScore += scoring.year[year] || 0;
-        totalScore += scoring.renovation[renovation] || 0;
-        totalScore += scoring.heating[heating] || 0;
-        totalScore += scoring.ventilation[ventilation] || 0;
-        totalScore += scoring.energyControl[energyControl] || 0;
-        totalScore += scoring.maintenance[maintenance] || 0;
-        totalScore += scoring.waterRecovery[waterRecovery] || 0;
-        totalScore += scoring.electricityCounter[electricityCounter] || 0;
-        totalScore += scoring.electricityAnalyzer[electricityAnalyzer] || 0;
-        totalScore += scoring.percentageScore.lighting(lightingPercentage);
-        totalScore += scoring.percentageScore.gas_lamp(gasLampPercentage);
-
-        // Aumenta l'impatto del punteggio dei LED
-        const ledScore = scoring.percentageScore.led(ledPercentage);
-        const weightedLedScore = ledScore * 1.5; // Fattore di moltiplicazione per dare maggiore peso ai LED
-        totalScore += weightedLedScore;
-
-        return totalScore;
-    };*/
-
 
     const options = [
         {
@@ -350,7 +242,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                 "Prima del 1976",
                 "Tra 1976 e 1991",
                 "Tra 1991 e 2004",
-                "dopo il 2004"
+                "Dopo il 2004"
             ],
             renovation: [
                 "Edile",
@@ -381,17 +273,17 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                 "No"
             ],
             water_recovery: [
-                "per l'irrigazione",
-                "per la cassette di scarico",
-                "altro",
+                "Per l'irrigazione",
+                "Per la cassette di scarico",
+                "Altro",
                 "No"
             ],
             electricity_meter: [
-                "da 0 a 10 kW",
-                "da 10 a 20 kW",
-                "da 20 a 50 kW",
-                "da 50 a 100 kW",
-                "oltre i 100 kW"
+                "Da 0 a 10 kW",
+                "Da 10 a 20 kW",
+                "Da 20 a 50 kW",
+                "Da 50 a 100 kW",
+                "Oltre i 100 kW"
             ],
             analyzers: [
                 "Si",
@@ -399,8 +291,8 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                 "Non so"
             ],
             electric_forniture: [
-                "elettrico - mix generico",
-                "elettrico - 100% rinnovabili",
+                "Elettrico - mix generico",
+                "Elettrico - 100% rinnovabili",
             ],
             automaticLightingControlSystems: [
                 "Si",
@@ -437,7 +329,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 onChange={handleLocationChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
-                                <option value="" disabled>Seleziona anno</option>
+                                <option value="" disabled>Seleziona</option>
                                 {options[0].location.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
@@ -481,6 +373,15 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
                             </select>
+                        </label>
+                        <label className="flex flex-col w-full md:w-1/2">
+                            <span className="block mb-2">Superficie (m²)</span>
+                            <input
+                                type="text"
+                                value={area || ''}
+                                onChange={handleAreaChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            />
                         </label>
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Ristrutturazioni (M)</span>
@@ -605,11 +506,11 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     </div>
 
                     <div className="mb-6">
-                        <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti (inserisci il numero di lampadine)</h3>
+                        <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti (inserisci il numero di dispositivi di illuminazione)</h3>
                         <div className="flex flex-col md:flex-row md:gap-4">
                             <label className="flex flex-col w-full md:w-1/3">
                                 <div className="flex flex-col items-center space-y-4 mb-2">
-                                    <div className="text-xl text-gray-900">Lampadine a incandescenza</div>
+                                    <div className="text-xl text-gray-900">Incandescenza</div>
                                     <input
                                         type="text"
                                         value={lighting}
@@ -620,7 +521,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                             </label>
                             <label className="flex flex-col w-full md:w-1/3">
                                 <div className="flex flex-col items-center space-y-4 mb-2">
-                                    <div className="text-xl text-gray-900">Lampadine a led</div>
+                                    <div className="text-xl text-gray-900">Led</div>
                                     <input
                                         type="text"
                                         value={led}
@@ -631,7 +532,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                             </label>
                             <label className="flex flex-col w-full md:w-1/3">
                                 <div className="flex flex-col items-center space-y-4 mb-2">
-                                    <div className="text-xl text-gray-900">Lampadine a scarica di gas</div>
+                                    <div className="text-xl text-gray-900">A scarica di gas</div>
                                     <input
                                         type="text"
                                         value={gasLamp}

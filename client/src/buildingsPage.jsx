@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ScrollToTop from './components/scrollToTop';
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
@@ -19,6 +19,13 @@ export default function Buildings() {
     const { addBuildingTrigger, setAddBuildingTrigger } = useRecoveryContext();
 
     const { buildingID, setBuildingID } = useRecoveryContext();
+
+    const formRef = useRef(null);
+    useEffect(() => {
+        if (showBuildingForm && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    })
 
     useEffect(() => {
         const fetchBuildings = async () => {
@@ -174,7 +181,7 @@ export default function Buildings() {
                                 </svg>
                             </button>
                         </div>
-                        {showBuildingForm && <BuildingFrom buildingData="empty" isEdit={false} />}
+                        {showBuildingForm && <div ref={formRef}><BuildingFrom buildingData="empty" isEdit={false} /></div>}
                     </div>
                 )
                 }

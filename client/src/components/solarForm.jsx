@@ -9,24 +9,7 @@ function SolarForm({ solar = 'empty', isEdit, onButtonClick = "empty" }) {
     const [isLoading, setIsLoading] = useState(false);
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
-
     const { buildingID, triggerRefresh } = useRecoveryContext();
-
-    // Funzione per calcolare il punteggio di ecosostenibilità
-    /*const calculateEcoScore = (area) => {
-        if (area <= 0) {
-            return 0;
-        } else if (area <= 10) {
-            return 10; // Punteggio fisso per aree fino a 10 m²
-        } else if (area <= 30) {
-            return 13; // Punteggio fisso per aree da 11 a 30 m²
-        } else if (area <= 50) {
-            return 16; // Punteggio fisso per aree da 31 a 50 m²
-        } else {
-            return 19; // Punteggio fisso per aree superiori a 50 m²
-        }
-    };*/
-
 
     const handleUpdateSolar = async () => {
         console.log("solar", solar);
@@ -36,7 +19,6 @@ function SolarForm({ solar = 'empty', isEdit, onButtonClick = "empty" }) {
         const area = parseFloat(installedArea);
         const formData = {
             installedArea: area,
-            //solarScore: calculateEcoScore(area)  // Calcolo e aggiunta del punteggio di ecosostenibilità
         };
 
         try {
@@ -91,7 +73,6 @@ function SolarForm({ solar = 'empty', isEdit, onButtonClick = "empty" }) {
         const area = parseFloat(installedArea);
         const formData = {
             installedArea: area,
-            //solarScore: calculateEcoScore(area)  // Calcolo e aggiunta del punteggio di ecosostenibilità
         };
 
         try {

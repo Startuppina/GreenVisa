@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import MessagePopUp from "./messagePopUp";
 import { MutatingDots } from 'react-loader-spinner';
@@ -32,6 +32,13 @@ function AllUsers() {
     const handleContentChange = (e) => setEmailContent(e.target.value);
     const [currentMessageEmail, setCurrentMessageEmail] = useState("");
     const [currentEmailFormUserId, setCurrentEmailFormUserId] = useState(null); // Stato per memorizzare l'ID utente
+
+    const formRef = useRef(null);
+    useEffect(() => {
+        if (currentEmailFormUserId && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [currentEmailFormUserId]);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -187,7 +194,7 @@ function AllUsers() {
                                 </div>
 
                                 {currentEmailFormUserId === user.id && (
-                                    <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border px-10 py-6">
+                                    <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border px-10 py-6" ref={formRef}>
                                         <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                                             {messagePopUp}
                                         </MessagePopUp>
