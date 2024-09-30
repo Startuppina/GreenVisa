@@ -168,10 +168,10 @@ export async function EmissionsCalculator(buildingID) {
         if (consumptionsData[i].energy_source === "Elettricità") {
             console.log("Energy source at index", i, ":", consumptionsData[i].energy_source);
 
-            if (electrcityType === "elettrico - 100% rinnovabili") {
+            if (electrcityType === "Elettrico - 100% rinnovabili") {
                 sourceTEP[electrcityType] = (consumptionsData[i].consumption * conversionFactors["elettricitaRete"]);
                 CO2SourceEmissions[electrcityType] = (sourceTEP[electrcityType] * emissionsCO2["elettricitaRinnovabile"]);
-            } else if (electrcityType === "elettrico - mix generico") {
+            } else if (electrcityType === "Elettrico - mix generico") {
                 sourceTEP[electrcityType] = (consumptionsData[i].consumption * conversionFactors["elettricitaRete"]);
                 CO2SourceEmissions[electrcityType] = (sourceTEP[electrcityType] * emissionsCO2["elettricitaRinnovabile"]);
             }
@@ -219,9 +219,9 @@ export async function EmissionsCalculator(buildingID) {
 
     for (let i = 0; i < consumptionsData.length; i++) {
         if (consumptionsData[i].energy_source === "Elettricità") {
-            if (electrcityType === "elettrico - 100% rinnovabili") {
+            if (electrcityType === "Elettrico - 100% rinnovabili") {
                 marks[electrcityType] = sourceMarks["elettricitaRinnovabile"];
-            } else if (electrcityType === "elettrico - mix generico") {
+            } else if (electrcityType === "Elettrico - mix generico") {
                 marks[electrcityType] = sourceMarks["elettricitaRete"];
             }
         } else {
@@ -547,9 +547,13 @@ export async function EmissionsCalculator(buildingID) {
     const finalVote = Math.ceil(Object.values(votesPercentage).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
     console.log("Final vote:", finalVote);
 
+    //EMISSIONE PER SUPERFICIE [tonsCO2/mq]
+    const areaCO2Emissions = totalCO2Emissions / buildingData.area;
+    console.log("Area CO2 emissions:", areaCO2Emissions);
+
     //aggiornamento dell'edificio per aggiungere il voto finale e le emissioni calcolate
     try {
-        const response = await axios.put(`http://localhost:8080/api/insert-results/${buildingID}`, { finalVote, totalCO2Emissions }, {
+        const response = await axios.put(`http://localhost:8080/api/insert-results/${buildingID}`, { finalVote, totalCO2Emissions, areaCO2Emissions }, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
@@ -564,8 +568,6 @@ export async function EmissionsCalculator(buildingID) {
         }
     }
 
-    //restituisci il voto finale e le emissioni totali
-    //return { finalVote, totalCO2Emissions };
 }
 
 

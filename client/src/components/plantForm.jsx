@@ -13,8 +13,6 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
     const [generatorType, setGeneratorType] = useState(plant.generator_type || "");
     const [generatorDescription, setGeneratorDescription] = useState(plant.generator_description || "");
     const [fuelType, setFuelType] = useState(plant.fuel_type || "");
-    //const [quantity, setQuantity] = useState(plant.quantity || "");
-    //const [electricitySupply, setElectricitySupply] = useState(plant.electricity_supply || "");
     const [isLoading, setIsLoading] = useState(false);
 
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -35,16 +33,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
             generatorType,
             generatorDescription: generatorType === "Altro" ? generatorDescription : "",
             fuelType,
-            //quantity,
-            //electricitySupply,
         };
-
-        //const plantScore = calculateSustainabilityScore(formData);
-
-        /*const updatedFormData = {
-            ...formData,
-            plantScore
-        };*/
 
         try {
             const response = await axios.put(`http://localhost:8080/api/buildings/${id}/update/plant/${plant.id}`, formData, {
@@ -93,16 +82,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
             generatorType,
             generatorDescription: generatorType === "Altro" ? generatorDescription : "",
             fuelType,
-            //quantity,
-            //electricitySupply,
         };
-
-        //const plantScore = calculateSustainabilityScore(formData);
-
-        /*const updatedFormData = {
-            ...formData,
-            plantScore
-        };*/
 
 
         try {
@@ -126,8 +106,6 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                     setGeneratorType("");
                     setGeneratorDescription("");
                     setFuelType("");
-                    //setQuantity(1);
-                    //setElectricitySupply("");
 
                     triggerRefresh(); // Trigger refresh in Plants component
 
@@ -151,49 +129,6 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
     const handleGeneratorTypeChange = (e) => setGeneratorType(e.target.value);
     const handleGeneratorDescriptionChange = (e) => setGeneratorDescription(e.target.value);
     const handleFuelTypeChange = (e) => setFuelType(e.target.value);
-    const handleQuantityChange = (e) => setQuantity(e.target.value);
-    const handleElectricitySupplyChange = (e) => setElectricitySupply(e.target.value);
-
-    /*const sustainabilityScores = {
-        plantTypes: {
-            'Centralizzato': 2,
-            'Autonomo': 4
-        },
-        serviceTypes: {
-            'Riscaldamento': 2,
-            'Raffrescamento': 3,
-            'Acqua calda sanitaria': 2,
-            'Altra produzione termica': 1
-        },
-        generatorTypes: {
-            'Caldaia tradizionale': 1,
-            'Caldaia condensazione': 2,
-            'Pompa di calore idronica': 4,
-            'Ibrido (Caldaia e Pompa di Calore)': 3,
-            'Teleriscaldamento': 2,
-            'Cogeneratore o Trigenerazione con Motore endotermico': 1,
-            'Cogeneratore o Trigenerazione con Microturbina': 2,
-            'Cogeneratore o Trigenerazione con Fuel Cell': 4,
-            'Altro': 1
-        },
-        fuelTypes: {
-            'Gas Naturale (Metano)': 2,
-            'GPL': 2,
-            'Gasolio': 1,
-            'Olio combustibile': 1,
-            'Pellet': 3,
-            'Cippato di legna': 3,
-            'Biogas': 4,
-            'Biodiesel': 3,
-            'Elettrico - mix generico': 3,
-            'Elettrico - 100% rinnovabili': 4
-        },
-        electricitySupplies: {
-            'Elettrico - mix generico': 3,
-            'Elettrico - 100% rinnovabili': 4
-        }
-    };*/
-
 
     const options = [
         {
@@ -210,30 +145,83 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
             generatorTypes: [
                 {
                     type: "Centralizzato",
-                    options: [
-                        "Caldaia tradizionale",
-                        "Caldaia condensazione",
-                        "Pompa di calore idronica",
-                        "Ibrido (Caldaia e Pompa di Calore)",
-                        "Cogeneratore o Trigenerazione con Motore endotermico",
-                        "Cogeneratore o Trigenerazione con Microturbina",
-                        "Cogeneratore o Trigenerazione con Fuel Cell",
-                        "Teleriscaldamento",
-                        "Bolitore elettrico",
-                        "Altro"
-                    ]
+                    serviceSpecificOptions: {
+                        "Riscaldamento": [
+                            "Caldaia tradizionale",
+                            "Caldaia condensazione",
+                            "Pompa di calore idronica",
+                            "Ibrido (Caldaia e Pompa di Calore)",
+                            "Cogeneratore o Trigenerazione con Motore endotermico",
+                            "Cogeneratore o Trigenerazione con Microturbina",
+                            "Cogeneratore o Trigenerazione con Fuel Cell",
+                            "Teleriscaldamento",
+                            "Bolitore elettrico",
+                            "Altro"
+                        ],
+                        "Raffrescamento": [
+                            "Pompa di calore idronica",
+                            "Altro"
+                        ],
+                        "Acqua calda sanitaria": [
+                            "Caldaia tradizionale",
+                            "Caldaia condensazione",
+                            "Pompa di calore idronica",
+                            "Ibrido (Caldaia e Pompa di Calore)",
+                            "Cogeneratore o Trigenerazione con Motore endotermico",
+                            "Cogeneratore o Trigenerazione con Microturbina",
+                            "Cogeneratore o Trigenerazione con Fuel Cell",
+                            "Teleriscaldamento",
+                            "Bolitore elettrico",
+                            "Altro"
+                        ],
+                        "Altra produzione termica": [
+                            "Caldaia tradizionale",
+                            "Caldaia condensazione",
+                            "Pompa di calore idronica",
+                            "Ibrido (Caldaia e Pompa di Calore)",
+                            "Cogeneratore o Trigenerazione con Motore endotermico",
+                            "Cogeneratore o Trigenerazione con Microturbina",
+                            "Cogeneratore o Trigenerazione con Fuel Cell",
+                            "Teleriscaldamento",
+                            "Bolitore elettrico",
+                            "Altro"
+                        ]
+                    }
                 },
                 {
                     type: "Autonomo",
-                    options: [
-                        "Caldaia tradizionale",
-                        "Caldaia condensazione",
-                        "Pompa di calore idronica",
-                        "split",
-                        "Ibrido (Caldaia e Pompa di Calore)",
-                        "Bolitore elettrico",
-                        "Altro"
-                    ]
+                    serviceSpecificOptions: {
+                        "Riscaldamento": [
+                            "Caldaia tradizionale",
+                            "Caldaia condensazione",
+                            "Pompa di calore idronica",
+                            "Split",
+                            "Ibrido (Caldaia e Pompa di Calore)",
+                            "Bolitore elettrico",
+                            "Altro"
+                        ],
+                        "Raffrescamento": [
+                            "Pompa di calore idronica",
+                            "Split",
+                            "Altro"
+                        ],
+                        "Acqua calda sanitaria": [
+                            "Caldaia tradizionale",
+                            "Caldaia condensazione",
+                            "Pompa di calore idronica",
+                            "Ibrido (Caldaia e Pompa di Calore)",
+                            "Bolitore elettrico",
+                            "Altro"
+                        ],
+                        "Altra produzione termica": [
+                            "Caldaia tradizionale",
+                            "Caldaia condensazione",
+                            "Pompa di calore idronica",
+                            "Ibrido (Caldaia e Pompa di Calore)",
+                            "Bolitore elettrico",
+                            "Altro"
+                        ]
+                    }
                 }
             ],
             fuelTypes: [
@@ -253,6 +241,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
             ]
         }
     ];
+
 
     const generatorOptions = options[0].generatorTypes.find(
         (gen) => gen.type === plantType
@@ -317,9 +306,11 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
                                 <option value="" disabled>Seleziona tipo di generatore</option>
-                                {generatorOptions.map((option, index) => (
-                                    <option key={index} value={option}>{option}</option>
-                                ))}
+                                {plantType && serviceType && options[0].generatorTypes
+                                    .find(type => type.type === plantType)
+                                    ?.serviceSpecificOptions[serviceType]?.map((option, index) => (
+                                        <option key={index} value={option}>{option}</option>
+                                    ))}
                             </select>
                         </label>
                         {generatorType === "Altro" && (
@@ -349,34 +340,8 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                                 ))}
                             </select>
                         </label>
-                        {/*
-                        <label className="flex flex-col w-full md:w-1/2">
-                            <span className="block mb-2">Quantità (metano e biogas [SMC], biodiesel e GPL [litri], olio e cippato [ton], pellet [kg])</span>
-                            <input
-                                type="number"
-                                value={quantity}
-                                onChange={handleQuantityChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                                min="1"
-                            />
-                        </label>*/}
                     </div>
 
-                    {/*<div className="mb-6">
-                        <label className="flex flex-col w-full">
-                            <span className="block mb-2">Fornitura di elettricità</span>
-                            <select
-                                value={electricitySupply}
-                                onChange={handleElectricitySupplyChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                            >
-                                <option value="" disabled>Seleziona tipo di fornitura elettrica</option>
-                                {options[0].electricitySupplies.map((cat, index) => (
-                                    <option key={index} value={cat}>{cat}</option>
-                                ))}
-                            </select>
-                        </label>
-                    </div>*/}
                     {isLoading ? (
                         <div className="flex justify-center items-center mt-5">
                             <MutatingDots

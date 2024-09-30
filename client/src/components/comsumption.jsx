@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
 import MessagePopUp from "./messagePopUp";
@@ -16,6 +16,14 @@ function Consumption() {
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
     const [showConsumptionFormModifier, setShowConsumptionFormModifier] = useState(false);
+
+    const formRef = useRef(null);
+
+    useEffect(() => {
+        if (showConsumptionForm && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [showConsumptionForm]);
 
     useEffect(() => {
 
@@ -77,6 +85,23 @@ function Consumption() {
         setShowConsumptionForm(false);
     };
 
+    const getEnergyUnit = (energySource) => {
+        const energyOptions = [
+            { label: "Gas Naturale (Metano)", unit: "Sm³" },
+            { label: "GPL", unit: "mc" },
+            { label: "Gasolio", unit: "mc" },
+            { label: "Olio combustibile", unit: "t" },
+            { label: "Pellet", unit: "t" },
+            { label: "Cippato di legna", unit: "t" },
+            { label: "Biogas", unit: "Sm³" },
+            { label: "Elettricità", unit: "kWh" },
+            { label: "Energia termica", unit: "kWh" },
+        ];
+
+        // Trova l'unità di misura corretta in base alla fonte energetica
+        const energyOption = energyOptions.find(option => option.label === energySource);
+        return energyOption ? energyOption.unit : ''; // Restituisce l'unità o una stringa vuota se non trovata
+    };
 
     return (
         <div className="text-arial text-xl mt-4 mb-4">
@@ -129,7 +154,7 @@ function Consumption() {
                                     <strong>Fonte:</strong> {data.energy_source}
                                 </div>
                                 <div>
-                                    <strong>Consumo:</strong> {data.consumption}
+                                    <strong>Consumo:</strong> {data.consumption} {getEnergyUnit(data.energy_source)}
                                 </div>
                                 <div className="flex justify-end gap-2">
                                     <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
@@ -157,7 +182,9 @@ function Consumption() {
 
             </div>
             {showConsumptionForm && (
-                <ConsumptionForm allConsumptionsData={consumptionData} data="empty" isEdit={false} onButtonClick={cancelEdit} />
+                <div ref={formRef}>
+                    <ConsumptionForm allConsumptionsData={consumptionData} data="empty" isEdit={false} onButtonClick={cancelEdit} />
+                </div>
             )
             }
         </div >

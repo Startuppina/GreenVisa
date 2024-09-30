@@ -61,17 +61,24 @@ function UserBuldingsPageAdmin() {
         }
     };
 
-    const energyOptions = [
-        { label: "Gas Naturale (Metano)", unit: "Sm³" },
-        { label: "GPL (Gas di Petrolio Liquefatti)", unit: "mc" },
-        { label: "Gasolio", unit: "mc" },
-        { label: "Olio Combustibile", unit: "t" },
-        { label: "Pellet", unit: "t" },
-        { label: "Cippato di Legna", unit: "t" },
-        { label: "Biogas", unit: "Sm³" },
-        { label: "Elettricità", unit: "kWh" },
-        { label: "Energia Termica", unit: "kWh" },
-    ];
+    const getEnergyUnit = (energySource) => {
+        const energyOptions = [
+            { label: "Gas Naturale (Metano)", unit: "Sm³" },
+            { label: "GPL", unit: "mc" },
+            { label: "Gasolio", unit: "mc" },
+            { label: "Olio combustibile", unit: "t" },
+            { label: "Pellet", unit: "t" },
+            { label: "Cippato di legna", unit: "t" },
+            { label: "Biogas", unit: "Sm³" },
+            { label: "Elettricità", unit: "kWh" },
+            { label: "Energia termica", unit: "kWh" },
+        ];
+
+        // Trova l'unità di misura corretta in base alla fonte energetica
+        const energyOption = energyOptions.find(option => option.label === energySource);
+        return energyOption ? energyOption.unit : ''; // Restituisce l'unità o una stringa vuota se non trovata
+    };
+
 
     const toggleBuildingInfo = (buildingId) => {
         // Se l'edificio cliccato è già selezionato, nascondi le informazioni, altrimenti mostra le informazioni
@@ -82,6 +89,33 @@ function UserBuldingsPageAdmin() {
         const baseHue = 200;
         const hueShift = (index * 30) % 360;
         return `hsl(${baseHue + hueShift}, 70%, 80%)`;
+    };
+
+    const scoreIndicator = (score) => {
+        const maxScore = 10;
+        const normalizedScore = Math.max(0, Math.min(score, maxScore));
+        return (normalizedScore / maxScore) * 100;
+    };
+
+    const getDetailedVoteColor = (finalVote) => {
+        if (finalVote >= 9) return "#1b5e20";
+        else if (finalVote >= 8) return "#4caf50";
+        else if (finalVote >= 7) return "#8bc34a";
+        else if (finalVote >= 6) return "#cddc39";
+        else if (finalVote >= 5) return "#ffeb3b";
+        else if (finalVote >= 4) return "#ffc107";
+        else if (finalVote >= 3) return "#ff9800";
+        else if (finalVote >= 2) return "#ff5722";
+        else if (finalVote >= 1) return "#f44336";
+        else return "#b71c1c";
+    };
+
+    const getOverallEvaluation = (finalVote) => {
+        if (finalVote >= 9) return "Eccellente";
+        else if (finalVote >= 8) return "Buono";
+        else if (finalVote >= 7) return "Discreto";
+        else if (finalVote >= 6) return "Sufficiente";
+        else return "Non Sufficiente";
     };
 
     return (
@@ -114,7 +148,47 @@ function UserBuldingsPageAdmin() {
                     {/* Mostra informazioni dettagliate solo se questo edificio è selezionato */}
                     {selectedBuildingId && selectedBuilding && (
                         <div className="bg-[#D9D9D9] rounded-lg mt-10 md:mx-14 h-[65vh] lg:h-auto overflow-y-auto w-full">
-                            <h2 className="text-2xl font-bold mb-4 text-center lg:text-left p-4">Dettagli dell'Edificio</h2>
+                            <h2 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Dettagli dell'Edificio</h2>
+                            <div>
+                                <div className="flex flex-col justify-center bg-gray-100 mx-2 md:mx-14 rounded-xl shadow-lg p-6 text-arial text-xl mb-2">
+                                    <h1 className="text-4xl text-center font-bold text-gray-800 mb-4">Risultato</h1>
+                                    <div className="flex flex-col items-start gap-6 mt-6">
+                                        <div className="flex flex-col items-center mx-auto justify-between w-full md:w-[500px]">
+                                            <div className="font-bold text-lg md:text-xl text-gray-700">Voto</div>
+                                            <div className="w-full h-[30px] bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300 shadow-inner">
+                                                <div
+                                                    className="h-full rounded-lg transition-all duration-300 ease-in-out"
+                                                    style={{
+                                                        width: `${scoreIndicator(selectedBuilding.emissionmark)}%`,
+                                                        backgroundColor: `${getDetailedVoteColor(selectedBuilding.emissionmark)}`,
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="text-right w-full text-lg md:text-xl text-gray-600 mt-2">
+                                                <strong>{selectedBuilding.emissionmark}</strong>/10
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col md:flex-row items-center mx-auto justify-center w-full md:w-[500px] gap-2">
+                                            <div className="text-lg md:text-xl text-blue-600 font-extrabold">
+                                                {getOverallEvaluation(selectedBuilding.emissionmark)}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col md:flex-row items-center mx-auto justify-between w-full md:w-[500px] gap-2 mt-4">
+                                            <div className="font-bold text-lg md:text-xl text-gray-700">Emissioni CO2</div>
+                                            <div className="text-lg md:text-xl text-gray-600 flex gap-2">
+                                                <strong>{selectedBuilding.emissionco2}</strong> <div>tonsCO<sub>2</sub>e</div>
+
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col md:flex-row items-center mx-auto justify-between w-full md:w-[500px] gap-2">
+                                            <div className="font-bold text-lg md:text-xl text-gray-700">Emissioni CO2 per superficie</div>
+                                            <div className="text-lg md:text-xl text-gray-600 flex gap-2">
+                                                <strong>{selectedBuilding.areaemissionco2}</strong> <div>tonsCO<sub>2</sub>/m²</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             {/* Colonna Sinistra */}
                             <div className="flex flex-col lg:flex-row items-stretch justify-center">
                                 <div className="w-full lg:w-1/2 p-4">
@@ -138,6 +212,10 @@ function UserBuldingsPageAdmin() {
                                         <div className="flex justify-between">
                                             <span className="font-semibold">Anno di Costruzione:</span>
                                             <span id="construction-year">{selectedBuilding.construction_year}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="font-semibold">Superficie:</span>
+                                            <span id="construction-year">{selectedBuilding.area} m²</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="font-semibold">Ristrutturazione:</span>
@@ -182,15 +260,15 @@ function UserBuldingsPageAdmin() {
                                             <span id="electricity-analyzer">{selectedBuilding.analyzers}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="font-semibold">Numero lampade a incandescenza:</span>
+                                            <span className="font-semibold">Numero dispositivi a incandescenza:</span>
                                             <span id="lighting">{selectedBuilding.incandescent}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="font-semibold">Numero lampade a LED:</span>
+                                            <span className="font-semibold">Numero dispositivi a LED:</span>
                                             <span id="led">{selectedBuilding.led}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="font-semibold">Numero lampade a gas:</span>
+                                            <span className="font-semibold">Numero dispositivi a gas:</span>
                                             <span id="gas-lamp">{selectedBuilding.gas_lamp}</span>
                                         </div>
                                         <div className="flex justify-between">
@@ -206,7 +284,7 @@ function UserBuldingsPageAdmin() {
 
                     {selectedBuildingId && buildingConsumptions.length > 0 && (
                         <div className="bg-[#D9D9D9] rounded-lg md:mx-14 h-auto max-h-[65vh] overflow-y-auto w-full p-4">
-                            <h1 className="text-2xl font-bold mb-2">Impianti fotovoltaici</h1>
+                            <h1 className="text-2xl font-bold mb-2">Consumi annuali</h1>
                             {buildingConsumptions.map((consumption, index) => ( // Controllo per prevenire plants undefined
                                 <div key={consumption.id}
                                     className="p-4 mb-4 bg-white rounded-lg"
@@ -215,7 +293,7 @@ function UserBuldingsPageAdmin() {
                                         <strong>Fonte energetica:</strong> {consumption.energy_source}
                                     </div>
                                     <div className="">
-                                        <strong>Consumo:</strong> {consumption.consumption} {energyOptions.find(option => option.label === consumption.energy_source).unit}
+                                        <strong>Consumo:</strong> {consumption.consumption} {getEnergyUnit(consumption.energy_source)}
                                     </div>
                                 </div>
                             ))}
@@ -266,7 +344,7 @@ function UserBuldingsPageAdmin() {
                                         <strong>Numero:</strong> {index + 1}
                                     </div>
                                     <div className="">
-                                        <strong>Quantità installata:</strong> {solar.installed_area}
+                                        <strong>Quantità installata:</strong> {solar.installed_area} m²
                                     </div>
                                 </div>
                             ))}
@@ -284,7 +362,7 @@ function UserBuldingsPageAdmin() {
                                         <strong>Numero:</strong> {index + 1}
                                     </div>
                                     <div className="">
-                                        <strong>Potenza:</strong> {photo.power}
+                                        <strong>Potenza:</strong> {photo.power} kW
                                     </div>
                                 </div>
                             ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import MessagePopUp from './messagePopUp';
 import ConfirmPopUp from './confirmPopUp';
@@ -18,10 +18,19 @@ const MessagesDashboard = () => {
     const [emailTitle, setEmailTitle] = useState("");
     const [emailContent, setEmailContent] = useState("");
     const [currentMessageEmail, setCurrentMessageEmail] = useState("");
+    const [currentIDEmail, setCurrentIDEmail] = useState("");
     const [admin, setAdmin] = useState('');
 
     const handleTitleChange = (e) => setEmailTitle(e.target.value);
     const handleContentChange = (e) => setEmailContent(e.target.value);
+
+    const formRef = useRef(null);
+    useEffect(() => {
+
+        if (currentIDEmail && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [emailForm, currentIDEmail]);
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -202,15 +211,20 @@ const MessagesDashboard = () => {
                                     Elimina
                                 </button>
                                 <button
-                                    onClick={() => handleSendEmail(message.email)}
-                                    className={` ${emailForm ? "bg-gray-500 border-gray-500 text-white" : "bg-blue-500 border-blue-500 text-white hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out"} w-[41%] md:w-auto border-2  px-4 py-2 rounded-lg truncate`}
-                                    disabled={emailForm === true}
+                                    onClick={() => {
+                                        handleSendEmail(message.email)
+                                        setCurrentIDEmail(message.id);
+                                    }}
+                                    className={` ${emailForm === true && message.id === currentIDEmail ? "bg-gray-500 border-gray-500 text-white" : "bg-blue-500 border-blue-500 text-white hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out"} w-[41%] md:w-auto border-2  px-4 py-2 rounded-lg truncate`}
+                                    disabled={emailForm === true && message.id === currentIDEmail ? true : false}
                                 >
                                     Conferma ricezione
                                 </button>
                                 <button
                                     onClick={() => {
                                         setCurrentMessageEmail(message.email);
+                                        setCurrentIDEmail(0);
+                                        setCurrentIDEmail(message.id);
                                         setEmailForm(!emailForm);
                                     }}
                                     className="bg-green-500 border-green-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-green-500 transition-colors duration-300 ease-in-out"
@@ -219,8 +233,8 @@ const MessagesDashboard = () => {
                                 </button>
                             </div>
 
-                            {emailForm && (
-                                <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border  px-10 py-6">
+                            {emailForm && message.id === currentIDEmail && (
+                                <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border  px-10 py-6" ref={formRef}>
                                     <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                                         {messagePopUp}
                                     </MessagePopUp>

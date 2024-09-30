@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import MessagePopUp from "./messagePopUp";
 import ConfirmPopUp from "./confirmPopUp";
+import { useRecoveryContext } from "../provider/provider";
 
 const debounce = (func, delay) => {
     let timeoutId;
@@ -29,6 +30,14 @@ function AllProducts() {
     const [currentProductToEdit, setCurrentProductToEdit] = useState(null);
     const [searchTerm, setSearchTerm] = useState(""); // Stato per il termine di ricerca
     const [filteredProducts, setFilteredProducts] = useState([]); // Stato per gli utenti filtrati
+    const { refresh, triggerRefresh } = useRecoveryContext();
+
+    const formRef = useRef(null);
+    useEffect(() => {
+        if (currentProductToEdit && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [currentProductToEdit, itemToEdit]);
 
 
     useEffect(() => {
@@ -55,7 +64,7 @@ function AllProducts() {
         };
 
         fetchProducts();
-    }, []); // No dependencies
+    }, [refresh]); // No dependencies
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -146,8 +155,12 @@ function AllProducts() {
                 console.log("ciao", updatedItem);
 
                 setProducts((prevProducts) =>
-                    prevProducts.map((product) => (product.id === id ? updatedItem : product))
+                    prevProducts.map((product) =>
+                        product.id === updatedItem.id ? updatedItem : product
+                    )
+
                 );
+                triggerRefresh();
                 setMessagePopUp("Certificazione modificata con successo");
                 setButtonPopup(true);
                 setItemToEdit(null);
@@ -290,7 +303,7 @@ function AllProducts() {
                                 </>
                             </div>
                             {currentProductToEdit === productItem.id && itemToEdit && (
-                                <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border border-gray-300 shadow-xl">
+                                <div className="w-[98.5%] mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border border-gray-300 shadow-xl" ref={formRef}>
                                     <h2 className="text-2xl font-bold text-center mb-4">
                                         Modifica Certificazione
                                     </h2>

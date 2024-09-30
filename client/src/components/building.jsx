@@ -75,6 +75,10 @@ function Building() {
                                 <span id="construction-year">{buildingData.construction_year}</span>
                             </div>
                             <div className="flex justify-between">
+                                <span className="font-semibold">Superficie:</span>
+                                <span id="construction-year">{buildingData.area} m²</span>
+                            </div>
+                            <div className="flex justify-between">
                                 <span className="font-semibold">Ristrutturazione:</span>
                                 <span id="renovation">{buildingData.renovation}</span>
                             </div>
@@ -117,15 +121,15 @@ function Building() {
                                 <span id="electricity-analyzer">{buildingData.analyzers}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">Numero lampade a incandescenza:</span>
+                                <span className="font-semibold">Numero dispositivi a incandescenza:</span>
                                 <span id="lighting">{buildingData.incandescent}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">Numero lampade a LED:</span>
+                                <span className="font-semibold">Numero dispositivi a LED:</span>
                                 <span id="led">{buildingData.led}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">Numero lampade a gas:</span>
+                                <span className="font-semibold">Numero dispositivi a gas:</span>
                                 <span id="gas-lamp">{buildingData.gas_lamp}</span>
                             </div>
                             <div className="flex justify-between">

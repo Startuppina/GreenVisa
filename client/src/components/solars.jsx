@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import SolarForm from "./solarForm";
 import { useRecoveryContext } from "../provider/provider";
@@ -19,6 +19,16 @@ function Solars() {
     const [messagePopup, setMessagePopup] = useState("");
 
     const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
+
+
+    // Crea una ref per il form
+    const formRef = useRef(null);
+
+    useEffect(() => {
+        if (showSolarForm && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [showSolarForm]);
 
     useEffect(() => {
         const fetchSolars = async () => {
@@ -161,7 +171,8 @@ function Solars() {
                     </>
                 )}
             </div>
-            {showSolarForm && <div className="pb-1"><SolarForm solar="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
+
+            {showSolarForm && <div className="pb-1" ref={formRef}><SolarForm solar="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
 
         </div>
     );

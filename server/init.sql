@@ -166,6 +166,7 @@ CREATE TABLE IF NOT EXISTS buildings (
     address VARCHAR(255) NOT NULL,
     usage VARCHAR(50) NOT NULL,
     construction_year VARCHAR(50) NOT NULL,
+    area INTEGER NOT NULL,
     renovation VARCHAR(50) NOT NULL,
     heat_distribution VARCHAR(50) NOT NULL,
     ventilation VARCHAR(50) NOT NULL,
@@ -181,6 +182,7 @@ CREATE TABLE IF NOT EXISTS buildings (
     autoLightingControlSystem VARCHAR(50) NOT NULL,
     emissionMark INTEGER DEFAULT NULL,
     emissionCO2 DECIMAL(10, 2) DEFAULT NULL,
+    areaEmissionCO2 DECIMAL(10, 2) DEFAULT NULL,
     results_visible BOOLEAN DEFAULT FALSE
 );
 
@@ -189,7 +191,7 @@ CREATE TABLE IF NOT EXISTS user_consumptions (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- assuming you have a users table with an id field
     building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
     energy_source VARCHAR(50) NOT NULL,
-    consumption DECIMAL(10, 4) NOT NULL
+    consumption DECIMAL(10, 2) NOT NULL
 );
 
 

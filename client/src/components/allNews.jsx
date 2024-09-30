@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import TextEditor from "./textEditor";
 import NewsForm from "./news_form";
 import MessagePopUp from "./messagePopUp";
 import ConfirmPopUp from "./confirmPopUp";
+import { useRecoveryContext } from "../provider/provider";
 
 const debounce = (func, delay) => {
     let timeoutId;
@@ -30,6 +31,14 @@ function AllNews() {
     const [currentNewsToEdit, setCurrentNewsToEdit] = useState(null);
     const [searchTerm, setSearchTerm] = useState(""); // Stato per il termine di ricerca
     const [filteredNews, setFilteredNews] = useState([]); // Stato per gli utenti filtrati
+    const { refresh, triggerRefresh } = useRecoveryContext();
+
+    const formRef = useRef(null);
+    useEffect(() => {
+        if (currentNewsToEdit && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [currentNewsToEdit, itemToEdit]);;
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -53,7 +62,7 @@ function AllNews() {
         };
 
         fetchNews();
-    }, []);
+    }, [refresh]);
 
     const deleteItem = async () => {
         setPopupConfirmDelete(false);
@@ -123,9 +132,11 @@ function AllNews() {
                 setNews((prevNews) =>
                     prevNews.map((news) => (news.id === id ? updatedItem : news))
                 );
+                triggerRefresh();
                 setMessagePopUp("Notizia modificata con successo");
                 setButtonPopup(true);
                 setItemToEdit(null);
+
             }
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
@@ -243,7 +254,7 @@ function AllNews() {
                                 </>
                             </div>
                             {currentNewsToEdit === newsItem.id && itemToEdit && (
-                                <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6">
+                                <div className="w-[98.5%] mx-auto my-10 font-arial text-xl m-4 rounded-2xl border shadow-xl px-10 py-6" ref={formRef}>
                                     <h2 className="text-2xl font-bold text-center mb-4">
                                         Modifica Notizia
                                     </h2>

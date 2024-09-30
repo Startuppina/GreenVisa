@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import PlantForm from "./plantForm";
 import { useRecoveryContext } from "../provider/provider";
@@ -18,8 +18,18 @@ function Plants() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
-
     const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
+
+
+    // Crea una ref per il form
+    const formRef = useRef(null);
+
+    useEffect(() => {
+        if (showPlantForm && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [showPlantForm]);
+
 
     useEffect(() => {
 
@@ -187,7 +197,9 @@ function Plants() {
                 )}
 
             </div>
-            {showPlantForm && (<div className="flex justify-center"><PlantForm plant="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
+            <div ref={formRef}>
+                {showPlantForm && (<div className="flex justify-center"><PlantForm plant="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
+            </div>
         </div >
     );
 }

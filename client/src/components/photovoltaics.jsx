@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import PhotoForm from "./photoForm";
 import { useRecoveryContext } from "../provider/provider";
@@ -11,7 +11,6 @@ function Photovoltaics() {
     const [showPhotoForm, setShowPhotoForm] = React.useState(false);
     const [showPhotoFormModifier, setShowPhotoFormModifier] = React.useState(null);
 
-
     const [photoToDelete, setPhotoToDelete] = useState(null);
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
@@ -19,6 +18,15 @@ function Photovoltaics() {
     const [messagePopup, setMessagePopup] = useState("");
 
     const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
+
+    // Crea una ref per il form
+    const formRef = useRef(null);
+
+    useEffect(() => {
+        if (showPhotoForm && formRef.current) {
+            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [showPhotoForm]);
 
     useEffect(() => {
         const fetchPhotos = async () => {
@@ -161,7 +169,7 @@ function Photovoltaics() {
                     </>
                 )}
             </div>
-            {showPhotoForm && <div className="flex justify-center"><PhotoForm photo="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
+            {showPhotoForm && <div className="flex justify-center" ref={formRef}><PhotoForm photo="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
 
         </div>
     );
