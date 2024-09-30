@@ -2836,7 +2836,7 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     const rows = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [buildingID]);
     const query2 = "SELECT COUNT(*) FROM photovoltaics WHERE building_id = $1";
     const totalPower = await pool.query(`SELECT SUM(power) FROM photovoltaics WHERE building_id = $1`, [buildingID]);
-    console.log(totalPower);
+    //console.log(totalPower);
     const values2 = [buildingID];
     const result2 = await pool.query(query2, values2);
     const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
@@ -2844,7 +2844,7 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     const rows2 = await pool.query(`SELECT * FROM solars WHERE building_id = $1`, [buildingID]);
     const query3 = "SELECT COUNT(*) FROM solars WHERE building_id = $1";
     const totalIstalledArea = await pool.query(`SELECT SUM(installed_area) FROM solars WHERE building_id = $1`, [buildingID]);
-    console.log(totalIstalledArea);
+    //console.log(totalIstalledArea);
     const values3 = [buildingID];
     const result3 = await pool.query(query3, values3);
     const count2 = parseInt(result3.rows[0].count, 10); // Convert to integer for accuracy
@@ -3354,7 +3354,7 @@ app.get("/api/fetch-user-buildings/:id", authenticateJWT, authenticateAdmin, asy
 
 })
 
-app.get("/api/fetch-building-plants-solars-photos/:id/:buildingID", authenticateJWT, authenticateAdmin, async (req, res) => {
+app.get("/api/fetch-building-plants-solars-photos/:id/:buildingID", authenticateJWT, async (req, res) => {
 
   const { role } = req.user;
   const { id, buildingID } = req.params;
@@ -3398,8 +3398,48 @@ app.get("/api/fetch-building-plants-solars-photos/:id/:buildingID", authenticate
   }
 })
 
+app.put("/api/insert-results/:buildingID", authenticateJWT, async (req, res) => {
+
+  const { user_id } = req.user;
+  const { buildingID } = req.params;
+  const { finalVote, totalCO2Emissions } = req.body;
+  console.log("buildingID:", buildingID);
+  console.log("user_id:", user_id);
+  console.log("finalVote:", finalVote);
+  console.log("totalCO2Emissions:", totalCO2Emissions);
 
 
+  try {
+    await pool.query(`UPDATE buildings SET  emissionMark = $1, emissionCO2 = $2, results_visible = true WHERE id = $3 AND user_id = $4`, [finalVote, totalCO2Emissions, buildingID, user_id]);
+    res.status(200).json({ msg: "Risultati inseriti con successo" });
+  } catch (error) {
+    console.error('Error inserting results:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.get("/api/fetch-results/:buildingID", authenticateJWT, async (req, res) => {
+
+  const { user_id } = req.user;
+  const { buildingID } = req.params;
+  console.log("buildingID:", buildingID);
+  console.log("user_id:", user_id);
+
+
+  try {
+    const query = "SELECT emissionMark, emissionCO2, results_visible FROM buildings WHERE id = $1 AND user_id = $2;";
+    const values = [buildingID, user_id];
+    const result = await pool.query(query, values);
+    if (result.rows.length === 0) {
+      return res.status(204).json({ emsgror: 'Alcuni dati non trovati' });
+    } else if (result.rows.length > 0) {
+      return res.status(200).json(result.rows);
+    }
+  } catch (error) {
+    console.error("Errore nel fetch dei dati", error.message);
+    res.status(500).json({ msg: 'Errore del server' });
+  }
+})
 
 
 

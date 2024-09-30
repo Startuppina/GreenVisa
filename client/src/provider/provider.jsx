@@ -14,10 +14,12 @@ export const RecoveryContextProvider = ({ children }) => {
     const [addBuildingTrigger, setAddBuildingTrigger] = useState(false);
     const [buildingID, setBuildingID] = useState(0);
     const [refresh, setRefresh] = useState(false);
+    const [refreshResults, setRefreshResults] = useState(false);
     const [initialData, setInitialData] = useState(null); // Stato per i dati iniziali
 
 
     const triggerRefresh = () => setRefresh(prev => !prev);
+    const triggerRefreshResults = () => setRefreshResults(prev => !prev);
 
 
     return (
@@ -25,7 +27,7 @@ export const RecoveryContextProvider = ({ children }) => {
             email, setEmail, OTP, setOTP, cartProducts, setCartProducts,
             quantities, setQuantities, isEmpty, setIsEmpty, codeTrigger, setCodeTrigger,
             addBuildingTrigger, setAddBuildingTrigger, buildingID, setBuildingID, refresh,
-            triggerRefresh, initialData, setInitialData,
+            triggerRefresh, initialData, setInitialData, refreshResults, triggerRefreshResults
         }}>
             {children}
         </RecoveryContext.Provider>

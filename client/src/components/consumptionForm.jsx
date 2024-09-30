@@ -25,13 +25,13 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
     const energyOptions = [
         { label: "Gas Naturale (Metano)", unit: "Sm³" },
-        { label: "GPL (Gas di Petrolio Liquefatti)", unit: "mc" },
+        { label: "GPL", unit: "mc" },
         { label: "Gasolio", unit: "mc" },
-        { label: "Olio Combustibile", unit: "t" },
+        { label: "Olio combustibile", unit: "t" },
         { label: "Pellet", unit: "t" },
-        { label: "Cippato di Legna", unit: "t" },
+        { label: "Cippato di legna", unit: "t" },
         { label: "Biogas", unit: "Sm³" },
-        { label: "Energia Termica", unit: "kWh" },
+        { label: "Energia termica", unit: "kWh" },
     ];
 
 

@@ -178,33 +178,33 @@ export default function Buildings() {
                     </div>
                 )
                 }
-                <div class="w-full mx-auto mt-10 px-4 lg:px-20 ">
-                    <div class=" font-arial text-justify">
-                        <h1 class="text-3xl font-bold mb-6 text-center">Procedura di Inserimento dei Buildings e Impianti</h1>
+                <div className="w-full mx-auto mt-10 px-4 lg:px-20 ">
+                    <div className=" font-arial text-justify">
+                        <h1 className="text-3xl font-bold mb-6 text-center">Procedura di Inserimento dei Buildings e Impianti</h1>
 
-                        <p class="text-xl mb-4">
+                        <p className="text-xl mb-4">
                             Il sistema permette di inserire edifici e associare a ciascuno impianti di vario tipo, inclusi impianti solari e impianti fotovoltaici.
                             Ogni impianto inserito contribuirà a determinare le emissioni di CO2 per l'edificio.
                         </p>
 
-                        <p class="text-xl mb-4">
+                        <p className="text-xl mb-4">
                             Per iniziare, dovrai creare un nuovo edificio compilando le informazioni richieste, come la descrizione e la localizzazione del building.
                             Successivamente, potrai aggiungere impianti specifici, selezionando il tipo di impianto (es. riscaldamento, raffrescamento, acqua calda sanitaria) e
                             inserendo i dettagli riguardanti il generatore, il tipo di combustibile, e altre caratteristiche come la fornitura di elettricità.
                         </p>
 
-                        <p class="text-xl mb-4">
+                        <p className="text-xl mb-4">
                             Il sistema include anche la possibilità di inserire impianti solari e fotovoltaici. Questi impianti sono considerati altamente sostenibili
                             e possono migliorare le emissioni dell'edificio. Le emissioni sono calcolate in base ai dati forniti e riflette il
                             livello di sostenibilità dell'edificio.
                         </p>
 
-                        <p class="text-xl mb-4">
+                        <p className="text-xl mb-4">
                             È fondamentale sfruttare il sistema in modo onesto e accurato. Inserire dati reali e corretti sugli impianti e i consumi è essenziale per ottenere
                             un risultato affidabile e veritiero. Solo con dati autentici sarà possibile determinare con precisione il livello di sostenibilità dell'edificio.
                         </p>
 
-                        <p class="text-xl mb-4 font-bold">
+                        <p className="text-xl mb-4 font-bold">
                             Ricorda: la trasparenza e l'onestà sono essenziali per contribuire al successo del sistema e migliorare l'impatto ambientale complessivo.
                         </p>
                     </div>

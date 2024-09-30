@@ -78,6 +78,7 @@ function Photovoltaics() {
 
     const cancelEdit = () => {
         setShowPhotoFormModifier(null);
+        setShowPhotoForm(false);
     };
 
     return (
@@ -160,7 +161,7 @@ function Photovoltaics() {
                     </>
                 )}
             </div>
-            {showPhotoForm && <div className="flex justify-center"><PhotoForm allPhotosData={photovoltaics} photo="empty" isEdit={false} /></div>}
+            {showPhotoForm && <div className="flex justify-center"><PhotoForm photo="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
 
         </div>
     );

@@ -134,7 +134,7 @@ export async function EmissionsCalculator(buildingID) {
         "Cippato di legna": 0.20, // t
         "Biogas": 0.00052,       // Sm³
         "elettricitaRete": 0.00025, // kWh
-        "elettricitaFotovoltaico": 0.00025, // kWh
+        "fotovoltaico": 0.00025, // kWh
         "Teleriscaldamento": 0.000187, // kWh TELERISCALDAMENTO E' ENERGIA TERMICA?
         "pannelliSolariTermici": 0.000187 // kWh
     };
@@ -148,11 +148,11 @@ export async function EmissionsCalculator(buildingID) {
         "Pellet": 0.0,          // tons CO2 eq/tep
         "Cippato di legna": 0.0,           // tons CO2 eq/tep
         "Biogas": 0.0,          // tons CO2 eq/tep
-        "elettricitaRete": 1.06, // tons CO2 eq/tep (no % rinnovabili)
+        "elettricitaReteNoRinnovabile": 1.06, // tons CO2 eq/tep (no % rinnovabili)
         "elettricitaRinnovabile": 0.0, // tons CO2 eq/tep (100% rinnovabili)
         "Teleriscaldamento": 1.52406, // tons CO2 eq/tep
         "pannelliSolariTermici": 0.0, // tons CO2 eq/tep
-        "elettricitaFotovoltaico": 0.0  // tons CO2 eq/tep
+        "fotovoltaico": 0.0  // tons CO2 eq/tep
     };
 
     //conversione TEP per le fonti non rinnovabili ed elettricità generica + calcolo emissioni CO2 per ogni fonte
@@ -161,33 +161,42 @@ export async function EmissionsCalculator(buildingID) {
 
 
 
-    let CO2SourceEmissions = [];
+    let CO2SourceEmissions = {};
+    let sourceTEP = {};
     console.log("consumptionsData:", consumptionsData[1].energy_source);
     for (let i = 0; i < consumptionsData.length; i++) {
         if (consumptionsData[i].energy_source === "Elettricità") {
             console.log("Energy source at index", i, ":", consumptionsData[i].energy_source);
 
             if (electrcityType === "elettrico - 100% rinnovabili") {
-                CO2SourceEmissions.push(consumptionsData[i].consumption * conversionFactors["elettricitaFotovoltaico"] * emissionsCO2["elettricitaRinnovabile"]);
+                sourceTEP[electrcityType] = (consumptionsData[i].consumption * conversionFactors["elettricitaRete"]);
+                CO2SourceEmissions[electrcityType] = (sourceTEP[electrcityType] * emissionsCO2["elettricitaRinnovabile"]);
             } else if (electrcityType === "elettrico - mix generico") {
-                CO2SourceEmissions.push(consumptionsData[i].consumption * conversionFactors["elettricitaRete"] * emissionsCO2["elettricitaRete"]);
+                sourceTEP[electrcityType] = (consumptionsData[i].consumption * conversionFactors["elettricitaRete"]);
+                CO2SourceEmissions[electrcityType] = (sourceTEP[electrcityType] * emissionsCO2["elettricitaRinnovabile"]);
             }
         } else {
-            CO2SourceEmissions.push(consumptionsData[i].consumption * conversionFactors[consumptionsData[i].energy_source] * emissionsCO2[consumptionsData[i].energy_source]);
+            sourceTEP[consumptionsData[i].energy_source] = (consumptionsData[i].consumption * conversionFactors[consumptionsData[i].energy_source]);
+            CO2SourceEmissions[consumptionsData[i].energy_source] = (sourceTEP[consumptionsData[i].energy_source] * emissionsCO2[consumptionsData[i].energy_source]);
         }
     }
 
-    console.log("Source CO2 emissions:", CO2SourceEmissions);
 
 
     //conversione TEP per le fonti rinnovabili + calcolo emissioni CO2 per ogni fonte rinnovabile
-    const solarEmissions = solarCalculation * conversionFactors["pannelliSolariTermici"] * emissionsCO2["pannelliSolariTermici"];
-    const photoEmissions = photoCalculation * conversionFactors["elettricitaFotovoltaico"] * emissionsCO2["elettricitaFotovoltaico"]; //devono essere arrotondati?
-    console.log("solar CO2 emissions:", solarEmissions);
-    console.log("photo CO2 emissions:", photoEmissions);
+    if (solarData) {
+        sourceTEP["pannelliSolariTermici"] = (solarCalculation * conversionFactors["pannelliSolariTermici"]);
+        CO2SourceEmissions["pannelliSolariTermici"] = (sourceTEP["pannelliSolariTermici"] * emissionsCO2["pannelliSolariTermici"]);
+    }
+    if (photoData) {
+        sourceTEP["fotovoltaico"] = (photoCalculation * conversionFactors["fotovoltaico"]);
+        CO2SourceEmissions["fotovoltaico"] = (sourceTEP["fotovoltaico"] * emissionsCO2["fotovoltaico"]);
+    }
 
     //total CO2 emissions
-    const totalCO2Emissions = solarEmissions + photoEmissions + CO2SourceEmissions.reduce((a, b) => a + b, 0);
+    const totalCO2Emissions = Object.values(CO2SourceEmissions).reduce((a, b) => a + b, 0);
+    console.log("sourceTEP:", sourceTEP);
+    console.log("CO2 emissions:", CO2SourceEmissions);
     console.log("totalCO2Emissions:", totalCO2Emissions);
 
     //PHASE3: source marks 
@@ -200,30 +209,35 @@ export async function EmissionsCalculator(buildingID) {
         "Cippato di legna": 9,
         "Biogas": 8,
         "elettricitaRete": 7,
-        "elettricitaFotovoltaico": 10,
+        "elettricitaRinnovabile": 10,
+        "fotovoltaico": 10,
         "Teleriscaldamento": 6,
         "pannelliSolariTermici": 10
     };
 
-    let marks = [];
+    let marks = {};
 
     for (let i = 0; i < consumptionsData.length; i++) {
         if (consumptionsData[i].energy_source === "Elettricità") {
             if (electrcityType === "elettrico - 100% rinnovabili") {
-                marks.push(sourceMarks["elettricitaFotovoltaico"]);
+                marks[electrcityType] = sourceMarks["elettricitaRinnovabile"];
             } else if (electrcityType === "elettrico - mix generico") {
-                marks.push(sourceMarks["elettricitaRete"]);
+                marks[electrcityType] = sourceMarks["elettricitaRete"];
             }
         } else {
-            marks.push(sourceMarks[consumptionsData[i].energy_source]);
-
+            marks[consumptionsData[i].energy_source] = sourceMarks[consumptionsData[i].energy_source];
         }
     }
-    marks.push(sourceMarks["pannelliSolariTermici"]);
-    marks.push(sourceMarks["elettricitaFotovoltaico"]);
+    if (solarData) {
+        marks["pannelliSolariTermici"] = sourceMarks["pannelliSolariTermici"];
+    }
+    if (photoData) {
+        marks["fotovoltaico"] = sourceMarks["fotovoltaico"];
+    }
     console.log("marks:", marks);
 
     //PAHSE4: correction factors
+    const totalCorrectionFactors = {} //ogni volta che viene generato un nuovo fattore di correzione per una fonte la aggiungiamo per la somma
 
     const correctionFactors = { //sfasamento?
         "VMCheatRecovery": 1.01, // nel caso in cui VMC con recuper calore
@@ -262,15 +276,15 @@ export async function EmissionsCalculator(buildingID) {
                     continue;
                 } else {
                     correctionFactorToSourcesVMC[energySource] = correctionFactor;
+                    totalCorrectionFactors[energySource] = correctionFactor;
                 }
             }
         }
     }
-
     console.log("correctionFactorToSourcesVMC:", correctionFactorToSourcesVMC);
 
 
-    // Oggetto per i fattori di correzione associati alla manutenzione dei combustibili settimanale o mensile
+    // Oggetto per i fattori di correzione associati alla manutenzi     settimanale o mensile
     let correctionFactorToSourcesMaintenance = {};
 
     // Loop attraverso gli impianti
@@ -299,11 +313,15 @@ export async function EmissionsCalculator(buildingID) {
                     continue;
                 } else {
                     correctionFactorToSourcesMaintenance[energySource] = correctionFactor;
+                    if (totalCorrectionFactors[energySource]) {
+                        totalCorrectionFactors[energySource] *= correctionFactor; // se esiste, somma il fattore alla fonte esistente
+                    } else {
+                        totalCorrectionFactors[energySource] = correctionFactor; // se non esiste, crea la fonte con il primo fattore
+                    }
                 }
             }
         }
     }
-
     console.log("correctionFactorToSourcesMaintenance:", correctionFactorToSourcesMaintenance);
 
 
@@ -371,11 +389,20 @@ export async function EmissionsCalculator(buildingID) {
     // applicazione del fattore correttivo al tipo di elettricita e al fotovoltaico
     let sourceToApplyLightCorrection = {};
 
-    sourceToApplyLightCorrection[electrcityType] = totalLightingCorrection; //o per rinovabili che per mix energetico
-    if (photoData) {
-        sourceToApplyLightCorrection["fotovoltaico"] = totalLightingCorrection;
+    sourceToApplyLightCorrection[electrcityType] = totalLightingCorrection / 100; //o per rinovabili che per mix energetico
+    if (totalCorrectionFactors[electrcityType]) {
+        totalCorrectionFactors[electrcityType] *= totalLightingCorrection / 100;
+    } else {
+        totalCorrectionFactors[electrcityType] = totalLightingCorrection / 100;
     }
-
+    if (photoData) {
+        sourceToApplyLightCorrection["fotovoltaico"] = totalLightingCorrection / 100;
+        if (totalCorrectionFactors["fotovoltaico"]) {
+            totalCorrectionFactors["fotovoltaico"] *= totalLightingCorrection / 100;
+        } else {
+            totalCorrectionFactors["fotovoltaico"] = totalLightingCorrection / 100;
+        }
+    }
     console.log("sourceToApplyLightCorrection:", sourceToApplyLightCorrection);
 
     // fattori di correzione sistemi di regolazione e controllo automatici dei corpi illuminanti
@@ -383,22 +410,40 @@ export async function EmissionsCalculator(buildingID) {
 
     if (buildingData.autolightingcontrolsystem === "Si") {
         sourceToApplyAutoCorrection[electrcityType] = correctionFactors["autoLightingControlSystem"]; //o per rinovabili che per mix energetico
+        if (totalCorrectionFactors[electrcityType]) {
+            totalCorrectionFactors[electrcityType] *= correctionFactors["autoLightingControlSystem"];
+        } else {
+            totalCorrectionFactors[electrcityType] = correctionFactors["autoLightingControlSystem"];
+        }
         if (photoData) {
             sourceToApplyAutoCorrection["fotovoltaico"] = correctionFactors["autoLightingControlSystem"];
+            if (totalCorrectionFactors["fotovoltaico"]) {
+                totalCorrectionFactors["fotovoltaico"] *= correctionFactors["autoLightingControlSystem"];
+            } else {
+                totalCorrectionFactors["fotovoltaico"] = correctionFactors["autoLightingControlSystem"];
+            }
         }
     }
-
     console.log("sourceToApplyAutoCorrection:", sourceToApplyAutoCorrection);
 
     // fattori di correzione analizzatori di rete per controllo dei consumi elettrici generali
     let sourceToApplyAnalyzerCorrection = {};
     if (buildingData.analyzers === "Si") {
         sourceToApplyAnalyzerCorrection[electrcityType] = correctionFactors["analyzers"]; //o per rinovabili che per mix energetico
+        if (totalCorrectionFactors[electrcityType]) {
+            totalCorrectionFactors[electrcityType] *= correctionFactors["analyzers"];
+        } else {
+            totalCorrectionFactors[electrcityType] = correctionFactors["analyzers"];
+        }
         if (photoData) {
             sourceToApplyAnalyzerCorrection["fotovoltaico"] = correctionFactors["analyzers"];
+            if (totalCorrectionFactors["fotovoltaico"]) {
+                totalCorrectionFactors["fotovoltaico"] *= correctionFactors["analyzers"];
+            } else {
+                totalCorrectionFactors["fotovoltaico"] = correctionFactors["analyzers"];
+            }
         }
     }
-
     console.log("sourceToApplyAnalyzerCorrection:", sourceToApplyAnalyzerCorrection);
 
     // fattori di correzione corgeneratore/trigeneratore (se presente un impianto centralizzato)
@@ -408,31 +453,119 @@ export async function EmissionsCalculator(buildingID) {
             if (plantData[i].generator_type === "Cogeneratore o Trigenerazione con Motore endotermico") {
                 if (plantData[i].fuel_type === "Elettrico") {
                     cogenTrigenCorrectionFactor[electrcityType] = correctionFactors["cogen/trigenTermic"];
+                    if (totalCorrectionFactors[electrcityType]) {
+                        totalCorrectionFactors[electrcityType] *= correctionFactors["cogen/trigenTermic"];
+                    } else {
+                        totalCorrectionFactors[electrcityType] = correctionFactors["cogen/trigenTermic"];
+                    }
                 } else {
                     cogenTrigenCorrectionFactor[plantData[i].fuel_type] = correctionFactors["cogen/trigenTermic"];
-
+                    if (totalCorrectionFactors[plantData[i].fuel_type]) {
+                        totalCorrectionFactors[plantData[i].fuel_type] *= correctionFactors["cogen/trigenTermic"];
+                    } else {
+                        totalCorrectionFactors[plantData[i].fuel_type] = correctionFactors["cogen/trigenTermic"];
+                    }
                 }
             } else if (plantData[i].generator_type === "Cogeneratore o Trigenerazione con Microturbina") {
                 if (plantData[i].fuel_type === "Elettrico") {
                     cogenTrigenCorrectionFactor[electrcityType] = correctionFactors["cogen/trigenMicro"];
+                    if (totalCorrectionFactors[electrcityType]) {
+                        totalCorrectionFactors[electrcityType] *= correctionFactors["cogen/trigenMicro"];
+                    } else {
+                        totalCorrectionFactors[electrcityType] = correctionFactors["cogen/trigenMicro"];
+                    }
                 } else {
                     cogenTrigenCorrectionFactor[plantData[i].fuel_type] = correctionFactors["cogen/trigenMicro"];
+                    if (totalCorrectionFactors[plantData[i].fuel_type]) {
+                        totalCorrectionFactors[plantData[i].fuel_type] *= correctionFactors["cogen/trigenMicro"];
+                    } else {
+                        totalCorrectionFactors[plantData[i].fuel_type] = correctionFactors["cogen/trigenMicro"];
+                    }
                 }
             } else if (plantData[i].generator_type === "Cogeneratore o Trigenerazione con Fuel Cell") {
                 if (plantData[i].fuel_type === "Elettrico") {
                     cogenTrigenCorrectionFactor[electrcityType] = correctionFactors["cogen/trigenFuelCell"];
+                    if (totalCorrectionFactors[electrcityType]) {
+                        totalCorrectionFactors[electrcityType] *= correctionFactors["cogen/trigenFuelCell"];
+                    } else {
+                        totalCorrectionFactors[electrcityType] = correctionFactors["cogen/trigenFuelCell"];
+                    }
                 } else {
                     cogenTrigenCorrectionFactor[plantData[i].fuel_type] = correctionFactors["cogen/trigenFuelCell"];
+                    if (totalCorrectionFactors[plantData[i].fuel_type]) {
+                        totalCorrectionFactors[plantData[i].fuel_type] *= correctionFactors["cogen/trigenFuelCell"];
+                    } else {
+                        totalCorrectionFactors[plantData[i].fuel_type] = correctionFactors["cogen/trigenFuelCell"];
+                    }
                 }
             }
         }
     }
-
     console.log("cogenTrigenCorrectionFactor:", cogenTrigenCorrectionFactor);
 
-    return (
-        console.log("Emissioni calcolate")
-    );
+    //PHASE5: correction factors total for each energy source
+
+    //correzione dei voti per ogni fonte di elettricita'
+    console.log("marks:", marks);
+    console.log("totalCorrectionFactors:", totalCorrectionFactors);
+
+    for (let key in marks) {
+        // Controlla se esiste un fattore di correzione per questa fonte di energia
+        if (totalCorrectionFactors[key]) {
+            // Somma il valore del mark con il corrispondente fattore di correzione
+            marks[key] *= totalCorrectionFactors[key];
+        }
+    }
+
+    // Visualizza i valori corretti
+    console.log("Corrected marks:", marks);
+
+    //total TEP
+    const totalTEP = Object.values(sourceTEP).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+    console.log("Total TEP:", totalTEP);
+
+    //tep frazionato per ogni fonte di elettricita'
+    const tepPercentage = {};
+    for (let key in sourceTEP) {
+        let percentage = (sourceTEP[key] / totalTEP);
+        tepPercentage[key] = percentage;
+    }
+    console.log("tepPercentage:", tepPercentage);
+
+    //totale frazioni
+    const totalPercentage = Object.values(tepPercentage).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+    console.log("Total percentage:", totalPercentage);
+
+    //voti frazionati per ogni fonte di elettricita'
+    const votesPercentage = {};
+    for (let key in marks) {
+        votesPercentage[key] = marks[key] * tepPercentage[key];
+    }
+    console.log("votesPercentage:", votesPercentage);
+
+    //il voto finale e' dato dalla somma dei voti frazionati
+    const finalVote = Math.ceil(Object.values(votesPercentage).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
+    console.log("Final vote:", finalVote);
+
+    //aggiornamento dell'edificio per aggiungere il voto finale e le emissioni calcolate
+    try {
+        const response = await axios.put(`http://localhost:8080/api/insert-results/${buildingID}`, { finalVote, totalCO2Emissions }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (response.status === 200) {
+            return response.data.msg;
+        }
+    } catch (error) {
+        if (error.response && error.response.data) {
+            return error.response.data.msg; // Messaggio di errore dal server
+        }
+    }
+
+    //restituisci il voto finale e le emissioni totali
+    //return { finalVote, totalCO2Emissions };
 }
 
 
