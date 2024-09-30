@@ -161,7 +161,7 @@ function Solars() {
                     </>
                 )}
             </div>
-            {showSolarForm && <div className="pb-1"><SolarForm allSolarsData={solars} solar="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
+            {showSolarForm && <div className="pb-1"><SolarForm solar="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
 
         </div>
     );

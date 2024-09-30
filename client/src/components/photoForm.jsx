@@ -4,7 +4,7 @@ import MessagePopUp from "./messagePopUp";
 import { MutatingDots } from "react-loader-spinner";
 import { useRecoveryContext } from "../provider/provider";
 
-function PhotoForm({ allPhotosData = 'empty', photo = 'empty', isEdit, onButtonClick }) {
+function PhotoForm({ photo = 'empty', isEdit, onButtonClick = 'empty' }) {
     const [power, setPower] = useState(photo.power || "");
     const [isLoading, setIsLoading] = useState(false);
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -156,14 +156,8 @@ function PhotoForm({ allPhotosData = 'empty', photo = 'empty', isEdit, onButtonC
                             <div className=" w-full flex justify-center items-center mt-5 gap-3">
                                 <button
                                     type="submit"
-                                    //disabled={isEdit === false && allPhotosData.length !== 0}
-                                    /*className={`mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 rounded-lg border-2 transition-colors duration-300 ease-in-out ${isEdit === false && allPhotosData.length !== 0
-                                        ? 'bg-gray-300 text-gray-700 cursor-not-allowed border-gray-300'
-                                        : 'bg-[#2d7044] text-white border-transparent hover:border-[#2d7044] hover:bg-white hover:text-[#2d7044]'
-                                        }`}*/
                                     className="mt-7 font-arial text-xl w-[30%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 rounded-lg border-2 transition-colors duration-300 ease-in-out bg-[#2d7044] text-white border-transparent hover:border-[#2d7044] hover:bg-white hover:text-[#2d7044]"
                                 >
-                                    {/*isEdit === false && allPhotosData.length !== 0 ? 'Disabilitato' : 'Carica'*/}
                                     Carica
                                 </button>
                                 <button

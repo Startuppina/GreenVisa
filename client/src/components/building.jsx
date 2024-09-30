@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRecoveryContext } from "../provider/provider";
 import BuildingFrom from "./buildingFrom";
+import BuildingResults from "./buildingResults";
 
 function Building() {
     const [buildingData, setBuildingData] = useState({});
@@ -46,6 +47,7 @@ function Building() {
     return (
         <div className="text-arial text-xl">
             <h1 className="text-3xl font-bold text-center">Informazioni su <span className="uppercase text-[#2d7044]">{buildingData.name}</span></h1>
+            <BuildingResults />
             <div className="bg-[#D9D9D9] rounded-lg mt-10 mx-2 md:mx-14 h-[65vh] lg:h-auto overflow-y-auto">
                 <h2 className="text-2xl font-bold mb-4 text-center lg:text-left p-4">Dettagli dell'Edificio</h2>
                 {/* Colonna Sinistra */}
