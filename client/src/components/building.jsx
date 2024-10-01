@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useRecoveryContext } from "../provider/provider";
 import BuildingFrom from "./buildingFrom";
 import BuildingResults from "./buildingResults";
 
 function Building() {
     const [buildingData, setBuildingData] = useState({});
-    const navigate = useNavigate();
     const { id } = useParams();
     const { setBuildingID, refresh } = useRecoveryContext();
-    const [averageScore, setAverageScore] = useState(0);
     const [showModifierBuildingForm, setShowModifierBuildingForm] = useState(false);
 
     // Crea una ref per il form
@@ -117,7 +115,7 @@ function Building() {
                                 <span id="electricity-counter">{buildingData.electricity_meter}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="font-semibold">Analizzatori:</span>
+                                <span className="font-semibold">Analizzatori di rete per il controllo dei consumi elettrici:</span>
                                 <span id="electricity-analyzer">{buildingData.analyzers}</span>
                             </div>
                             <div className="flex justify-between">

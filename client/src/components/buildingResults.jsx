@@ -3,7 +3,6 @@ import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
 import MessagePopUp from "./messagePopUp";
 
-
 function BuildingResults() {
     const [results, setResults] = useState([{ emissionmark: 0, emissionco2: 0, results_visible: false }]);
     const [progress, setProgress] = useState(0);
@@ -25,7 +24,7 @@ function BuildingResults() {
 
                 if (response.status === 200) {
                     setResults(response.data); // Aggiorna lo stato
-                    console.log("Results:", results);
+                    //console.log("Results:", results);
 
 
                     // Smooth scroll to top

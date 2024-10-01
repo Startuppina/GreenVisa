@@ -81,7 +81,7 @@ const authenticateJWT = (req, res, next) => {
           return res.status(401).json({ msg: "Sessione scaduta, rieffettua il login per continuare" });
         }
 
-        return res.sendStatus(403); // Token non valido per altri motivi
+        return res.sendStatus(403); // Non valid token or expired
       }
 
       req.user = user;
@@ -89,7 +89,7 @@ const authenticateJWT = (req, res, next) => {
     });
   } else {
     console.error("Nessun token fornito");
-    res.sendStatus(401); // Nessun token fornito
+    res.sendStatus(401); // Unauthorized
   }
 };
 
@@ -115,7 +115,7 @@ const cleanUpCart = async () => {
       WHERE session_id IS NOT NULL
       AND user_id IS NULL
     `);
-    console.log('Pulizia del carrello completata.');
+    //console.log('Pulizia del carrello completata.');
   } catch (error) {
     console.error('Errore nella pulizia del carrello:', error);
   }
@@ -126,7 +126,7 @@ cron.schedule('0 0 */3 * *', cleanUpCart);
 async function deleteExpiredPromoCodes() {
   try {
     const currentDate = new Date();
-    const isoDateString = currentDate.toISOString(); // Senza rimuovere i millisecondi e senza aggiungere 'Z'
+    const isoDateString = currentDate.toISOString();
 
     const query = `
           DELETE FROM promocodes
@@ -136,15 +136,15 @@ async function deleteExpiredPromoCodes() {
     const values = [isoDateString];
     const result = await pool.query(query);
 
-    console.log(`Deleted ${result.rowCount} expired promo codes`);
+    //console.log(`Deleted ${result.rowCount} expired promo codes`);
   } catch (error) {
     console.error('Error deleting expired promo codes:', error);
   }
 };
 
-// Pianifica l'esecuzione della pulizia ogni 60 minuti. ORA è CONFIGURATO OGNI MINUTO PER TEST, rimettere poi '0 * * * *'
-cron.schedule('* * * * *', () => {
-  console.log('Running scheduled job to delete expired promo codes');
+// Cancel all expired promo codes every 1 hour
+cron.schedule('0 * * * *', () => {
+  //console.log('Running scheduled job to delete expired promo codes');
   deleteExpiredPromoCodes();
 });
 
@@ -172,7 +172,7 @@ app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, r
 app.post("/api/signup", async (req, res) => {
   const { username, company_name, email, password, phone } = req.body;
 
-  // Validazione
+  // Check if all fields are filled
   if (!email || !company_name || !password || !username || !phone) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
   } else if (!passwordCheck(password)) { //implement password check defined below
@@ -231,7 +231,7 @@ app.post("/api/login", async (req, res) => {
       return res.status(400).json({ msg: "Email non valida" });
     }
 
-    const user = result.rows[0]; // Se c'è un utente, ci sarà solo una riga
+    const user = result.rows[0]; // if we found a user
     const isMatch = await bcrypt.compare(password, user.password_digest);
 
     if (!isMatch) {
@@ -247,14 +247,12 @@ app.post("/api/login", async (req, res) => {
     }
 
     const user_id = user.id;
-    console.log("user_id:", user_id);
-    console.log("sessionID:", sessionID);
+    //console.log("user_id:", user_id);
+    //console.log("sessionID:", sessionID);
 
     if (sessionID) {
-      // Prima assegniamo il `user_id` basato sul `sessionID`
+      // Update user_id and session_id in cart table if session_id is not null
       await pool.query("UPDATE cart SET user_id = $1, session_id = NULL  WHERE session_id = $2", [user_id, sessionID])
-
-
     }
 
     return res
@@ -274,10 +272,9 @@ app.post("/api/logout", authenticateJWT, (req, res) => {
 
 app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
   try {
-    // Ottieni l'email dell'utente dal token
+
     const { user_id } = req.user;
 
-    // Trova e elimina l'utente dal database
     const result = await pool.query("DELETE FROM users WHERE id = $1", [
       user_id,
     ]);
@@ -286,7 +283,6 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
       return res.status(404).json({ message: "Account non trovato" });
     }
 
-    // Invia una risposta di successo
     res.status(200).json({ message: "Account eliminato con successo" });
   } catch (err) {
     console.error(err);
@@ -296,10 +292,8 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
 
 app.get("/api/user-info", authenticateJWT, async (req, res) => {
   try {
-    // Ottieni l'email dell'utente dal token
     const { user_id } = req.user;
 
-    // Trova l'utente dal database
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
       user_id,
     ]);
@@ -308,7 +302,6 @@ app.get("/api/user-info", authenticateJWT, async (req, res) => {
       return res.status(404).json({ message: "Utente non trovato" });
     }
 
-    // Invia la risposta con l'utente trovato
     res.status(200).json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -318,11 +311,9 @@ app.get("/api/user-info", authenticateJWT, async (req, res) => {
 
 app.put("/api/update-username", authenticateJWT, async (req, res) => {
   try {
-    // Ottieni l'email dell'utente dal token
     const { user_id } = req.user;
     const { username } = req.body;
 
-    // Trova l'utente dal database
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
       user_id,
     ]);
@@ -331,13 +322,11 @@ app.put("/api/update-username", authenticateJWT, async (req, res) => {
       return res.status(404).json({ message: "Utente non trovato" });
     }
 
-    // Aggiorna il nome utente nel database
     await pool.query("UPDATE users SET username = $1 WHERE id = $2", [
       username,
       user_id,
     ]);
 
-    // Invia una risposta di successo
     res.status(200).json({ message: "Username aggiornato con successo" });
   } catch (err) {
     console.error(err);
@@ -347,11 +336,9 @@ app.put("/api/update-username", authenticateJWT, async (req, res) => {
 
 app.put("/api/update-phone", authenticateJWT, async (req, res) => {
   try {
-    // Ottieni l'email dell'utente dal token
     const { user_id } = req.user;
     const { phone_number } = req.body;
 
-    // Trova l'utente dal database
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
       user_id,
     ]);
@@ -364,13 +351,11 @@ app.put("/api/update-phone", authenticateJWT, async (req, res) => {
     const intSuffix = phone_number.slice(2);
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
-    // Aggiorna il numero di telefono nel database
     await pool.query("UPDATE users SET phone_number = $1 WHERE id = $2", [
       newPhone,
       user_id,
     ]);
 
-    // Invia una risposta di successo
     res
       .status(200)
       .json({ message: "Numero di telefono aggiornato con successo", newPhone });
@@ -382,11 +367,9 @@ app.put("/api/update-phone", authenticateJWT, async (req, res) => {
 
 app.put("/api/update-email", authenticateJWT, async (req, res) => {
   try {
-    // Ottieni l'email dell'utente dal token
     const { user_id } = req.user;
     const { email } = req.body;
 
-    // Trova l'utente dal database
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [
       user_id,
     ]);
@@ -399,13 +382,11 @@ app.put("/api/update-email", authenticateJWT, async (req, res) => {
       return res.status(400).json({ message: "Email non valida" });
     }
 
-    // Aggiorna l'email nel database
     await pool.query("UPDATE users SET email = $1 WHERE id = $2", [
       email,
       user_id,
     ]);
 
-    // Invia una risposta di successo
     res.status(200).json({ message: "Email aggiornata con successo" });
   } catch (err) {
     console.error(err);
@@ -542,7 +523,7 @@ app.post("/api/send_email", async (req, res) => {
         secretKey,
         { expiresIn: "1h" }
       )
-      console.log(recoveryToken);
+      //console.log(recoveryToken);
       res.status(200).json({ exist: true, token: recoveryToken });
     } else {
       res.status(200).json({ exist: false });
@@ -555,7 +536,7 @@ app.post("/api/send_email", async (req, res) => {
 
 app.post("/api/send-email-message", async (req, res) => {
   try {
-    //verifica se l'email esiste nel database
+    //verify if the email exists in the database
     const result = await pool.query(
       "SELECT id, email FROM users WHERE email = $1",
       [req.body.email]
@@ -581,7 +562,7 @@ function sendEmail({ recipient_email, OTP }) {
     var transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        //PER RAGIONI DI SICUREZZA LE CREDENZIALI DEVONO STARE NEL .ENV
+        //BEACUSE SECURITY, THE CREDENTIALS MUST BE IN .ENV
         user: email_sender,
         pass: pass_sender
       },
@@ -705,7 +686,7 @@ function sendEmailMessage({ recipient_email }) {
     var transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        //PER RAGIONI DI SICUREZZA LE CREDENZIALI DEVONO STARE NEL .ENV
+        //BEACUSE SECURITY, THE CREDENTIALS MUST BE IN .ENV
         user: email_sender,
         pass: pass_sender
       },
@@ -813,7 +794,7 @@ function sendEmailResponse({ recipient_email, email_title, email_content, receiv
     var transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        //PER RAGIONI DI SICUREZZA LE CREDENZIALI DEVONO STARE NEL .ENV
+        //BEACUSE SECURITY, THE CREDENTIALS MUST BE IN .ENV
         user: email_sender,
         pass: pass_sender
       },
@@ -969,7 +950,7 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
     }
 
     if (!req.user || !req.user.user_id) {
-      console.log("ID utente mancante:", req.user);
+      //console.log("ID utente mancante:", req.user);
       return res.status(400).json({ msg: "ID utente mancante" });
     }
 
@@ -985,15 +966,15 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
     const insertNewsQuery = "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4) RETURNING id";
     const values = [req.user.user_id, title, sanitizedContent, image.filename];
 
-    // Iniziare una transazione
+    // begin transaction
     const client = await pool.connect();
     await client.query('BEGIN');
 
-    // Inserire la notizia e ottenere l'ID della notizia
+    // Insert the news into the database
     const resNews = await client.query(insertNewsQuery, values);
     const newsId = resNews.rows[0].id;
 
-    // Aggiornare lo stato di lettura per tutti gli utenti
+    // update news read status
     const updateReadStatusQuery = `
       INSERT INTO news_read_status (user_id, news_id)
       SELECT u.id, $1
@@ -1005,7 +986,7 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
 
     await client.query(updateReadStatusQuery, [newsId]);
 
-    // Completare la transazione
+    // complete transaction
     await client.query('COMMIT');
     client.release();
 
@@ -1152,12 +1133,10 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
       return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
     }
 
-    // Controllo che tutti i campi siano compilati
     if (!name || !category || !tag || !info || !cod) {
       return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
     }
 
-    // Controllo che il codice sia unico
     const checkCodQuery = "SELECT * FROM products WHERE cod = $1";
     const checkCodValues = [cod];
     const checkCodResult = await pool.query(checkCodQuery, checkCodValues);
@@ -1191,13 +1170,13 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
         break;
     }
 
-    // Controllo che il prezzo sia un numero valido
+    // Check if price is valid
     const parsedPrice = parseFloat(price);
     if (parsedPrice <= 0) {
       return res.status(400).json({ msg: "Prezzo non valido" });
     }
 
-    // Controllo che l'immagine sia presente
+    // Check if image is present
     if (!image) {
       return res.status(400).json({ msg: "Immagine mancante" });
     }
@@ -1206,8 +1185,8 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
       return res.status(400).json({ msg: "La descrizione è troppo lunga. Max 100 caratteri" });
     }
 
-    // Crea il prodotto su Stripe
-    const stripeProduct = await stripe.products.create({
+    // Create Stripe product
+    /*const stripeProduct = await stripe.products.create({
       name: name,
       description: info,
       metadata: {
@@ -1215,14 +1194,14 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
         tag: tag,
         cod: cod
       }
-    });
+    });*/
 
-    // Inserisco il prodotto nel database con l'ID Stripe
+    // Insert product into database
     const query = `
       INSERT INTO products (user_id, name, price, image, info, cod, category, tag, stripe_product_id) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `;
-    const values = [user_id, name, parsedPrice, image.filename, info, cod, category, tag, stripeProduct.id];
+    const values = [user_id, name, parsedPrice, image.filename, info, cod, category, tag, null];
 
     await pool.query(query, values);
     res.status(200).json({ msg: "Prodotto caricato con successo" });
@@ -1319,7 +1298,6 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
     const { name, image, price, quantity, option, session_id } = req.body;
 
     if (req.headers.authorization) {
-      // Esegui il middleware di autenticazione JWT
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
           if (err) {
@@ -1330,9 +1308,9 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
       });
     }
 
-    const user_id = req.user?.user_id; // Ottieni user_id se l'utente è autenticato
+    const user_id = req.user?.user_id; // Obtain the user ID from the JWT if needed
 
-    // Verifica se l'utente è autenticato o sta usando un session_id
+    // Check if user_id or session_id is present
     if (!user_id && !session_id) {
       return res.status(400).json({ msg: "Devi essere autenticato o avere un session_id per inserire nel carrello" });
     }
@@ -1346,7 +1324,7 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
     const category = categoryResult.rows[0].category;
     let finalPrice = price;
 
-    // Chiama la funzione di calcolo del prezzo in base alla categoria
+    // Calculate final price based on category
     switch (category) {
       case "Certificazione hotel":
         finalPrice = pricingFunctions.getHotelPrice(option, price);
@@ -1370,9 +1348,9 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
         return res.status(400).json({ msg: "Categoria non valida" });
     }
 
-    console.log("Final price:", finalPrice);
+    //console.log("Final price:", finalPrice);
 
-    // Controlla se il prodotto esiste
+    // Check if the product exists
     const productQuery = "SELECT * FROM products WHERE id = $1";
     const productResult = await pool.query(productQuery, [id]);
 
@@ -1380,16 +1358,16 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
       return res.status(404).json({ msg: "Certificazione non trovata" });
     }
 
-    // Controlla se il prodotto è già nel carrello dell'utente o della sessione
+    // Check if the product is already in the cart
     let cartQuery;
     let cartValues;
 
     if (user_id) {
-      // Controllo per utenti autenticati
+      // Control for authenticated users
       cartQuery = "SELECT * FROM cart WHERE user_id = $1 AND product_id = $2";
       cartValues = [user_id, id];
     } else {
-      // Controllo per utenti anonimi (basato su session_id)
+      // Control for anonymous users
       cartQuery = "SELECT * FROM cart WHERE session_id = $1 AND product_id = $2";
       cartValues = [session_id, id];
     }
@@ -1400,16 +1378,16 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
       return res.status(400).json({ msg: "La certificazione è già nel carrello" });
     }
 
-    // Aggiungi il prodotto al carrello
+    // Insert the product into the cart
     let insertQuery;
     let insertValues;
 
     if (user_id) {
-      // Inserimento nel carrello per utenti autenticati
+      // Insert into the cart for authenticated users
       insertQuery = "INSERT INTO cart (user_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
       insertValues = [user_id, id, name, image, quantity, option, finalPrice];
     } else {
-      // Inserimento nel carrello per utenti anonimi
+      // Insert into the cart for anonymous users
       insertQuery = "INSERT INTO cart (session_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
       insertValues = [session_id, id, name, image, quantity, option, finalPrice];
     }
@@ -1427,9 +1405,7 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
 app.get("/api/fetch-user-cart", async (req, res) => {
   try {
 
-
     if (req.headers.authorization) {
-      // Esegui il middleware di autenticazione JWT
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
           if (err) {
@@ -1442,24 +1418,19 @@ app.get("/api/fetch-user-cart", async (req, res) => {
 
     const user_id = req.user?.user_id;
     const session_id = req.header('session-id');
-    console.log("User ID:", user_id);
-    console.log("Session ID:", session_id);
+    //console.log("User ID:", user_id);
+    //console.log("Session ID:", session_id);
 
-    /*if (!user_id && !session_id) {
-      return res.status(400).json({ msg: "Devi essere autenticato o avere un session_id per inserire nel carrello" });
-    }*/
 
     let query;
     let values;
     let query2;
 
     if (user_id) {
-      // Controllo per utenti autenticati
       query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
       query2 = "SELECT COUNT(*) FROM cart WHERE user_id = $1";
       values = [user_id];
     } else {
-      // Controllo per utenti anonimi (basato su session_id)
       query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.session_id = $1";
       query2 = "SELECT COUNT(*) FROM cart WHERE session_id = $1";
       values = [session_id];
@@ -1482,7 +1453,6 @@ app.put("/api/update-quantity/:id", async (req, res) => {
     const { quantity } = req.body;
 
     if (req.headers.authorization) {
-      // Esegui il middleware di autenticazione JWT
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
           if (err) {
@@ -1520,7 +1490,6 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
     const { id } = req.params;
 
     if (req.headers.authorization) {
-      // Esegui il middleware di autenticazione JWT
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
           if (err) {
@@ -1558,7 +1527,6 @@ app.post("/api/send-message", async (req, res) => {
   try {
     const { name, email, company_name, phone, subject, message } = req.body;
 
-    //const { user_id } = req.user;
     const query = "INSERT INTO contacts (name_surname, email, company_name, phone_number, subject, message) VALUES ($1, $2, $3, $4, $5, $6)";
     const values = [name, email, company_name, phone, subject, message];
     await pool.query(query, values);
@@ -1777,7 +1745,7 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
       }
 
       const queryCheck = await pool.query("SELECT category FROM cart JOIN products on cart.product_id = products.id WHERE cart.user_id = $1", [user_id]);
-      const cartCategories = queryCheck.rows.map(row => row.category); // Array di categorie prodotti nel carrello
+      const cartCategories = queryCheck.rows.map(row => row.category); // fetch the category of each product in the cart
       if (cartCategories.includes(used_by)) {
         return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
       } else {
@@ -1786,7 +1754,7 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
       }
 
     } else {
-      return res.status(400).json({ msg: "Codice non esistente" }); // Cambiato a 400 per errore client
+      return res.status(400).json({ msg: "Codice non esistente" });
     }
 
   } catch (error) {
@@ -1821,7 +1789,7 @@ app.delete("/api/delete-promo-code/:id", authenticateJWT, authenticateAdmin, asy
 
   try {
     const { id } = req.params;
-    console.log(`ID: ${id}`);
+    //console.log(`ID: ${id}`);
     const query = "DELETE FROM promocodes WHERE id = $1";
     await pool.query(query, [id]);
     res.status(200).json({ msg: "Certificazione eliminata con successo" });
@@ -1834,10 +1802,10 @@ app.delete("/api/delete-promo-code/:id", authenticateJWT, authenticateAdmin, asy
 
 app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
   try {
-    const { promoCode, products } = req.body; // products deve contenere id, name, price e quantity
+    const { promoCode, products } = req.body;
     const { user_id } = req.user;
 
-    // Verifica la validità del codice promozionale
+    // check if the promo code is valid
     let promo = null;
     if (promoCode) {
       const promoQuery = "SELECT * FROM promocodes WHERE code = $1 AND start <= CURRENT_DATE AND expiration >= CURRENT_DATE";
@@ -1851,13 +1819,13 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       }
     }
 
-    // Calcola l'importo totale e applica sconti solo sui prodotti compatibili
+    // Calculate the total price
     const items = [];
 
     for (const product of products) {
       const { id, name, image, price, quantity } = product;
 
-      // Recupera informazioni sul prodotto dal database
+      // fetch the product from the database
       const productQuery = "SELECT * FROM products WHERE id = $1";
       const productValues = [id];
       const productResult = await pool.query(productQuery, productValues);
@@ -1868,36 +1836,36 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
 
       const productInfo = productResult.rows[0];
 
-      let productPrice = price; // Prezzo di default senza sconto
+      let productPrice = price; // default price
 
       if (promo) {
         if (promo.used_by === "Tutti" || promo.used_by.includes(productInfo.category)) {
-          // Applica lo sconto solo sui prodotti compatibili con il codice promozionale
+          // Apply the promo code to compatible products
           productPrice = price * (1 - promo.discount / 100);
         }
       }
 
-      // Arrotonda il prezzo e convertilo in centesimi
+      // Round the price to the nearest cent
       const finalPriceInCents = Math.round(productPrice * 100);
-      //console.log("product image: ", image)
+      ////console.log("product image: ", image)
       //const path = `http://localhost:8080/uploaded_img/${image}`
-      //console.log("path: ", path)
+      ////console.log("path: ", path)
 
 
       items.push({
         price_data: {
-          currency: 'eur', // Cambia la valuta se necessario
+          currency: 'eur',
           product_data: {
             name: name
             //images: [path],
           },
-          unit_amount: finalPriceInCents, // Arrotondato e convertito in centesimi
+          unit_amount: finalPriceInCents,
         },
         quantity: quantity,
       });
     }
 
-    // Crea una sessione di checkout su Stripe
+    // Create a checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: items,
@@ -1923,18 +1891,18 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
     const { orderData, codeID } = req.body;
     const { user_id } = req.user;
 
-    console.log("Dati dell'ordine:", orderData);
-    console.log("User ID:", user_id);
+    //console.log("Dati dell'ordine:", orderData);
+    //console.log("User ID:", user_id);
 
     for (const id of orderData) {
-      // Recupera quantità e prezzo dal carrello
+      // Recover the quantity and price of the product
       const query = "SELECT quantity, price FROM cart WHERE user_id = $1 AND product_id = $2";
       const values = [user_id, id];
       const result = await pool.query(query, values);
 
-      console.log("Risultato query:", result.rows);
+      //console.log("Risultato query:", result.rows);
 
-      // Verifica se il prodotto esiste nel carrello
+      // Check if the product is in the cart
       if (result.rows.length === 0) {
         return res.status(404).json({ msg: `Prodotto con ID ${id} non trovato nel carrello.` });
       }
@@ -1943,15 +1911,13 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
       const price = result.rows[0].price;
       const order_date = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-      // Inserisci l'ordine nella tabella
       const query2 = "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)";
       const values2 = [quantity, price, user_id, id, codeID, order_date];
       await pool.query(query2, values2);
 
-      console.log(`Ordine creato per prodotto ID ${id}`);
+      //console.log(`Ordine creato per prodotto ID ${id}`);
     }
 
-    // Risposta positiva al termine dell'inserimento
     res.status(201).json({ msg: "Ordine creato con successo." });
 
   } catch (error) {
@@ -1997,7 +1963,6 @@ app.get("/api/all-orders", authenticateJWT, authenticateAdmin, async (req, res) 
   try {
     const { user_id, role } = req.user;
 
-    //verifica che l'utente sia un amministratore
     if (role !== "administrator") {
       return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
     }
@@ -2040,7 +2005,6 @@ app.delete("/api/remove-user-cart", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
 
-    // fetch image from cart table
     const queryCart = "SELECT image FROM cart WHERE user_id = $1";
     const valuesCart = [user_id];
     const resultCart = await pool.query(queryCart, valuesCart);
@@ -2064,7 +2028,6 @@ app.post("/api/send-message-response", authenticateJWT, authenticateAdmin, async
     const { emailTitle, emailContent, receiverEmail } = req.body;
     const { role, user_id } = req.user;
 
-    //verifica che l'utente sia un amministratore
     if (role !== "administrator") {
       return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
     }
@@ -2117,7 +2080,6 @@ app.post("/api/send-message-response", authenticateJWT, authenticateAdmin, async
 
 app.post("/api/upload-building", authenticateJWT, async (req, res) => {
   try {
-    // Estrai i dati dal corpo della richiesta
     const {
       name,
       address,
@@ -2141,29 +2103,20 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       //buildingScore
     } = req.body;
 
-    console.log(req.body);
+    //console.log(req.body);
 
 
-    // Verifica che tutti i dati richiesti siano presenti
+
     if (!name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
-    /*
-    console.log("total ligting: ", parseInt(lighting) + parseInt(led) + parseInt(gasLamp));
-    if (parseInt(lighting) + parseInt(led) + parseInt(gasLamp) !== 100) {
-      return res.status(400).json({ msg: "La somma delle percentuali di luci a incandescenza, led e scarica di gas deve essere 100%" });
-    }*/
-
-    // Recupera l'ID utente dalla richiesta
     const userId = req.user.user_id;
 
-    // Verifica che l'ID utente sia valido
     if (!userId) {
       return res.status(401).json({ msg: "Utente non autenticato" });
     }
 
-    // Prepara i valori per l'inserimento
     const values = [
       name,
       userId,
@@ -2185,11 +2138,8 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       gasLamp,
       electricityAnalyzer,
       autoLightingControlSystem,
-      //buildingScore // Aggiungi questo se vuoi includerlo
     ];
 
-
-    // Esegui la query di inserimento
     const query = `
     INSERT INTO buildings (
         name,
@@ -2219,8 +2169,6 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
 
     await pool.query(query, values);
 
-
-    // Rispondi con successo
     res.status(200).json({ msg: "Edificio caricato con successo" });
   } catch (error) {
     console.error('Error inserting building:', error.message);
@@ -2230,7 +2178,6 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
 
 app.put("/api/edit-building", authenticateJWT, async (req, res) => {
   try {
-    // Estrai i dati dal corpo della richiesta
     const {
       id,
       name,
@@ -2255,28 +2202,18 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       //buildingScore
     } = req.body;
 
-    console.log(req.body);
+    //console.log(req.body);
 
-    // Verifica che tutti i dati richiesti siano presenti
     if (!id || !name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
-
-    /*
-    if (parseInt(lighting) + parseInt(led) + parseInt(gasLamp) !== 100) {
-      return res.status(400).json({ msg: "La somma delle percentuali di luci a incandescenza, led e scarica di gas deve essere 100%" });
-    }*/
-
-    // Recupera l'ID utente dalla richiesta
     const userId = req.user.user_id;
 
-    // Verifica che l'ID utente sia valido
     if (!userId) {
       return res.status(401).json({ msg: "Utente non autenticato" });
     }
 
-    // Prepara i valori per l'aggiornamento
     const values = [
       name,
       userId,
@@ -2301,7 +2238,6 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       id
     ];
 
-    // Esegui la query di aggiornamento
     await pool.query(`
       UPDATE buildings
       SET
@@ -2328,8 +2264,6 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       WHERE id = $21
   `, values);
 
-
-    // Rispondi con successo
     res.status(200).json({ msg: "Edificio aggiornato con successo" });
   } catch (error) {
     console.error('Error updating building:', error.message);
@@ -2342,7 +2276,7 @@ app.delete("/api/delete-building/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    console.log('ID dai parametri della richiesta:', id);
+    //console.log('ID dai parametri della richiesta:', id);
     const query = "DELETE FROM buildings WHERE user_id = $1 AND id = $2";
     const values = [user_id, id];
     await pool.query(query, values);
@@ -2370,7 +2304,7 @@ app.get("/api/fetch-buildings", authenticateJWT, async (req, res) => {
       SELECT COUNT(*) FROM buildings WHERE user_id = $1
     `, [userId]);
 
-    console.log('Response:', rows.rows, numBuildings.rows[0].count);
+    //console.log('Response:', rows.rows, numBuildings.rows[0].count);
 
     res.status(200).json({ buildings: rows.rows, numBuildings: numBuildings.rows[0].count });
   } catch (error) {
@@ -2499,7 +2433,7 @@ app.get("/api/buildings/:id/fetch-plants", authenticateJWT, async (req, res) => 
     const result2 = await pool.query(query2, values2);
     const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
 
-    console.log('Count from database:', count); // Log count
+    //console.log('Count from database:', count); // Log count
 
     const rows = await pool.query(`SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`, [id, user_id]);
 
@@ -2527,7 +2461,7 @@ app.get("/api/:buildingID/fetch-user-energies", authenticateJWT, async (req, res
   try {
     const { user_id } = req.user;
     const { buildingID } = req.params;
-    console.log('buildingID:', buildingID);
+    //console.log('buildingID:', buildingID);
 
     const rows = await pool.query(`SELECT DISTINCT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2 AND fuel_type <> 'Elettrico'`, [user_id, buildingID]);
     res.status(200).json({ energies: rows.rows });
@@ -2541,14 +2475,12 @@ app.post("/api/:buildingID/add-consumption", authenticateJWT, async (req, res) =
   try {
     const { user_id } = req.user;
     const { buildingID } = req.params;
-    const { energy_source, consumption } = req.body; // Ora `consumptions` è un array
+    const { energy_source, consumption } = req.body;
 
 
     if (!energy_source || !consumption) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi per ogni consumo" });
     }
-
-    //check if the consumption already exists
 
     const rows = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2 AND energy_source = $3`, [user_id, buildingID, energy_source]);
 
@@ -2575,7 +2507,7 @@ app.get("/api/:buildingID/fetch-consumption-data", authenticateJWT, async (req, 
   try {
     const { user_id } = req.user;
     const { buildingID } = req.params;
-    console.log('buildingID:', buildingID);
+    //console.log('buildingID:', buildingID);
 
     const rows = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2`, [user_id, buildingID]);
     res.status(200).json({ consumptions: rows.rows });
@@ -2606,9 +2538,9 @@ app.delete("/api/:buildingID/delete-consumption/:id", authenticateJWT, async (re
     const { buildingID } = req.params;
     const { id } = req.params;
 
-    console.log('buildingID:', buildingID);
-    console.log('consumption id:', id);
-    console.log('user_id:', user_id);
+    //console.log('buildingID:', buildingID);
+    //console.log('consumption id:', id);
+    //console.log('user_id:', user_id);
 
     await pool.query(`DELETE FROM user_consumptions WHERE id = $1 AND building_id = $2 AND user_id = $3`, [id, buildingID, user_id]);
     res.status(200).json({ msg: "Consumo eliminato con successo" });
@@ -2838,11 +2770,66 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
 
     const building = buildingData.rows[0];
 
+    //Check if building has at least one plant
+    const hasPlants = await pool.query(`SELECT COUNT(*)::int AS count FROM plants WHERE building_id = $1 AND user_id = $2`, [buildingID, user_id]);
+    if (hasPlants.rows[0].count === 0) {
+      return res.status(400).json({ error: "Non hai inserito impianti nel tuo edificio. Almeno un impianto è richiesto" });
+    }
+
+    // Check if user has consumption data for the building
+    const userHasConsumptionData = await pool.query(
+      "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2;",
+      [user_id, buildingID]
+    );
+    if (userHasConsumptionData.rows.length === 0) {
+      return res.status(400).json({ error: "Non hai ancora dati di consumo per questo edificio" });
+    }
+
+
+    // Recover the quantity and price of the product
+    const plantsConsumptions = await pool.query(
+      "SELECT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2;",
+      [user_id, buildingID]
+    );
+    //console.log("consumptionCheck:", plantsConsumptions.rows);
+
+    // Recover the quantity and price of the product
+    const userConsumptions = await pool.query(
+      "SELECT energy_source FROM user_consumptions WHERE user_id = $1 AND building_id = $2;",
+      [user_id, buildingID]
+    );
+    //console.log("userConsumptions:", userConsumptions.rows);
+
+
+    // Extract the fuel types from the rows
+    const plantFuelTypes = plantsConsumptions.rows.map(row => row.fuel_type);
+    const userEnergySources = userConsumptions.rows.map(row => row.energy_source);
+
+    if (!userEnergySources.includes("Elettricità")) {
+      return res.status(400).json({ error: "Il consumo di elettricità è richiesto." });
+    }
+
+    // Check if all fuel types are present
+    const allFuelTypesMatched = plantFuelTypes.every(fuelType =>
+      userEnergySources.includes(fuelType)
+    );
+
+    // Find missing fuel types
+    const missingConsumptions = plantFuelTypes.filter(fuelType =>
+      !userEnergySources.includes(fuelType)
+    );
+
+    //console.log("missingEnergySources:", missingConsumptions);
+
+    if (!allFuelTypesMatched) {
+      return res.status(400).json({ error: `Non ha inserito tutti i consumi. Consumi mancanti: ${missingConsumptions}` });
+    }
+
     //Fetch solars and photovoltaics data fo user and building 
     const rows = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [buildingID]);
     const query2 = "SELECT COUNT(*) FROM photovoltaics WHERE building_id = $1";
     const totalPower = await pool.query(`SELECT SUM(power) FROM photovoltaics WHERE building_id = $1`, [buildingID]);
-    //console.log(totalPower);
+    ////console.log(totalPower);
     const values2 = [buildingID];
     const result2 = await pool.query(query2, values2);
     const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
@@ -2850,7 +2837,7 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     const rows2 = await pool.query(`SELECT * FROM solars WHERE building_id = $1`, [buildingID]);
     const query3 = "SELECT COUNT(*) FROM solars WHERE building_id = $1";
     const totalIstalledArea = await pool.query(`SELECT SUM(installed_area) FROM solars WHERE building_id = $1`, [buildingID]);
-    //console.log(totalIstalledArea);
+    ////console.log(totalIstalledArea);
     const values3 = [buildingID];
     const result3 = await pool.query(query3, values3);
     const count2 = parseInt(result3.rows[0].count, 10); // Convert to integer for accuracy
@@ -2887,103 +2874,10 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
   }
 })
 
-/*app.get("/api/fetch-building-scores/:id", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-
-    const buildingScoresResult = await pool.query(`SELECT SUM(buildingScore) AS totalScore FROM buildings WHERE user_id = $1 AND id = $2`, [user_id, id]);
-    const buildingScores = parseInt(buildingScoresResult.rows[0].totalscore, 10); // Convert to integer for accuracy
-    const buildingScoresCountResult = 1;
-
-    // Calcolare la somma dei punteggi e la somma delle quantità/potenza per gli impianti
-    const plantScoresResult = await pool.query(`SELECT SUM(plantScore) AS totalScore FROM plants WHERE user_id = $1 AND building_id = $2`, [user_id, id]);
-    const generatorScoreResult = await pool.query(`SELECT SUM(generator_assigned_score) AS generator_assigned_score FROM plants WHERE user_id = $1 AND building_id = $2`, [user_id, id]);
-    const plantScores = parseInt(plantScoresResult.rows[0].totalscore, 10) + parseInt(generatorScoreResult.rows[0].generator_assigned_score, 10); // Convert to integer for accuracy 
-    const plantScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM plants WHERE user_id = $1 AND building_id = $2`, [user_id, id])).rows[0].count, 10);
-
-
-    // Calcolare la somma dei punteggi e la somma delle aree installate per i solari
-    const solarScoresResult = await pool.query(`SELECT SUM(solarScore) AS totalScore FROM solars WHERE building_id = $1`, [id]);
-    const solarScores = parseInt(solarScoresResult.rows[0].totalscore, 10);
-    const solarScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM solars WHERE building_id = $1 `, [id])).rows[0].count, 10);
-
-    // Calcolare la somma dei punteggi e la somma delle potenze per i fotovoltaici
-    const photoScoresResult = await pool.query(`SELECT SUM(photovoltaicScore) AS totalScore FROM photovoltaics WHERE building_id = $1 `, [id]);
-    const photoScores = parseInt(photoScoresResult.rows[0].totalscore, 10);
-    const photoScoresCountResult = parseInt((await pool.query(`SELECT COUNT(*) AS count FROM photovoltaics WHERE building_id = $1`, [id])).rows[0].count, 10);
-
-    const buildingScore = buildingScoresCountResult > 0 ? buildingScores : 0;
-
-    const plantScore = plantScoresCountResult > 0 ? plantScores : 0;
-
-    const solarScore = solarScoresCountResult > 0 ? solarScores : 0;
-
-    const photoScore = photoScoresCountResult > 0 ? photoScores : 0;
-
-    console.log("scores:", buildingScore, plantScore, solarScore, photoScore);
-
-    // Calcolare il punteggio totale
-    let totalScore = 0;
-    let countFactors = 0;
-
-    // Aggiungi il punteggio del building se buildingScoresCountResult non è 0
-    if (buildingScoresCountResult !== 0) {
-      totalScore += (buildingScore / buildingScoresCountResult);
-      countFactors++; // Incrementa il numero di fattori considerati
-    }
-
-    // Aggiungi il punteggio del plant se plantScoresCountResult non è 0
-    if (plantScoresCountResult !== 0) {
-      totalScore += (plantScore / plantScoresCountResult);
-      countFactors++;
-    }
-
-    // Aggiungi il punteggio del solar se solarScoresCountResult non è 0
-    if (solarScoresCountResult !== 0) {
-      totalScore += (solarScore / solarScoresCountResult);
-      countFactors++;
-    }
-
-    // Aggiungi il punteggio del photo se photoScoresCountResult non è 0
-    if (photoScoresCountResult !== 0) {
-      totalScore += (photoScore / photoScoresCountResult);
-      countFactors++;
-    }
-
-    // Se ci sono fattori considerati, calcola la media
-    if (countFactors > 0) {
-      totalScore;
-    }
-    // stampa ogni dato di totalScore 
-    console.log("building score:", buildingScore, "building count:", buildingScoresCountResult);
-    console.log("plant score:", plantScore, "plant count:", plantScoresCountResult);
-    console.log("solar score:", solarScore, "solar count:", solarScoresCountResult);
-    console.log("photo score:", photoScore, "photo count:", photoScoresCountResult);
-
-
-    console.log("total score:", totalScore);
-
-    ;
-
-    res.json({
-      averageScore: totalScore,
-      numPlants: plantScoresCountResult,
-      numSolars: solarScoresCountResult,
-      numPhotovoltaics: photoScoresCountResult
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error fetching building scores.");
-  }
-});*/
-
-
 app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
 
-    // Esegui la query SQL corretta
     const rows = await pool.query(`
       SELECT 
           o.product_id AS product_id,
@@ -3000,7 +2894,6 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
           o.user_id = $1;
     `, [user_id]);
 
-    // Invia i dati come JSON
     res.status(200).json({ surveyInfo: rows.rows });
   } catch (error) {
     console.error('Error fetching orders:', error.message);
@@ -3010,12 +2903,11 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
 
 
 app.post('/api/responses', authenticateJWT, async (req, res) => {
-  const { pageNo, certification_id, totalScore, completed, surveyData } = req.body; // Aggiungi totalScore
+  const { pageNo, certification_id, totalScore, completed, surveyData } = req.body;
   const { user_id } = req.user;
 
-  console.log("ALL", user_id, pageNo, surveyData, totalScore, completed); // Aggiungi totalScore
+  ////console.log("ALL", user_id, pageNo, surveyData, totalScore, completed);
 
-  // Controllo per assicurarsi che i dati necessari siano presenti
   if (!surveyData) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -3047,7 +2939,7 @@ app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
   const { certification_id } = req.query;
   const { user_id } = req.user;
 
-  console.log("ALL", user_id, certification_id);
+  //console.log("ALL", user_id, certification_id);
 
   try {
     const query = `
@@ -3072,7 +2964,7 @@ app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
 app.get("/api/users-generator-types", authenticateJWT, async (req, res) => {
   const { user_id } = req.user;
 
-  console.log("user_id:", user_id);
+  //console.log("user_id:", user_id);
 
   try {
     const query = `
@@ -3084,7 +2976,7 @@ app.get("/api/users-generator-types", authenticateJWT, async (req, res) => {
     `;
 
     const results = await pool.query(query);
-    console.log("usersGeneratorTypes:", results.rows);
+    //console.log("usersGeneratorTypes:", results.rows);
 
     if (results.rows.length === 0) {
       return res.status(404).json({ message: "No users found" });
@@ -3104,13 +2996,12 @@ app.post("/api/users-assign-score", authenticateJWT, authenticateAdmin, async (r
     return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
   }
 
-  console.log("user_id:", requestor_id);
-  console.log("score:", score);
-  console.log("score type:", typeof score);
-  console.log("generatorType:", generatorType);
+  //console.log("user_id:", requestor_id);
+  //console.log("score:", score);
+  //console.log("score type:", typeof score);
+  //console.log("generatorType:", generatorType);
 
   try {
-    // Costruzione della query SQL parametrizzata
     const query = `
           UPDATE plants
           SET generator_assigned_score = $1
@@ -3119,10 +3010,8 @@ app.post("/api/users-assign-score", authenticateJWT, authenticateAdmin, async (r
           AND id = $4
       `;
 
-    // Esegui la query
     const result = await pool.query(query, [parseFloat(score), requestor_id, generatorType, plant_id]);
 
-    // Controlla se la riga è stata aggiornata
     if (result.rowCount > 0) {
       res.status(200).json({ message: 'Punteggio aggiornato con successo', data: result.rows[0] });
     } else {
@@ -3137,8 +3026,8 @@ app.post("/api/users-assign-score", authenticateJWT, authenticateAdmin, async (r
 app.post("/api/second-level-certification", authenticateJWT, async (req, res) => {
   const { userInfo, certification_id } = req.body;
   const { user_id } = req.user;
-  console.log("user_id:", user_id);
-  console.log("certification_id:", certification_id);
+  //console.log("user_id:", user_id);
+  //console.log("certification_id:", certification_id);
 
   try {
     const query = `
@@ -3151,7 +3040,7 @@ app.post("/api/second-level-certification", authenticateJWT, async (req, res) =>
     const result = await pool.query(query, values);
     res.status(201).json({ id: result.rows[0].id });
   } catch (err) {
-    if (err.code === '23505') {  // Codice errore per violazione di vincolo unico
+    if (err.code === '23505') {  // Error code for unique constraint violation
       return res.status(409).json({ message: "La richiesta per questo utente e certificazione esiste già." });
     }
     console.error("Errore nell'inviare la richiesta di certificazione di secondo, livello", err);
@@ -3197,8 +3086,8 @@ app.get("/api/fetch-second-level-requests", authenticateJWT, authenticateAdmin, 
 
 app.post("/api/approve-second-level-request", authenticateJWT, authenticateAdmin, async (req, res) => {
   const { request_id, user_requestor_id } = req.body;
-  console.log("request_id:", request_id);
-  console.log("user_requestor_id:", user_requestor_id);
+  //console.log("request_id:", request_id);
+  //console.log("user_requestor_id:", user_requestor_id);
   const { role } = req.user;
   if (role !== "administrator") {
     return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
@@ -3289,8 +3178,8 @@ app.delete("/api/delete-second-level-request", authenticateJWT, authenticateAdmi
 
   const { request_id, user_requestor_id } = req.query;  // Cambia req.body con req.query
   const { role } = req.user;
-  console.log("request_id:", request_id);
-  console.log("user_requestor_id:", user_requestor_id);
+  //console.log("request_id:", request_id);
+  //console.log("user_requestor_id:", user_requestor_id);
   if (role !== "administrator") {
     return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
   }
@@ -3364,8 +3253,8 @@ app.get("/api/fetch-building-plants-solars-photos/:id/:buildingID", authenticate
 
   const { role } = req.user;
   const { id, buildingID } = req.params;
-  console.log("buildingID:", buildingID);
-  console.log("id:", id);
+  //console.log("buildingID:", buildingID);
+  //console.log("id:", id);
 
   if (role !== "administrator") {
     return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
@@ -3409,10 +3298,10 @@ app.put("/api/insert-results/:buildingID", authenticateJWT, async (req, res) => 
   const { user_id } = req.user;
   const { buildingID } = req.params;
   const { finalVote, totalCO2Emissions, areaCO2Emissions } = req.body;
-  console.log("buildingID:", buildingID);
-  console.log("user_id:", user_id);
-  console.log("finalVote:", finalVote);
-  console.log("totalCO2Emissions:", totalCO2Emissions);
+  //console.log("buildingID:", buildingID);
+  //console.log("user_id:", user_id);
+  //console.log("finalVote:", finalVote);
+  //console.log("totalCO2Emissions:", totalCO2Emissions);
 
 
   try {
@@ -3428,9 +3317,8 @@ app.get("/api/fetch-results/:buildingID", authenticateJWT, async (req, res) => {
 
   const { user_id } = req.user;
   const { buildingID } = req.params;
-  console.log("buildingID:", buildingID);
-  console.log("user_id:", user_id);
-
+  //console.log("buildingID:", buildingID);
+  //console.log("user_id:", user_id);
 
   try {
     const query = "SELECT emissionMark, emissionCO2, areaEmissionCO2, results_visible FROM buildings WHERE id = $1 AND user_id = $2;";
@@ -3446,8 +3334,6 @@ app.get("/api/fetch-results/:buildingID", authenticateJWT, async (req, res) => {
     res.status(500).json({ msg: 'Errore del server' });
   }
 })
-
-
 
 function emailCheck(email) {
   const re =
@@ -3467,12 +3353,12 @@ function phoneCheck(phone) {
 }
 
 function pivaCheck(piva) {
-  const pivaRegex = /^[0-9]{11}$/;  // Deve essere composto da 11 numeri
+  const pivaRegex = /^[0-9]{11}$/;  // Must be 11 digits
   return pivaRegex.test(piva);
 }
 
 function cfCheck(cf) {
-  //const cfRegex = /^[A-Z0-9]{16}$/; // Deve essere composto da 16 caratteri alfanumerici
+  //const cfRegex = /^[A-Z0-9]{16}$/; // Must be 16 alphanumeric characters
   const cfRegex = /^[A-Za-z]{6}[0-9]{2}[A-Za-z]{1}[0-9]{2}[A-Za-z]{1}[0-9]{3}[A-Za-z]{1}$/
   return cfRegex.test(cf);
 }
@@ -3486,14 +3372,14 @@ app.use((err, req, res, next) => {
 
 
 app.listen(port, '0.0.0.0', async () => {
-  console.log(`Server in ascolto sulla porta ${port}`);
+  //console.log(`Server in ascolto sulla porta ${port}`);
 
   try {
-    // Verifica se esiste già un amministratore
+    // Check if the admin user exists
     const res = await pool.query('SELECT * FROM users WHERE administrator = TRUE LIMIT 1');
     if (res.rows.length === 0) {
-      // Nessun amministratore trovato, quindi creane uno
-      const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Modifica la password e il salt come necessario
+      // If the admin user doesn't exist, create it
+      const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Hash the passwords
       await pool.query(
         `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest)
          VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`,

@@ -232,7 +232,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                 "Pellet",
                 "Cippato di legna",
                 "Biogas",
-                "Elettrico",
+                "Elettricità",
                 "Energia termica"
             ],
             electricitySupplies: [

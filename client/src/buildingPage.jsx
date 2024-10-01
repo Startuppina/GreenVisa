@@ -21,8 +21,6 @@ function BuildingPage() {
     const [isLoading, setIsLoading] = useState(false);
     const { buildingID, triggerRefreshResults } = useRecoveryContext();
     const [results, setResults] = useState(null);
-    const [resultsVisible, setResultsVisible] = useState(false);
-    const [progress, setProgress] = useState(0);
 
     const [buttonPopUp, setButtonPopUp] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
@@ -38,12 +36,24 @@ function BuildingPage() {
         setTimeout(async () => {
             try {
                 // Attende la risoluzione della Promise restituita da EmissionsCalculator
-                await EmissionsCalculator(buildingID);
+                const response = await EmissionsCalculator(buildingID);
+
+                // Se la risposta contiene un messaggio di errore
+                if (response.success === false) {
+                    setMessagePopup(response.message || "Errore sconosciuto.");
+                    setButtonPopUp(true);  // Mostra il popup con il messaggio di errore
+                } else {
+                    // Successo: puoi gestire la logica per il successo qui
+                    console.log("Emissioni calcolate con successo");
+                }
+
                 setIsLoading(false);
                 triggerRefreshResults();
 
             } catch (error) {
                 console.error("Error calculating emissions:", error);
+                setMessagePopup("Errore durante il calcolo delle emissioni.");
+                setButtonPopUp(true);  // Mostra il popup con un messaggio di errore generico
                 setIsLoading(false);
             }
         }, 1000); // Ritarda di 1 secondo prima di eseguire il calcolo

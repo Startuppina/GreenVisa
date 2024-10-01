@@ -256,7 +256,7 @@ function UserBuldingsPageAdmin() {
                                             <span id="electricity-counter">{selectedBuilding.electricity_meter}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="font-semibold">Analizzatori:</span>
+                                            <span className="font-semibold">Analizzatori di rete per il controllo dei consumi elettrici:</span>
                                             <span id="electricity-analyzer">{selectedBuilding.analyzers}</span>
                                         </div>
                                         <div className="flex justify-between">
