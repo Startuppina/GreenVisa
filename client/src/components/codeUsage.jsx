@@ -41,7 +41,7 @@ const CodeUsage = () => {
 
 
   return (
-    <div className="w-full lg:w-1/2 bg-yellow-500 p-4 rounded-lg overflow-y-auto flex-1">
+    <div className="w-full lg:w-1/2 bg-yellow-500 p-4 rounded-xl overflow-y-auto flex-1">
       <h2 className="text-2xl font-bold mb-4 text-center lg:text-left">Codici sconto disponibili</h2>
       {codici.length === 0 && <p>Nessun codice disponibile</p>}
       {codici.map((codice, index) => (

@@ -5,7 +5,7 @@ function Protocolli() {
 
     const imgStyle = "relative w-[35vw] md:w-[25vw] transition-transform duration-300 ease-in-out hover:scale-105 rounded-lg";
     return (
-        <div className="bg-[#2d7044] md:rounded-lg md:m-4">
+        <div className="bg-[#2d7044] md:rounded-xl md:m-4">
             <h1 className="font-arial text-2xl md:text-3xl text-center text-white font-bold mb-5 pt-3">I PROTOCOLLI GREEN VISA</h1>
             <Infinite_carousel />
             <div className="flex flex-col items-center justify-center flex-wrap w-full">

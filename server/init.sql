@@ -181,8 +181,8 @@ CREATE TABLE IF NOT EXISTS buildings (
     analyzers VARCHAR(50) NOT NULL,
     autoLightingControlSystem VARCHAR(50) NOT NULL,
     emissionMark INTEGER DEFAULT NULL,
-    emissionCO2 DECIMAL(10, 2) DEFAULT NULL,
-    areaEmissionCO2 DECIMAL(10, 2) DEFAULT NULL,
+    emissionCO2 DECIMAL(10, 5) DEFAULT NULL,
+    areaEmissionCO2 DECIMAL(10, 5) DEFAULT NULL,
     results_visible BOOLEAN DEFAULT FALSE
 );
 

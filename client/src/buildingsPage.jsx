@@ -7,6 +7,7 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import ConfirmPopUp from "./components/confirmPopUp";
 import { useRecoveryContext } from "./provider/provider";
+import { useNavigate } from "react-router-dom";
 
 export default function Buildings() {
     const [buildings, setBuildings] = useState([]);
@@ -19,6 +20,8 @@ export default function Buildings() {
     const { addBuildingTrigger, setAddBuildingTrigger } = useRecoveryContext();
 
     const { buildingID, setBuildingID } = useRecoveryContext();
+
+    const navigate = useNavigate();
 
     const formRef = useRef(null);
     useEffect(() => {
@@ -92,6 +95,9 @@ export default function Buildings() {
             <Navbar />
             <main className="text-arial text-xl">
                 <h1 className="text-3xl font-bold text-center">I TUOI EDIFICI</h1>
+                {buildings.length > 0 && (
+                    <div className="w-[200px] m-auto flex justify-center mt-4 hover:cursor-pointer hover:text-[#2d7044]" onClick={() => navigate(`/report`)}>Visualizza il report</div>
+                )}
 
                 {numBuildings === 0 ? (
                     <div className="text-center mt-20">

@@ -46,7 +46,7 @@ function Building() {
         <div className="text-arial text-xl">
             <h1 className="text-3xl font-bold text-center">Informazioni su <span className="uppercase text-[#2d7044]">{buildingData.name}</span></h1>
             <BuildingResults />
-            <div className="bg-[#D9D9D9] rounded-lg mt-10 mx-2 md:mx-14 h-[65vh] lg:h-auto overflow-y-auto">
+            <div className="bg-[#D9D9D9] rounded-xl mt-10 mx-2 md:mx-14 h-[65vh] lg:h-auto overflow-y-auto">
                 <h2 className="text-2xl font-bold mb-4 text-center lg:text-left p-4">Dettagli dell'Edificio</h2>
                 {/* Colonna Sinistra */}
                 <div className="flex flex-col lg:flex-row items-stretch justify-center">

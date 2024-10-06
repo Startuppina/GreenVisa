@@ -319,7 +319,7 @@ const UserPage = () => {
                             )}
 
                             <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 lg:mx-14  h-auto lg:h-[330px]">
-                                <div className="w-full bg-[#d9d9d9] p-4 rounded-lg flex-1">
+                                <div className="w-full bg-[#d9d9d9] p-4 rounded-xl flex-1">
                                     <h2 className="text-2xl font-bold">Informazioni personali</h2>
                                     <div className="pb-5">
                                         <p className='flex justify-between md:justify-normal gap-2'><strong>Username: </strong> {userInfo ? userInfo.username : ''}</p>
@@ -357,7 +357,7 @@ const UserPage = () => {
                             )}
 
                             <Link to="/buildings">
-                                <div className="bg-[#2d7044] text-white text-xl p-4 mx-2 lg:mx-14 my-4 border border-[#0056b3] rounded-lg shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer">
+                                <div className="bg-[#2d7044] text-white text-xl p-4 mx-2 lg:mx-14 my-4 border border-[#0056b3] rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer">
                                     <h1 className="text-2xl font-bold text-center">
                                         I tuoi edifici
                                     </h1>
@@ -366,10 +366,10 @@ const UserPage = () => {
                             </Link>
 
                             {surveyInfo.length > 0 && (
-                                <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-2 lg:mx-14 my-4 border border-gray-300 rounded-lg">
+                                <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-2 lg:mx-14 my-4 border border-gray-300 rounded-xl">
                                     <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
                                     {surveyInfo.map((info) => (
-                                        <div key={info.order_id} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                                        <div key={info.order_id} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
                                             <div className='flex flex-col md:flex-row justify-between'>
                                                 <div className='flex flex-col mb-2'>
                                                     <h2 className="text-2xl font-semibold text-gray-800">Questionario per la categoria: {info.product_category}</h2>
@@ -389,11 +389,11 @@ const UserPage = () => {
                                 </div>
                             )}
                             {approvations.length > 0 && (
-                                <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-2 md:mx-14 my-4 border border-gray-300 rounded-lg">
+                                <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-2 md:mx-14 my-4 border border-gray-300 rounded-xl">
                                     <h1 className="text-3xl font-bold text-gray-800 mb-4">Hai una certificazione di secondo livello approvata</h1>
-                                    <p className='pb-4'>Inviaci nella sezione contatti il tuo indirizzo, CAP, città e numero di telefono, in modo tale da fissare un appuntamento per la certificazione di secondo livello, oppure una richiesta di cancellazione della richiesta se cambi idea.</p>
+                                    <p className='pb-4'>Verrai contattato per ulteriori informazioni</p>
                                     {approvations.map((data, index) => (
-                                        <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                                        <div key={index} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
                                             <div className='flex flex-col md:flex-row justify-between'>
                                                 <div className='flex flex-col mb-2'>
                                                     <h2 className="text-xl text-gray-800">Approvazione per la categoria: {data.category}</h2>

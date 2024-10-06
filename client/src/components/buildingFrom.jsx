@@ -383,6 +383,10 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             />
                         </label>
+                    </div>
+
+                    {/* Sezione Riscaldamento e Ventilazione */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Ristrutturazioni (M)</span>
                             <select
@@ -396,10 +400,6 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 ))}
                             </select>
                         </label>
-                    </div>
-
-                    {/* Sezione Riscaldamento e Ventilazione */}
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Diffusione calore (M)</span>
                             <select
@@ -413,6 +413,10 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 ))}
                             </select>
                         </label>
+                    </div>
+
+                    {/* Sezione Controllo dei Consumie e Manutenzioni */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Ventilazione meccanica controllata</span>
                             <select
@@ -426,10 +430,6 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 ))}
                             </select>
                         </label>
-                    </div>
-
-                    {/* Sezione Controllo dei Consumie e Manutenzioni */}
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Controllo dei consumi</span>
                             <select
@@ -443,6 +443,10 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 ))}
                             </select>
                         </label>
+                    </div>
+
+                    {/* Sezione Recupero Acqua e Contatori */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Manutenzione periodica dell'impianto</span>
                             <select
@@ -456,10 +460,6 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 ))}
                             </select>
                         </label>
-                    </div>
-
-                    {/* Sezione Recupero Acqua e Contatori */}
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Sistema di recupero acqua piovana (M)</span>
                             <select
@@ -473,6 +473,10 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 ))}
                             </select>
                         </label>
+                    </div>
+
+                    {/* Sezione Fornitura Elettrica e Corpi Illuminanti */}
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Contatore elettrico per l'utente</span>
                             <select
@@ -486,10 +490,6 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 ))}
                             </select>
                         </label>
-                    </div>
-
-                    {/* Sezione Fornitura Elettrica e Corpi Illuminanti */}
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Fornitura elettrica dell'edificio</span>
                             <select
