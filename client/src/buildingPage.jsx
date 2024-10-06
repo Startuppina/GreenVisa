@@ -186,7 +186,7 @@ function BuildingPage() {
                         />
                     </div>
                 ) : (
-                    <div className="w-full flex justify-center items-center mt-5 gap-3 mb-5">
+                    <div className="w-full flex flex-col justify-center items-center mt-5 gap-3 mb-5">
                         <button
                             type="submit"
                             className="mt-7 font-arial text-xl w-[50%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700"
@@ -196,6 +196,7 @@ function BuildingPage() {
                         >
                             Calcola le emissioni
                         </button>
+                        <div className="w-full text-arial text-xl text-center">Ad ogni aggiornamento dei dati ricalcola le emissioni</div>
                     </div>
                 )
             }

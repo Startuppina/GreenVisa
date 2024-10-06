@@ -46,8 +46,8 @@ export async function EmissionsCalculator(buildingID) {
 
     //PHASE 1: FETCH DATA FROM THE SERVER
     const token = localStorage.getItem("token");
-    //console.log("Token:", token);
-    //console.log("Building ID:", buildingID);
+    console.log("Token:", token);
+    console.log("Building ID:", buildingID);
 
     try {
         const response = await axios.get(`http://localhost:8080/api/${buildingID}/fetch-emissions-data`, {
@@ -63,11 +63,11 @@ export async function EmissionsCalculator(buildingID) {
             solarData = response.data.solaData;
             photoData = response.data.photoData;
             consumptionsData = response.data.consumptionsData;
-            //console.log("BuildingData:", buildingData);
-            //console.log("PlantData:", plantData);
-            //console.log("SolaData:", solarData);
-            //console.log("PhotoData:", photoData);
-            //console.log("ConsumptionsData:", consumptionsData);
+            console.log("BuildingData:", buildingData);
+            console.log("PlantData:", plantData);
+            console.log("SolaData:", solarData);
+            console.log("PhotoData:", photoData);
+            console.log("ConsumptionsData:", consumptionsData);
         } else if (response.status === 400) {
             const message = response.data.error || "Errore sconosciuto.";
             return { success: false, message };  // Ritorna l'errore specifico
@@ -127,17 +127,17 @@ export async function EmissionsCalculator(buildingID) {
         ifPhotovoltaic = 1;
     }
 
-    //console.log("ifSolar:", ifSolar);
-    //console.log("ifPhotovoltaic:", ifPhotovoltaic);
+    console.log("ifSolar:", ifSolar);
+    console.log("ifPhotovoltaic:", ifPhotovoltaic);
 
     //calculation for solars
     const solarCalculation = Math.round(ifSolar * solarData.totalIstalledArea * solarsEmissionFactors[buildingLocation]);
-    //console.log(solarData.totalIstalledArea);
-    //console.log("solarCalculation:", solarCalculation);
+    console.log(solarData.totalIstalledArea);
+    console.log("solarCalculation:", solarCalculation);
 
     const photoCalculation = Math.round(ifPhotovoltaic * photoData.totalPower * photoEmissionFactors[buildingLocation]);
-    //console.log(photoData.totalPower);
-    //console.log("photoCalculation:", photoCalculation);
+    console.log(photoData.totalPower);
+    console.log("photoCalculation:", photoCalculation);
 
     //PHASE 3: CONVERSIONE IN TEP DI OGNI FONTE O VETTORE ENERGETICO. TEP CONVERSION
     // Fattori di conversione [tep/x]
@@ -149,47 +149,47 @@ export async function EmissionsCalculator(buildingID) {
         "Pellet": 0.40,          // t
         "Cippato di legna": 0.20, // t
         "Biogas": 0.00052,       // Sm³
-        "elettricitaRete": 0.00025, // kWh
-        "fotovoltaico": 0.00025, // kWh
-        "Teleriscaldamento": 0.000187, // kWh TELERISCALDAMENTO E' ENERGIA TERMICA?
-        "pannelliSolariTermici": 0.000187 // kWh
+        "elettricitaRete": 0.000187, // kWh
+        "fotovoltaico": 0.000187, // kWh
+        "Teleriscaldamento": 0.000103, // kWh TELERISCALDAMENTO E' ENERGIA TERMICA?
+        "pannelliSolariTermici": 0.000103 // kWh
     };
 
     // Emissioni in tonnellate di CO2 per tep
     const emissionsCO2 = {
-        "Gas Naturale (Metano)": 2.35885, // tons CO2 eq/tep
-        "GPL": 2.74909,         // tons CO2 eq/tep
-        "Gasolio": 2.92593,     // tons CO2 eq/tep
-        "Olio combustibile": 3.20816, // tons CO2 eq/tep
+        "Gas Naturale (Metano)": 2.35885167464115, // tons CO2 eq/tep
+        "GPL": 2.74909090909091,         // tons CO2 eq/tep
+        "Gasolio": 2.92592592592593,     // tons CO2 eq/tep
+        "Olio combustibile": 3.20816326530612, // tons CO2 eq/tep
         "Pellet": 0.0,          // tons CO2 eq/tep
         "Cippato di legna": 0.0,           // tons CO2 eq/tep
         "Biogas": 0.0,          // tons CO2 eq/tep
-        "elettricitaReteNoRinnovabile": 1.06, // tons CO2 eq/tep (no % rinnovabili)
+        "elettricitaReteNoRinnovabile": 1.41711229946524, // tons CO2 eq/tep (no % rinnovabili)
         "elettricitaRinnovabile": 0.0, // tons CO2 eq/tep (100% rinnovabili)
-        "Teleriscaldamento": 1.52406, // tons CO2 eq/tep
+        "Teleriscaldamento": 2.75097087378641, // tons CO2 eq/tep
         "pannelliSolariTermici": 0.0, // tons CO2 eq/tep
         "fotovoltaico": 0.0  // tons CO2 eq/tep
     };
 
     //conversione TEP per le fonti non rinnovabili ed elettricità generica + calcolo emissioni CO2 per ogni fonte
     const electrcityType = buildingData.electricity_forniture; //elettrico mix generico oppure elettrico 100% rinnovabili
-    //console.log("electricity forniture:", electrcityType);
+    console.log("electricity forniture:", electrcityType);
 
 
 
     let CO2SourceEmissions = {};
     let sourceTEP = {};
-    //console.log("consumptionsData:", consumptionsData[1].energy_source);
+    console.log("consumptionsData:", consumptionsData[1].energy_source);
     for (let i = 0; i < consumptionsData.length; i++) {
         if (consumptionsData[i].energy_source === "Elettricità") {
-            //console.log("Energy source at index", i, ":", consumptionsData[i].energy_source);
+            console.log("Energy source at index", i, ":", consumptionsData[i].energy_source);
 
             if (electrcityType === "Elettrico - 100% rinnovabili") {
                 sourceTEP[electrcityType] = (consumptionsData[i].consumption * conversionFactors["elettricitaRete"]);
                 CO2SourceEmissions[electrcityType] = (sourceTEP[electrcityType] * emissionsCO2["elettricitaRinnovabile"]);
             } else if (electrcityType === "Elettrico - mix generico") {
                 sourceTEP[electrcityType] = (consumptionsData[i].consumption * conversionFactors["elettricitaRete"]);
-                CO2SourceEmissions[electrcityType] = (sourceTEP[electrcityType] * emissionsCO2["elettricitaRinnovabile"]);
+                CO2SourceEmissions[electrcityType] = (sourceTEP[electrcityType] * emissionsCO2["elettricitaReteNoRinnovabile"]);
             }
         } else {
             sourceTEP[consumptionsData[i].energy_source] = (consumptionsData[i].consumption * conversionFactors[consumptionsData[i].energy_source]);
@@ -211,9 +211,9 @@ export async function EmissionsCalculator(buildingID) {
 
     //total CO2 emissions
     const totalCO2Emissions = Object.values(CO2SourceEmissions).reduce((a, b) => a + b, 0);
-    //console.log("sourceTEP:", sourceTEP);
-    //console.log("CO2 emissions:", CO2SourceEmissions);
-    //console.log("totalCO2Emissions:", totalCO2Emissions);
+    console.log("sourceTEP:", sourceTEP);
+    console.log("CO2 emissions:", CO2SourceEmissions);
+    console.log("totalCO2Emissions:", totalCO2Emissions);
 
     //PHASE3: source marks 
     const sourceMarks = {
@@ -224,10 +224,10 @@ export async function EmissionsCalculator(buildingID) {
         "Pellet": 8,
         "Cippato di legna": 9,
         "Biogas": 8,
-        "elettricitaRete": 7,
+        "elettricitaRete": 6,
         "elettricitaRinnovabile": 10,
         "fotovoltaico": 10,
-        "Teleriscaldamento": 6,
+        "Teleriscaldamento": 5,
         "pannelliSolariTermici": 10
     };
 
@@ -250,7 +250,7 @@ export async function EmissionsCalculator(buildingID) {
     if (photoData) {
         marks["fotovoltaico"] = sourceMarks["fotovoltaico"];
     }
-    //console.log("marks:", marks);
+    console.log("marks:", marks);
 
     //PAHSE4: correction factors
     const totalCorrectionFactors = {} //ogni volta che viene generato un nuovo fattore di correzione per una fonte la aggiungiamo per la somma
@@ -278,7 +278,7 @@ export async function EmissionsCalculator(buildingID) {
         for (let i = 0; i < plantData.length; i++) {
             if (plantData[i].service_type === "Riscaldamento") {
                 let energySource = plantData[i].fuel_type; // recupera il combustibile
-                //console.log("energySource:", energySource);
+                console.log("energySource:", energySource);
                 if (energySource === "Elettricità") {
                     energySource = electrcityType;
                 } else {
@@ -297,7 +297,7 @@ export async function EmissionsCalculator(buildingID) {
             }
         }
     }
-    //console.log("correctionFactorToSourcesVMC:", correctionFactorToSourcesVMC);
+    console.log("correctionFactorToSourcesVMC:", correctionFactorToSourcesVMC);
 
 
     // Oggetto per i fattori di correzione associati alla manutenzi     settimanale o mensile
@@ -338,7 +338,7 @@ export async function EmissionsCalculator(buildingID) {
             }
         }
     }
-    //console.log("correctionFactorToSourcesMaintenance:", correctionFactorToSourcesMaintenance);
+    console.log("correctionFactorToSourcesMaintenance:", correctionFactorToSourcesMaintenance);
 
 
     // Fattori di correzione corpi illuminanti
@@ -358,10 +358,10 @@ export async function EmissionsCalculator(buildingID) {
     // somma delle lampadine frazionate (arrotondata a due decimali)
     const totalFractedLamps = (numIncandescents + numLed + numGasLamp) * 100 / 100;
 
-    //console.log("numIncandescents:", numIncandescents);
-    //console.log("numLed:", numLed);
-    //console.log("numGasLamp:", numGasLamp);
-    //console.log("totalFractedLamps:", totalFractedLamps);
+    console.log("numIncandescents:", numIncandescents);
+    console.log("numLed:", numLed);
+    console.log("numGasLamp:", numGasLamp);
+    console.log("totalFractedLamps:", totalFractedLamps);
 
     // numero di lampadine a incandescenza in percentuale (arrotondato)
     const percentIncandescents = Math.round(numIncandescents * 100);
@@ -375,10 +375,10 @@ export async function EmissionsCalculator(buildingID) {
     // somma delle percentuali delle lampadine
     const totalFractedLampsPercentage = percentIncandescents + percentLed + percentGasLamp;
 
-    //console.log("percentIncandescents:", percentIncandescents);
-    //console.log("percentLed:", percentLed);
-    //console.log("percentGasLamp:", percentGasLamp);
-    //console.log("totalLampsPercentage:", totalFractedLampsPercentage);
+    console.log("percentIncandescents:", percentIncandescents);
+    console.log("percentLed:", percentLed);
+    console.log("percentGasLamp:", percentGasLamp);
+    console.log("totalLampsPercentage:", totalFractedLampsPercentage);
 
 
     // applicazione dei fattori di correzione per ogni tipo di lampadina (arrotondati)
@@ -395,10 +395,10 @@ export async function EmissionsCalculator(buildingID) {
     // somma dei fattori di correzione (arrotondato)
     const totalLightingCorrection = Math.round(incandescentCorrection + ledCorrection + gasLampCorrection);
 
-    //console.log("incandescentCorrection:", incandescentCorrection);
-    //console.log("ledCorrection:", ledCorrection);
-    //console.log("gasLampCorrection:", gasLampCorrection);
-    //console.log("totalCorrection:", totalLightingCorrection);
+    console.log("incandescentCorrection:", incandescentCorrection);
+    console.log("ledCorrection:", ledCorrection);
+    console.log("gasLampCorrection:", gasLampCorrection);
+    console.log("totalCorrection:", totalLightingCorrection);
 
 
 
@@ -419,7 +419,7 @@ export async function EmissionsCalculator(buildingID) {
             totalCorrectionFactors["fotovoltaico"] = totalLightingCorrection / 100;
         }
     }
-    //console.log("sourceToApplyLightCorrection:", sourceToApplyLightCorrection);
+    console.log("sourceToApplyLightCorrection:", sourceToApplyLightCorrection);
 
     // fattori di correzione sistemi di regolazione e controllo automatici dei corpi illuminanti
     let sourceToApplyAutoCorrection = {};
@@ -440,7 +440,7 @@ export async function EmissionsCalculator(buildingID) {
             }
         }
     }
-    //console.log("sourceToApplyAutoCorrection:", sourceToApplyAutoCorrection);
+    console.log("sourceToApplyAutoCorrection:", sourceToApplyAutoCorrection);
 
     // fattori di correzione analizzatori di rete per controllo dei consumi elettrici generali
     let sourceToApplyAnalyzerCorrection = {};
@@ -460,7 +460,7 @@ export async function EmissionsCalculator(buildingID) {
             }
         }
     }
-    //console.log("sourceToApplyAnalyzerCorrection:", sourceToApplyAnalyzerCorrection);
+    console.log("sourceToApplyAnalyzerCorrection:", sourceToApplyAnalyzerCorrection);
 
     // fattori di correzione corgeneratore/trigeneratore (se presente un impianto centralizzato)
     let cogenTrigenCorrectionFactor = {};
@@ -517,13 +517,13 @@ export async function EmissionsCalculator(buildingID) {
             }
         }
     }
-    //console.log("cogenTrigenCorrectionFactor:", cogenTrigenCorrectionFactor);
+    console.log("cogenTrigenCorrectionFactor:", cogenTrigenCorrectionFactor);
 
     //PHASE5: correction factors total for each energy source
 
     //correzione dei voti per ogni fonte di elettricita'
-    //console.log("marks:", marks);
-    //console.log("totalCorrectionFactors:", totalCorrectionFactors);
+    console.log("marks:", marks);
+    console.log("totalCorrectionFactors:", totalCorrectionFactors);
 
     for (let key in marks) {
         // Controlla se esiste un fattore di correzione per questa fonte di energia
@@ -534,11 +534,11 @@ export async function EmissionsCalculator(buildingID) {
     }
 
     // Visualizza i valori corretti
-    //console.log("Corrected marks:", marks);
+    console.log("Corrected marks:", marks);
 
     //total TEP
     const totalTEP = Object.values(sourceTEP).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-    //console.log("Total TEP:", totalTEP);
+    console.log("Total TEP:", totalTEP);
 
     //tep frazionato per ogni fonte di elettricita'
     const tepPercentage = {};
@@ -546,26 +546,26 @@ export async function EmissionsCalculator(buildingID) {
         let percentage = (sourceTEP[key] / totalTEP);
         tepPercentage[key] = percentage;
     }
-    //console.log("tepPercentage:", tepPercentage);
+    console.log("tepPercentage:", tepPercentage);
 
     //totale frazioni
     const totalPercentage = Object.values(tepPercentage).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-    //console.log("Total percentage:", totalPercentage);
+    console.log("Total percentage:", totalPercentage);
 
     //voti frazionati per ogni fonte di elettricita'
     const votesPercentage = {};
     for (let key in marks) {
         votesPercentage[key] = marks[key] * tepPercentage[key];
     }
-    //console.log("votesPercentage:", votesPercentage);
+    console.log("votesPercentage:", votesPercentage);
 
     //il voto finale e' dato dalla somma dei voti frazionati
     const finalVote = Math.ceil(Object.values(votesPercentage).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
-    //console.log("Final vote:", finalVote);
+    console.log("Final vote:", finalVote);
 
     //EMISSIONE PER SUPERFICIE [tonsCO2/mq]
     const areaCO2Emissions = totalCO2Emissions / buildingData.area;
-    //console.log("Area CO2 emissions:", areaCO2Emissions);
+    console.log("Area CO2 emissions:", areaCO2Emissions);
 
     //aggiornamento dell'edificio per aggiungere il voto finale e le emissioni calcolate
     try {

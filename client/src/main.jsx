@@ -25,6 +25,7 @@ import BuildingPage from './buildingPage.jsx';
 import QuestionnairePage from './questionnairePage.jsx';
 import NotFoundPage from './notFoundPage.jsx';
 import UserBuldingsPageAdmin from './userBuldingsPageAdmin.jsx';
+import ReportPage from './reportPage.jsx';
 
 
 const router = createBrowserRouter([
@@ -116,7 +117,11 @@ const router = createBrowserRouter([
   {
     path: "/user-buildings/:id/:username",
     element: <UserBuldingsPageAdmin />,
-  }
+  },
+  {
+    path: "/report",
+    element: <ReportPage />,
+  },
 ]);
 
 {/*<React.StrictMode>

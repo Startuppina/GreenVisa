@@ -160,7 +160,7 @@ function Products() {
                 onButtonClick={deleteProduct}>
                 {messageConfirm}
             </ConfirmPopUp>
-            <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-8 pb-12 md:rounded-lg md:m-4">  {/* Adjusted padding */}
+            <div className="w-full md:w-[97.5%] h-auto bg-[#2d7044] p-8 pb-12 md:rounded-xl md:m-4">  {/* Adjusted padding */}
                 {haveProducts === false ? (
                     <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center">
                         <p>Nessuna certificazione ancora disponibile</p>

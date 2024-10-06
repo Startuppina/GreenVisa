@@ -147,49 +147,53 @@ function UserBuldingsPageAdmin() {
 
                     {/* Mostra informazioni dettagliate solo se questo edificio è selezionato */}
                     {selectedBuildingId && selectedBuilding && (
-                        <div className="bg-[#D9D9D9] rounded-lg mt-10 md:mx-14 h-[65vh] lg:h-auto overflow-y-auto w-full">
+                        <div className="bg-[#D9D9D9] rounded-xl mt-10 md:mx-14 h-[65vh] lg:h-auto overflow-y-auto w-full">
                             <h2 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Dettagli dell'Edificio</h2>
-                            <div>
-                                <div className="flex flex-col justify-center bg-gray-100 mx-2 md:mx-14 rounded-xl shadow-lg p-6 text-arial text-xl mb-2">
-                                    <h1 className="text-4xl text-center font-bold text-gray-800 mb-4">Risultato</h1>
-                                    <div className="flex flex-col items-start gap-6 mt-6">
-                                        <div className="flex flex-col items-center mx-auto justify-between w-full md:w-[500px]">
-                                            <div className="font-bold text-lg md:text-xl text-gray-700">Voto</div>
-                                            <div className="w-full h-[30px] bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300 shadow-inner">
-                                                <div
-                                                    className="h-full rounded-lg transition-all duration-300 ease-in-out"
-                                                    style={{
-                                                        width: `${scoreIndicator(selectedBuilding.emissionmark)}%`,
-                                                        backgroundColor: `${getDetailedVoteColor(selectedBuilding.emissionmark)}`,
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="text-right w-full text-lg md:text-xl text-gray-600 mt-2">
-                                                <strong>{selectedBuilding.emissionmark}</strong>/10
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col md:flex-row items-center mx-auto justify-center w-full md:w-[500px] gap-2">
-                                            <div className="text-lg md:text-xl text-blue-600 font-extrabold">
-                                                {getOverallEvaluation(selectedBuilding.emissionmark)}
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col md:flex-row items-center mx-auto justify-between w-full md:w-[500px] gap-2 mt-4">
-                                            <div className="font-bold text-lg md:text-xl text-gray-700">Emissioni CO2</div>
-                                            <div className="text-lg md:text-xl text-gray-600 flex gap-2">
-                                                <strong>{selectedBuilding.emissionco2}</strong> <div>tonsCO<sub>2</sub>e</div>
 
+                            {/* Sezione dei risultati (solo se esiste il voto) */}
+                            {selectedBuilding.emissionmark && (
+                                <div>
+                                    <div className="flex flex-col justify-center bg-gray-100 mx-2 md:mx-14 rounded-xl shadow-lg p-6 text-arial text-xl mb-2">
+                                        <h1 className="text-4xl text-center font-bold text-gray-800 mb-4">Risultato</h1>
+                                        <div className="flex flex-col items-start gap-6 mt-6">
+                                            <div className="flex flex-col items-center mx-auto justify-between w-full md:w-[500px]">
+                                                <div className="font-bold text-lg md:text-xl text-gray-700">Voto</div>
+                                                <div className="w-full h-[30px] bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300 shadow-inner">
+                                                    <div
+                                                        className="h-full rounded-lg transition-all duration-300 ease-in-out"
+                                                        style={{
+                                                            width: `${scoreIndicator(selectedBuilding.emissionmark)}%`,
+                                                            backgroundColor: `${getDetailedVoteColor(selectedBuilding.emissionmark)}`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="text-right w-full text-lg md:text-xl text-gray-600 mt-2">
+                                                    <strong>{selectedBuilding.emissionmark}</strong>/10
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex flex-col md:flex-row items-center mx-auto justify-between w-full md:w-[500px] gap-2">
-                                            <div className="font-bold text-lg md:text-xl text-gray-700">Emissioni CO2 per superficie</div>
-                                            <div className="text-lg md:text-xl text-gray-600 flex gap-2">
-                                                <strong>{selectedBuilding.areaemissionco2}</strong> <div>tonsCO<sub>2</sub>/m²</div>
+                                            <div className="flex flex-col md:flex-row items-center mx-auto justify-center w-full md:w-[500px] gap-2">
+                                                <div className="text-lg md:text-xl text-blue-600 font-extrabold">
+                                                    {getOverallEvaluation(selectedBuilding.emissionmark)}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col md:flex-row items-center mx-auto justify-between w-full md:w-[500px] gap-2 mt-4">
+                                                <div className="font-bold text-lg md:text-xl text-gray-700">Emissioni CO2</div>
+                                                <div className="text-lg md:text-xl text-gray-600 flex gap-2">
+                                                    <strong>{selectedBuilding.emissionco2}</strong> <div>tonsCO<sub>2</sub>e</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col md:flex-row items-center mx-auto justify-between w-full md:w-[500px] gap-2">
+                                                <div className="font-bold text-lg md:text-xl text-gray-700">Emissioni CO2 per superficie</div>
+                                                <div className="text-lg md:text-xl text-gray-600 flex gap-2">
+                                                    <strong>{selectedBuilding.areaemissionco2}</strong> <div>tonsCO<sub>2</sub>/m²</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            {/* Colonna Sinistra */}
+                            )}
+
+                            {/* Colonna Sinistra - Sempre visibile */}
                             <div className="flex flex-col lg:flex-row items-stretch justify-center">
                                 <div className="w-full lg:w-1/2 p-4">
                                     <div className="max-w-4xl mx-auto space-y-4">
@@ -198,7 +202,7 @@ function UserBuldingsPageAdmin() {
                                             <span id="building-name">{selectedBuilding.name}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="font-semibold">locazione:</span>
+                                            <span className="font-semibold">Locazione:</span>
                                             <span id="construction-year">{selectedBuilding.location}</span>
                                         </div>
                                         <div className="flex justify-between">
@@ -236,7 +240,7 @@ function UserBuldingsPageAdmin() {
                                     </div>
                                 </div>
 
-                                {/* Colonna Destra */}
+                                {/* Colonna Destra - Sempre visibile */}
                                 <div className="w-full lg:w-1/2 p-4">
                                     <div className="max-w-4xl mx-auto space-y-4">
                                         <div className="flex justify-between">
@@ -279,11 +283,11 @@ function UserBuldingsPageAdmin() {
                                 </div>
                             </div>
                         </div>
-
                     )}
 
+
                     {selectedBuildingId && buildingConsumptions.length > 0 && (
-                        <div className="bg-[#D9D9D9] rounded-lg md:mx-14 h-auto max-h-[65vh] overflow-y-auto w-full p-4">
+                        <div className="bg-[#D9D9D9] rounded-xl md:mx-14 h-auto max-h-[65vh] overflow-y-auto w-full p-4">
                             <h1 className="text-2xl font-bold mb-2">Consumi annuali</h1>
                             {buildingConsumptions.map((consumption, index) => ( // Controllo per prevenire plants undefined
                                 <div key={consumption.id}
@@ -301,7 +305,7 @@ function UserBuldingsPageAdmin() {
                     )}
 
                     {selectedBuildingId && buildingPlants.length > 0 && (
-                        <div className="bg-[#D9D9D9] rounded-lg md:mx-14 h-auto max-h-[65vh] lg:h-auto overflow-y-auto w-full p-4">
+                        <div className="bg-[#D9D9D9] rounded-xl md:mx-14 h-auto max-h-[65vh] lg:h-auto overflow-y-auto w-full p-4">
                             <h1 className="text-2xl font-bold mb-2">Impianti</h1>
                             {buildingPlants.map(plant => ( // Controllo per prevenire plants undefined
                                 <div key={plant.id}
@@ -334,7 +338,7 @@ function UserBuldingsPageAdmin() {
                     )}
 
                     {selectedBuildingId && buildingSolars.length > 0 && (
-                        <div className="bg-[#D9D9D9] rounded-lg md:mx-14 h-auto max-h-[65vh] lg:h-auto overflow-y-auto w-full p-4">
+                        <div className="bg-[#D9D9D9] rounded-xl md:mx-14 h-auto max-h-[65vh] lg:h-auto overflow-y-auto w-full p-4">
                             <h1 className="text-2xl font-bold mb-2">Impianti solari termici</h1>
                             {buildingSolars.map((solar, index) => ( // Controllo per prevenire plants undefined
                                 <div key={solar.id}
@@ -352,7 +356,7 @@ function UserBuldingsPageAdmin() {
                     )}
 
                     {selectedBuildingId && buildingPhotos.length > 0 && (
-                        <div className="bg-[#D9D9D9] rounded-lg md:mx-14 h-auto max-h-[65vh] lg:h-auto overflow-y-auto w-full p-4">
+                        <div className="bg-[#D9D9D9] rounded-xl md:mx-14 h-auto max-h-[65vh] lg:h-auto overflow-y-auto w-full p-4">
                             <h1 className="text-2xl font-bold mb-2">Impianti fotovoltaici</h1>
                             {buildingPhotos.map((photo, index) => ( // Controllo per prevenire plants undefined
                                 <div key={photo.id}

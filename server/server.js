@@ -2416,7 +2416,7 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
       WHERE user_id = $1 AND building_id = $2 AND id = $9
     `, values);
 
-    res.status(200).json({ msg: "Impianto aggiornato con successo" });
+    res.status(200).json({ msg: "Impianto aggiornato con successo. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente" });
   } catch (error) {
     console.error('Error updating plant:', error.message);
     res.status(500).json({ msg: "Errore interno del server" });
@@ -2463,7 +2463,7 @@ app.get("/api/:buildingID/fetch-user-energies", authenticateJWT, async (req, res
     const { buildingID } = req.params;
     //console.log('buildingID:', buildingID);
 
-    const rows = await pool.query(`SELECT DISTINCT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2 AND fuel_type <> 'Elettrico'`, [user_id, buildingID]);
+    const rows = await pool.query(`SELECT DISTINCT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2 AND fuel_type <> 'Elettricità'`, [user_id, buildingID]);
     res.status(200).json({ energies: rows.rows });
   } catch (error) {
     console.error('Error fetching energies:', error.message);
@@ -2820,6 +2820,16 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     );
 
     //console.log("missingEnergySources:", missingConsumptions);
+    //check if an userenergysource is not included in plantfueltypes
+    const allEnergySourcesMatched = userEnergySources.filter(energySource => energySource !== "Elettricità").every(energySource => plantFuelTypes.includes(energySource));
+    const missingEnergySources = userEnergySources.filter(energySource => !plantFuelTypes.includes(energySource));
+    //remove Elettricità 
+    missingEnergySources.splice(missingEnergySources.indexOf("Elettricità"), 1);
+    console.log("missingEnergySources:", missingEnergySources);
+
+    if (!allEnergySourcesMatched) {
+      return res.status(400).json({ error: `Il consumo ${missingEnergySources} registrato non è più presente tra gli impianti.` });
+    }
 
     if (!allFuelTypesMatched) {
       return res.status(400).json({ error: `Non ha inserito tutti i consumi. Consumi mancanti: ${missingConsumptions}` });
@@ -2873,6 +2883,69 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     res.status(500).json({ msg: "Errore interno del server" });
   }
 })
+
+app.get("/api/fetch-report-data", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+
+    //fetch user data
+    const userData = await pool.query(`SELECT * FROM users WHERE id = $1`, [user_id]);
+    const user = userData.rows[0];
+
+    // Fetch all buildings for the user
+    const buildingsData = await pool.query(`SELECT * FROM buildings WHERE user_id = $1`, [user_id]);
+
+    // Create arrays to hold the data for each building
+    const buildings = [];
+
+    for (const building of buildingsData.rows) {
+      const buildingID = building.id;
+
+      // Fetch plants for the current building
+      const plantsQuery = await pool.query(`SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`, [buildingID, user_id]);
+      const plants = plantsQuery.rows;
+
+      // Fetch photovoltaics data for the current building
+      const photoQuery = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [buildingID]);
+      const totalPowerQuery = await pool.query(`SELECT SUM(power) FROM photovoltaics WHERE building_id = $1`, [buildingID]);
+
+      const photoData = {
+        photovoltaics: photoQuery.rows,
+        totalPower: totalPowerQuery.rows[0].sum || 0  // In case there's no photovoltaics data
+      };
+
+      // Fetch solar data for the current building
+      const solarQuery = await pool.query(`SELECT * FROM solars WHERE building_id = $1`, [buildingID]);
+      const totalInstalledAreaQuery = await pool.query(`SELECT SUM(installed_area) FROM solars WHERE building_id = $1`, [buildingID]);
+
+      const solaData = {
+        solars: solarQuery.rows,
+        totalInstalledArea: totalInstalledAreaQuery.rows[0].sum || 0  // In case there's no solar data
+      };
+
+      // Fetch consumptions for the current building
+      const consumptionsQuery = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2`, [user_id, buildingID]);
+      const consumptions = consumptionsQuery.rows;
+
+      // Store the data for the current building
+      buildings.push({
+        building,
+        plants,
+        photoData,
+        solaData,
+        consumptions
+      });
+    }
+
+    // Return all the building data with their associated details
+    res.status(200).json({ user, buildings });
+
+  } catch (error) {
+    console.error('Error fetching data:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
 
 app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
   try {

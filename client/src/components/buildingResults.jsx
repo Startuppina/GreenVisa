@@ -118,14 +118,14 @@ function BuildingResults() {
                         <div className="flex flex-col md:flex-row items-center mx-auto justify-between w-full md:w-[500px] gap-2 mt-4">
                             <div className="font-bold text-lg md:text-xl text-gray-700">Emissioni CO2</div>
                             <div className="text-lg md:text-xl text-gray-600 flex gap-2">
-                                <strong>{results[0].emissionco2}</strong> <div>tonsCO<sub>2</sub>e</div>
+                                <strong>{results[0].emissionco2}</strong> <div>tons CO<sub>2</sub>e</div>
 
                             </div>
                         </div>
                         <div className="flex flex-col md:flex-row items-center mx-auto justify-between w-full md:w-[500px] gap-2">
                             <div className="font-bold text-lg md:text-xl text-gray-700">Emissioni CO2 per superficie</div>
                             <div className="text-lg md:text-xl text-gray-600 flex gap-2">
-                                <strong>{results[0].areaemissionco2}</strong> <div>tonsCO<sub>2</sub>/m²</div>
+                                <strong>{results[0].areaemissionco2}</strong> <div>tons CO<sub>2</sub>/m²</div>
                             </div>
                         </div>
                     </div>
