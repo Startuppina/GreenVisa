@@ -107,7 +107,7 @@ function BuildingResults() {
                                 />
                             </div>
                             <div className="text-right w-full text-lg md:text-xl text-gray-600 mt-2">
-                                <strong>{results[0].emissionmark}</strong>/10
+                                <strong>{results[0].emissionmark > 10 ? '10+' : results[0].emissionmark}</strong>/10
                             </div>
                         </div>
                         <div className="flex flex-col md:flex-row items-center mx-auto justify-center w-full md:w-[500px] gap-2">

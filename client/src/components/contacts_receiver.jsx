@@ -229,7 +229,7 @@ const MessagesDashboard = () => {
                                     }}
                                     className="bg-green-500 border-green-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-green-500 transition-colors duration-300 ease-in-out"
                                 >
-                                    Rispondi
+                                    {emailForm === true && message.id === currentIDEmail ? "Annulla" : "Rispondi"}
                                 </button>
                             </div>
 

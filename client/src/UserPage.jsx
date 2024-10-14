@@ -49,8 +49,10 @@ const UserPage = () => {
     useEffect(() => {
         const fetchInfo = async () => {
 
+            console.log("env", import.meta.env.VITE_REACT_VALUE);
+
             try {
-                const response = await axios.get('http://localhost:8080/api/user-info', {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_VALUE}/api/user-info`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -365,6 +367,13 @@ const UserPage = () => {
                                 </div>
                             </Link>
 
+                            <div className='flex justify-center'>
+                                <button className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                    onClick={() => navigate('/Certification')}
+                                >
+                                    Accedi alla certificazione</button>
+                            </div>
+
                             {surveyInfo.length > 0 && (
                                 <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-2 lg:mx-14 my-4 border border-gray-300 rounded-xl">
                                     <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
@@ -409,7 +418,7 @@ const UserPage = () => {
                                 </div>
                             )}
 
-                            <Plate />
+                            {/*<Plate />*/}
                             <UserOrders />
 
 
