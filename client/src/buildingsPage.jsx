@@ -96,7 +96,7 @@ export default function Buildings() {
             <main className="text-arial text-xl">
                 <h1 className="text-3xl font-bold text-center">I TUOI EDIFICI</h1>
                 {buildings.length > 0 && (
-                    <div className="w-[200px] m-auto flex justify-center mt-4 hover:cursor-pointer hover:text-[#2d7044]" onClick={() => navigate(`/report`)}>Visualizza il report</div>
+                    <button className="w-[200px] bg-[#2d7044] p-2 text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] hover:bg-white transition-colors duration-300 ease-in-out m-auto flex justify-center mt-4 hover:cursor-pointer hover:text-[#2d7044]" onClick={() => navigate(`/report`)}>Visualizza il report</button>
                 )}
 
                 {numBuildings === 0 ? (

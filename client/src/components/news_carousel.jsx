@@ -64,7 +64,7 @@ const NewsCarousel = () => {
                     const screenWidth = window.innerWidth;
                     let newSlidesToShow = screenWidth <= 700 ? 1 : screenWidth <= 1380 ? 2 : 3;
                     setSlidesToShow(newSlidesToShow);
-                } 
+                }
             } catch (error) {
                 setMessagePopup("Errore durante il recupero delle notizie");
                 setButtonPopup(true);
@@ -102,7 +102,7 @@ const NewsCarousel = () => {
         setNewToDelete(id);
         setMessageConfirm('Sei sicuro di voler eliminare la news?');
         setPopupConfirmDelete(true);
-    }; 
+    };
 
     const deleteNews = async () => {
         const token = localStorage.getItem('token');
@@ -122,7 +122,7 @@ const NewsCarousel = () => {
 
             if (response.status === 200) {
                 navigate(0);
-            } 
+            }
 
         } catch (error) {
             setMessagePopup(error.response?.data?.msg || error.message);
@@ -149,7 +149,7 @@ const NewsCarousel = () => {
                 <div className="text-center text-arial text-3xl text-black h-[30vh] flex flex-col items-center justify-center">
                     <p>Nessuna notizia disponibile</p>
                     <svg width="200" height="200" xmlns='http://www.w3.org/2000/svg'>
-                        <image href="./public/sad.svg" width="200" height="200"/>
+                        <image href="./public/sad.svg" width="200" height="200" />
                     </svg>
                 </div>
             ) : (
@@ -176,10 +176,10 @@ const NewsCarousel = () => {
                                         </div>
                                     </div>
                                     <div className="text-arial text-2xl text-black font-bold text-center p-4 flex items-center justify-center">
-                                            <p className="overflow-ellipsis whitespace-nowrap overflow-hidden text-center">
-                                                {item.title}
-                                            </p>
-                                        </div>
+                                        <p className="overflow-ellipsis whitespace-nowrap overflow-hidden text-center">
+                                            {item.title}
+                                        </p>
+                                    </div>
                                 </Link>
                             </div>
                         ))}

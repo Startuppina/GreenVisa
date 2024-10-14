@@ -26,7 +26,7 @@ import QuestionnairePage from './questionnairePage.jsx';
 import NotFoundPage from './notFoundPage.jsx';
 import UserBuldingsPageAdmin from './userBuldingsPageAdmin.jsx';
 import ReportPage from './reportPage.jsx';
-
+import CertificationPage from './CertificationPage.jsx';
 
 const router = createBrowserRouter([
   {
@@ -121,6 +121,10 @@ const router = createBrowserRouter([
   {
     path: "/report",
     element: <ReportPage />,
+  },
+  {
+    path: "/certification",
+    element: <CertificationPage />,
   },
 ]);
 

@@ -6,6 +6,7 @@ import ScrollToTop from "./components/scrollToTop";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import AutoTable from 'jspdf-autotable';
+import { MutatingDots } from "react-loader-spinner";
 
 /*const generatePDF = () => {
     const input = document.getElementById('table-to-pdf');
@@ -38,6 +39,7 @@ import AutoTable from 'jspdf-autotable';
 function ReportPage() {
     const [buildings, setBuildings] = useState([]);
     const [userData, setUserData] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
 
     const getEnergyUnit = (energySource) => {
         const energyOptions = [
@@ -107,16 +109,16 @@ function ReportPage() {
             const tableBody = buildings.map((building) => [
                 { content: building.building.name, styles: { halign: 'left' } },
                 {
-                    content: building.building.emissionmark !== null ? `${building.building.emissionmark}/10` : 'N/D',
-                    styles: { halign: 'left', fontStyle: 'bold', textColor: '#16a34a' }, // Verde scuro, font semi-grassetto
+                    content: building.building.emissionmark !== null ? `${building.building.emissionmark > 10 ? '10+' : building.building.emissionmark}/10` : 'N/D',
+                    styles: { halign: 'center', fontStyle: 'bold', textColor: '#16a34a' }, // Verde scuro, font semi-grassetto
                 },
                 {
                     content: building.building.emissionco2 !== null ? `${building.building.emissionco2} tonsCO2e` : 'N/D',
-                    styles: { halign: 'left' },
+                    styles: { halign: 'center' },
                 },
                 {
                     content: building.building.areaemissionco2 !== null ? `${building.building.areaemissionco2} tonsCO2e m²` : 'N/D',
-                    styles: { halign: 'left' },
+                    styles: { halign: 'center' },
                 },
             ]);
 
@@ -139,10 +141,10 @@ function ReportPage() {
                     lineColor: [200, 200, 200], // Colore del bordo nero
                 },
                 columnStyles: {
-                    0: { cellWidth: 52 }, // Larghezza della colonna "Edificio"
-                    1: { cellWidth: 30 }, // Larghezza della colonna "Voto"
-                    2: { cellWidth: 50 }, // Larghezza della colonna "Emissioni CO2"
-                    3: { cellWidth: 50 }, // Larghezza della colonna "Emissioni CO2 per Superficie"
+                    0: { cellWidth: 30 }, // Larghezza della colonna "Edificio"
+                    1: { cellWidth: 40 }, // Larghezza della colonna "Voto"
+                    2: { cellWidth: 52 }, // Larghezza della colonna "Emissioni CO2"
+                    3: { cellWidth: 52 }, // Larghezza della colonna "Emissioni CO2 per Superficie"
                 },
                 didDrawPage: (data) => {
                     // Verifica se è necessario aggiungere una nuova pagina
@@ -183,6 +185,14 @@ function ReportPage() {
                     [{ content: 'Ventilazione', styles: { halign: 'left' } }, { content: buildingData.building.ventilation, styles: { halign: 'left' } }],
                     [{ content: 'Controllo Energetico', styles: { halign: 'left' } }, { content: buildingData.building.energy_control, styles: { halign: 'left' } }],
                     [{ content: 'Manutenzione', styles: { halign: 'left' } }, { content: buildingData.building.maintenance, styles: { halign: 'left' } }],
+                    [{ content: 'Fornitura Elettrica', styles: { halign: 'left' } }, { content: buildingData.building.electricity_forniture, styles: { halign: 'left' } }],
+                    [{ content: 'Recupero Acqua', styles: { halign: 'left' } }, { content: buildingData.building.water_recovery, styles: { halign: 'left' } }],
+                    [{ content: 'Contatore Elettrico', styles: { halign: 'left' } }, { content: buildingData.building.electricity_meter, styles: { halign: 'left' } }],
+                    [{ content: 'Dispositivi a Incandescenza', styles: { halign: 'left' } }, { content: `${buildingData.building.incandescent}`, styles: { halign: 'left' } }],
+                    [{ content: 'Dispositivi a LED', styles: { halign: 'left' } }, { content: `${buildingData.building.led}`, styles: { halign: 'left' } }],
+                    [{ content: 'Dispositivi a Scarica di Gas', styles: { halign: 'left' } }, { content: `${buildingData.building.gas_lamp}`, styles: { halign: 'left' } }],
+                    [{ content: 'Analizzatori di rete controllo consumi elettrici', styles: { halign: 'left' } }, { content: `${buildingData.building.analyzers}`, styles: { halign: 'left' } }],
+                    [{ content: 'Sistemi di controllo automatici dei corpi illuminanti', styles: { halign: 'left' } }, { content: buildingData.building.autolightingcontrolsystem, styles: { halign: 'left' } }],
                 ];
 
                 // Genera la tabella per l'edificio specifico
@@ -210,10 +220,7 @@ function ReportPage() {
                 // Aggiorna la posizione per la prossima riga
                 currentY = doc.lastAutoTable.finalY;
 
-                // Aggiungi nuova pagina se necessario
-                if (index !== buildings.length - 1 && currentY > doc.internal.pageSize.height - 30) {
-                    doc.addPage();
-                }
+
             });
 
             // Imposta il titolo per i consumi
@@ -331,7 +338,7 @@ function ReportPage() {
                         ],
                     ])
                     : [[
-                        { content: 'Nessun impianto disponibile', styles: { halign: 'left', colSpan: 2 } },
+                        { content: 'Nessun impianto ancora caricato', styles: { halign: 'left', colSpan: 2 } },
                         { content: '', styles: { halign: 'center' } }
                     ]];
 
@@ -413,9 +420,9 @@ function ReportPage() {
             });
 
 
-
             // Salva il PDF
             doc.save(`report-edifici-${new Date().toISOString()}.pdf`);
+            setIsLoading(false);
         };
     };
 
@@ -444,9 +451,29 @@ function ReportPage() {
             <Navbar />
             <ScrollToTop />
             <div className="flex justify-center">
-                <button onClick={generatePDF} className="mb-4 p-2 bg-blue-500 border-2 border-blue-500 rounded-lg text-white hover:bg-white hover:text-blue-500 transition-color duration-300 ease-in-out mt-10">
-                    Scarica PDF
-                </button>
+                {isLoading ? (
+                    <div className="flex justify-center items-center mt-5">
+                        <MutatingDots
+                            height="100"
+                            width="100"
+                            color="#2d7044"
+                            secondaryColor='#2d7044'
+                            radius='12.5'
+                            ariaLabel="mutating-dots-loading"
+                            visible={true}
+                        />
+                    </div>
+                ) : (
+                    <button onClick={() => {
+                        setIsLoading(true);
+                        setTimeout(() => {
+                            generatePDF();
+                        }, 3000);
+                    }}
+                        className="mb-4 p-2 bg-blue-500 border-2 border-blue-500 rounded-lg text-white hover:bg-white hover:text-blue-500 transition-color duration-300 ease-in-out mt-10">
+                        Scarica PDF
+                    </button>
+                )}
             </div>
             <div id="table-to-pdf" className="container mx-auto bg-white p-20 mt-2 mb-10 text-2xl">
                 <div className="flex justify-center">
@@ -480,7 +507,7 @@ function ReportPage() {
                             <tr key={index} className="hover:bg-gray-50">
                                 <td className="py-2 px-4 border-2">{building.building.name}</td>
                                 <td className="py-2 px-4  border-2 text-green-600 font-semibold text-center">
-                                    {building.building.emissionmark !== null ? `${building.building.emissionmark}/10` : 'N/D'}
+                                    {building.building.emissionmark !== null ? `${building.building.emissionmark > 10 ? '10+' : building.building.emissionmark}/10` : 'N/D'}
                                 </td>
                                 <td className="py-2 px-4 border-2 text-center">
                                     {building.building.areaemissionco2 !== null
@@ -572,23 +599,23 @@ function ReportPage() {
                                     <td className="py-2 px-4 border-2">{buildingData.building.electricity_meter}</td>
                                 </tr>
                                 <tr className="p-2">
-                                    <td className="py-2 px-4 border-2">Incandescenti</td>
+                                    <td className="py-2 px-4 border-2">Dispositivi a Incandescenza</td>
                                     <td className="py-2 px-4 border-2">{buildingData.building.incandescent}</td>
                                 </tr>
                                 <tr className="p-2">
-                                    <td className="py-2 px-4 border-2">LED</td>
+                                    <td className="py-2 px-4 border-2">Dispositivi a LED</td>
                                     <td className="py-2 px-4 border-2">{buildingData.building.led}</td>
                                 </tr>
                                 <tr className="p-2">
-                                    <td className="py-2 px-4 border-2">Lampade a Gas</td>
+                                    <td className="py-2 px-4 border-2">Dispositivi a Scarica di Gas</td>
                                     <td className="py-2 px-4 border-2">{buildingData.building.gas_lamp}</td>
                                 </tr>
                                 <tr className="p-2">
-                                    <td className="py-2 px-4 border-2">Analizzatori</td>
+                                    <td className="py-2 px-4 border-2">Analizzatori di rete controlo consumi elettrici</td>
                                     <td className="py-2 px-4 border-2">{buildingData.building.analyzers}</td>
                                 </tr>
                                 <tr className="p-2">
-                                    <td className="py-2 px-4 border-2">Sistema di Controllo dell'Illuminazione</td>
+                                    <td className="py-2 px-4 border-2">Sistema di Controllo automatici dei corpi illuminanti</td>
                                     <td className="py-2 px-4 border-2">{buildingData.building.autolightingcontrolsystem}</td>
                                 </tr>
                             </tbody>
@@ -679,7 +706,7 @@ function ReportPage() {
                                     ))
                                 ) : (
                                     <tr className="p-2">
-                                        <td className="py-2 px-4 border-2" colSpan={2}>Nessun impianto disponibile</td>
+                                        <td className="py-2 px-4 border-2" colSpan={2}>Nessun impianto ancora caricato</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -696,7 +723,7 @@ function ReportPage() {
                             <tbody>
                                 <tr className="p-2">
                                     <td className="py-2 px-4 border-2">Impianto Solare Termico (quantità totale installata)</td>
-                                    <td className="py-2 px-4 border-2">{building.solaData.totalInstalledArea || 'N/D'}</td>
+                                    <td className="py-2 px-4 border-2">{building.solaData.totalInstalledArea ? `${building.solaData.totalInstalledArea} m²` : 'N/D'} </td>
                                 </tr>
                                 <tr className="p-2">
                                     <td className="py-2 px-4 border-2">Impianto Fotovoltaico (potenza totale)</td>
@@ -713,5 +740,7 @@ function ReportPage() {
         </>
     )
 }
+
+/*INSERIRE ANCHE REPORT DOMANDE */
 
 export default ReportPage
