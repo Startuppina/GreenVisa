@@ -13,7 +13,7 @@ const CodeUsage = () => {
     const fetchFromPublished = async () => {
 
       try {
-        const response = await axios.get('http://localhost:8080/api/fetch-published-codes',
+        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-published-codes`,
           {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`

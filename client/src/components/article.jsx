@@ -11,7 +11,7 @@ function Article() {
     useEffect(() => {
         const getArticleData = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/api/article/${id}`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/article/${id}`, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -35,7 +35,7 @@ function Article() {
             const token = localStorage.getItem("token");
 
             try {
-                const response = await axios.put(`http://localhost:8080/api/set-news-read/${id}`, {}, {
+                const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/set-news-read/${id}`, {}, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -109,7 +109,7 @@ function Article() {
             </div>
             <div className="w-[300px] h-[300px] border-gray-300 border-2 rounded-lg">
                 <img
-                    src={`http://localhost:8080/uploaded_img/${article.image}`}
+                    src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${article.image}`}
                     alt={article.title}
                     className="w-full h-full object-fill rounded-lg"
                 />

@@ -45,7 +45,7 @@ function AllProducts() {
             const token = localStorage.getItem("token");
             try {
                 const response = await axios.get(
-                    "http://localhost:8080/api/products-info",
+                    `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/products-info`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -70,7 +70,7 @@ function AllProducts() {
         const fetchCategories = async () => {
             try {
                 const response = await axios.get(
-                    "http://localhost:8080/api/categories"
+                    `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/categories`,
                 );
                 if (response.status === 200) {
                     setCategories(response.data);
@@ -93,7 +93,7 @@ function AllProducts() {
 
         try {
             const response = await axios.delete(
-                `http://localhost:8080/api/delete-product/${id}`,
+                `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-product/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -140,7 +140,7 @@ function AllProducts() {
             }
 
             const response = await axios.put(
-                `http://localhost:8080/api/edit-product/${id}`,
+                `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-product/${id}`,
                 formData,
                 {
                     headers: {
@@ -238,7 +238,7 @@ function AllProducts() {
                                     </h3>
                                     <div className="mb-2 w-[150px] h-[150px]">
                                         <img
-                                            src={`http://localhost:8080/uploaded_img/${productItem.image}`}
+                                            src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${productItem.image}`}
                                             alt={productItem.name}
                                             className=" object-cover rounded mb-2"
                                         />

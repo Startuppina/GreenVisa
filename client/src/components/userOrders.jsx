@@ -9,7 +9,7 @@ function UserOrders() {
         const fetchOrders = async () => {
 
             try {
-                const response = await axios.get('http://localhost:8080/api/user-orders', {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-orders`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -44,7 +44,7 @@ function UserOrders() {
                                 <h3 className="w-full text-start text-lg font-bold mb-4">Ordine {order.order_id}</h3>
                                 <div className="flex flex-col md:flex-row text-center md:text-left items-center md:items-start mb-4">
                                     <img
-                                        src={`http://localhost:8080/uploaded_img/${order.product_image}`}
+                                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${order.product_image}`}
                                         alt={order.product_name}
                                         className="w-full h-32 md:w-32 md:h-32 object-cover rounded-lg mb-4 md:mb-0 md:mr-4"
                                     />

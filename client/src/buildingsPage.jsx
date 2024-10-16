@@ -35,7 +35,7 @@ export default function Buildings() {
             setBuildingID(0);
             const token = localStorage.getItem('token');
             try {
-                const response = await axios.get("http://localhost:8080/api/fetch-buildings", {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-buildings`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -57,7 +57,7 @@ export default function Buildings() {
         const token = localStorage.getItem('token');
         const { id } = buildingToDelete;
         try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-building/${id}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-building/${id}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

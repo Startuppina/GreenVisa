@@ -30,7 +30,7 @@ function ProductDetails() {
         const getProductDetails = async () => {
 
             try {
-                const response = await axios.get(`http://localhost:8080/api/product-details/${id}`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/product-details/${id}`, {
                     headers: {
                         'Content-Type': 'application/json',
                     }
@@ -80,7 +80,7 @@ function ProductDetails() {
         console.log(cartData);
 
         try {
-            const response = await axios.post(`http://localhost:8080/api/cart-insertion/${id}`, cartData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/cart-insertion/${id}`, cartData, {
                 headers: {
                     'Content-Type': 'application/json',
                     // Invia il token JWT solo se l'utente è autenticato
@@ -110,7 +110,7 @@ function ProductDetails() {
                 {/* Sezione immagine prodotto */}
                 <div className="w-full max-w-xs lg:max-w-md h-[250px] sm:h-[300px] lg:h-[400px] overflow-hidden">
                     <img
-                        src={`http://localhost:8080/uploaded_img/${product.image}`}
+                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${product.image}`}
                         alt={product.name}
                         className="w-full h-full object-cover rounded-lg"
                     />

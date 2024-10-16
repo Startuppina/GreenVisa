@@ -54,7 +54,7 @@ const NewsCarousel = () => {
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                const response = await axios.get("http://localhost:8080/api/news");
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/news`);
                 if (response.status === 200) {
                     setNews(response.data);
                     if (response.data.length > 0) {
@@ -113,7 +113,7 @@ const NewsCarousel = () => {
         }
 
         try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-news/${newToDelete}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-news/${newToDelete}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -169,7 +169,7 @@ const NewsCarousel = () => {
                                     >
                                         <div className="w-full h-full border-gray-300 border-2 rounded-lg">
                                             <img
-                                                src={`http://localhost:8080/uploaded_img/${item.image}`}
+                                                src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${item.image}`}
                                                 alt={item.title}
                                                 className="w-full h-full object-fill rounded-lg"
                                             />

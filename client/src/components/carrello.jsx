@@ -26,7 +26,7 @@ function Carrello() {
             console.log("sessionID: ", sessionID);
 
             try {
-                const response = await axios.get('http://localhost:8080/api/fetch-user-cart', {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-cart`, {
                     headers: {
                         'Content-Type': 'application/json',
                         ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
@@ -63,7 +63,7 @@ function Carrello() {
         const sessionID = localStorage.getItem('session_id');
 
         try {
-            const response = await axios.put(`http://localhost:8080/api/update-quantity/${productId}`, { quantity: newQuantity }, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-quantity/${productId}`, { quantity: newQuantity }, {
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
@@ -86,7 +86,7 @@ function Carrello() {
         const token = localStorage.getItem('token');
         const sessionID = localStorage.getItem('session_id');
         try {
-            const response = await axios.delete(`http://localhost:8080/api/remove-from-cart/${productId}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/remove-from-cart/${productId}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
@@ -140,7 +140,7 @@ function Carrello() {
 
             console.log(promoCode);
 
-            const response = await axios.post('http://localhost:8080/api/get-code-id', { code: promoCode }, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/get-code-id`, { code: promoCode }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -159,7 +159,7 @@ function Carrello() {
 
         try {
             // Esegui il checkout e redirigi l'utente alla pagina appropriata
-            const response = await axios.post('http://localhost:8080/api/checkout-session', checkoutData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/checkout-session`, checkoutData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -181,7 +181,7 @@ function Carrello() {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.post('http://localhost:8080/api/apply-promo-code', { code: promoCode }, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/apply-promo-code`, { code: promoCode }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -277,7 +277,7 @@ function Carrello() {
                             <div className="w-full h-auto flex flex-col md:flex-row items-center justify-center px-5 mx-auto gap-5 transition-all duration-500 ease-out">
                                 <div className="w-[250px] h-[200px] overflow-hidden mt-3 mb-3">
                                     <img
-                                        src={`http://localhost:8080/uploaded_img/${product.image}`}
+                                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${product.image}`}
                                         alt={product.name}
                                         className="w-full h-full object-cover rounded-lg"
                                     />

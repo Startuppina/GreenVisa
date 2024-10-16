@@ -36,7 +36,7 @@ const Dashboard = () => {
       const token = localStorage.getItem('token');
 
       try {
-        const response = await axios.get('http://localhost:8080/api/messages', {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/messages`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -54,7 +54,7 @@ const Dashboard = () => {
     const fetchRequests = async () => {
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get("http://localhost:8080/api/fetch-second-level-requests", {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-second-level-requests`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`

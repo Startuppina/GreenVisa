@@ -5,7 +5,7 @@ import MessagePopUp from './messagePopUp';
 import { useRecoveryContext } from '../provider/provider';
 
 const InsertEmail = () => {
-    const {OTP, setOTP} = useRecoveryContext();
+  const { OTP, setOTP } = useRecoveryContext();
   const [email, setEmail] = useState('');
   const [buttonPopup, setButtonPopup] = useState(false);
   const [messagePopup, setMessagePopup] = useState('');
@@ -15,14 +15,14 @@ const InsertEmail = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
 
     try {
-      const response = await axios.post('http://localhost:8080/api/send_email', { email });
-  
+      const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send_email`, { email });
+
       console.log(response.data);
 
-      if(response.data.exist === false) {
+      if (response.data.exist === false) {
         setMessagePopup("L'email inserita non esiste");
         setButtonPopup(true);
         return;
@@ -33,21 +33,21 @@ const InsertEmail = () => {
         localStorage.setItem('recoveryToken', recoveryToken);
 
         console.log(recoveryToken);
-  
+
         if (recoveryToken) {
-            const OTP = Math.floor(Math.random() * 9000 + 1000);
-            console.log(OTP);
-            setOTP(OTP);
+          const OTP = Math.floor(Math.random() * 9000 + 1000);
+          console.log(OTP);
+          setOTP(OTP);
 
           try {
-            const response2 = await axios.post('http://localhost:8080/api/send_recovery_email', { email, OTP }, {
+            const response2 = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send_recovery_email`, { email, OTP }, {
               headers: {
                 'Authorization': `Bearer ${recoveryToken}`
               }
             });
 
             console.log(response2.data);
-  
+
             if (response2.status === 200) {
               navigate('/Verification');
             } else {
@@ -65,7 +65,7 @@ const InsertEmail = () => {
       setButtonPopup(true);
     }
   };
-  
+
 
   return (
     <>

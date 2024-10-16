@@ -18,7 +18,7 @@ function UserBuldingsPageAdmin() {
     useEffect(() => {
         const fetchUserBuildings = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/api/fetch-user-buildings/${id}`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-buildings/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -45,7 +45,7 @@ function UserBuldingsPageAdmin() {
         console.log("building solars", buildingSolars);
 
         try {
-            const response = await axios.get(`http://localhost:8080/api/fetch-building-plants-solars-photos/${id}/${buildingId}`, {
+            const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-building-plants-solars-photos/${id}/${buildingId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }

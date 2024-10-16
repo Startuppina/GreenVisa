@@ -42,7 +42,7 @@ export default function Reset() {
     const recoveryToken = localStorage.getItem("recoveryToken");
 
     try {
-      const response = await axios.put("http://localhost:8080/api/change-password", {
+      const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/change-password`, {
         password
       }, {
         headers: {
@@ -87,17 +87,17 @@ export default function Reset() {
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center gap-1'>
                         <label htmlFor="password" className='block text-xl'>Password</label>
-                        <svg 
-                          className='cursor-pointer ml-2' 
-                          onClick={togglePassInfo} 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          width="24" 
-                          height="24" 
-                          viewBox="0 0 24 24" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          strokeWidth="2" 
-                          strokeLinecap="round" 
+                        <svg
+                          className='cursor-pointer ml-2'
+                          onClick={togglePassInfo}
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
                           strokeLinejoin="round"
                         >
                           <circle cx="12" cy="12" r="10"></circle>
@@ -107,12 +107,12 @@ export default function Reset() {
                       </div>
                       <div className='flex items-center gap-2'>
                         <span className='text-black'>Mostra password</span>
-                        <input 
-                          type="checkbox" 
-                          name="showPassword" 
-                          id="showPassword" 
-                          onClick={toggleShowPassword} 
-                          className='cursor-pointer' 
+                        <input
+                          type="checkbox"
+                          name="showPassword"
+                          id="showPassword"
+                          onClick={toggleShowPassword}
+                          className='cursor-pointer'
                         />
                       </div>
                     </div>

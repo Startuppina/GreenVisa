@@ -429,7 +429,7 @@ function ReportPage() {
     useEffect(() => {
         const fetchBuildings = async () => {
             try {
-                const response = await axios.get("http://localhost:8080/api/fetch-report-data", {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-report-data`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('token')}`

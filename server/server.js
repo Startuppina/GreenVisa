@@ -1141,29 +1141,35 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
     const checkCodValues = [cod];
     const checkCodResult = await pool.query(checkCodQuery, checkCodValues);
     if (checkCodResult.rows.length > 0) {
-      return res.status(400).json({ msg: "Codice prodotto già esistente. Inserisci un codice diverso" });
+      return res.status(400).json({ msg: "Codice certificazione già esistente. Inserisci un codice diverso" });
     }
 
     // set price based on category 
     let price;
     switch (category) {
       case "Certificazione hotel":
-        price = 350;
+        //price = 350;
+        price = 0.5;
         break;
       case "Certificazione spa e resorts":
-        price = 350;
+        //price = 350;
+        price = 0.5;
         break;
       case "Certificazione trasporti":
-        price = 350;
+        //price = 350;
+        price = 0.5;
         break;
       case "Certificazione industria":
-        price = 350;
+        //price = 350;
+        price = 0.5;
         break;
       case "Certificazione store e retail":
-        price = 350;
+        //price = 350;
+        price = 0.5;
         break;
       case "Certificazione bar e ristoranti":
-        price = 300;
+        //price = 300;
+        price = 0.5;
         break;
       default:
         price = 0;
@@ -1204,10 +1210,10 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
     const values = [user_id, name, parsedPrice, image.filename, info, cod, category, tag, null];
 
     await pool.query(query, values);
-    res.status(200).json({ msg: "Prodotto caricato con successo" });
+    res.status(200).json({ msg: "Certificazione caricata con successo" });
   } catch (error) {
-    console.error("Errore durante il caricamento del prodotto:", error);
-    res.status(500).json({ msg: "Errore durante il caricamento del prodotto" });
+    console.error("Errore durante il caricamento della certificazione:", error);
+    res.status(500).json({ msg: "Errore durante il caricamento della certificazione" });
   }
 });
 
@@ -1294,7 +1300,7 @@ app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async 
 
 app.post("/api/cart-insertion/:id", async (req, res) => {
   try {
-    const { id } = req.params; // ID del prodotto
+    const { id } = req.params; // ID della certificazione
     const { name, image, price, quantity, option, session_id } = req.body;
 
     if (req.headers.authorization) {
@@ -1516,10 +1522,10 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
     }
 
     const result = await pool.query(query, values);
-    res.status(200).json({ msg: "Prodotto rimosso dal carrello con successo" });
+    res.status(200).json({ msg: "Certificazione rimossa dal carrello con successo" });
   } catch (error) {
-    console.error("Errore nel rimuovere il prodotto dal carrello:", error);
-    res.status(500).json({ msg: "Errore nel rimuovere il prodotto dal carrello" });
+    console.error("Errore nel rimuovere la certificazione dal carrello:", error);
+    res.status(500).json({ msg: "Errore nel rimuovere la certificazione dal carrello" });
   }
 });
 
@@ -1831,7 +1837,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       const productResult = await pool.query(productQuery, productValues);
 
       if (productResult.rows.length === 0) {
-        return res.status(400).json({ msg: `Prodotto con ID ${id} non trovato` });
+        return res.status(400).json({ msg: `Certificazione con ID ${id} non trovata` });
       }
 
       const productInfo = productResult.rows[0];
@@ -1904,7 +1910,7 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
 
       // Check if the product is in the cart
       if (result.rows.length === 0) {
-        return res.status(404).json({ msg: `Prodotto con ID ${id} non trovato nel carrello.` });
+        return res.status(404).json({ msg: `Certificazione con ID ${id} non trovato nel carrello.` });
       }
 
       const quantity = result.rows[0].quantity;
@@ -1915,7 +1921,7 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
       const values2 = [quantity, price, user_id, id, codeID, order_date];
       await pool.query(query2, values2);
 
-      //console.log(`Ordine creato per prodotto ID ${id}`);
+      //console.log(`Ordine creato per certificazione ID ${id}`);
     }
 
     res.status(201).json({ msg: "Ordine creato con successo." });

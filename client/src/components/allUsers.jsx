@@ -44,7 +44,7 @@ function AllUsers() {
         const fetchUsers = async () => {
             const token = localStorage.getItem("token");
             try {
-                const response = await axios.get("http://localhost:8080/api/fetch-users", {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-users`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -62,7 +62,7 @@ function AllUsers() {
         const fetchAdminUsername = async () => {
             const token = localStorage.getItem('token');
             try {
-                const response = await axios.get('http://localhost:8080/api/admin-username', {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/admin-username`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -94,7 +94,7 @@ function AllUsers() {
         setIsLoading(true);
         const token = localStorage.getItem('token');
         try {
-            const response = await axios.post("http://localhost:8080/api/send-message-response", { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-message-response`, { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

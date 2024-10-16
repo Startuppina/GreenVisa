@@ -48,7 +48,7 @@ function NewsUnread() {
         const fetchNews = async () => {
             const token = localStorage.getItem("token");
             try {
-                const response = await axios.get("http://localhost:8080/api/news-unread", {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/news-unread`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -106,7 +106,7 @@ function NewsUnread() {
                     <Slider {...settings}>
                         {news.map((item) => (
                             <div className='pt-6 mx-auto z-10'>
-                                <Link to={`/Article/${item.id}`} key={item.id}>
+                                <Link to={`/ Article / ${item.id}`} key={item.id}>
                                     <div
                                         className={`relative mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
                                         style={{
@@ -118,28 +118,29 @@ function NewsUnread() {
                                     >
                                         <div className="w-full h-full border-gray-300 border-2 rounded-lg">
                                             <img
-                                                src={`http://localhost:8080/uploaded_img/${item.image}`}
+                                                src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${item.image}`}
                                                 alt={item.title}
                                                 className="w-full h-full object-fill rounded-lg"
                                             />
-                                        </div>
-                                    </div>
+                                        </div >
+                                    </div >
                                     <div className="text-arial text-2xl text-white font-bold text-center p-4 flex items-center justify-center">
                                         <p className="overflow-ellipsis whitespace-nowrap overflow-hidden text-center">
                                             {item.title}
                                         </p>
                                     </div>
-                                </Link>
-                            </div>
-                        ))}
-                    </Slider>
-                </div>
+                                </Link >
+                            </div >
+                        ))
+                        }
+                    </Slider >
+                </div >
             ) : (
                 <div className="w-full h-auto p-8">
                     <h1 className="text-center text-white text-xl">Hai letto tutte le notizie </h1>
                 </div>
             )}
-        </div>
+        </div >
 
     );
 }

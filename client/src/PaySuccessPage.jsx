@@ -29,7 +29,7 @@ function PaySuccessPage() {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await axios.delete('http://localhost:8080/api/remove-user-cart', {
+      const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/remove-user-cart`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -62,7 +62,7 @@ function PaySuccessPage() {
     try {
       //IL POST VERRA FATTO DUE VOLTE, QUINDI DUE ORDINI INVECE CHE UNO IN QUANTO IN MAIN.JS C'E'
       //REACT STRICT MODE CHE IN AMBIENTE DI PRODUZIONE E' DISABILITATO
-      const response = await axios.post('http://localhost:8080/api/create-order', { orderData: JSON.parse(orderData), codeID: code }, {
+      const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/create-order`, { orderData: JSON.parse(orderData), codeID: code }, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

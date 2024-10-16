@@ -722,7 +722,7 @@ function WellnessQuestionnaire({ certification_id }) {
   useEffect(() => {
     const fetchInfo = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/user-info', {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
 
@@ -746,7 +746,7 @@ function WellnessQuestionnaire({ certification_id }) {
     const token = localStorage.getItem('token');
     console.log("certification_id:", certification_id);
     try {
-      const response = await axios.get(`http://localhost:8080/api/responses-fetch`, {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses-fetch`, {
         headers: { "Authorization": `Bearer ${token}` },
         params: {
           certification_id: certification_id
@@ -805,7 +805,7 @@ function WellnessQuestionnaire({ certification_id }) {
     const token = localStorage.getItem('token');
     console.log("Submitting survey data:", data);
     try {
-      await axios.post("http://localhost:8080/api/responses", data, {
+      await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses`, data, {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`

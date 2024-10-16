@@ -37,7 +37,7 @@ function Photovoltaics() {
                 return;
             }
             try {
-                const response = await axios.get(`http://localhost:8080/api/buildings/${id}/fetch-photovoltaics`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-photovoltaics`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -61,7 +61,7 @@ function Photovoltaics() {
         const token = localStorage.getItem('token');
         const { id } = photoToDelete;
         try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-photovoltaic/${id}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-photovoltaic/${id}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
