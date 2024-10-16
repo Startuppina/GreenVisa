@@ -68,7 +68,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         console.log('Form data:', formData);
 
         try {
-            const response = await axios.put('http://localhost:8080/api/edit-building', formData, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-building`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         console.log('Form data:', formData);
 
         try {
-            const response = await axios.post('http://localhost:8080/api/upload-building', formData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-building`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

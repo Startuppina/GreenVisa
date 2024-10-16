@@ -26,7 +26,7 @@ const Login = () => {
         const sessionID = localStorage.getItem('session_id');
 
         try {
-            const response = await axios.post('http://localhost:8080/api/login', formData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/login`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                     ...(sessionID && { 'session-id': sessionID })

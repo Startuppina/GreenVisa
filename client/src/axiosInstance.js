@@ -1,8 +1,10 @@
 // axiosInstance.js
 import axios from 'axios';
 
+console.log(import.meta.env.VITE_REACT_SERVER_ADDRESS);
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api`,
 });
 
 // Interceptor per aggiungere token

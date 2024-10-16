@@ -18,7 +18,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
         const fetchRequests = async () => {
             const token = localStorage.getItem("token");
             try {
-                const response = await axios.get("http://localhost:8080/api/fetch-second-level-requests", {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-second-level-requests`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -41,7 +41,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
         const token = localStorage.getItem("token");
 
         try {
-            const response = await axios.post("http://localhost:8080/api/approve-second-level-request", {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/approve-second-level-request`, {
                 request_id,
                 user_requestor_id
             }, {
@@ -76,7 +76,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
         console.log("token :", token);
 
         try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-second-level-request`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-second-level-request`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

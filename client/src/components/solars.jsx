@@ -39,7 +39,7 @@ function Solars() {
                 return;
             }
             try {
-                const response = await axios.get(`http://localhost:8080/api/buildings/${id}/fetch-solars`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-solars`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -63,7 +63,7 @@ function Solars() {
         const token = localStorage.getItem('token');
         const { id } = solarToDelete;
         try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-solar/${id}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-solar/${id}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

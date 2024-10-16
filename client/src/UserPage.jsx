@@ -49,10 +49,10 @@ const UserPage = () => {
     useEffect(() => {
         const fetchInfo = async () => {
 
-            console.log("env", import.meta.env.VITE_REACT_VALUE);
+            console.log("env", import.meta.env.VITE_REACT_SERVER_ADDRESS);
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_VALUE}/api/user-info`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -83,7 +83,7 @@ const UserPage = () => {
         const fetchOrdersCategory = async () => {
 
             try {
-                const response = await axios.get('http://localhost:8080/api/user-questionnaires', {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-questionnaires`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -113,7 +113,7 @@ const UserPage = () => {
 
     const logout = async () => {
         try {
-            const response = await axios.post('http://localhost:8080/api/logout', {}, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/logout`, {}, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -145,7 +145,7 @@ const UserPage = () => {
         try {
             const token = localStorage.getItem('token');
 
-            const response = await axios.delete('http://localhost:8080/api/delete-account', {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-account`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -189,7 +189,7 @@ const UserPage = () => {
         const fetchUserApprovations = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get('http://localhost:8080/api/fetch-approved-requests', {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-approved-requests`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -211,7 +211,7 @@ const UserPage = () => {
 
         try {
             // Effettua la richiesta di aggiornamento
-            const response = await axios.put(`http://localhost:8080/api/cancel-approvation/${approvation_id}`, {}, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/cancel-approvation/${approvation_id}`, {}, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

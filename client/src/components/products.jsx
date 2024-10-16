@@ -58,7 +58,7 @@ function Products() {
         const getProductsInfo = async () => {
 
             try {
-                const response = await axios.get("http://localhost:8080/api/products-info", {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/products-info`, {
                     params: { order: productOrdering },
                     headers: {
                         'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ function Products() {
         }
 
         try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-product/${productToDelete}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-product/${productToDelete}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -189,7 +189,7 @@ function Products() {
                                         <Link to={`/ProductDetails/${item.id}`}>
                                             <div className="w-full bg-[#2d7044] rounded-lg p-2 hover:transform hover:scale-105 duration-300">
                                                 <div className="h-[35vh]"> {/* Adjusted height */}
-                                                    <img src={`http://localhost:8080/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
+                                                    <img src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
                                                 </div>
                                                 <div className="text-arial text-xl text-white font-bold text-center pt-3">{item.name}</div>
                                                 <div className="text-arial text-xl text-white text-center pt-2">{getPriceCategory(item.category)}</div>

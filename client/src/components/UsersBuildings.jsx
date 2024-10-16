@@ -14,7 +14,7 @@ function UsersBuildings() {
     const fetchUserInfo = async () => {
         const token = localStorage.getItem("token");
         try {
-            const response = await axios.get("http://localhost:8080/api/fetch-user-info-by-buildings", {
+            const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-info-by-buildings`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

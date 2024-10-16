@@ -30,7 +30,7 @@ function Consumption() {
         const fetchConsumptionData = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const response = await axios.get(`http://localhost:8080/api/${buildingID}/fetch-consumption-data`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-consumption-data`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -56,7 +56,7 @@ function Consumption() {
         console.log("Consumption ID to delete:", id);
 
         try {
-            const response = await axios.delete(`http://localhost:8080/api/${buildingID}/delete-consumption/${id}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/delete-consumption/${id}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

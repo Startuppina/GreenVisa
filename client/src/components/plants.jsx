@@ -41,7 +41,7 @@ function Plants() {
                 return;
             }
             try {
-                const response = await axios.get(`http://localhost:8080/api/buildings/${id}/fetch-plants`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-plants`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -66,7 +66,7 @@ function Plants() {
         const token = localStorage.getItem('token');
         const { id } = plantsToDelete;
         try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-plant/${id}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-plant/${id}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

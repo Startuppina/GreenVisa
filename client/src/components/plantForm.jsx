@@ -36,7 +36,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
         };
 
         try {
-            const response = await axios.put(`http://localhost:8080/api/buildings/${id}/update/plant/${plant.id}`, formData, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/plant/${plant.id}`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -86,7 +86,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
 
 
         try {
-            const response = await axios.post(`http://localhost:8080/api/buildings/${id}/upload/plant`, formData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/plant`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

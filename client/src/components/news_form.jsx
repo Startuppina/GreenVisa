@@ -65,7 +65,7 @@ const NewsForm = () => {
         console.log('FormData:', formData);
 
         try {
-            const response = await axios.post('http://localhost:8080/api/upload-news', formData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-news`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${token}`,

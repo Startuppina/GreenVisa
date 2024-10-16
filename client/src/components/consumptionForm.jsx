@@ -39,7 +39,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         const fetchUserEnergies = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const response = await axios.get(`http://localhost:8080/api/${buildingID}/fetch-user-energies`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-user-energies`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -69,7 +69,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.post(`http://localhost:8080/api/${buildingID}/add-consumption`, consumption, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/add-consumption`, consumption, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -111,7 +111,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         try {
 
-            const response = await axios.put(`http://localhost:8080/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -157,7 +157,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.post(`http://localhost:8080/api/${buildingID}/add-consumption`, consumption, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/add-consumption`, consumption, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
@@ -208,7 +208,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         try {
 
             const token = localStorage.getItem("token");
-            const response = await axios.put(`http://localhost:8080/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS products (
     UNIQUE (cod)  -- Aggiunto un vincolo di unicità per il codice prodotto
 );
 
+
 CREATE TABLE IF NOT EXISTS plates (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -126,19 +127,23 @@ CREATE INDEX idx_cart_user_id ON cart(user_id);
 CREATE INDEX idx_cart_session_id ON cart(session_id);
 
 
-
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     quantity INTEGER NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     user_id INTEGER NOT NULL,
-    product_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,  -- Inizialmente product_id è NOT NULL
     code_id INTEGER DEFAULT NULL, -- Il codice promozionale associato all'ordine --
     order_date DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
     FOREIGN KEY (code_id) REFERENCES promocodes(id) ON DELETE SET NULL
 );
+
+-- Modifica della colonna product_id per permettere NULL
+--ALTER TABLE orders ALTER COLUMN product_id DROP NOT NULL;
+
+
 
 CREATE TABLE IF NOT EXISTS credit_cards (
     id SERIAL PRIMARY KEY,

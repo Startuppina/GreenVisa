@@ -20,7 +20,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = 'empty' }) {
         };
 
         try {
-            const response = await axios.put(`http://localhost:8080/api/buildings/${id}/update-photovoltaic/${photo.id}`, formData, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update-photovoltaic/${photo.id}`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -66,7 +66,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = 'empty' }) {
         };
 
         try {
-            const response = await axios.post(`http://localhost:8080/api/buildings/${id}/upload/photovoltaic`, formData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/photovoltaic`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

@@ -33,7 +33,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.put('http://localhost:8080/api/update-username', { username: newUsername }, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-username`, { username: newUsername }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -59,7 +59,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
 
         setNewPhone(`+${newPhone}`);
         try {
-            const response = await axios.put('http://localhost:8080/api/update-phone', { phone_number: newPhone }, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-phone`, { phone_number: newPhone }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -84,7 +84,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.put('http://localhost:8080/api/update-email', { email: newEmail }, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-email`, { email: newEmail }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -109,7 +109,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            const response = await axios.put('http://localhost:8080/api/update-company-name', { company_name: newCompanyName }, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-company-name`, { company_name: newCompanyName }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -133,7 +133,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.put('http://localhost:8080/api/update-piva', { piva: newPiva }, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-piva`, { piva: newPiva }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -157,7 +157,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await axios.put('http://localhost:8080/api/update-tax-code', { tax_code: newTaxCode }, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-tax-code`, { tax_code: newTaxCode }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -180,7 +180,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            const response = await axios.put('http://localhost:8080/api/update-legal-headquarter', { legal_headquarter: newLegalHeadquarter }, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-legal-headquarter`, { legal_headquarter: newLegalHeadquarter }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

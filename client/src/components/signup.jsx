@@ -45,7 +45,7 @@ const Signup = () => {
         const formData = { username, company_name, email, password, phone };
 
         try {
-            const response = await axios.post('http://localhost:8080/api/signup', formData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/signup`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                 },

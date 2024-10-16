@@ -27,7 +27,7 @@ function PromoCodes() {
             const token = localStorage.getItem("token");
 
             try {
-                const response = await axios.get("http://localhost:8080/api/fetch-promo-codes", {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-promo-codes`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -64,7 +64,7 @@ function PromoCodes() {
     const deleteCode = async () => {
         const token = localStorage.getItem("token");
         try {
-            const response = await axios.delete(`http://localhost:8080/api/delete-promo-code/${promoCodeToDelete}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-promo-code/${promoCodeToDelete}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -89,7 +89,7 @@ function PromoCodes() {
     const publishCode = async () => {
         const token = localStorage.getItem("token");
         try {
-            const response = await axios.post(`http://localhost:8080/api/publish-promo-code/${promoCodeToPublish}`, {}, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/publish-promo-code/${promoCodeToPublish}`, {}, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

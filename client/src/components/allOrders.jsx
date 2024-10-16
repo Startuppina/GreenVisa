@@ -8,7 +8,7 @@ function AllOrders() {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/api/all-orders', {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/all-orders`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -43,7 +43,7 @@ function AllOrders() {
                                 <h3 className="text-lg font-bold mb-4">Ordine {order.order_id}</h3>
                                 <div className="flex flex-col md:flex-row mb-4">
                                     <img
-                                        src={`http://localhost:8080/uploaded_img/${order.product_image}`}
+                                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${order.product_image}`}
                                         alt={order.product_name}
                                         className="w-full md:w-48 h-48 object-cover rounded-lg mb-4 md:mb-0 md:mr-4"
                                     />

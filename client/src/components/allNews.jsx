@@ -45,7 +45,7 @@ function AllNews() {
             const token = localStorage.getItem("token");
 
             try {
-                const response = await axios.get("http://localhost:8080/api/news", {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/news`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -73,7 +73,7 @@ function AllNews() {
 
         try {
             const response = await axios.delete(
-                `http://localhost:8080/api/delete-news/${id}`,
+                `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-news/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -115,7 +115,7 @@ function AllNews() {
             }
 
             const response = await axios.put(
-                `http://localhost:8080/api/edit-news/${id}`,
+                `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-news/${id}`,
                 formData,
                 {
                     headers: {
@@ -215,7 +215,7 @@ function AllNews() {
                                     </h3>
                                     <div className="mb-2 w-[150px] h-[150px]">
                                         <img
-                                            src={`http://localhost:8080/uploaded_img/${newsItem.image}`}
+                                            src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${newsItem.image}`}
                                             alt={newsItem.title}
                                             className="w-full h-full object-cover rounded mb-2"
                                         />
