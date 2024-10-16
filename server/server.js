@@ -3458,6 +3458,7 @@ app.listen(port, '0.0.0.0', async () => {
     const res = await pool.query('SELECT * FROM users WHERE administrator = TRUE LIMIT 1');
     if (res.rows.length === 0) {
       // If the admin user doesn't exist, create it
+      console.log("PASS_ADMIN:", process.env.PASS_ADMIN);
       const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Hash the passwords
       await pool.query(
         `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest)
