@@ -77,12 +77,12 @@ function Article() {
     return (
         <div className='flex flex-col items-center justify-center p-4 w-full'>
             <div className='w-full flex flex-col items-center justify-center'>
-                <div className='flex flex-col gap-3 md:flex-row w-full md:w-[80%] items-center justify-center mb-6'>
+                <div className='flex gap-3 md:flex-row w-full md:w-[80%] items-center justify-center mb-6'>
                     <button
                         className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
                         onClick={() => previousArticle(id)}
                     >
-                        {"<< Precedente"}
+                        {"Precedente"}
                     </button>
                     <button
                         className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
@@ -94,7 +94,7 @@ function Article() {
                         className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
                         onClick={() => nextArticle(id)}
                     >
-                        {"Successivo >>"}
+                        {"Successivo"}
                     </button>
                 </div>
                 <div className='w-[120px] p-2 bg-red-600 text-arial text-center font-bold text-2xl text-white rounded-lg animate-blink'>
@@ -114,7 +114,7 @@ function Article() {
                     className="w-full h-full object-fill rounded-lg"
                 />
             </div>
-            <div className='w-[90%] mt-20 mb-5 px-4 mx-auto text-lg md:text-xl text-justify'>
+            <div className='w-[100%] md:w-[90%] mt-20 mb-5 px-1 mx-auto text-lg md:text-xl text-justify'>
                 <div
                     id='content'
                     dangerouslySetInnerHTML={{ __html: article.content }}

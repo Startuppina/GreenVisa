@@ -97,7 +97,7 @@ const Dashboard = () => {
   return (
     <>
       <ScrollToTop />
-      <div className="flex flex-col lg:flex-row h-auto w-[98.5%] mx-auto my-10 font-arial text-xl m-4">
+      <div className="flex flex-col lg:flex-row h-auto w-[98.5%] mx-auto font-arial text-xl m-4">
         <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
           {messagePopUp}
         </MessagePopUp>
@@ -833,9 +833,9 @@ const Dashboard = () => {
 
         </div>
 
-        <div className={`flex flex-wrap justify-center items-center gap-4 ${window.innerWidth < 1024 ? 'block' : 'hidden'}`}>
+        <div className={`flex overflow-x-scroll p-2 h-[120px] items-center gap-4 ${window.innerWidth < 1024 ? 'block' : 'hidden'}`}>
           <button
-            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "users" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "users" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("users");
             }}
@@ -843,7 +843,7 @@ const Dashboard = () => {
             <span className="truncate">Utenti registrati</span>
           </button>
           <button
-            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "usersBuildings" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "usersBuildings" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("usersBuildings");
             }}
@@ -851,7 +851,7 @@ const Dashboard = () => {
             <span className="truncate">Edifici degli utenti</span>
           </button>
           <button
-            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "news" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "news" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("news");
             }}
@@ -860,7 +860,7 @@ const Dashboard = () => {
           </button>
 
           <button
-            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "products" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "products" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("products");
             }}
@@ -868,13 +868,13 @@ const Dashboard = () => {
             <span className="truncate">Certificazioni</span>
           </button>
           <button
-            className={`relative w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "messages" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`relative w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "messages" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("messages");
             }}
           >
             {totalMessages > 0 && (
-              <span className="absolute bottom-[40px] left-[125px] bg-red-500 text-white px-3 py-1 rounded-full">
+              <span className="absolute bottom-[30px] left-[120px] bg-red-500 text-white px-3 py-1 rounded-full">
                 {totalMessages}
               </span>
             )}
@@ -886,7 +886,7 @@ const Dashboard = () => {
           </button>
 
           <button
-            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "orders" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "orders" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("orders");
             }}
@@ -895,7 +895,7 @@ const Dashboard = () => {
           </button>
 
           <button
-            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "promocodes" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "promocodes" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("promocodes");
             }}
@@ -904,31 +904,33 @@ const Dashboard = () => {
           </button>
 
           <button
-            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "forms" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "forms" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("forms");
             }}
           >
             <span className="truncate">Aggiungi</span>
           </button>
-
-          <button
-            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "usersImplants" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+          {
+            /*
+                        <button
+            className={`w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "usersImplants" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("usersImplants");
             }}
           >
             <span className="overflow-hidden whitespace-nowrap text-ellipsis">Generatori da approvare</span>
           </button>
-
+            */
+          }
           <button
-            className={`relative w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "2ndLevelCerts" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+            className={`relative w-auto p-2 rounded-lg border-[#2d7044] border-2 ${activeSection === "2ndLevelCerts" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
             onClick={() => {
               toggleSection("2ndLevelCerts");
             }}
           >
             {totalRequests > 0 && (
-              <span className="absolute bottom-[40px] left-[125px] bg-red-500 text-white px-3 py-1 rounded-full text-xl">
+              <span className="absolute bottom-[30px] left-[-10px] bg-red-500 text-white px-3 py-1 rounded-full text-xl">
                 {totalRequests}
               </span>
             )}

@@ -324,15 +324,13 @@ const UserPage = () => {
                                 <div className="w-full bg-[#d9d9d9] p-4 rounded-xl flex-1">
                                     <h2 className="text-2xl font-bold">Informazioni personali</h2>
                                     <div className="pb-5">
-                                        <p className='flex justify-between md:justify-normal gap-2'><strong>Username: </strong> {userInfo ? userInfo.username : ''}</p>
-                                        <p className='flex justify-between md:justify-normal gap-2'><strong>Ragione sociale:</strong> {userInfo ? userInfo.company_name : ''}</p>
-                                        <p className='flex justify-between md:justify-normal gap-2'><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
-                                        <p className='flex justify-between md:justify-normal gap-2'><strong>Telefono:</strong> {userInfo ? (userInfo.phone_number ? userInfo.phone_number : <span className='text-gray-400'>Inserisci il tuo numero di telefono</span>) : ''}</p>
-                                        <p className='flex justify-between md:justify-normal gap-2'><strong>Partita IVA:</strong> {userInfo ? (userInfo.p_iva ? userInfo.p_iva : <span className='text-gray-400'>Inserisci la tua partita IVA</span>) : ''}</p>
-                                        <p className='flex justify-between md:justify-normal gap-2'><strong>Codice fiscale:</strong> {userInfo ? (userInfo.tax_code ? userInfo.tax_code : <span className='text-gray-400'>Inserisci il tuo codice fiscale</span>) : ''}</p>
-                                        <p className='flex justify-between md:justify-normal gap-2'><strong>Sede legale:</strong> {userInfo ? (userInfo.legal_headquarter ? userInfo.legal_headquarter : <span className='text-gray-400'>Inserisci la tua sede legale</span>) : ''}</p>
-
-
+                                        <p className='flex  md:justify-normal gap-2'><strong>Username: </strong> {userInfo ? userInfo.username : ''}</p>
+                                        <p className='flex  md:justify-normal gap-2'><strong>Ragione sociale:</strong> {userInfo ? userInfo.company_name : ''}</p>
+                                        <p className='flex  md:justify-normal gap-2'><strong>Email:</strong> {userInfo ? userInfo.email : ''}</p>
+                                        <p className='flex  md:justify-normal gap-2'><strong>Telefono:</strong> {userInfo ? (userInfo.phone_number ? userInfo.phone_number : <span className='text-gray-400'>Inserisci il tuo numero di telefono</span>) : ''}</p>
+                                        <p className='flex  md:justify-normal gap-2'><strong>Partita IVA:</strong> {userInfo ? (userInfo.p_iva ? userInfo.p_iva : <span className='text-gray-400'>Inserisci la tua partita IVA</span>) : ''}</p>
+                                        <p className='flex  md:justify-normal gap-2'><strong>Codice fiscale:</strong> {userInfo ? (userInfo.tax_code ? userInfo.tax_code : <span className='text-gray-400'>Inserisci il tuo codice fiscale</span>) : ''}</p>
+                                        <p className='flex  md:justify-normal gap-2'><strong>Sede legale:</strong> {userInfo ? (userInfo.legal_headquarter ? userInfo.legal_headquarter : <span className='text-gray-400'>Inserisci la tua sede legale</span>) : ''}</p>
                                     </div>
                                     <div className="flex justify-center mb-4">
                                         <button
@@ -368,7 +366,7 @@ const UserPage = () => {
                             </Link>
 
                             <div className='flex justify-center'>
-                                <button className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                                <button className="w-full bg-[#2d7044] text-white text-xl p-4 mx-2 lg:mx-14 border border-[#0056b3] rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer"
                                     onClick={() => navigate('/Certification')}
                                 >
                                     Accedi alla certificazione</button>

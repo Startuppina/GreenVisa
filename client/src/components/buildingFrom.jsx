@@ -394,7 +394,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 onChange={handleRenovationChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
-                                <option value="" disabled>Seleziona tipo di ristrutturazione</option>
+                                <option value="" disabled>Seleziona</option>
                                 {options[0].renovation.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}
@@ -407,7 +407,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 onChange={handleHeatingChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
-                                <option value="" disabled>Seleziona tipo di riscaldamento</option>
+                                <option value="" disabled>Seleziona</option>
                                 {options[0].heat_distribution.map((cat, index) => (
                                     <option key={index} value={cat}>{cat}</option>
                                 ))}

@@ -40,14 +40,16 @@ function UserOrders() {
                 ) : (
                     orders.map((order) => (
                         <div key={order.order_id} className="w-full">
-                            <div className="p-4 w-full lg:w-[400px] rounded-lg border-2 border-gray-400 z-10 flex flex-col items-center">
+                            <div className="p-4 w-full md:w-[400px] rounded-lg border-2 border-gray-400 z-10 flex flex-col items-center">
                                 <h3 className="w-full text-start text-lg font-bold mb-4">Ordine {order.order_id}</h3>
                                 <div className="flex flex-col md:flex-row text-center md:text-left items-center md:items-start mb-4">
-                                    <img
-                                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${order.product_image}`}
-                                        alt={order.product_name}
-                                        className="w-full h-32 md:w-32 md:h-32 object-cover rounded-lg mb-4 md:mb-0 md:mr-4"
-                                    />
+                                    {window.innerWidth >= 768 && (
+                                        <img
+                                            src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${order.product_image}`}
+                                            alt={order.product_name}
+                                            className="w-full h-32 md:w-32 md:h-32 object-cover rounded-lg mb-4 md:mb-0 md:mr-4"
+                                        />
+                                    )}
                                     <div>
                                         <p className="text-xl font-semibold">{order.product_name}</p>
                                         <p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p>
