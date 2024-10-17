@@ -36,6 +36,7 @@ function AllProducts() {
     useEffect(() => {
         if (currentProductToEdit && formRef.current) {
             formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+            formRef.current = null; // Resetta la ref per evitare scorrimenti anomail durante la modifica
         }
     }, [currentProductToEdit, itemToEdit]);
 
@@ -108,6 +109,8 @@ function AllProducts() {
                 setTotalProducts((prevTotalProducts) => prevTotalProducts - 1);
                 setMessagePopUp("Certificazione eliminata con successo");
                 setButtonPopup(true);
+
+                triggerRefresh();
 
             }
         } catch (error) {
