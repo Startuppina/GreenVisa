@@ -24,14 +24,16 @@ const TextEditor = ({ value, onChange, placeholder }) => {
   };
 
   return (
-    <JoditEditor
-      ref={editor}
-      value={content}
-      config={config}
-      tabIndex={1} // tabIndex of textarea
-      onBlur={handleChange} // update content when editor loses focus
-      onChange={handleChange} // update content on change
-    />
+    <div className="w-full md:w-[50%]">
+      <JoditEditor
+        ref={editor}
+        value={content}
+        config={config}
+        tabIndex={1} // tabIndex of textarea
+        onBlur={handleChange} // update content when editor loses focus
+        onChange={handleChange} // update content on change
+      />
+    </div>
   );
 };
 

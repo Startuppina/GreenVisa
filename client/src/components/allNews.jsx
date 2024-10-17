@@ -35,10 +35,12 @@ function AllNews() {
 
     const formRef = useRef(null);
     useEffect(() => {
-        if (currentNewsToEdit && formRef.current) {
+        if (currentNewsToEdit && formRef.current && itemToEdit) {
             formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+            formRef.current = null; // Resetta la ref per evitare scorrimenti anomail durante la modifica
         }
-    }, [currentNewsToEdit, itemToEdit]);;
+    }, [currentNewsToEdit, itemToEdit]);
+
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -81,10 +83,13 @@ function AllNews() {
                 }
             );
             if (response.status === 200) {
-                setNews((prevNews) => prevNews.filter((news) => news.id !== id));
+                const updatedNews = news.filter((news) => news.id !== id);
+                setNews(updatedNews);
                 setTotalNews((prevTotalNews) => prevTotalNews - 1);
                 setMessagePopUp("Notizia eliminata con successo");
                 setButtonPopup(true);
+
+                triggerRefresh();
             }
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
@@ -221,9 +226,9 @@ function AllNews() {
                                         />
                                     </div>
                                 </div>
-                                <div className="mb-2">
+                                <div className="mb-2 w-full h-[40vh] overflow-y-auto">
                                     <div
-                                        className="prose lg:prose-xl prose-h1:text-3xl prose-h2:text-2xl prose-p:text-lg prose-ul:pl-5 prose-ul:list-disc w-full mx-auto text-black h-[30vh] overflow-y-auto"
+                                        id="content"
                                         dangerouslySetInnerHTML={{ __html: newsItem.content }}
                                     ></div>
                                 </div>
@@ -288,7 +293,16 @@ function AllNews() {
                                         </div>
                                         <label className="flex flex-col w-full z-10">
                                             <span className="block mb-2">Contenuto:</span>
-                                            <TextEditor value={itemToEdit.content || ""} onChange={handleQuillChange} />
+                                            <div className='flex flex-col md:flex-row md:gap-3 justify-start'>
+                                                <TextEditor value={itemToEdit.content || ""} onChange={handleQuillChange} />
+                                                <div className='w-full md:w-[50%] mb-5 px-1 mx-auto text-lg md:text-xl text-justify bg-white rounded-lg'>
+                                                    <div
+                                                        id='content'
+                                                        className="border p-4"
+                                                        dangerouslySetInnerHTML={{ __html: itemToEdit.content || "" }}
+                                                    ></div>
+                                                </div>
+                                            </div>
                                         </label>
                                         <div className="flex justify-center gap-3">
                                             <button

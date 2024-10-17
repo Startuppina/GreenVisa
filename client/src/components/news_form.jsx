@@ -125,7 +125,16 @@ const NewsForm = () => {
                 </div>
                 {<label className="flex flex-col w-full z-10">
                     <span className="block mb-2">Contenuto:</span>
-                    <TextEditor theme="snow" value={content} onChange={handleContentChange} />
+                    <div className='flex flex-col md:flex-row md:gap-3 justify-start'>
+                        <TextEditor theme="snow" value={content} onChange={handleContentChange} />
+                        <div className='w-full md:w-[50%] mb-5 px-1 mx-auto text-lg md:text-xl text-justify bg-white'>
+                            <div
+                                id='content'
+                                className='p-4'
+                                dangerouslySetInnerHTML={{ __html: content }}
+                            ></div>
+                        </div>
+                    </div>
                 </label>}
                 <div className='flex justify-center'>
                     {isLoading ? (
