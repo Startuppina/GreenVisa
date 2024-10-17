@@ -3,6 +3,7 @@ import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import ScrollToTop from "./components/scrollToTop";
 
 const CertificationPage = () => {
 
@@ -39,10 +40,12 @@ const CertificationPage = () => {
 
     return (
         <>
+            <ScrollToTop />
             <Navbar />
             <div className="font-arial text-xl mt-10 h-screen">
                 <h1 className="text-center font-bold text-3xl">Certificazione</h1>
                 <p className="text-center">Qui puoi scaricare la tua certificazione</p>
+                <p className="text-center">Pagina di test</p>
                 <div className="flex justify-center">
                     <button onClick={() => {
                         setTimeout(() => {

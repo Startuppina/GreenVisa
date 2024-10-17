@@ -81,7 +81,7 @@ const authenticateJWT = (req, res, next) => {
           return res.status(401).json({ msg: "Sessione scaduta, rieffettua il login per continuare" });
         }
 
-        return res.sendStatus(403); // Non valid token or expired
+        //return res.sendStatus(403); // Non valid token or expired
       }
 
       req.user = user;
@@ -650,7 +650,7 @@ function sendEmail({ recipient_email, OTP }) {
         <body>
             <div class="container">
                 <div class="logo">
-                    <img src="http://localhost:8080/logo2.png" alt="Green Visa">
+                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa">
                 </div>
                 <div class="content">
                     <h1>Green Visa</h1>
@@ -760,7 +760,7 @@ function sendEmailMessage({ recipient_email }) {
         <body>
             <div class="container">
                 <div class="logo">
-                    <img src="http://localhost:8080/logo2.png" alt="Green Visa">
+                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa">
                 </div>
                 <div class="content">
                     <h1>Green Visa</h1>
@@ -868,7 +868,7 @@ function sendEmailResponse({ recipient_email, email_title, email_content, receiv
         <body>
             <div class="container">
                 <div class="logo">
-                    <img src="http://localhost:8080/logo2.png" alt="Green Visa">
+                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa">
                 </div>
                 <div class="content">
                     <h1>${email_title}</h1>
