@@ -154,10 +154,10 @@ function Plants() {
                                     <strong>Tipo di generatore:</strong> {plant.generator_type}
                                 </div>
                                 <div className="">
-                                    <strong>Descrizione tipologia:</strong> {plant.generator_description}
+                                    <strong>Descrizione tipologia:</strong> {plant.generator_description ? plant.generator_description : 'N/D'}
                                 </div>
                                 <div className="">
-                                    <strong>Punteggio assegnato alla tipologia di generatore (definito nella descrizione):</strong> {plant.generator_assigned_score}
+                                    <strong>Punteggio assegnato alla tipologia di generatore (definito nella descrizione):</strong> {plant.generator_assigned_score > 0 ? plant.generator_assigned_score : 'N/D'}
                                 </div>
                                 <div className="">
                                     <strong>Elemento consumato dal generatore:</strong> {plant.fuel_type}

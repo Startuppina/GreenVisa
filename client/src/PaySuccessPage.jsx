@@ -53,7 +53,7 @@ function PaySuccessPage() {
     const codeID = localStorage.getItem('codeId');
     console.log("codeID:", codeID);
 
-    if (codeID !== undefined) {
+    if (codeID) {
       setCode(codeID);
     } else {
       setCode(null);

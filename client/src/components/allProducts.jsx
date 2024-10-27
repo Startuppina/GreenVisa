@@ -328,6 +328,7 @@ function AllProducts() {
                                                     className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
                                                 />
                                             </label>
+                                            {/*  
                                             <label className="flex flex-col w-full">
                                                 <span className="block mb-2">Prezzo</span>
                                                 <input
@@ -338,6 +339,7 @@ function AllProducts() {
                                                     className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5 h-[53px] z-10"
                                                 />
                                             </label>
+                                            */}
                                             <label className="flex flex-col w-full">
                                                 <span className="block mb-2">Immagine</span>
                                                 <input

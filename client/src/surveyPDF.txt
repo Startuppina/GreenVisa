@@ -1,0 +1,119 @@
+  function generatePDF(surveyData) {
+    return () => {
+      const pdf = new jsPDF();
+      const tableData = [];
+
+      // Aggiungi immagine al PDF
+      const image = new Image();
+      image.src = '/img/logo.png';
+      const logoX = (pdf.internal.pageSize.getWidth() - 32) / 2;
+      pdf.addImage(image, 'JPEG', logoX, 10, 32, 32);
+
+      // Impostazioni del titolo del PDF
+      pdf.setFont('Helvetica', 'bold');
+      pdf.setFontSize(20); // Aumenta la dimensione del font per il titolo
+      pdf.setTextColor('#374151');
+      pdf.text('Report Questionario Certificazione Trasporti', pdf.internal.pageSize.getWidth() / 2, 60, { align: 'center' });
+
+      // Aggiungi sottotitolo informazioni utente
+      pdf.setFontSize(16); // Dimensione del font per il sottotitolo
+      pdf.text('Informazioni Utente', pdf.internal.pageSize.getWidth() / 2, 80, { align: 'center' });
+
+      pdf.setFont('Helvetica', 'normal');
+      const userInfoYStart = 90; // Offset per l'inizio delle informazioni utente
+      const userInfoYSpacing = 8; // Spaziatura verticale tra le informazioni utente
+      const userInfoLines = [
+        `Utente: ${userData.username || 'N/D'}`,
+        `Azienda: ${userData.company_name || 'N/D'}`,
+        `Email: ${userData.email || 'N/D'}`,
+        `Telefono: ${userData.phone_number || 'N/D'}`,
+        `Partita IVA: ${userData.p_iva || 'N/D'}`,
+        `Codice Fiscale: ${userData.tax_code || 'N/D'}`,
+        `Sede Legale: ${userData.legal_headquarter || 'N/D'}`,
+      ];
+
+      userInfoLines.forEach((line, index) => {
+        pdf.text(line, pdf.internal.pageSize.getWidth() / 2, userInfoYStart + (index * userInfoYSpacing), { align: 'center' });
+      });
+
+      // Funzione per aggiungere righe alla tabella
+      const addRowToTable = (question, answer) => {
+        tableData.push([question, answer]);
+      };
+
+      // Elaborazione delle domande e delle risposte
+      json.pages.forEach(page => {
+        page.elements.forEach(element => {
+          const questionTitle = element.title || '';
+          const answer = surveyData[element.name]; // Supponendo che surveyData contenga le risposte
+
+          switch (element.type) {
+            case 'radiogroup':
+              const selectedChoice = element.choices.find(choice => choice.value === answer);
+              addRowToTable(questionTitle, selectedChoice ? selectedChoice.text : 'Nessuna risposta');
+              break;
+
+            case 'multipletext':
+              const multipleTextAnswers = surveyData[element.name] || {};
+              if (element.items) {
+                element.items.forEach(item => {
+                  const itemAnswer = multipleTextAnswers[item.name] || 'Nessuna risposta';
+                  addRowToTable(`${questionTitle} - ${item.title}`, itemAnswer);
+                });
+              } else {
+                addRowToTable(questionTitle, 'Nessuna risposta');
+              }
+              break;
+
+            case 'matrixdynamic':
+              const matrixAnswers = surveyData[element.name] || [];
+              matrixAnswers.forEach((row, index) => {
+                const rowText = `Riga ${index + 1}`;
+                Object.keys(row).forEach(column => {
+                  const columnTitle = element.columns.find(col => col.name === column)?.title || column;
+                  const cellAnswer = row[column] || 'Nessuna risposta';
+
+                  // Se la colonna è di tipo dropdown, ottieni il testo corrispondente
+                  if (element.columns.find(col => col.name === column).cellType === 'dropdown') {
+                    const choice = element.columns.find(col => col.name === column).choices.find(choice => choice.value === cellAnswer);
+                    const answerText = choice ? choice.text : 'Nessuna risposta';
+                    addRowToTable(`${questionTitle} (${rowText}) - ${columnTitle}`, answerText);
+                  } else {
+                    addRowToTable(`${questionTitle} (${rowText}) - ${columnTitle}`, cellAnswer);
+                  }
+                });
+              });
+              break;
+
+            case 'dropdown':
+              const dropdownChoice = element.choices.find(choice => choice.value === answer);
+              addRowToTable(questionTitle, dropdownChoice ? dropdownChoice.text : 'Nessuna risposta');
+              break;
+
+            default:
+              console.warn(`Tipo di domanda non gestito: ${element.type}`);
+          }
+        });
+      });
+
+      // Aggiungi una verifica che pdf.autoTable.previous esista, altrimenti usa un valore predefinito per startY
+      const startY = pdf.autoTable.previous ? pdf.autoTable.previous.finalY + 15 : 105; // Controlla se c'è un valore precedente, altrimenti parti da 105
+      pdf.autoTable({
+        head: [['Domanda', 'Risposta']],
+        body: tableData,
+        startY: startY, // Utilizza un valore di backup se pdf.autoTable.previous è indefinito
+        styles: { fontSize: 11, font: 'Helvetica', cellPadding: 5 }, // Aumenta il padding delle celle per maggiore leggibilità
+        headStyles: { fillColor: [45, 112, 68], textColor: [255, 255, 255] }, // Colore dell'intestazione
+      });
+
+      // Salvataggio del PDF
+      pdf.save("survey.pdf");
+    };
+  }
+
+
+    survey.addNavigationItem({
+      id: "pdf-export",
+      title: "Salva come PDF",
+      action: generatePDF(survey.data), // Call the savePdf function
+    });

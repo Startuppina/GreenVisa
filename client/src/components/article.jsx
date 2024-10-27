@@ -77,26 +77,27 @@ function Article() {
     return (
         <div className='flex flex-col items-center justify-center p-4 w-full'>
             <div className='w-full flex flex-col items-center justify-center'>
-                <div className='flex gap-3 md:flex-row w-full md:w-[80%] items-center justify-center mb-6'>
+                <div className='flex gap-3 flex-row w-full md:w-[80%] items-center justify-center mb-6'>
                     <button
-                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
+                        className='text-center bg-[#2d7044] border-2 border-[#2d7044] text-white text-xl px-6 py-3 mx-2 w-auto rounded-lg hover:bg-white hover:text-[#2d7044] transition-colors duration-300 ease-in-out'
                         onClick={() => previousArticle(id)}
                     >
-                        {"Precedente"}
+                        {"←"}
                     </button>
                     <button
-                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
+                        className='text-center bg-[#2d7044] border-2 border-[#2d7044] text-white text-xl px-6 py-3 mx-2 w-auto rounded-lg hover:bg-white hover:text-[#2d7044] transition-colors duration-300 ease-in-out'
                         onClick={() => navigate('/News')}
                     >
-                        Torna alle News
+                        News
                     </button>
                     <button
-                        className='text-center text-xl px-6 py-3 mx-2 w-[200px] md:w-[250px] hover:text-[#2d7044] transition-all duration-300 ease-in-out'
+                        className='text-center bg-[#2d7044] border-2 border-[#2d7044] text-white text-xl px-6 py-3 mx-2 w-auto rounded-lg hover:bg-white hover:text-[#2d7044] transition-colors duration-300 ease-in-out'
                         onClick={() => nextArticle(id)}
                     >
-                        {"Successivo"}
+                        {"→"}
                     </button>
                 </div>
+
                 <div className='w-[120px] p-2 bg-red-600 text-arial text-center font-bold text-2xl text-white rounded-lg animate-blink'>
                     NEWS
                 </div>

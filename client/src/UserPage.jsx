@@ -263,6 +263,31 @@ const UserPage = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    //Chiamata che verifica se l'utente ha completato un questionario e ha calcolto le emissioni di CO2 per almeno un edificio
+    const [isUserCertificable, setIsUserCertifiable] = useState(false);
+    useEffect(() => {
+        const fetchIsUserCertifiable = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/is-user-certificable`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.status === 200) {
+                    setIsUserCertifiable(response.data.isCertificable);
+                    console.log(response.data.isCertificable);
+                }
+            } catch (error) {
+                console.log('Errore nella verifa della certificabilità dell\'utente:');
+                setMessagePopup('Errore');
+                setButtonPopup(true);
+            }
+        }
+
+        fetchIsUserCertifiable();
+    }, []);
+
     return (
         <div className="flex flex-col min-h-screen">
             <ScrollToTop />
@@ -365,12 +390,15 @@ const UserPage = () => {
                                 </div>
                             </Link>
 
-                            <div className='flex justify-center'>
-                                <button className="w-full bg-[#2d7044] text-white text-xl p-4 mx-2 lg:mx-14 border border-[#0056b3] rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer"
-                                    onClick={() => navigate('/Certification')}
-                                >
-                                    Accedi alla certificazione</button>
-                            </div>
+                            {isUserCertificable && (
+                                <div className='flex justify-center'>
+                                    <button className="w-full bg-[#2d7044] text-white text-xl p-4 mx-2 lg:mx-14 border border-[#0056b3] rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer"
+                                        onClick={() => navigate('/Certification')}
+                                    >
+                                        Accedi alla certificazione</button>
+                                </div>
+                            )}
+
 
                             {surveyInfo.length > 0 && (
                                 <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-2 lg:mx-14 my-4 border border-gray-300 rounded-xl">
