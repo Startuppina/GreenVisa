@@ -33,7 +33,9 @@
     "react-slick": "^0.30.2",
     "react-slideshow-image": "^4.3.1",
     "slick-carousel": "^1.8.1",
-    "survey-react-ui": "^1.11.13"
+    "survey-core": "^1.12.7",
+    "survey-pdf": "^1.12.7",
+    "survey-react-ui": "^1.12.7"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

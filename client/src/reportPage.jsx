@@ -245,12 +245,21 @@ function ReportPage() {
                     ],
                 ];
 
-                const consumptionTableBody = building.consumptions.map((energySource) => {
-                    return [
-                        { content: energySource.energy_source, styles: { halign: 'left' } },
-                        { content: energySource.consumption ? `${energySource.consumption} ${energySource.energy_source}` : 'N/D', styles: { halign: 'left' } },
-                    ];
-                });
+                const consumptionTableBody = building.consumptions.length > 0 ? (
+                    building.consumptions.map((energySource) => {
+                        return [
+                            { content: energySource.energy_source, styles: { halign: 'left' } },
+                            { content: energySource.consumption ? `${energySource.consumption} ${energySource.energy_source}` : 'N/D', styles: { halign: 'left' } },
+                        ];
+                    })
+                ) : (
+                    [
+                        [
+                            { content: 'Nessun consumo ancora caricato', colSpan: 2, styles: { halign: 'left' } }
+                        ]
+                    ]
+                );
+
 
                 // Generazione della tabella dei consumi energetici
                 doc.autoTable({
@@ -521,7 +530,7 @@ function ReportPage() {
                                     {building.building.areaemissionco2 !== null
                                         ? (
                                             <>
-                                                {building.building.areaemissionco2} tons CO<sub>2e</sub>/m²
+                                                {building.building.areaemissionco2} tons CO<sub>2</sub>e/m²
                                             </>
                                         )
                                         : 'N/D'}
@@ -638,9 +647,9 @@ function ReportPage() {
                             </thead>
                             <tbody>
                                 {/* Itera su tutte le fonti energetiche */}
-                                {building.consumptions.map((energySource, index) => {
-                                    // Trova il consumo associato alla fonte energetica corrente
-                                    return (
+                                {building.consumptions.length > 0 ? (
+                                    building.consumptions.map((energySource, index) => (
+                                        // Trova il consumo associato alla fonte energetica corrente
                                         <tr key={index}>
                                             {/* Prima colonna: Fonte Energetica */}
                                             <td className="py-2 px-4 border-2">{energySource.energy_source}</td>
@@ -649,8 +658,12 @@ function ReportPage() {
                                                 {energySource ? `${energySource.consumption} ${getEnergyUnit(energySource.energy_source)}` : 'N/D'}
                                             </td>
                                         </tr>
-                                    );
-                                })}
+                                    ))
+                                ) : (
+                                    <tr className="p-2">
+                                        <td className="py-2 px-4 border-2" colSpan={2}>Nessun consumo ancora caricato</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

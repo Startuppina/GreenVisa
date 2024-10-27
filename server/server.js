@@ -1897,8 +1897,10 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
     const { orderData, codeID } = req.body;
     const { user_id } = req.user;
 
-    //console.log("Dati dell'ordine:", orderData);
-    //console.log("User ID:", user_id);
+    console.log("Dati dell'ordine:", orderData);
+    console.log("Codice ID:", codeID);
+    console.log("User ID:", user_id);
+
 
     for (const id of orderData) {
       // Recover the quantity and price of the product
@@ -1916,6 +1918,14 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
       const quantity = result.rows[0].quantity;
       const price = result.rows[0].price;
       const order_date = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+      const queryCheck = "SELECT * FROM orders WHERE user_id = $1 AND product_id = $2";
+      const existingOrder = await pool.query(queryCheck, [user_id, id]);
+
+      if (existingOrder.rows.length > 0) {
+        return res.status(400).json({ msg: `Ordine già esistente per il prodotto ID ${id}.` });
+      }
+
 
       const query2 = "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)";
       const values2 = [quantity, price, user_id, id, codeID, order_date];
@@ -3413,6 +3423,43 @@ app.get("/api/fetch-results/:buildingID", authenticateJWT, async (req, res) => {
     res.status(500).json({ msg: 'Errore del server' });
   }
 })
+
+app.get("/api/is-user-certificable", authenticateJWT, async (req, res) => {
+
+  const { user_id } = req.user;
+
+  //check if user has completed a questionnaire
+  let questionnaireCompleted = false;
+  try {
+    const query = "SELECT completed FROM survey_responses WHERE user_id = $1;";
+    const values = [user_id];
+    const result = await pool.query(query, values);
+    if (result.rows.length > 0) {
+      questionnaireCompleted = result.rows[0].completed;
+    }
+
+    //check if user has at least one building with CO2 emissions calculated
+    let buildingsWithResults = false;
+
+    const query2 = "SELECT COUNT(*) FROM buildings WHERE emissionMark IS NOT NULL AND emissionCO2 IS NOT NULL AND areaEmissionCO2 IS NOT NULL AND results_visible = TRUE AND user_id = $1;";
+    const values2 = [user_id];
+    const result2 = await pool.query(query2, values2);
+    if (result2.rows[0].count > 0) {
+      buildingsWithResults = true;
+    }
+
+    if (questionnaireCompleted && buildingsWithResults) {
+      return res.status(200).json({ isCertificable: true });
+    } else {
+      return res.status(200).json({ isCertificable: false });
+    }
+
+  } catch (error) {
+    console.error("Errore nel fetch dei dati", error.message);
+    res.status(500).json({ msg: 'Errore del server' });
+  }
+})
+
 
 function emailCheck(email) {
   const re =

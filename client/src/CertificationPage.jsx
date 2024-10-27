@@ -1,11 +1,16 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import ScrollToTop from "./components/scrollToTop";
+import axios from "axios";
+import MessagePopUp from "./components/messagePopUp";
 
 const CertificationPage = () => {
+    const [userInfo, setUserInfo] = useState({});
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState("");
 
     const generatePDF = () => {
         const pdf = new jsPDF('l', 'mm', 'a4'); // 'l' per landscape, formato A4
@@ -38,10 +43,36 @@ const CertificationPage = () => {
         pdf.save('Certification.pdf'); // Salva il PDF
     };
 
+    useEffect(() => {
+        const fetchInfo = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (response.status === 200) {
+                    setUserInfo(response.data);
+
+                }
+
+            } catch (error) {
+                console.error("Error fetching user info:", error);
+                setMessagePopup(error.response?.data?.msg || error.message);
+                setButtonPopup(true);
+            }
+        };
+
+        fetchInfo();
+    }, []);
+
+
     return (
         <>
             <ScrollToTop />
             <Navbar />
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
             <div className="font-arial text-xl mt-10 h-screen">
                 <h1 className="text-center font-bold text-3xl">Certificazione</h1>
                 <p className="text-center">Qui puoi scaricare la tua certificazione</p>
@@ -69,7 +100,7 @@ const CertificationPage = () => {
 
                         {/* Posizionamento del nome dell'azienda (bloccato sull'immagine) */}
                         <div className="absolute top-[67%] md:top-[66%] lg:top-[67%] left-[50%] transform -translate-x-1/2 text-xl sm:text-2xl lg:text-3xl font-bold">
-                            Nome Azienda
+                            {userInfo.company_name}
                         </div>
                     </div>
                 </div>
