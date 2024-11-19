@@ -2127,6 +2127,22 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
+    if (isNaN(area)) {
+      return res.status(400).json({ msg: "Il campo 'area' deve essere un numero." });
+    }
+
+    if (isNaN(lighting)) {
+      return res.status(400).json({ msg: "Il campo 'illuminazione' deve essere un numero." });
+    }
+
+    if (isNaN(led)) {
+      return res.status(400).json({ msg: "Il campo 'LED' deve essere un numero." });
+    }
+
+    if (isNaN(gasLamp)) {
+      return res.status(400).json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
+    }
+
     const userId = req.user.user_id;
 
     if (!userId) {
@@ -2222,6 +2238,22 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
 
     if (!id || !name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
+    }
+
+    if (isNaN(area)) {
+      return res.status(400).json({ msg: "Il campo 'area' deve essere un numero." });
+    }
+
+    if (isNaN(lighting)) {
+      return res.status(400).json({ msg: "Il campo 'illuminazione' deve essere un numero." });
+    }
+
+    if (isNaN(led)) {
+      return res.status(400).json({ msg: "Il campo 'LED' deve essere un numero." });
+    }
+
+    if (isNaN(gasLamp)) {
+      return res.status(400).json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
     }
 
     const userId = req.user.user_id;
@@ -2504,6 +2536,10 @@ app.post("/api/:buildingID/add-consumption", authenticateJWT, async (req, res) =
       return res.status(400).json({ msg: "Hai già aggiunto questo consumo" });
     }
 
+    if (isNaN(consumption)) {
+      return res.status(400).json({ msg: "Il consumo deve essere un valore numerico" });
+    }
+
     const values = [user_id, buildingID, energy_source, consumption];
     await pool.query(`
         INSERT INTO user_consumptions (user_id, building_id, energy_source, consumption)
@@ -2539,6 +2575,15 @@ app.put("/api/:buildingID/modify-consumption/:consumptionId", authenticateJWT, a
     const { buildingID } = req.params;
     const { consumptionId } = req.params;
     const { energy_source, consumption } = req.body;
+
+
+    if (!energy_source || !consumption) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi per ogni consumo" });
+    }
+
+    if (isNaN(consumption)) {
+      return res.status(400).json({ msg: "Il consumo deve essere un valore numerico" });
+    }
 
     await pool.query(`UPDATE user_consumptions SET energy_source = $1, consumption = $2 WHERE id = $3 AND building_id = $4 AND user_id = $5`, [energy_source, consumption, consumptionId, buildingID, user_id]);
     res.status(200).json({ msg: "Consumo modificato con successo" });
