@@ -28,7 +28,8 @@ export default function Buildings() {
         if (showBuildingForm && formRef.current) {
             formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-    })
+    }, [showBuildingForm]);
+
 
     useEffect(() => {
         const fetchBuildings = async () => {

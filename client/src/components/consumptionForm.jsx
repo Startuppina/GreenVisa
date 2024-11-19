@@ -64,7 +64,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         setIsLoadingElectricity(true);
         const consumption = {
             energy_source: "Elettricità",
-            consumption: electricityConsumption
+            consumption: parseFloat(electricityConsumption)
         };
 
         try {
@@ -106,7 +106,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         const consumption = {
             energy_source: "Elettricità",
-            consumption: electricityConsumption
+            consumption: parseFloat(electricityConsumption)
         };
 
         try {
@@ -152,7 +152,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         const consumption = {
             energy_source: selectedEnergy,
-            consumption: otherConsumption,
+            consumption: parseFloat(otherConsumption),
         };
 
         try {
@@ -202,7 +202,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         const consumption = {
             energy_source: selectedEnergy,
-            consumption: otherConsumption,
+            consumption: parseFloat(otherConsumption),
         };
 
         try {
