@@ -569,7 +569,7 @@ export async function EmissionsCalculator(buildingID) {
 
     //aggiornamento dell'edificio per aggiungere il voto finale e le emissioni calcolate
     try {
-        const response = await axios.put(`http://localhost:8080/api/insert-results/${buildingID}`, { finalVote, totalCO2Emissions, areaCO2Emissions }, {
+        const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/insert-results/${buildingID}`, { finalVote, totalCO2Emissions, areaCO2Emissions }, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
