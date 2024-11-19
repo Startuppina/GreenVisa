@@ -50,7 +50,7 @@ export async function EmissionsCalculator(buildingID) {
     console.log("Building ID:", buildingID);
 
     try {
-        const response = await axios.get(`http://localhost:8080/api/${buildingID}/fetch-emissions-data`, {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-emissions-data`, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
