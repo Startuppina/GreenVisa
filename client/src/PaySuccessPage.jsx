@@ -12,6 +12,7 @@ function PaySuccessPage() {
   useEffect(() => {
 
     createOrder();
+
     remove_user_cart();
 
     localStorage.removeItem('productsIDs');
