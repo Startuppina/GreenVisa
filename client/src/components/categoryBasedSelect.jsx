@@ -21,8 +21,8 @@ function CategoryBasedSelect({ category, onSelectChange }) {
         ],
         "Certificazione trasporti": [
             { value: "default", label: "Scegli un'opzione" },
-            { value: "1-20", label: "1-20 veicoli" },
-            { value: "21-50", label: "21-50 veicoli" },
+            { value: "1-10", label: "1-10 veicoli" },
+            { value: "11-50", label: "11-50 veicoli" },
             { value: "51-100", label: "51-100 veicoli" },
             { value: "101-200", label: "101-200 veicoli" },
             { value: "201+", label: "201+ veicoli" }

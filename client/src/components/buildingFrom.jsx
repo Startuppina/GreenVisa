@@ -170,9 +170,9 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     setElectricityAnalyzer("");
                     setAutoLightingControlSystem("");
                     setElectricForniture("");
-                    setLighting("");
-                    setLed("");
-                    setGasLamp("");
+                    setLighting(0);
+                    setLed(0);
+                    setGasLamp(0);
                     setAddBuildingTrigger(!addBuildingTrigger);
 
                     setMessagePopup("edificio aggiunto con successo");

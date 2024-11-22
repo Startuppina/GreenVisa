@@ -1908,7 +1908,7 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
       const values = [user_id, id];
       const result = await pool.query(query, values);
 
-      //console.log("Risultato query:", result.rows);
+      console.log("Risultato query:", result.rows);
 
       // Check if the product is in the cart
       if (result.rows.length === 0) {
@@ -1922,16 +1922,16 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
       const queryCheck = "SELECT * FROM orders WHERE user_id = $1 AND product_id = $2";
       const existingOrder = await pool.query(queryCheck, [user_id, id]);
 
-      if (existingOrder.rows.length > 0) {
+      /*if (existingOrder.rows.length > 0) {
         return res.status(400).json({ msg: `Ordine già esistente per il prodotto ID ${id}.` });
-      }
+      }*/
 
 
       const query2 = "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)";
       const values2 = [quantity, price, user_id, id, codeID, order_date];
       await pool.query(query2, values2);
 
-      //console.log(`Ordine creato per certificazione ID ${id}`);
+      console.log(`Ordine creato per certificazione ID ${id}`);
     }
 
     res.status(201).json({ msg: "Ordine creato con successo." });
@@ -3012,7 +3012,7 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
 
-    const rows = await pool.query(`
+    /*const rows = await pool.query(`
       SELECT 
           o.product_id AS product_id,
           p.category AS product_category,
@@ -3026,6 +3026,22 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
           survey_responses sr ON sr.certification_id = o.product_id
       WHERE 
           o.user_id = $1;
+    `, [user_id]);*/
+
+    const rows = await pool.query(`
+     SELECT DISTINCT ON (p.category)
+        o.product_id AS product_id,
+        p.category AS product_category,
+        sr.total_score AS total_score,
+        sr.completed AS completed
+    FROM 
+        orders o
+    JOIN 
+        products p ON o.product_id = p.id
+    LEFT JOIN 
+        survey_responses sr ON sr.certification_id = o.product_id
+    WHERE 
+        o.user_id = $1
     `, [user_id]);
 
     res.status(200).json({ surveyInfo: rows.rows });
@@ -3503,6 +3519,25 @@ app.get("/api/is-user-certificable", authenticateJWT, async (req, res) => {
     console.error("Errore nel fetch dei dati", error.message);
     res.status(500).json({ msg: 'Errore del server' });
   }
+})
+
+app.get("/api/fetch-all-user-quantity", authenticateJWT, async (req, res) => {
+
+  const { user_id } = req.user;
+
+  try {
+    const query = "SELECT SUM(quantity) FROM orders WHERE user_id = $1;";
+    const values = [user_id];
+    const result = await pool.query(query, values);
+    console.log("Quantità totali", result.rows[0].sum);
+    if (result.rows.length > 0) {
+      return res.status(200).json({ quantity: result.rows[0].sum });
+    }
+  } catch (error) {
+    console.error("Errore nel fetch dei dati", error.message);
+    res.status(500).json({ msg: 'Errore del server' });
+  }
+
 })
 
 
