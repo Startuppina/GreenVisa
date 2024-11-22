@@ -381,14 +381,16 @@ const UserPage = () => {
 
                             )}
 
-                            <Link to="/buildings">
-                                <div className="bg-[#2d7044] text-white text-xl p-4 mx-2 lg:mx-14 my-4 border border-[#0056b3] rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer">
-                                    <h1 className="text-2xl font-bold text-center">
-                                        I tuoi edifici
-                                    </h1>
-                                    <p className="text-center">Accedi</p>
-                                </div>
-                            </Link>
+                            {surveyInfo.length > 0 && (
+                                <Link to="/buildings">
+                                    <div className="bg-[#2d7044] text-white text-xl p-4 mx-2 lg:mx-14 my-4 border border-[#0056b3] rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer">
+                                        <h1 className="text-2xl font-bold text-center">
+                                            I tuoi edifici
+                                        </h1>
+                                        <p className="text-center">Accedi</p>
+                                    </div>
+                                </Link>
+                            )}
 
                             {isUserCertificable && (
                                 <div className='flex justify-center'>

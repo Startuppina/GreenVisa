@@ -16,6 +16,7 @@ export default function Buildings() {
     const [buildingToDelete, setBuildingToDelete] = useState(null);
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
+    const [totalQuantity, setTotalQuantity] = useState(0);
 
     const { addBuildingTrigger, setAddBuildingTrigger } = useRecoveryContext();
 
@@ -51,7 +52,29 @@ export default function Buildings() {
                 console.log(error);
             }
         };
+
+        const fetchUserTotalQuantity = async () => {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-all-user-quantity`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+
+                    }
+                });
+                if (response.status === 200) {
+                    setTotalQuantity(response.data.quantity);
+                    console.log("totale: ", response.data.quantity);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+
         fetchBuildings();
+        fetchUserTotalQuantity();
+
     }, [addBuildingTrigger]);
 
     const deleteBuilding = async () => {
@@ -96,6 +119,7 @@ export default function Buildings() {
             <Navbar />
             <main className="text-arial text-xl">
                 <h1 className="text-3xl font-bold text-center">I TUOI EDIFICI</h1>
+                <p className="text-center text-xl text-red-500">ATTENZIONE: il numero di edifici che puoi inserire è limitato al numero di volte in cui hai aquistato le varie certificazioni GREEN VISA </p>
                 {buildings.length > 0 && (
                     <button className="w-[200px] bg-[#2d7044] p-2 text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] hover:bg-white transition-colors duration-300 ease-in-out m-auto flex justify-center mt-4 hover:cursor-pointer hover:text-[#2d7044]" onClick={() => navigate(`/report`)}>Visualizza il report</button>
                 )}
@@ -168,26 +192,33 @@ export default function Buildings() {
                             ))}
                         </div>
                         <div className="flex flex-col items-center justify-center m-2 mt-5">
-                            <button
-                                className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                                onClick={() => setShowBuildingForm(!showBuildingForm)}
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="2"
-                                    stroke="currentColor"
-                                    className="w-6 h-6"
+                            {numBuildings < totalQuantity ? (
+                                <button
+                                    className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
+                                    onClick={() => setShowBuildingForm(!showBuildingForm)}
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M12 4.5v15m7.5-7.5h-15"
-                                    />
-                                </svg>
-                            </button>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth="2"
+                                        stroke="currentColor"
+                                        className="w-6 h-6"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M12 4.5v15m7.5-7.5h-15"
+                                        />
+                                    </svg>
+                                </button>
+                            ) : (
+                                <h1 className="text-xl font-bold text-center mb-3">
+                                    Hai raggiunto il numero massimo di edifici registrabili
+                                </h1>
+                            )}
                         </div>
+
                         {showBuildingForm && <div ref={formRef}><BuildingFrom buildingData="empty" isEdit={false} /></div>}
                     </div>
                 )

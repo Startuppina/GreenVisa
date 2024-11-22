@@ -293,10 +293,11 @@ function Carrello() {
                                             <div>
 
                                                 <div className="">
+                                                    {/*
                                                     <QuantitySelector
                                                         value={quantities[product.product_id] || 1}
                                                         onValueChange={(newQuantity) => handleQuantityChange(product.product_id, newQuantity)}
-                                                    />
+                                                    />*/}
                                                 </div>
                                             </div>
                                         </div>

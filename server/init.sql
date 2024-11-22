@@ -129,12 +129,12 @@ CREATE INDEX idx_cart_session_id ON cart(session_id);
 
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
-    quantity INTEGER NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
     price DECIMAL(10, 2) NOT NULL,
     user_id INTEGER NOT NULL,
-    product_id INTEGER NOT NULL,  -- Inizialmente product_id è NOT NULL
-    code_id INTEGER DEFAULT NULL, -- Il codice promozionale associato all'ordine --
-    order_date DATE NOT NULL,
+    product_id INTEGER DEFAULT NULL, -- Ora accetta NULL
+    code_id INTEGER DEFAULT NULL,   -- Codice promozionale (opzionale)
+    order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Ora include data e ora
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
     FOREIGN KEY (code_id) REFERENCES promocodes(id) ON DELETE SET NULL

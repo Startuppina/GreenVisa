@@ -39,8 +39,8 @@ function UserOrders() {
                     <p>{message}</p>
                 ) : (
                     orders.map((order) => (
-                        <div key={order.order_id} className="w-full">
-                            <div className="p-4 w-full md:w-[400px] rounded-lg border-2 border-gray-400 z-10 flex flex-col items-center">
+                        <div key={order.order_id} className="w-auto">
+                            <div className="p-4 w-full md:w-[400px] rounded-lg border-2 border-gray-400 z-10 flex flex-wrap items-center">
                                 <h3 className="w-full text-start text-lg font-bold mb-4">Ordine {order.order_id}</h3>
                                 <div className="flex flex-col md:flex-row text-center md:text-left items-center md:items-start mb-4">
                                     {window.innerWidth >= 768 && (

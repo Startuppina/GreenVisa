@@ -22,10 +22,10 @@ function getHotelPrice(option, price) {
 
 function getTransportPrice(option, price) {
     switch (option) {
-        case "1-20":
+        case "1-10":
             //increase price depending by case
             return price;
-        case "21-50":
+        case "11-50":
             //return price * 1.4;
             price = 0.5;
             return price;

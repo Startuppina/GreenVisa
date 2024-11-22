@@ -102,13 +102,18 @@ function ProductDetails() {
 
     return (
         <>
+            <div className="w-full h-auto md:p-8 text-arial text-xl text-black text-center flex flex-col gap-5 items-center">
+                <h1 className="text-2xl font-bold">NOTA BENE</h1>
+                <p className="p-4 w-full lg:w-[40%] text-justify">All'aquisto di una certificazione potrai registrare un solo edificio. Se desideri registrare più edifici l'aquisto dovrà essere ripetuto.</p>
+            </div>
             <div className="w-full h-auto flex flex-col lg:flex-row items-center justify-center mx-auto p-4 lg:p-8 gap-6">
                 <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                     {messagePopUp}
                 </MessagePopUp>
 
+
                 {/* Sezione immagine prodotto */}
-                <div className="w-full max-w-xs lg:max-w-md h-[250px] sm:h-[300px] lg:h-[400px] overflow-hidden">
+                <div className="w-full max-w-lg lg:max-w-xl h-[250px] sm:h-[300px] lg:h-[400px] overflow-hidden">
                     <img
                         src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${product.image}`}
                         alt={product.name}
@@ -130,10 +135,10 @@ function ProductDetails() {
                     />
 
                     <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4 mt-4">
-                        <QuantitySelector
+                        {/*<QuantitySelector
                             onValueChange={handleQuantityChange}
                             value={quantity}
-                        />
+                        />*/}
                         <button
                             className="font-arial font-semibold text-lg sm:text-xl w-auto px-4 py-2 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                             onClick={handleCartInsertion}
@@ -150,7 +155,6 @@ function ProductDetails() {
                     </div>
                 </div>
             </div>
-
             <div className="w-full h-auto md:p-8 text-arial text-xl text-black text-center flex flex-col gap-5 items-center">
                 <h1 className="text-2xl font-bold">Info</h1>
                 <p className="p-4 w-full lg:w-[40%] text-justify">Dopo l’acquisto riceverai sulla tua mail un link univoco e privato che ti darà accesso al questionario che ci consentirà di calcolare in tempo reale le emissioni di CO2 della tua struttura/azienda.</p>
