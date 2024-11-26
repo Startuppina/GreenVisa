@@ -104,7 +104,7 @@ function ProductDetails() {
         <>
             <div className="w-full h-auto md:p-8 text-arial text-xl text-black text-center flex flex-col gap-5 items-center">
                 <h1 className="text-2xl font-bold">NOTA BENE</h1>
-                <p className="p-4 w-full lg:w-[40%] text-justify">All'aquisto di una certificazione potrai registrare un solo edificio. Se desideri registrare più edifici l'aquisto dovrà essere ripetuto.</p>
+                <p className="p-4 w-full lg:w-[40%] text-justify">All'aquisto di una certificazione potrai registrare un solo edificio. Se desideri registrare più edifici l'acquisto dovrà essere ripetuto.</p>
             </div>
             <div className="w-full h-auto flex flex-col lg:flex-row items-center justify-center mx-auto p-4 lg:p-8 gap-6">
                 <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>

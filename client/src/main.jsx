@@ -66,7 +66,7 @@ const router = createBrowserRouter([
     element: <ProductPage />,
   },
   {
-    path: "/Carrello",
+    path: "/Cart",
     element: <CarrelloPage />,
   },
   {

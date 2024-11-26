@@ -765,7 +765,7 @@ function sendEmailMessage({ recipient_email }) {
                 <div class="content">
                     <h1>Green Visa</h1>
                     <p>Ciao,</p>
-                    <p>Grazie per aver utilizzato Green Visa. Il messagio da te inviato e' stato preso in carico. Ricevera al piu' presto una email di risposta</p>
+                    <p>Grazie per aver scelto Green Visa. Il messagio da te inviato e' stato preso in carico. Ricevera al piu' presto una email di risposta</p>
                     <p>Saluti,<br />Green Visa</p>
                 </div>
                 <div class="footer">
@@ -1667,8 +1667,8 @@ app.post("/api/create-promo-code", authenticateJWT, authenticateAdmin, async (re
     const { code, discount, start, expiration, category } = req.body;
     if (!code || !discount || !start || !expiration || !category) {
       return res.status(400).json({ msg: "Completa tutti i campi" });
-    } else if (code.length > 10) {
-      return res.status(400).json({ msg: "Il codice non deve superare i 10 caratteri" });
+    } else if (code.length > 20) {
+      return res.status(400).json({ msg: "Il codice non deve superare i 20 caratteri" });
     } else if (start > expiration) {
       return res.status(400).json({ msg: "La data di inizio non deve superare la data di fine" });
     } else if (start < Date.now()) {
@@ -1716,17 +1716,28 @@ app.get("/api/fetch-published-codes", authenticateJWT, async (req, res) => {
 })
 
 app.post("/api/publish-promo-code/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
-
   try {
     const { id } = req.params;
+
+    // Verifica se il codice è già pubblicato
+    const check = "SELECT * FROM promocodes_publishment WHERE promocode_id = $1";
+    const queryCheck = await pool.query(check, [id]);
+    if (queryCheck.rows.length > 0) {
+      return res.status(400).json({ msg: "Codice promozionale già pubblicato." });
+    }
+
+    // Inserisce il codice nella tabella
     const query = "INSERT INTO promocodes_publishment (promocode_id) VALUES ($1)";
     await pool.query(query, [id]);
+
+    // Risposta di successo
     res.status(200).json({ msg: "Certificazione pubblicata con successo" });
   } catch (error) {
-    console.error("Errore nell'aggiornare le certificazioni:", error);
-    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
+    console.error("Errore durante la pubblicazione del codice promozionale:", error);
+    res.status(500).json({ msg: "Errore interno del server durante la pubblicazione del codice promozionale." });
   }
-})
+});
+
 
 app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
 
@@ -1877,7 +1888,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       line_items: items,
       mode: 'payment',
       success_url: `${process.env.CLIENT_URL}/PaymentSuccess`,
-      cancel_url: `${process.env.CLIENT_URL}/Carrello`,
+      cancel_url: `${process.env.CLIENT_URL}/Cart`,
       metadata: {
         user_id: user_id,
         promo_code: promoCode || '',

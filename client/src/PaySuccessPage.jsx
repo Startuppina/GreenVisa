@@ -19,7 +19,7 @@ function PaySuccessPage() {
     localStorage.removeItem('codeId');
 
     const timer = setTimeout(() => {
-      navigate('/Carrello');
+      navigate('/Cart');
     }, 5000);
     return () => {
       clearTimeout(timer);
@@ -79,7 +79,7 @@ function PaySuccessPage() {
   };
 
   const returnToLogin = () => {
-    navigate('/Carrello');
+    navigate('/Cart');
   };
 
   return (
