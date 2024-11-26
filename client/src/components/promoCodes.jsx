@@ -103,14 +103,16 @@ function PromoCodes() {
                 navigate("/User");
             }
         } catch (error) {
-            console.error(error);
+            setPopupConfirmPublish(false);
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
         }
-    };
+    }
 
     const colors = ["#2d7044", "#1e90ff", "#ff6347", "#ffd700", "#32cd32", "#a52a2a", "#ff00ff", "#7b68ee"]; // Array di colori
 
     return (
-        <div className="w-full h-[430px] overflow-y-auto mx-auto font-arial text-xl rounded-2xl border shadow-xl px-5 py-6">
+        <div className="w-full h-[430px] flex flex-wrap items-center justify-center gap-4 overflow-y-auto mx-auto font-arial text-xl rounded-2xl border shadow-xl px-5 py-6">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>

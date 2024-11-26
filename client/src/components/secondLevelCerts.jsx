@@ -125,7 +125,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
 
                 {/* Sezione Richieste da approvare */}
                 <div className="w-full h-[50vh] md:h-[70vh] overflow-y-auto mx-auto p-6 border border-gray-300 rounded-2xl shadow-md bg-white">
-                    <h1 className="text-3xl font-bold text-center mb-6">Richieste certificazione di secondi livello</h1>
+                    <h1 className="text-3xl font-bold text-center mb-6">Richieste certificazione di secondo livello</h1>
 
                     <div className="space-y-6">
                         <h2 className="text-2xl font-bold mb-4">Richieste</h2>

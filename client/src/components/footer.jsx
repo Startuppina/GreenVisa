@@ -13,7 +13,7 @@ function Footer({ styleProp }) {
                 <Link to="/Products">Entra in green visa</Link>
                 {/*<Link to="/payment">Pagamento</Link>*/}
                 <Link to="/News">News</Link>
-                <Link to="/Carrello">Carrello</Link>
+                <Link to="/Cart">Carrello</Link>
                 <Link to="/Contacts">Contattaci</Link>
                 <Link to="/privacy">Privacy Policy</Link>
             </div>

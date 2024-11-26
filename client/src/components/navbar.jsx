@@ -38,7 +38,7 @@ function Navbar() {
             <div className={showMenu ? "absolute top-[30px] right-[15px]" : "hidden"}>
                 <ul className="list-none flex gap-[20px] font-[Arial] text-[1.2em] font-bold m-0">
                     <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/">Home</Link></li>
-                    <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/Carrello">Carrello</Link></li>
+                    <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/Cart">Carrello</Link></li>
                     <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/News">News</Link></li>
                     <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/Products">Entra in Green Visa</Link></li>
                     <li className="cursor-pointer hover:text-[#2d7044]"><Link to="/Contacts">Contattaci</Link></li>
