@@ -5,9 +5,12 @@ import "survey-core/defaultV2.min.css";
 import { themeJson } from "../surveyTheme";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
+import generatePDF from "../pdfGeneratorQuestionnaires";
+
 
 function WellnessQuestionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
+  const [userData, setUserData] = useState({});
   const [initialData, setInitialData] = useState({}); // Stato per i dati iniziali
   const [totalScore, setTotalScore] = useState(0);
 
@@ -728,6 +731,7 @@ function WellnessQuestionnaire({ certification_id }) {
 
         if (response.status === 200) {
           setUserInfo(response.data.id);
+          setUserData(response.data);
           restoreSurveyData(response.data.id);
         }
 
@@ -782,6 +786,16 @@ function WellnessQuestionnaire({ certification_id }) {
     // Aggiungi i gestori dell'evento onComplete
     survey.onValueChanged.add(saveSurveyData);
     survey.onComplete.add(handleSurveyComplete);
+
+    survey.addNavigationItem({
+      id: "pdf-export",
+      title: "Salva come PDF",
+      action: () => {
+        const updatedData = survey.data;  // Recupera i dati aggiornati
+        let totalScore = calcolaPunteggio(survey.data);
+        generatePDF(updatedData, "Questionario di SPA e Resorts", userData, totalScore, json)();  // Genera il PDF con i dati aggiornati
+      },
+    });
 
     // Cleanup
     return () => {

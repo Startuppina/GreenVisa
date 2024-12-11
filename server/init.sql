@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS news (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     image VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -88,6 +89,14 @@ CREATE TABLE IF NOT EXISTS promocodes_publishment (
     id SERIAL PRIMARY KEY,
     promocode_id INT NOT NULL,
     FOREIGN KEY (promocode_id) REFERENCES promocodes(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS promocodes_assignments (
+    id SERIAL PRIMARY KEY,
+    promocode_id INT NOT NULL,
+    user_id INT NOT NULL,
+    FOREIGN KEY (promocode_id) REFERENCES promocodes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 
@@ -239,6 +248,7 @@ CREATE TABLE IF NOT EXISTS survey_responses (
     page_no INTEGER,
     survey_data JSONB,
     total_score INTEGER,
+    co2emissions DECIMAL(10,2) DEFAULT 0.0,
     completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT unique_user_survey UNIQUE (user_id, certification_id),

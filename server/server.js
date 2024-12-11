@@ -205,6 +205,11 @@ app.post("/api/signup", async (req, res) => {
       [username, company_name, email, newPhone, null, null, null, false, hashedPassword]
     );
 
+    sendWelcomeEmail({
+      recipient_email: email,
+      recipient_name: username,
+    });
+
     return res.status(200).json({ msg: "Utente registrato" });
   } catch (error) {
     console.error("Errore durante la registrazione dell'utente:", error);
@@ -556,6 +561,139 @@ app.post("/api/send-email-message", async (req, res) => {
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
+
+function sendWelcomeEmail({ recipient_email, recipient_name }) {
+  return new Promise((resolve, reject) => {
+    var transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: email_sender,
+        pass: pass_sender,
+      },
+    });
+
+    const mail_configs = {
+      from: email_sender,
+      to: recipient_email,
+      subject: "Benvenuto in Green Visa!",
+      html: `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Benvenuto in Green Visa</title>
+            <style>
+                body {
+                    font-family: Helvetica, Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f9f9f9;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 50px auto;
+                    background-color: #ffffff;
+                    padding: 30px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header img {
+                    width: 150px;
+                    margin-bottom: 10px;
+                }
+                .header h1 {
+                    font-size: 1.8em;
+                    color: #2d7044;
+                    margin: 0;
+                }
+                .body {
+                    padding: 20px 10px;
+                    text-align: center;
+                }
+                .body h2 {
+                    font-size: 1.4em;
+                    color: #333333;
+                    margin-bottom: 10px;
+                }
+                .body p {
+                    font-size: 1.1em;
+                    line-height: 1.6;
+                    color: #555555;
+                }
+                .cta-button {
+                    display: inline-block;
+                    background-color: #2d7044;
+                    color: white;
+                    text-decoration: none;
+                    padding: 12px 24px;
+                    font-size: 1.2em;
+                    font-weight: bold;
+                    border-radius: 4px;
+                    margin: 20px 0;
+                }
+                .footer {
+                    padding-top: 20px;
+                    text-align: center;
+                    font-size: 0.9em;
+                    color: #888888;
+                }
+                .footer p {
+                    margin: 5px 0;
+                }
+                @media screen and (max-width: 600px) {
+                    .container {
+                        width: 100%;
+                        padding: 15px;
+                    }
+                    .header h1 {
+                        font-size: 1.6em;
+                    }
+                    .body h2 {
+                        font-size: 1.2em;
+                    }
+                    .cta-button {
+                        font-size: 1em;
+                        padding: 10px 20px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa Logo">
+                    <h1>Benvenuto in Green Visa!</h1>
+                </div>
+                <div class="body">
+                    <h2>Ciao ${recipient_name},</h2>
+                    <p>Siamo entusiasti di darti il benvenuto nella nostra comunità di utenti che scelgono la sostenibilità.</p>
+                    <p>Green Visa ti offre strumenti innovativi per supportare il tuo viaggio verso un futuro più verde e consapevole.</p>
+                    <p>Inizia subito il tuo percorso esplorando tutte le funzionalità disponibili sul nostro portale.</p>
+                    <a href="${process.env.CLIENT_URL}" class="cta-button">Esplora Green Visa</a>
+                </div>
+                <div class="footer">
+                    <p>Grazie per aver scelto Green Visa.</p>
+                    <p>La sostenibilità con un click!</p>
+                    <p><strong>Green Visa Team</strong></p>
+                </div>
+            </div>
+        </body>
+        </html>`,
+    };
+
+    transporter.sendMail(mail_configs, (error, info) => {
+      if (error) {
+        return reject({ message: "Errore nell'invio dell'email", error });
+      }
+      return resolve({ message: "Email inviata con successo", info });
+    });
+  });
+}
+
 
 function sendEmail({ recipient_email, OTP }) {
   return new Promise((resolve, reject) => {
@@ -984,6 +1122,10 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
       WHERE nrs.id IS NULL;
     `;
 
+    /*La query aggiunge con la LEFT JOIN un record in news_read_status per ogni utente che 
+    non ha ancora letto la notizia specificata, garantendo di evitare duplicati grazie alla 
+    condizione WHERE nrs.id IS NULL. */
+
     await client.query(updateReadStatusQuery, [newsId]);
 
     // complete transaction
@@ -1047,11 +1189,15 @@ app.get("/api/article/:id", async (req, res) => {
 app.put("/api/set-news-read/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
+    const { user_id } = req.user;
+
+    console.log("ID della notizia:", id);
+    console.log("ID dell'utente:", user_id);
 
     const query = `UPDATE news_read_status
                   SET is_read = TRUE, read_at = NOW()
                   WHERE user_id = $1 AND news_id = $2`;
-    const values = [req.user.user_id, id];
+    const values = [user_id, id];
     await pool.query(query, values);
 
     res.status(200).json({ msg: "Notizia impostata come letta correttamente" });
@@ -1066,7 +1212,7 @@ app.put("/api/set-news-read/:id", authenticateJWT, async (req, res) => {
 app.get("/api/news-unread", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
-    const query = "SELECT * FROM news JOIN news_read_status ON news.id = news_read_status.news_id WHERE news.user_id = $1 AND is_read = FALSE";
+    const query = "SELECT * FROM news JOIN news_read_status ON news.id = news_read_status.news_id WHERE news_read_status.user_id = $1 AND is_read = FALSE";
     const values = [user_id];
     const result = await pool.query(query, values);
     res.status(200).json(result.rows);
@@ -1703,11 +1849,23 @@ app.get("/api/fetch-promo-codes", authenticateJWT, authenticateAdmin, async (req
   }
 })
 
-app.get("/api/fetch-published-codes", authenticateJWT, async (req, res) => {
+app.get("/api/fetch-published-assinged-codes", authenticateJWT, async (req, res) => {
 
   try {
+    const { user_id } = req.user;
+
     const query = "SELECT code, used_by FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id";
     const result = await pool.query(query);
+
+    //fetch users's assigned codes
+    const query2 = "SELECT code, used_by FROM promocodes_assignments JOIN promocodes ON promocodes_assignments.promocode_id = promocodes.id WHERE promocodes_assignments.user_id = $1";
+    const values2 = [user_id];
+    const result2 = await pool.query(query2, values2);
+
+    if (result2.rows.length > 0) {
+      result.rows = [...result.rows, ...result2.rows]; // Concatenate the results
+    }
+
     res.status(200).json({ codes: result.rows });
   } catch (error) {
     console.error("Errore nell fetching dei codici pubblicati:", error);
@@ -1737,6 +1895,52 @@ app.post("/api/publish-promo-code/:id", authenticateJWT, authenticateAdmin, asyn
     res.status(500).json({ msg: "Errore interno del server durante la pubblicazione del codice promozionale." });
   }
 });
+
+app.get("/api/fetch-users-not-assigned-codes/:codeId", authenticateJWT, authenticateAdmin, async (req, res) => {
+
+  try {
+    const { codeId } = req.params;
+    const query = "SELECT username, company_name FROM users WHERE id NOT IN (SELECT user_id FROM promocodes_assignments WHERE promocode_id = $1)";
+    const values = [codeId];
+    const result = await pool.query(query, values);
+    res.status(200).json({ users: result.rows });
+  } catch (error) {
+    console.error("Errore nel trovare gli utenti:", error);
+    res.status(500).json({ msg: "Errore nel trovare gli utenti" });
+  }
+})
+
+app.post("/api/assign-promo-code-to-users/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { selectedUsers } = req.body;
+
+    console.log("Selected users:", selectedUsers);
+
+    for (const user of selectedUsers) {
+      // Recupera l'ID dell'utente
+      const fetchUserId = "SELECT id FROM users WHERE username = $1";
+      const values = [user];
+      const userResult = await pool.query(fetchUserId, values);
+
+      if (userResult.rows.length === 0) {
+        throw new Error(`Utente con username ${user} non trovato.`);
+      }
+
+      const userID = userResult.rows[0].id;
+
+      // Assegna il codice promozionale
+      const query = "INSERT INTO promocodes_assignments (promocode_id, user_id) VALUES ($1, $2)";
+      await pool.query(query, [id, userID]);
+    }
+
+    res.status(200).json({ msg: `Codice promozionale assegnato agli utenti (${selectedUsers.join(", ")}) con successo` });
+  } catch (error) {
+    console.error("Errore durante l'assegnazione del codice promozionale agli utenti:", error);
+    res.status(500).json({ msg: "Errore interno del server durante l'assegnazione del codice promozionale agli utenti." });
+  }
+});
+
 
 
 app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
@@ -3028,6 +3232,7 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
           o.product_id AS product_id,
           p.category AS product_category,
           sr.total_score AS total_score,
+          sr.co2emissions AS co2emissions,
           sr.completed AS completed
       FROM 
           orders o
@@ -3044,6 +3249,7 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
         o.product_id AS product_id,
         p.category AS product_category,
         sr.total_score AS total_score,
+        sr.co2emissions AS co2emissions,
         sr.completed AS completed
     FROM 
         orders o
@@ -3064,7 +3270,7 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
 
 
 app.post('/api/responses', authenticateJWT, async (req, res) => {
-  const { pageNo, certification_id, totalScore, completed, surveyData } = req.body;
+  const { pageNo, certification_id, totalScore, CO2emissions, completed, surveyData } = req.body;
   const { user_id } = req.user;
 
   ////console.log("ALL", user_id, pageNo, surveyData, totalScore, completed);
@@ -3075,17 +3281,18 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
 
   try {
     const query = `
-      INSERT INTO survey_responses (user_id, certification_id, page_no, survey_data, total_score, completed, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      INSERT INTO survey_responses (user_id, certification_id, page_no, survey_data, total_score, co2emissions, completed, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
       ON CONFLICT (user_id, certification_id) 
       DO UPDATE SET 
         page_no = EXCLUDED.page_no,
         survey_data = EXCLUDED.survey_data,
         total_score = EXCLUDED.total_score,
+        co2emissions = EXCLUDED.co2emissions,
         completed = EXCLUDED.completed
       RETURNING id;
     `;
-    const values = [user_id, certification_id, pageNo, surveyData, totalScore, completed]; // Aggiungi totalScore
+    const values = [user_id, certification_id, pageNo, surveyData, totalScore, CO2emissions, completed]; // Aggiungi totalScore
 
     const result = await pool.query(query, values);
     res.status(201).json({ id: result.rows[0].id });
@@ -3202,7 +3409,7 @@ app.post("/api/second-level-certification", authenticateJWT, async (req, res) =>
     res.status(201).json({ id: result.rows[0].id });
   } catch (err) {
     if (err.code === '23505') {  // Error code for unique constraint violation
-      return res.status(409).json({ message: "La richiesta per questo utente e certificazione esiste già." });
+      return res.status(201).json({ message: "La richiesta per questo utente e certificazione esiste già." });
     }
     console.error("Errore nell'inviare la richiesta di certificazione di secondo, livello", err);
     res.status(500).json({ error: 'Errore del server' });
