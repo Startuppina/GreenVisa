@@ -192,7 +192,7 @@ export default function Buildings() {
                             ))}
                         </div>
                         <div className="flex flex-col items-center justify-center m-2 mt-5">
-                            {numBuildings < totalQuantity ? (
+                            { /* dnumBuildings < totalQuantity ? (
                                 <button
                                     className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
                                     onClick={() => setShowBuildingForm(!showBuildingForm)}
@@ -213,10 +213,31 @@ export default function Buildings() {
                                     </svg>
                                 </button>
                             ) : (
+
                                 <h1 className="text-xl font-bold text-center mb-3">
                                     Hai raggiunto il numero massimo di edifici registrabili
                                 </h1>
-                            )}
+                            )*/
+
+                                <button
+                                    className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
+                                    onClick={() => setShowBuildingForm(!showBuildingForm)}
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth="2"
+                                        stroke="currentColor"
+                                        className="w-6 h-6"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M12 4.5v15m7.5-7.5h-15"
+                                        />
+                                    </svg>
+                                </button>}
                         </div>
 
                         {showBuildingForm && <div ref={formRef}><BuildingFrom buildingData="empty" isEdit={false} /></div>}

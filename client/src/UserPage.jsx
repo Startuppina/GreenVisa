@@ -381,7 +381,7 @@ const UserPage = () => {
 
                             )}
 
-                            {surveyInfo.length > 0 && (
+                            {/*surveyInfo.length > 0*/ 1 && (
                                 <Link to="/buildings">
                                     <div className="bg-[#2d7044] text-white text-xl p-4 mx-2 lg:mx-14 my-4 border border-[#0056b3] rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl duration-300 cursor-pointer">
                                         <h1 className="text-2xl font-bold text-center">
@@ -412,7 +412,10 @@ const UserPage = () => {
                                                     <h2 className="text-2xl font-semibold text-gray-800">Questionario per la categoria: {info.product_category}</h2>
                                                     <div className="text-gray-600">Stato: <span className="font-semibold text-gray-800">{info.completed ? 'Completato' : 'Non completato'}</span></div>
                                                 </div>
-                                                <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span> / 100</div>
+                                                <div className='flex flex-col mb-2 text-right'>
+                                                    <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span> / 100</div>
+                                                    {info.product_category === "Certificazione trasporti" && <div className="text-gray-600">Emissioni CO2 da veicoli: <span className="font-semibold text-gray-800">{info.co2emissions} </span>tons CO&#8322;/anno</div>}
+                                                </div>
                                             </div>
                                             <div className='flex justify-center md:justify-start mt-2 md:mt-0'>
                                                 <button className="p-2 w-[235px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">

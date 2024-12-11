@@ -5,13 +5,14 @@ import "survey-core/defaultV2.min.css";
 import { themeJson } from "../surveyTheme";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
-import jsPDF from "jspdf";
+import generatePDF from "../pdfGeneratorQuestionnaires";
 
 function TransportQuestionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
   const [userData, setUserData] = useState({});
   const [initialData, setInitialData] = useState({}); // Stato per i dati iniziali
   const [totalScore, setTotalScore] = useState(0);
+  const [CO2Emissions, setCO2Emissions] = useState(0);
 
   //          <p>Hai totalizzato un punteggio di: <span class="score">${totalScore}</span> punti.</p>
   const json = {
@@ -562,6 +563,98 @@ function TransportQuestionnaire({ certification_id }) {
             ]
           },
           {
+            "type": "matrixdynamic",
+            "name": "question29",
+            "title": "Sulla base dei veicoli termici che utilizzi inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo)\n",
+            "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati. Non incide sul foto finale",
+            "columns": [
+              {
+                "name": "Marca",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "Mercedes"
+              },
+              {
+                "name": "Modello",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "Classe A"
+              },
+              {
+                "name": "Anno immatricolazione",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "2024"
+              },
+              {
+                "name": "Carburante",
+                "cellType": "dropdown",
+                "isRequired": true,
+                "choices": [
+                  {
+                    "value": "Benzina",
+                    "text": "Benzina"
+                  },
+                  {
+                    "value": "Diesel",
+                    "text": "Diesel"
+                  },
+                  {
+                    "value": "GPL",
+                    "text": "GPL"
+                  },
+                  {
+                    "value": "Metano",
+                    "text": "Metano"
+                  },
+                  {
+                    "value": "Metano (monovalente)",
+                    "text": "Metano (monovalente)"
+                  },
+                  {
+                    "value": "Ibrido",
+                    "text": "Ibrido"
+                  },
+                  {
+                    "value": "Elettrico",
+                    "text": "Elettrico"
+                  }
+                ],
+                "placeholder": "Benzina"
+              },
+              {
+                "name": "km annui",
+                "title": "KM annui",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "10000"
+              },
+              {
+                "name": "emissioni di CO2 WLTP",
+                "title": "Emissioni di CO2 WLTP (g/km) - Carburante principale",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "137"
+              },
+              {
+                "name": "emissioni di CO2 WLTP (GPL o metano)",
+                "cellType": "text",
+                "visibleIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
+                "requiredIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
+                "placeholder": "120"
+              }
+            ],
+            "choices": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "cellType": "text",
+            "rowCount": 1
+          },
+          {
             "type": "radiogroup",
             "name": "question19",
             "title": "Nel calcolo dei percorsi nella vostra attività si fa uso di software o navigatori in modo da ottimizzare il viaggio e circolare in regime di risparmio e rispetto dell’ambiente?",
@@ -687,6 +780,100 @@ function TransportQuestionnaire({ certification_id }) {
     ]
   }
 
+  /*
+  {
+          "type": "matrixdynamic",
+          "name": "question29",
+          "title": "Sulla base dei veicoli termici che utilizzi inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo)\n",
+          "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati. Non incide sul foto finale",
+          "columns": [
+            {
+              "name": "Marca",
+              "cellType": "text",
+              "isRequired": true,
+              "placeholder": "Mercedes"
+            },
+            {
+              "name": "Modello",
+              "cellType": "text",
+              "isRequired": true,
+              "placeholder": "Classe A"
+            },
+            {
+              "name": "Anno immatricolazione",
+              "cellType": "text",
+              "isRequired": true,
+              "placeholder": "2024"
+            },
+            {
+              "name": "Carburante",
+              "cellType": "dropdown",
+              "isRequired": true,
+              "choices": [
+                {
+                  "value": "item1",
+                  "text": "Benzina"
+                },
+                {
+                  "value": "item2",
+                  "text": "Diesel"
+                },
+                {
+                  "value": "item5",
+                  "text": "GPL"
+                },
+                {
+                  "value": "item6",
+                  "text": "Metano"
+                },
+                {
+                  "value": "item7",
+                  "text": "Metano (monovalente)"
+                },
+                {
+                  "value": "item3",
+                  "text": "Ibrido"
+                },
+                {
+                  "value": "item4",
+                  "text": "Elettrico"
+                }
+              ],
+              "placeholder": "Benzina"
+            },
+            {
+              "name": "consumi annui",
+              "title": "KM annui",
+              "cellType": "text",
+              "isRequired": true,
+              "placeholder": "10000"
+            },
+            {
+              "name": "emissioni di CO2 WLTP",
+              "title": "Emissioni di CO2 WLTP (g/km) - Carburante principale",
+              "cellType": "text",
+              "isRequired": true,
+              "placeholder": "137"
+            },
+            {
+              "name": "emissioni di CO2 WLTP (GPL o metano)",
+              "cellType": "text",
+              "visibleIf": "{row.Carburante} = 'item6' or {row.Carburante} = 'item5'",
+              "requiredIf": "{row.Carburante} = 'item6' or {row.Carburante} = 'item5'",
+              "placeholder": "120"
+            }
+          ],
+          "choices": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "cellType": "text",
+          "rowCount": 1
+        }
+  */
 
   const survey = new Model(json);
 
@@ -714,9 +901,9 @@ function TransportQuestionnaire({ certification_id }) {
   }, []);
 
   async function restoreSurveyData(surveyId) {
-    console.log("Restoring survey data for survey ID:", surveyId);
+    //console.log("Restoring survey data for survey ID:", surveyId);
     const token = localStorage.getItem('token');
-    console.log("certification_id:", certification_id);
+    //console.log("certification_id:", certification_id);
     try {
       const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses-fetch`, {
         headers: { "Authorization": `Bearer ${token}` },
@@ -749,146 +936,6 @@ function TransportQuestionnaire({ certification_id }) {
 
   }, [survey]);
 
-  function generatePDF(surveyData) {
-
-    return () => {
-      const pdf = new jsPDF();
-      const tableData = [];
-
-      // Aggiungi immagine al PDF
-      const image = new Image();
-      image.src = '/img/logo.png';
-      const logoX = (pdf.internal.pageSize.getWidth() - 32) / 2;
-      pdf.addImage(image, 'JPEG', logoX, 10, 32, 32);
-
-      // Impostazioni del titolo del PDF
-      pdf.setFont('Helvetica', 'bold');
-      pdf.setFontSize(16); // Aumenta la dimensione del font per il titolo
-      pdf.setTextColor('#374151');
-      pdf.text('Report Questionario Certificazione Trasporti', pdf.internal.pageSize.getWidth() / 2, 60, { align: 'center' });
-
-      // Aggiungi sottotitolo informazioni utente
-      pdf.setFontSize(12); // Dimensione del font per il sottotitolo
-      pdf.text('Informazioni Utente', pdf.internal.pageSize.getWidth() / 2, 80, { align: 'center' });
-
-      pdf.setFont('Helvetica', 'normal');
-      const userInfoYStart = 90; // Offset per l'inizio delle informazioni utente
-      const userInfoYSpacing = 8; // Spaziatura verticale tra le informazioni utente
-      const userInfoLines = [
-        `Utente: ${userData.username || 'N/D'}`,
-        `Azienda: ${userData.company_name || 'N/D'}`,
-        `Email: ${userData.email || 'N/D'}`,
-        `Telefono: ${userData.phone_number || 'N/D'}`,
-        `Partita IVA: ${userData.p_iva || 'N/D'}`,
-        `Codice Fiscale: ${userData.tax_code || 'N/D'}`,
-        `Sede Legale: ${userData.legal_headquarter || 'N/D'}`,
-      ];
-
-      userInfoLines.forEach((line, index) => {
-        pdf.text(line, pdf.internal.pageSize.getWidth() / 2, userInfoYStart + (index * userInfoYSpacing), { align: 'center' });
-      });
-
-      let totalScore = calcolaPunteggio(surveyData);
-
-      // Aggiungi il punteggio totale al PDF
-      const totalScoreY = 150; // Usa la Y finale della tabella precedente se esiste
-      // Imposta il colore del testo
-      pdf.setTextColor(45, 112, 68); // Imposta il colore usando valori RGB (corrispondente a #2d7044)
-      pdf.setFont('Helvetica', 'bold'); // Imposta il font in grassetto
-      pdf.setFontSize(14); // Aumenta la dimensione del font per renderlo più evidente
-      pdf.text(`Punteggio totale: ${totalScore}`, pdf.internal.pageSize.getWidth() / 2, totalScoreY, { align: 'center' });
-
-
-      // Funzione per aggiungere righe alla tabella
-      const addRowToTable = (question, answer) => {
-        tableData.push([question, answer]);
-      };
-
-      // Elaborazione delle domande e delle risposte
-      json.pages.forEach(page => {
-        page.elements.forEach(element => {
-          const questionTitle = element.title || '';
-          const answer = surveyData[element.name]; // Supponendo che surveyData contenga le risposte
-
-          switch (element.type) {
-            case 'radiogroup':
-              const selectedChoice = element.choices.find(choice => choice.value === answer);
-              addRowToTable(questionTitle, selectedChoice ? selectedChoice.text : '0');
-              break;
-
-            case 'multipletext':
-              const multipleTextAnswers = surveyData[element.name] || {};
-              if (element.items) {
-                element.items.forEach(item => {
-                  const itemAnswer = multipleTextAnswers[item.name] || '0';
-                  addRowToTable(`${questionTitle} - ${item.title}`, itemAnswer);
-                });
-              } else {
-                addRowToTable(questionTitle, '0');
-              }
-              break;
-
-            case 'matrixdynamic':
-              const matrixAnswers = surveyData[element.name] || [];
-              matrixAnswers.forEach((row, index) => {
-                const rowText = `Riga ${index + 1}`;
-                Object.keys(row).forEach(column => {
-                  const columnTitle = element.columns.find(col => col.name === column)?.title || column;
-                  const cellAnswer = row[column] || '0';
-
-                  // Se la colonna è di tipo dropdown, ottieni il testo corrispondente
-                  if (element.columns.find(col => col.name === column).cellType === 'dropdown') {
-                    const choice = element.columns.find(col => col.name === column).choices.find(choice => choice.value === cellAnswer);
-                    const answerText = choice ? choice.text : '0';
-                    addRowToTable(`${questionTitle} (${rowText}) - ${columnTitle}`, answerText);
-                  } else {
-                    addRowToTable(`${questionTitle} (${rowText}) - ${columnTitle}`, cellAnswer);
-                  }
-                });
-              });
-              break;
-
-            case 'dropdown':
-              const dropdownChoice = element.choices.find(choice => choice.value === answer);
-              addRowToTable(questionTitle, dropdownChoice ? dropdownChoice.text : '0');
-              break;
-
-            default:
-              console.warn(`Tipo di domanda non gestito: ${element.type}`);
-          }
-        });
-      });
-
-      // Aggiungi la tabella delle domande e risposte
-      const startY = 160; // Usa la Y finale della tabella precedente se esiste
-      pdf.autoTable({
-        head: [['Domanda', 'Risposta']],
-        body: tableData,
-        theme: 'grid',
-        startY: startY,
-        styles: {
-          fontSize: 10, // Font più piccolo per la tabella
-          cellPadding: 2, // Spaziatura interna delle celle
-        },
-        headStyles: {
-          fillColor: [240, 240, 240], // Sfondo grigio chiaro per l'intestazione
-          textColor: '#000000', // Colore del testo dell'intestazione
-          halign: 'center', // Allinea il testo al centro nell'intestazione
-          fontStyle: 'bold', // Grassetto per l'intestazione
-          lineWidth: 0.1, // Spessore del bordo
-          lineColor: [200, 200, 200], // Colore del bordo grigio
-        },
-        columnStyles: {
-          0: { cellWidth: 120 }, // Larghezza della colonna "Domanda"
-          1: { cellWidth: 60, halign: 'center' }, // Larghezza della colonna "Risposta"
-        },
-      });
-
-
-      // Salvataggio del PDF
-      pdf.save(`Questionario-trasporti-${userData.username}-${new Date().getTime()}.pdf`);
-    };
-  }
 
   useEffect(() => {
     // Aggiungi i gestori dell'evento onComplete
@@ -900,7 +947,8 @@ function TransportQuestionnaire({ certification_id }) {
       title: "Salva come PDF",
       action: () => {
         const updatedData = survey.data;  // Recupera i dati aggiornati
-        generatePDF(updatedData)();  // Genera il PDF con i dati aggiornati
+        let totalScore = calcolaPunteggio(survey.data);
+        generatePDF(updatedData, "Questionario Trasporti", userData, totalScore, json)();  // Genera il PDF con i dati aggiornati
       },
     });
 
@@ -914,18 +962,18 @@ function TransportQuestionnaire({ certification_id }) {
 
 
   function handleSurveyComplete() {
-    let totalScore = calcolaPunteggio(survey.data);
-    saveSurveyDataComplete(survey, totalScore);
+    let results = calcolaPunteggio(survey.data);
+    saveSurveyDataComplete(survey, results.punteggioTotale, results.CO2emissions);
     //scroll to top of page
     window.scrollTo(0, 0);
 
-    console.log("Answers:", survey.data);
+    //console.log("Answers:", survey.data);
   }
 
 
   async function submitSurveyData(data) {
     const token = localStorage.getItem('token');
-    console.log("Submitting survey data:", data);
+    //console.log("Submitting survey data:", data);
     try {
       await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses`, data, {
         headers: {
@@ -933,7 +981,7 @@ function TransportQuestionnaire({ certification_id }) {
           "Authorization": `Bearer ${token}`
         }
       });
-      console.log("Survey data saved successfully");
+      //console.log("Survey data saved successfully");
     } catch (error) {
       console.error("Error saving survey data:", error);
     }
@@ -951,11 +999,12 @@ function TransportQuestionnaire({ certification_id }) {
     submitSurveyData(data);
   }
 
-  function saveSurveyDataComplete(survey, totalScore) {
+  function saveSurveyDataComplete(survey, totalScore, CO2emissions) {
     const data = {
       surveyId: userInfo,
       certification_id,
       totalScore,
+      CO2emissions,
       pageNo: survey.currentPageNo,
       surveyData: survey.data,
       completed: true
@@ -973,7 +1022,7 @@ function TransportQuestionnaire({ certification_id }) {
           "Authorization": `Bearer ${token}`
         }
       });
-      console.log("Second Level Certification completed successfully");
+      //console.log("Second Level Certification completed successfully");
     } catch (error) {
       console.error("Error completing Second Level Certification:", error);
     }
@@ -982,34 +1031,39 @@ function TransportQuestionnaire({ certification_id }) {
   // Funzione per calcolare il punteggio totale
   function calcolaPunteggio(formData) {
     let punteggioTotale = 0;
+    let CO2emissions = 0
 
     // Itera attraverso le pagine
     json.pages.forEach(page => {
       page.elements.forEach(element => {
         // Controlla il tipo di elemento e calcola il punteggio
-        console.log(`Elemento: ${element.name}, tipo: ${element.type}`);
+        //console.log(`Elemento: ${element.name}, tipo: ${element.type}`);
         switch (element.type) {
           case 'radiogroup':
             const punteggioRadiogroup = calcolaPunteggioRadiogroup(formData[element.name], element);
             punteggioTotale += punteggioRadiogroup;
-            console.log(`Domanda: ${element.title}, Risposta: ${formData[element.name]}, Punteggio: ${punteggioRadiogroup}`);
+            //console.log(`Domanda: ${element.title}, Risposta: ${formData[element.name]}, Punteggio: ${punteggioRadiogroup}`);
             break;
           case 'multipletext':
             const punteggioMultipletext = calcolaPunteggioMultipletext(formData[element.name], element);
             punteggioTotale += punteggioMultipletext;
-            console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMultipletext}`);
+            //console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMultipletext}`);
             break;
           case 'matrixdynamic':
-            const punteggioMatrixdynamic = calcolaPunteggioMatrixdynamic(formData[element.name], element);
-            punteggioTotale += punteggioMatrixdynamic;
-            console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMatrixdynamic}`);
+            if (element.name === 'question29') {
+              CO2emissions = CO2EmissionsCalculator(formData[element.name], element);
+            } else {
+              const punteggioMatrixdynamic = calcolaPunteggioMatrixdynamic(formData[element.name], element);
+              punteggioTotale += punteggioMatrixdynamic;
+              //console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMatrixdynamic}`);
+            }
             break;
           case 'panel':
-            console.log('Dati passati alla funzione calcolaPunteggioPanel:', formData[element.name], element);
+            //console.log('Dati passati alla funzione calcolaPunteggioPanel:', formData[element.name], element);
 
             const punteggioPanel = calcolaPunteggioPanel(formData[element.name], element);
             punteggioTotale += punteggioPanel;
-            console.log(`Pannello: ${element.title}, Punteggio: ${punteggioPanel}`);
+            //console.log(`Pannello: ${element.title}, Punteggio: ${punteggioPanel}`);
             break;
           case 'html':
             break;
@@ -1019,27 +1073,55 @@ function TransportQuestionnaire({ certification_id }) {
       });
     });
 
-    console.log(`Punteggio totale: ${punteggioTotale}`);
+    //console.log(`Punteggio totale: ${punteggioTotale}`);
 
     const punteggioMassimo = 1115; //punteggio massimo possibile
-    return Math.round((punteggioTotale / punteggioMassimo) * 100);
+    return {
+      CO2emissions, punteggioTotale: Math.round((punteggioTotale / punteggioMassimo) * 100)
+    };
+  }
+
+  function CO2EmissionsCalculator(responses) {
+    let currentCO2Emissions = 0; //espresso in grammi
+    let totalCO2Emissions = 0; //espresso in grammi
+
+    if (responses === undefined) {
+      return;
+    }
+
+    responses.forEach(row => {
+      currentCO2Emissions = 0;
+      //console.log(`Marca: ${row["Marca"]}, Modello: ${row["Modello"]}, Anno: ${row["Anno immatricolazione"]}, Carburante: ${row["Carburante"]}, km annui: ${row["km annui"]}, emissioni: ${row["emissioni di CO2 WLTP"]}, emissioni GPl o metano: : ${row["emissioni di CO2 WLTP (GPL o metano)"]}`);
+      if (row["Carburante"] === "GPL" || row["Carburante"] === "Metano") {
+        currentCO2Emissions = parseInt(row["km annui"]) * ((parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2); //Media tra le emissioni di due carburanti
+        //console.log(currentCO2Emissions)
+        totalCO2Emissions += currentCO2Emissions;
+      } else {
+        currentCO2Emissions = parseInt(row["km annui"]) * parseInt(row["emissioni di CO2 WLTP"]);
+        //console.log(currentCO2Emissions)
+        totalCO2Emissions += currentCO2Emissions;
+      }
+    }
+    );
+    //console.log("total co2 emisisons in tons", totalCO2Emissions / 1000000);
+    return totalCO2Emissions / 1000000;
   }
 
   // Funzione per calcolare il punteggio per le domande di tipo radiogroup
   function calcolaPunteggioRadiogroup(response, element) {
 
-    //console.log(`parametri radiogroup:`, response, element);
+    ////console.log(`parametri radiogroup:`, response, element);
     let punteggio = 0;
     if (response && element.choices) {
       const scelta = element.choices.find(choice => choice.value === response);
       if (scelta) {
         punteggio = scelta.score || 0;
         if (element.name === 'question23' && scelta.text === 'Si') {
-          console.log("Sei interessato ad una certificazione di secondo livello");
+          //console.log("Sei interessato ad una certificazione di secondo livello");
           secondLevelCertification(userInfo, certification_id);
-          console.log("UserInfo:", userInfo, "CertificationId:", certification_id);
+          //console.log("UserInfo:", userInfo, "CertificationId:", certification_id);
         } else if (element.name === 'question23' && scelta.text === 'No') {
-          console.log("Non sei interessato ad una certificazione di secondo livello");
+          //console.log("Non sei interessato ad una certificazione di secondo livello");
         }
       }
     }
@@ -1051,10 +1133,10 @@ function TransportQuestionnaire({ certification_id }) {
   function calcolaPunteggioMultipletext(response, element) {
     let punteggio = 0;
     element.items.forEach(item => {
-      console.log(`Item: ${item.name}, Risposta: ${response[item.name]}`);
+      //console.log(`Item: ${item.name}, Risposta: ${response[item.name]}`);
       if (response[item.name]) {
         punteggio += item.score || 0;
-        //console.log(`Punteggio multiple text: ${punteggio}`);
+        ////console.log(`Punteggio multiple text: ${punteggio}`);
       }
     });
     return punteggio;
@@ -1153,11 +1235,11 @@ function TransportQuestionnaire({ certification_id }) {
 
     // Funzione per calcolare il punteggio in base al carburante
     const calcolaPunteggioCarburante = (response) => {
-      console.log(`Column 2: ${response["Column 2"]}`);
-      console.log(`carburante: ${fuelScores[response["Column 2"]]}`);
+      //console.log(`Column 2: ${response["Column 2"]}`);
+      //console.log(`carburante: ${fuelScores[response["Column 2"]]}`);
       const penalitaCarburante = penalitaPerCarburante[response["Column 2"]] || 0;
       const punteggio = ((fuelScores[response["Column 2"]] - penalitaCarburante) * parseInt(response["Column 1"])) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio Euro
-      console.log(`punteggio con penalita: ${punteggio}`);
+      //console.log(`punteggio con penalita: ${punteggio}`);
       mezziTotali += parseInt(response["Column 1"]);
       return punteggio;
     };
@@ -1178,17 +1260,17 @@ function TransportQuestionnaire({ certification_id }) {
       } else if (element.name === 'question9') {
         // Calcola il punteggio per la domanda 9
         if (row["Column 2"] === 1) { // 1 = si
-          console.log("Column2 bollino valore", row["Column 2"]);
+          //console.log("Column2 bollino valore", row["Column 2"]);
           // Se la risposta è "Si", calcola il punteggio basato sull'anno
           mezziTotali += parseInt(row["Column 1"]);
           const punteggioAnno = yearScores[row["Column 3"]] * parseInt(row["Column 1"]) || 0;
           punteggioTotale += punteggioAnno;
-          console.log(`Domanda: ${element.name}, Risposta: Si, Anno: ${row["Column 3"]}, Punteggio: ${punteggioAnno}`);
+          //console.log(`Domanda: ${element.name}, Risposta: Si, Anno: ${row["Column 3"]}, Punteggio: ${punteggioAnno}`);
         } else if (row["Column 2"] === 0) {
           // Se la risposta è "No", il punteggio è 0
           mezziTotali += parseInt(row["Column 1"]);
           punteggioTotale += 0;
-          console.log(`Domanda: ${element.name}, Risposta: No, Punteggio: 0`);
+          //console.log(`Domanda: ${element.name}, Risposta: No, Punteggio: 0`);
         }
       } else if (element.name === 'question15' || element.name === 'question14' || element.name === 'question13' || element.name === 'question12' || element.name === 'question11' || element.name === 'question10') {
         const punteggioCarburante = calcolaPunteggioCarburante(row);
@@ -1203,8 +1285,8 @@ function TransportQuestionnaire({ certification_id }) {
     if (isNaN(mean)) {
       mean = 0;
     }
-    console.log("punteggio totale", punteggioTotale);
-    console.log("media punteggio", mean);
+    //console.log("punteggio totale", punteggioTotale);
+    //console.log("media punteggio", mean);
     return mean;
   }
 
@@ -1212,14 +1294,14 @@ function TransportQuestionnaire({ certification_id }) {
   function calcolaPunteggioPanel(formData, panel) {
     let punteggio = 0;
 
-    console.log(`parametri pannello:`, formData, panel);
+    //console.log(`parametri pannello:`, formData, panel);
 
     if (formData && panel.elements) {
       panel.elements.forEach(element => {
         if (element.type === 'radiogroup') {
           const punteggioRadiogroup = calcolaPunteggioRadiogroup(formData[element.name], element);
           punteggio += punteggioRadiogroup;
-          console.log(`Domanda nel pannello: ${element.name}, Risposta: ${formData[element.name]}, Punteggio: ${punteggioRadiogroup}`);
+          //console.log(`Domanda nel pannello: ${element.name}, Risposta: ${formData[element.name]}, Punteggio: ${punteggioRadiogroup}`);
         } else if (element.type === 'text') {
           // Puoi aggiungere logica specifica per i campi di testo se necessario
         }

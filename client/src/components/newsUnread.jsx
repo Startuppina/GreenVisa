@@ -106,7 +106,7 @@ function NewsUnread() {
                     <Slider {...settings}>
                         {news.map((item) => (
                             <div className='pt-6 mx-auto z-10'>
-                                <Link to={`/ Article / ${item.id}`} key={item.id}>
+                                <Link to={`/Article/${item.id}`} key={item.id}>
                                     <div
                                         className={`relative mx-auto bg-[#d9d9d9] rounded-lg overflow-hidden flex flex-col items-center justify-between hover:transform hover:scale-105 transition-transform duration-300`}
                                         style={{

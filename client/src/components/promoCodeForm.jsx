@@ -63,15 +63,17 @@ function PromoCodeForm() {
                     setButtonPopup(true);
                     setIsLoading(false);
                     setCodeTrigger(!codeTrigger);
+                    setCode('');
+                    setDiscount('');
+                    setStart('');
+                    setExpiration('');
+                    setCategory('');
                 }, 3000);
 
                 navigate('/User');
 
             }
-            setCode('');
-            setDiscount('');
-            setStart('');
-            setExpiration('');
+
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
             setButtonPopup(true);
