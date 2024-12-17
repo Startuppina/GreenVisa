@@ -71,11 +71,17 @@ const Signup = () => {
         }
     };
 
+    const closePassInfo = () => {
+        setPassInfo(false);
+    };
+
     return (
         <div className="bg-[url('/img/login.jpg')] bg-cover h-screen bg-center bg-no-repeat py-10 flex items-center justify-center">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
+
+            {passInfo && <PassInfo onClose={closePassInfo} />}
 
             <div className="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[70%] lg:max-w-[80%] p-4 h-[83vh] flex flex-col items-center justify-start bg-white rounded-lg shadow-lg overflow-y-auto relative">
                 <div className="absolute top-4 left-4 text-arial text-[#2d7044] text-xl font-bold cursor-pointer">
@@ -189,7 +195,7 @@ const Signup = () => {
                         <div className="w-full">
                             <label htmlFor="confirm" className="block text-xl">Conferma password</label>
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 name="confirm"
                                 id="confirm"
                                 value={confirmPassword}

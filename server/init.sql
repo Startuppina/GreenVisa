@@ -247,7 +247,7 @@ CREATE TABLE IF NOT EXISTS survey_responses (
     certification_id INTEGER NOT NULL,
     page_no INTEGER,
     survey_data JSONB,
-    total_score INTEGER,
+    total_score DECIMAL(10,2) DEFAULT 0.0,
     co2emissions DECIMAL(10,2) DEFAULT 0.0,
     completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),

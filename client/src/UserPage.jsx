@@ -413,7 +413,7 @@ const UserPage = () => {
                                                     <div className="text-gray-600">Stato: <span className="font-semibold text-gray-800">{info.completed ? 'Completato' : 'Non completato'}</span></div>
                                                 </div>
                                                 <div className='flex flex-col mb-2 text-right'>
-                                                    <div className="text-gray-600">Punteggio: <span className="font-semibold text-gray-800">{info.total_score}</span> / 100</div>
+                                                    <div className="text-gray-600">Voto: <span className="font-semibold text-gray-800">{info.total_score}</span> / 10</div>
                                                     {info.product_category === "Certificazione trasporti" && <div className="text-gray-600">Emissioni CO2 da veicoli: <span className="font-semibold text-gray-800">{info.co2emissions} </span>tons CO&#8322;/anno</div>}
                                                 </div>
                                             </div>

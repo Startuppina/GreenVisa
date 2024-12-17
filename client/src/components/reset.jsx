@@ -135,7 +135,7 @@ export default function Reset() {
                   <div className='w-[80%]'>
                     <label htmlFor="confirm-password" className="block text-xl">Conferma Password</label>
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       name="confirm-password"
                       id="confirm-password"
                       className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"

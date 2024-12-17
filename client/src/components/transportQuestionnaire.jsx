@@ -91,7 +91,7 @@ function TransportQuestionnaire({ certification_id }) {
           {
             "type": "html",
             "name": "question28",
-            "html": "<div style=\"font-family: Arial, sans-serif; font-size: 1.25rem; padding: 2rem; line-height: 1.75; background-color: #f9fafb; border-radius: 1.5rem; border: 0.1px solid #A3A3A3;\">\n  <h1 style=\"font-size: 2rem; font-weight: bold; margin-bottom: 1rem; color: #2d7044;\">\n    Questionario trasporti\n  </h1>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    Regolamento per la Compilazione del Questionario\n  </h2>\n\n  <p style=\"margin-bottom: 0.25rem;\">\n    Benvenuto nel questionario sui trasporti! Ti chiediamo di leggere attentamente le seguenti istruzioni per compilare\n    correttamente tutte le sezioni. Il questionario è progettato per raccogliere informazioni più accurate possibili, quindi è\n    fondamentale seguire queste linee guida. \n    <strong style=\"font-weight: 600;\">\n      Tutte le domande sono obbligatorie (hanno un asterisco rosso \n      <span style=\"color: #f56565;\">*</span>)\n    </strong>.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    1. Compilazione Onesta e Rilevante\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Rispondi in modo sincero e accurato, fornendo informazioni che riflettano la tua situazione attuale. È obbligatorio rispondere a tutte le domande.\n    In alcune domande non è necessario selezionare tutte le voci (ad esempio, se non hai veicoli immatricolati nel 2023, non selezionare\n    2023 come anno. \n    <strong>La stessa cosa vale per tutte le altre domande che hanno menu a discesa</strong>).\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    2. Esattezza delle Risposte\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Assicurati che tutte le risposte fornite siano corrette e coerenti. Non inserire \"0\" se non possiedi veicoli immatricolati\n    in un certo anno: semplicemente non rispondere per quell'anno.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    3. Attenzione ai Dettagli\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Presta attenzione ai dettagli numerici. Se una domanda richiede un numero, assicurati di inserire il valore\n    corretto, evitando stime imprecise.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    4. Rispetto dei Tempi\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Completa il questionario con calma. Una compilazione attenta e precisa è preferibile a una rapida e incompleta.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    5. Assistenza\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Se hai dubbi o difficoltà nella compilazione, contattaci per chiarimenti. È importante comprendere bene ogni\n    domanda prima di rispondere.\n  </p>\n\n  <p style=\"margin-bottom: 0.25rem;\">Grazie per la tua collaborazione!</p>\n</div>\n"
+            "html": "<div style=\"font-family: Arial, sans-serif; font-size: 1.25rem; padding: 2rem; line-height: 1.75; background-color: #f9fafb; border-radius: 1.5rem; border: 0.1px solid #A3A3A3;\">\n  <h1 style=\"font-size: 2rem; font-weight: bold; margin-bottom: 1rem; color: #2d7044;\">\n    Questionario trasporti\n  </h1>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    Regolamento per la Compilazione del Questionario\n  </h2>\n\n  <p style=\"margin-bottom: 0.25rem;\">\n    Benvenuto nel questionario sui trasporti! Ti chiediamo di leggere attentamente le seguenti istruzioni per compilare\n    correttamente tutte le sezioni. Il questionario è progettato per raccogliere informazioni più accurate possibili per <strong>calcolare le emissioni di CO2 e il voto di sostenibilità</strong>, quindi è\n    fondamentale seguire queste linee guida. \n    <strong style=\"font-weight: 600;\">\n      Tutte le domande sono obbligatorie (hanno un asterisco rosso \n      <span style=\"color: #f56565;\">*</span>)\n    </strong>.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    1. Compilazione Onesta e Rilevante\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Rispondi in modo sincero e accurato, fornendo informazioni che riflettano la tua situazione attuale. È obbligatorio rispondere a tutte le domande prima di completare il questionario. È però possibile interrompere il questionario e riprenderlo da dove si ha interrotto in quanto il sistema è dotato di <strong>AUTOSALVATAGGIO</strong>.\n    In alcune domande non è necessario selezionare tutte le voci (ad esempio, se non hai veicoli immatricolati nel 2023, non selezionare\n    2023 come anno. \n    <strong>La stessa cosa vale per tutte le altre domande che hanno menu a discesa</strong>).\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    2. Esattezza delle Risposte\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Assicurati che tutte le risposte fornite siano corrette e coerenti. Non inserire \"0\" se non possiedi veicoli immatricolati\n    in un certo anno: semplicemente non rispondere per quell'anno.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    3. Attenzione ai Dettagli\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Presta attenzione ai dettagli numerici. Se una domanda richiede un numero, assicurati di inserire il valore\n    corretto, evitando stime imprecise.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    4. Rispetto dei Tempi\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Completa il questionario con calma. Una compilazione attenta e precisa è preferibile a una rapida e incompleta.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    5. Assistenza\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Se hai dubbi o difficoltà nella compilazione, contattaci per chiarimenti. È importante comprendere bene ogni\n    domanda prima di rispondere.\n  </p>\n\n  <p style=\"margin-bottom: 0.25rem;\">Grazie per la tua collaborazione!</p>\n</div>\n"
           },
           {
             "type": "radiogroup",
@@ -565,8 +565,8 @@ function TransportQuestionnaire({ certification_id }) {
           {
             "type": "matrixdynamic",
             "name": "question29",
-            "title": "Sulla base dei veicoli termici che utilizzi inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo)\n",
-            "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati. Non incide sul foto finale",
+            "title": "Sulla base dei veicoli termici adibiti al trasporto di persone che utilizzi, inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo nel terzo riquadro)\n",
+            "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati e fornire il voto complessivo al questionario.",
             "columns": [
               {
                 "name": "Marca",
@@ -612,8 +612,16 @@ function TransportQuestionnaire({ certification_id }) {
                     "text": "Metano (monovalente)"
                   },
                   {
-                    "value": "Ibrido",
-                    "text": "Ibrido"
+                    "value": "Mild hybrid",
+                    "text": "Mild hybrid"
+                  },
+                  {
+                    "value": "Full hybrid",
+                    "text": "Full hybrid"
+                  },
+                  {
+                    "value": "Plug-in hybrid",
+                    "text": "Plug-in hybrid"
                   },
                   {
                     "value": "Elettrico",
@@ -623,25 +631,189 @@ function TransportQuestionnaire({ certification_id }) {
                 "placeholder": "Benzina"
               },
               {
-                "name": "km annui",
-                "title": "KM annui",
+                "name": "KM annui",
                 "cellType": "text",
                 "isRequired": true,
                 "placeholder": "10000"
               },
               {
+                "name": "Il veicolo viaggia",
+                "cellType": "dropdown",
+                "isRequired": true,
+                "choices": [
+                  {
+                    "value": 1,
+                    "text": "Per 2/3 del tempo con una sola persona a bordo"
+                  },
+                  {
+                    "value": 2,
+                    "text": "Per il 50% con una persona a bordo"
+                  },
+                  {
+                    "value": 3,
+                    "text": "Per oltre 2/3 del tempo con almeno 2 persone a bordo"
+                  },
+                  {
+                    "value": 4,
+                    "text": "Per oltre il 50% con almeno 2 persone a bordo"
+                  },
+                  {
+                    "value": 5,
+                    "text": "Per oltre 2/3 del tempo con almeno 3 o più persone a bordo"
+                  },
+                  {
+                    "value": 6,
+                    "text": "Per oltre il 50% con almeno 3 persone a bordo"
+                  }
+                ],
+                "placeholder": "2/3 del tempo con una sola persona a bordo"
+              },
+              {
                 "name": "emissioni di CO2 WLTP",
-                "title": "Emissioni di CO2 WLTP (g/km) - Carburante principale",
+                "title": "emissioni di CO2 WLTP - (alimentazione principale)",
                 "cellType": "text",
                 "isRequired": true,
-                "placeholder": "137"
+                "placeholder": "137",
               },
               {
                 "name": "emissioni di CO2 WLTP (GPL o metano)",
+                "title": "emissioni di CO2 WLTP (GPL o metano)",
                 "cellType": "text",
                 "visibleIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
                 "requiredIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
                 "placeholder": "120"
+              }
+            ],
+            "choices": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "cellType": "text",
+            "rowCount": 1
+          },
+          {
+            "type": "matrixdynamic",
+            "name": "question30",
+            "title": "Sulla base dei veicoli termici adibiti al trasporto di merci che utilizzi, inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo nel terzo riquadro)\n",
+            "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati e fornire il voto complessivo al questionario.",
+            "columns": [
+              {
+                "name": "Marca",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "Iveco"
+              },
+              {
+                "name": "Modello",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "Daily"
+              },
+              {
+                "name": "Anno immatricolazione",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "2014"
+              },
+              {
+                "name": "Carburante",
+                "cellType": "dropdown",
+                "isRequired": true,
+                "choices": [
+                  {
+                    "value": "Benzina",
+                    "text": "Benzina"
+                  },
+                  {
+                    "value": "Diesel",
+                    "text": "Diesel"
+                  },
+                  {
+                    "value": "GPL",
+                    "text": "GPL"
+                  },
+                  {
+                    "value": "Metano",
+                    "text": "Metano"
+                  },
+                  {
+                    "value": "Metano (monovalente)",
+                    "text": "Metano (monovalente)"
+                  },
+                  {
+                    "value": "Mild hybrid",
+                    "text": "Mild hybrid"
+                  },
+                  {
+                    "value": "Full hybrid",
+                    "text": "Full hybrid"
+                  },
+                  {
+                    "value": "Plug-in hybrid",
+                    "text": "Plug-in hybrid"
+                  },
+                  {
+                    "value": "Elettrico",
+                    "text": "Elettrico"
+                  }
+                ],
+                "placeholder": "Benzina"
+              },
+              {
+                "name": "KM annui",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "10000"
+              },
+              {
+                "name": "Utilizzo del veicolo",
+                "cellType": "dropdown",
+                "isRequired": true,
+                "choices": [
+                  {
+                    "value": 1,
+                    "text": "Per 2/3 del tempo viaggia con carico inferiore al 50% della capacità"
+                  },
+                  {
+                    "value": 2,
+                    "text": "Per il 50% del tempo viaggia con carico inferiore al 50% della capacità"
+                  },
+                  {
+                    "value": 3,
+                    "text": "Per oltre 2/3 del tempo viaggia con carico pari almeno al 50% della capacità"
+                  },
+                  {
+                    "value": 4,
+                    "text": "Per oltre il 50% del tempo viaggia con carico pari almeno al 50% della capacità"
+                  },
+                  {
+                    "value": 5,
+                    "text": "Per oltre 2/3 del tempo viaggia con carico pari almeno al 75% della capacità"
+                  },
+                  {
+                    "value": 6,
+                    "text": "Per oltre il 50% del tempo viaggia con carico pari almeno al 75% della capacità"
+                  }
+                ],
+                "placeholder": "2/3 del tempo con carico inferiore al 50% della capacità"
+              },
+              {
+                "name": "emissioni di CO2 WLTP",
+                "title": "emissioni di CO2 WLTP - (alimentazione principale)",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "190",
+              },
+              {
+                "name": "emissioni di CO2 WLTP (GPL o metano)",
+                "title": "emissioni di CO2 WLTP (GPL o metano)",
+                "cellType": "text",
+                "visibleIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
+                "requiredIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
+                "placeholder": "150"
               }
             ],
             "choices": [
@@ -781,98 +953,120 @@ function TransportQuestionnaire({ certification_id }) {
   }
 
   /*
-  {
-          "type": "matrixdynamic",
-          "name": "question29",
-          "title": "Sulla base dei veicoli termici che utilizzi inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo)\n",
-          "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati. Non incide sul foto finale",
-          "columns": [
-            {
-              "name": "Marca",
-              "cellType": "text",
-              "isRequired": true,
-              "placeholder": "Mercedes"
-            },
-            {
-              "name": "Modello",
-              "cellType": "text",
-              "isRequired": true,
-              "placeholder": "Classe A"
-            },
-            {
-              "name": "Anno immatricolazione",
-              "cellType": "text",
-              "isRequired": true,
-              "placeholder": "2024"
-            },
-            {
-              "name": "Carburante",
-              "cellType": "dropdown",
-              "isRequired": true,
-              "choices": [
-                {
-                  "value": "item1",
-                  "text": "Benzina"
-                },
-                {
-                  "value": "item2",
-                  "text": "Diesel"
-                },
-                {
-                  "value": "item5",
-                  "text": "GPL"
-                },
-                {
-                  "value": "item6",
-                  "text": "Metano"
-                },
-                {
-                  "value": "item7",
-                  "text": "Metano (monovalente)"
-                },
-                {
-                  "value": "item3",
-                  "text": "Ibrido"
-                },
-                {
-                  "value": "item4",
-                  "text": "Elettrico"
-                }
-              ],
-              "placeholder": "Benzina"
-            },
-            {
-              "name": "consumi annui",
-              "title": "KM annui",
-              "cellType": "text",
-              "isRequired": true,
-              "placeholder": "10000"
-            },
-            {
-              "name": "emissioni di CO2 WLTP",
-              "title": "Emissioni di CO2 WLTP (g/km) - Carburante principale",
-              "cellType": "text",
-              "isRequired": true,
-              "placeholder": "137"
-            },
-            {
-              "name": "emissioni di CO2 WLTP (GPL o metano)",
-              "cellType": "text",
-              "visibleIf": "{row.Carburante} = 'item6' or {row.Carburante} = 'item5'",
-              "requiredIf": "{row.Carburante} = 'item6' or {row.Carburante} = 'item5'",
-              "placeholder": "120"
-            }
-          ],
-          "choices": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ],
-          "cellType": "text",
-          "rowCount": 1
-        }
+   {
+            "type": "matrixdynamic",
+            "name": "question29",
+            "title": "Sulla base dei veicoli termici che utilizzi inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo)\n",
+            "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati e fornire il voto complessivo al questionario.",
+            "columns": [
+              {
+                "name": "Marca",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "Mercedes"
+              },
+              {
+                "name": "Modello",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "Classe A"
+              },
+              {
+                "name": "Anno immatricolazione",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "2024"
+              },
+              {
+                "name": "Carburante",
+                "cellType": "dropdown",
+                "isRequired": true,
+                "choices": [
+                  {
+                    "value": "item1",
+                    "text": "Benzina"
+                  },
+                  {
+                    "value": "item2",
+                    "text": "Diesel"
+                  },
+                  {
+                    "value": "item3",
+                    "text": "GPL"
+                  },
+                  {
+                    "value": "item4",
+                    "text": "Metano"
+                  },
+                  {
+                    "value": "item5",
+                    "text": "Metano (monovalente)"
+                  },
+                  {
+                    "value": "item6",
+                    "text": "Mild hybrid"
+                  },
+                  {
+                    "value": "item7",
+                    "text": "Full hybrid "
+                  },
+                  {
+                    "value": "item8",
+                    "text": "Plug-in hybrid"
+                  },
+                  {
+                    "value": "item9",
+                    "text": "Elettrico"
+                  }
+                ],
+                "placeholder": "Benzina"
+              },
+              {
+                "name": "KM annui",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "10000"
+              },
+              {
+                "name": "Il veicolo viaggia",
+                "cellType": "dropdown",
+                "isRequired": true,
+                "choices": [
+                  "2/3 del tempo con una sola persona a bordo",
+                  "Per il 50% con una persona a bordo",
+                  "Per oltre 2/3 del tempo con almeno 2 persone a bordo",
+                  "Per oltre il 50% con almeno 2 persone a bordo",
+                  "Per oltre 2/3 del tempo con almeno 3 o più persone a bordo",
+                  "Per oltre il 50% con almeno 3 persone a bordo"
+                ],
+                "placeholder": "2/3 del tempo con una sola persona a bordo"
+              },
+              {
+                "name": "emissioni di CO2 WLTP",
+                "title": "emissioni di CO2 WLTP - (alimentazione principale)",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "137"
+              },
+              {
+                "name": "emissioni di CO3 WLTP (GPL o metano)",
+                "title": "emissioni di CO2 WLTP (GPL o metano)",
+                "cellType": "text",
+                "visibleIf": "{row.Carburante} = 'item3' or {row.Carburante} = 'item4'",
+                "requiredIf": "{row.Carburante} = 'item3' or {row.Carburante} = 'item4'",
+                "placeholder": "120"
+              }
+            ],
+            "choices": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "cellType": "text",
+            "rowCount": 1
+          }
   */
 
   const survey = new Model(json);
@@ -1031,7 +1225,9 @@ function TransportQuestionnaire({ certification_id }) {
   // Funzione per calcolare il punteggio totale
   function calcolaPunteggio(formData) {
     let punteggioTotale = 0;
-    let CO2emissions = 0
+    let results = 0;
+    let totalCO2Emissions = 0;
+    let totalScore = 0;
 
     // Itera attraverso le pagine
     json.pages.forEach(page => {
@@ -1051,7 +1247,7 @@ function TransportQuestionnaire({ certification_id }) {
             break;
           case 'matrixdynamic':
             if (element.name === 'question29') {
-              CO2emissions = CO2EmissionsCalculator(formData[element.name], element);
+              results = CO2EmissionsCalculator(formData[element.name], element, element.name);
             } else {
               const punteggioMatrixdynamic = calcolaPunteggioMatrixdynamic(formData[element.name], element);
               punteggioTotale += punteggioMatrixdynamic;
@@ -1075,15 +1271,57 @@ function TransportQuestionnaire({ certification_id }) {
 
     //console.log(`Punteggio totale: ${punteggioTotale}`);
 
-    const punteggioMassimo = 1115; //punteggio massimo possibile
+    //const punteggioMassimo = 1115; //punteggio massimo possibile
+
+    console.log("punteggio", results.vehiclesScore);
+    console.log("CO2Emissions", results.CO2emissions);
     return {
-      CO2emissions, punteggioTotale: Math.round((punteggioTotale / punteggioMassimo) * 100)
+      CO2emissions: results.CO2emissions, punteggioTotale: results.vehiclesScore
     };
   }
 
-  function CO2EmissionsCalculator(responses) {
+  function CO2EmissionsCalculator(responses, questionName) {
     let currentCO2Emissions = 0; //espresso in grammi
     let totalCO2Emissions = 0; //espresso in grammi
+    let currentVehicleScore = 0;
+    let totalVehiclesScore = 0;
+    let totalVehicles = 0;
+
+    const emissionClassesPeopleTransport = [
+      { class: "A", minEmissions: 0, maxEmissions: 0, maxScore: 100 },
+      { class: "B", minEmissions: 1, maxEmissions: 50, maxScore: 90 },
+      { class: "C", minEmissions: 51, maxEmissions: 80, maxScore: 80 },
+      { class: "D", minEmissions: 81, maxEmissions: 100, maxScore: 70 },
+      { class: "E", minEmissions: 101, maxEmissions: 130, maxScore: 60 },
+      { class: "F", minEmissions: 131, maxEmissions: 160, maxScore: 50 },
+      { class: "G", minEmissions: 161, maxEmissions: 200, maxScore: 40 },
+      { class: "H", minEmissions: 201, maxEmissions: 250, maxScore: 30 },
+      { class: "I", minEmissions: 251, maxEmissions: 300, maxScore: 20 },
+      { class: "J", minEmissions: 301, maxEmissions: Infinity, maxScore: 10 }
+    ];
+
+    const emissionClassesFreightTransport = [ //Trasporto merci
+      { class: "A", minEmissions: 0, maxEmissions: 50, maxScore: 100 },      // Emissioni molto basse
+      { class: "B", minEmissions: 51, maxEmissions: 100, maxScore: 90 },    // Emissioni basse
+      { class: "C", minEmissions: 101, maxEmissions: 150, maxScore: 80 },   // Emissioni moderate
+      { class: "D", minEmissions: 151, maxEmissions: 200, maxScore: 70 },   // Emissioni medio-alte
+      { class: "E", minEmissions: 201, maxEmissions: 250, maxScore: 60 },   // Emissioni alte
+      { class: "F", minEmissions: 251, maxEmissions: 300, maxScore: 50 },   // Emissioni molto alte
+      { class: "G", minEmissions: 301, maxEmissions: 400, maxScore: 40 },   // Emissioni elevate per carichi pesanti
+      { class: "H", minEmissions: 401, maxEmissions: 500, maxScore: 30 },   // Emissioni elevate per veicoli pesanti
+      { class: "I", minEmissions: 501, maxEmissions: 600, maxScore: 20 },   // Emissioni molto elevate
+      { class: "J", minEmissions: 601, maxEmissions: Infinity, maxScore: 10 } // Emissioni estremamente elevate
+    ];
+
+
+    const penalities = {
+      1: 9, //2/3 del tempo con una sola persona a bordo
+      2: 8, //Per il 50% con una persona a bordo
+      3: 5, //Per oltre 2/3 del tempo con almeno 2 persone a bordo
+      4: 4, //Per oltre il 50% con almeno 2 persone a bordo
+      5: 2, //Per oltre 2/3 del tempo con almeno 3 o più persone a bordo
+      6: 0 //Per oltre il 50% con almeno 3 persone a bordo
+    };
 
     if (responses === undefined) {
       return;
@@ -1091,20 +1329,74 @@ function TransportQuestionnaire({ certification_id }) {
 
     responses.forEach(row => {
       currentCO2Emissions = 0;
+      totalVehicles++;
+
       //console.log(`Marca: ${row["Marca"]}, Modello: ${row["Modello"]}, Anno: ${row["Anno immatricolazione"]}, Carburante: ${row["Carburante"]}, km annui: ${row["km annui"]}, emissioni: ${row["emissioni di CO2 WLTP"]}, emissioni GPl o metano: : ${row["emissioni di CO2 WLTP (GPL o metano)"]}`);
       if (row["Carburante"] === "GPL" || row["Carburante"] === "Metano") {
-        currentCO2Emissions = parseInt(row["km annui"]) * ((parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2); //Media tra le emissioni di due carburanti
+        currentCO2Emissions = parseInt(row["KM annui"]) * ((parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2); //Media tra le emissioni di due carburanti
         //console.log(currentCO2Emissions)
         totalCO2Emissions += currentCO2Emissions;
+        console.log("currentCO2Emissions", currentCO2Emissions);
+
+        const averageCO2Emissions = (parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2;
+        console.log("averageCO2Emissions", averageCO2Emissions);
+
+        const emissionClass = emissionClassesPeopleTransport.find((entry) =>
+          averageCO2Emissions >= entry.minEmissions && averageCO2Emissions <= entry.maxEmissions);
+        console.log("emissionClass", emissionClass);
+
+        console.log("Il veicolo viaggia", row["Il veicolo viaggia"]);
+        console.log("Penalita applicata", penalities[row["Il veicolo viaggia"]]);
+
+        //penalità sulla base della capienza dei veicoli
+        currentVehicleScore = emissionClass.maxScore - parseInt(penalities[row["Il veicolo viaggia"]]);
+        console.log("currentVehicleScore", currentVehicleScore);
+
+        totalVehiclesScore += currentVehicleScore;
+
       } else {
-        currentCO2Emissions = parseInt(row["km annui"]) * parseInt(row["emissioni di CO2 WLTP"]);
+        currentCO2Emissions = parseInt(row["KM annui"]) * parseInt(row["emissioni di CO2 WLTP"] || 0);
         //console.log(currentCO2Emissions)
         totalCO2Emissions += currentCO2Emissions;
+        console.log("currentCO2Emissions", currentCO2Emissions);
+
+        const emissionClass = emissionClassesPeopleTransport.find((entry) =>
+          row["emissioni di CO2 WLTP"] >= entry.minEmissions && row["emissioni di CO2 WLTP"] <= entry.maxEmissions);
+        console.log("emissionClass", emissionClass);
+
+        console.log("Il veicolo viaggia", row["Il veicolo viaggia"]);
+        console.log("Penalita applicata", penalities[row["Il veicolo viaggia"]]);
+
+        //penalità sulla base della capienza dei veicoli
+        currentVehicleScore = emissionClass.maxScore - parseInt(penalities[row["Il veicolo viaggia"]]);
+        console.log("currentVehicleScore", currentVehicleScore);
+
+        if (row["Carburante"] === "Full Hybrid") {
+          currentVehicleScore += 1;
+        } else if (row["Carburante"] === "Plug-in hybrid") {
+          currentVehicleScore += 2;
+        }
+
+        if (currentVehicleScore > emissionClass.maxScore) {
+          currentVehicleScore = emissionClass.maxScore;
+        }
+
+        console.log("currentVehicleScore", currentVehicleScore);
+
+        totalVehiclesScore += currentVehicleScore;
       }
+
+    });
+
+    console.log("total co2 emisisons in tons", totalCO2Emissions / 1000000);
+    console.log("total veichles", totalVehicles)
+    console.log("total veichle score in decimal", totalVehiclesScore / totalVehicles / 10)
+
+    totalCO2Emissions = totalCO2Emissions / 1000000;
+    return {
+      CO2emissions: totalCO2Emissions,
+      vehiclesScore: totalVehiclesScore / totalVehicles / 10
     }
-    );
-    //console.log("total co2 emisisons in tons", totalCO2Emissions / 1000000);
-    return totalCO2Emissions / 1000000;
   }
 
   // Funzione per calcolare il punteggio per le domande di tipo radiogroup
