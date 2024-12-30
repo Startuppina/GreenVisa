@@ -201,8 +201,8 @@ app.post("/api/signup", async (req, res) => {
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
     await pool.query(
-      "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-      [username, company_name, email, newPhone, null, null, null, false, hashedPassword]
+      "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, turnover, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+      [username, company_name, email, newPhone, null, null, null, null, false, hashedPassword]
     );
 
     sendWelcomeEmail({
@@ -493,6 +493,31 @@ app.put("/api/update-legal-headquarter", authenticateJWT, async (req, res) => {
     ]);
 
     res.status(200).json({ message: "Sede legale aggiornata con successo" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+});
+
+app.put("/api/update-turnover", authenticateJWT, async (req, res) => {
+  try {
+    const { user_id } = req.user;
+    const { turnover } = req.body;
+
+    console.log("turnover:", turnover);
+
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
+
+    await pool.query("UPDATE users SET turnover = $1 WHERE id = $2", [
+      turnover,
+      user_id,
+    ]);
+
+    res.status(200).json({ message: "Fatturato aggiornato con successo" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Errore interno del server" });

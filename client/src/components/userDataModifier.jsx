@@ -14,6 +14,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
     const [newLegalHeadquarter, setNewLegalHeadquarter] = useState('');
     const [newPiva, setNewPiva] = useState('');
     const [newTaxCode, setNewTaxCode] = useState('');
+    const [newTurnover, setNewTurnover] = useState('');
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
@@ -25,6 +26,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
     const handleEmailChange = (e) => setNewEmail(e.target.value);
     const handleCompanyNameChange = (e) => setNewCompanyName(e.target.value);
     const handleLegalHeadquarterChange = (e) => setNewLegalHeadquarter(e.target.value);
+    const handleTurnoverChange = (e) => setNewTurnover(e.target.value);
     const handlePivaChange = (e) => setNewPiva(e.target.value);
     const handleTaxCodeChange = (e) => setNewTaxCode(e.target.value.toUpperCase());
 
@@ -199,6 +201,30 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         }
     }
 
+    const handleTurnoverModifier = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        console.log("newTurnover:", newTurnover);
+        try {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-turnover`, { turnover: newTurnover }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.status === 200) {
+                setMessagePopup("Fatturato aggiornato con successo");
+                setButtonPopup(true);
+                setNewTurnover('');
+                triggerRefresh();
+                setUserInfo({ ...userInfo, turnover: newTurnover });
+            }
+        } catch (error) {
+            setMessagePopup(error.response?.data?.message || error.message);
+            setButtonPopup(true);
+        }
+    }
+
     const [activeInput, setActiveInput] = useState(null);
 
     const toggleSection = (input) => {
@@ -257,6 +283,12 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
                     onClick={() => toggleSection('headquarter')}
                 >
                     Sede Legale
+                </button>
+                <button
+                    className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'turnover' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                    onClick={() => toggleSection('turnover')}
+                >
+                    Fatturato
                 </button>
             </div>
 
@@ -406,6 +438,27 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
                         <input
                             type='submit'
                             value='Modifica sede legale'
+                            className="mt-3 p-3 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                        />
+                    </div>
+                </form>
+            )}
+
+            {/* Sezione per Modifica Sede Legale */}
+            {activeInput === 'turnover' && (
+                <form onSubmit={handleTurnoverModifier} className='mb-6 w-full md:w-[50%]'>
+                    <label htmlFor="Turnover" className="block mb-2">Fatturato</label>
+                    <input
+                        type="text"
+                        id="Turnover"
+                        value={newTurnover}
+                        onChange={handleTurnoverChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg w-full p-3"
+                    />
+                    <div className='flex justify-center'>
+                        <input
+                            type='submit'
+                            value='Modifica fatturato'
                             className="mt-3 p-3 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
                         />
                     </div>
