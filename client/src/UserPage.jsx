@@ -345,7 +345,7 @@ const UserPage = () => {
                                 <p className="text-center text-red-500 font bold text-xl uppercase mb-4">Hai delle informazioni mancanti. Completa il tuo account</p>
                             )}
 
-                            <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 lg:mx-14  h-auto lg:h-[330px]">
+                            <div className="flex flex-col lg:flex-row items-stretch justify-center gap-4 z-10 mx-2 lg:mx-14  h-auto">
                                 <div className="w-full bg-[#d9d9d9] p-4 rounded-xl flex-1">
                                     <h2 className="text-2xl font-bold">Informazioni personali</h2>
                                     <div className="pb-5">
@@ -356,6 +356,7 @@ const UserPage = () => {
                                         <p className='flex  md:justify-normal gap-2'><strong>Partita IVA:</strong> {userInfo ? (userInfo.p_iva ? userInfo.p_iva : <span className='text-gray-400'>Inserisci la tua partita IVA</span>) : ''}</p>
                                         <p className='flex  md:justify-normal gap-2'><strong>Codice fiscale:</strong> {userInfo ? (userInfo.tax_code ? userInfo.tax_code : <span className='text-gray-400'>Inserisci il tuo codice fiscale</span>) : ''}</p>
                                         <p className='flex  md:justify-normal gap-2'><strong>Sede legale:</strong> {userInfo ? (userInfo.legal_headquarter ? userInfo.legal_headquarter : <span className='text-gray-400'>Inserisci la tua sede legale</span>) : ''}</p>
+                                        <p className='flex  md:justify-normal gap-2'><strong>Fatturato:</strong> {userInfo ? (userInfo.turnover ? userInfo.turnover : <span className='text-gray-400'>Inserisci il fatturato dell'impresa</span>) : ''}</p>
                                     </div>
                                     <div className="flex justify-center mb-4">
                                         <button

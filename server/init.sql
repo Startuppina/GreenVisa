@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     p_iva VARCHAR(11) UNIQUE,
     tax_code VARCHAR(16) DEFAULT NULL UNIQUE, --codice fiscale
     legal_headquarter VARCHAR(255), -- sede legale
+    turnover DECIMAL(10, 2), --fatturato
     administrator BOOLEAN NOT NULL,
     password_digest TEXT
 
