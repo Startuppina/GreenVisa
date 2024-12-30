@@ -50,7 +50,7 @@ function AllOrders() {
                                     <div className="flex flex-col justify-between">
                                         <div>
                                             <p className="text-xl font-semibold mb-2">{order.product_name}</p>
-                                            <p className="text-gray-600 mb-2">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p>
+                                            <p className="text-gray-600 mb-2">Data: {new Date(order.order_date).toLocaleDateString('ita')}</p>
                                         </div>
                                         <div className="mt-4">
                                             <p className="text-lg "><span className="font-semibold">Utente:</span> {order.username}</p>

@@ -3250,6 +3250,7 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
         p.category AS product_category,
         sr.total_score AS total_score,
         sr.co2emissions AS co2emissions,
+        sr.created_at AS date,
         sr.completed AS completed
     FROM 
         orders o
@@ -3311,7 +3312,7 @@ app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
 
   try {
     const query = `
-      SELECT page_no, survey_data, total_score FROM survey_responses
+      SELECT page_no, survey_data, total_score, co2emissions, completed FROM survey_responses
       WHERE user_id = $1 AND certification_id = $2;
     `;
     const values = [user_id, certification_id];
