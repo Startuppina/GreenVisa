@@ -98,15 +98,18 @@ function WellnessQuestionnaire({ certification_id }) {
             "choices": [
               {
                 "value": "Item 1",
-                "text": "Efficienza e risparmio energetico"
+                "text": "Efficienza e risparmio energetico",
+                "score": 4
               },
               {
                 "value": "Item 2",
-                "text": "Gestione e produzione di rifiuti"
+                "text": "Gestione e produzione di rifiuti",
+                "score": 5
               },
               {
                 "value": "Item 3",
-                "text": "Comunicazione ed educazione ambientale rivolta a clienti e dipendenti"
+                "text": "Comunicazione ed educazione ambientale rivolta a clienti e dipendenti",
+                "score": 4
               },
               {
                 "value": "Item 4",
@@ -114,19 +117,23 @@ function WellnessQuestionnaire({ certification_id }) {
               },
               {
                 "value": "Item 5",
-                "text": "Vendita di prodotti certificati bio"
+                "text": "Vendita di prodotti certificati bio",
+                "score": 4
               },
               {
                 "value": "Item 6",
-                "text": "Programmi Fitness green"
+                "text": "Programmi Fitness green",
+                "score": 3
               },
               {
                 "value": "Item 7",
-                "text": "Programmi Beauty green"
+                "text": "Programmi Beauty green",
+                "score": 3
               },
               {
                 "value": "Item 8",
-                "text": "Programmi Relax green"
+                "text": "Programmi Relax green",
+                "score": 3
               }
             ]
           },
@@ -138,7 +145,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -155,7 +162,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 5
               },
               {
                 "value": "Item 2",
@@ -172,7 +179,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 5
               },
               {
                 "value": "Item 2",
@@ -189,7 +196,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -206,7 +213,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -223,7 +230,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 2
               },
               {
                 "value": "Item 2",
@@ -240,7 +247,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -257,7 +264,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 5
               },
               {
                 "value": "Item 2",
@@ -274,7 +281,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 5
               },
               {
                 "value": "Item 2",
@@ -291,7 +298,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 5
               },
               {
                 "value": "Item 2",
@@ -308,7 +315,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -325,7 +332,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -342,7 +349,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 5
               },
               {
                 "value": "Item 2",
@@ -359,7 +366,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -376,7 +383,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -393,7 +400,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -410,7 +417,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -427,7 +434,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -444,7 +451,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -461,7 +468,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -478,7 +485,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -495,7 +502,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -512,7 +519,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -529,7 +536,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -546,7 +553,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 2
               },
               {
                 "value": "Item 2",
@@ -563,7 +570,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -580,7 +587,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -597,7 +604,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -614,7 +621,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -631,7 +638,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 3
               },
               {
                 "value": "Item 2",
@@ -641,7 +648,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 3",
                 "text": "NON SO",
-                "score": 50
+                "score": 0
               }
             ]
           },
@@ -670,7 +677,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 5
               },
               {
                 "value": "Item 2",
@@ -687,7 +694,7 @@ function WellnessQuestionnaire({ certification_id }) {
               {
                 "value": "Item 1",
                 "text": "SI",
-                "score": 100
+                "score": 4
               },
               {
                 "value": "Item 2",
@@ -763,7 +770,7 @@ function WellnessQuestionnaire({ certification_id }) {
           ? JSON.parse(response.data.survey_data)
           : response.data.survey_data;
 
-        setInitialData({ surveyData, pageNo: response.data.pageNo });
+        setInitialData({ surveyData, pageNo: response.data.pageNo, completed: response.data.completed, previousCO2emissions: response.data.co2emissions, previousScore: response.data.total_score });
       }
     } catch (error) {
       console.error("Error restoring survey data:", error);
@@ -835,10 +842,10 @@ function WellnessQuestionnaire({ certification_id }) {
     const data = {
       surveyId: userInfo,
       certification_id,
-      totalScore,
+      totalScore: initialData.completed ? initialData.previousScore : 0,
       pageNo: survey.currentPageNo,
       surveyData: survey.data,
-      completed: false
+      completed: initialData.completed ? true : false
     };
     submitSurveyData(data);
   }
@@ -877,7 +884,7 @@ function WellnessQuestionnaire({ certification_id }) {
     });
 
     const punteggioMassimo = 3400; //punteggio massimo possibile
-    return Math.round((punteggioTotale / punteggioMassimo) * 100);
+    return Math.round((punteggioTotale / punteggioMassimo) * 10);
   }
 
   // Funzione per calcolare il punteggio per le domande di tipo radiogroup

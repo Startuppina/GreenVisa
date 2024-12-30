@@ -411,10 +411,11 @@ const UserPage = () => {
                                                 <div className='flex flex-col mb-2'>
                                                     <h2 className="text-2xl font-semibold text-gray-800">Questionario per la categoria: {info.product_category}</h2>
                                                     <div className="text-gray-600">Stato: <span className="font-semibold text-gray-800">{info.completed ? 'Completato' : 'Non completato'}</span></div>
+                                                    <div className="text-gray-600">Data completamento: <span className="font-semibold text-gray-800">{new Date(info.date).toLocaleDateString('ita')}</span></div>
                                                 </div>
                                                 <div className='flex flex-col mb-2 text-right'>
-                                                    <div className="text-gray-600">Voto: <span className="font-semibold text-gray-800">{info.total_score}</span> / 10</div>
-                                                    {info.product_category === "Certificazione trasporti" && <div className="text-gray-600">Emissioni CO2 da veicoli: <span className="font-semibold text-gray-800">{info.co2emissions} </span>tons CO&#8322;/anno</div>}
+                                                    <div className="text-gray-600">Voto: <span className="font-semibold text-gray-800">{info.completed ? info.total_score : "-"}</span> / 10</div>
+                                                    {info.product_category === "Certificazione trasporti" && <div className="text-gray-600">Emissioni CO2 da veicoli: <span className="font-semibold text-gray-800">{info.completed ? info.co2emissions : "-"} </span>tons CO&#8322;/anno</div>}
                                                 </div>
                                             </div>
                                             <div className='flex justify-center md:justify-start mt-2 md:mt-0'>

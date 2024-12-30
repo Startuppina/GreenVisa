@@ -44,7 +44,7 @@ function generatePDF(surveyData, questionnaireName, userData, totalScore, json) 
         pdf.setTextColor(45, 112, 68); // Imposta il colore usando valori RGB (corrispondente a #2d7044)
         pdf.setFont('Helvetica', 'bold'); // Imposta il font in grassetto
         pdf.setFontSize(14); // Aumenta la dimensione del font per renderlo più evidente
-        pdf.text(`Punteggio totale: ${totalScore}`, pdf.internal.pageSize.getWidth() / 2, totalScoreY, { align: 'center' });
+        pdf.text(`Voto assegnato: ${totalScore}`, pdf.internal.pageSize.getWidth() / 2, totalScoreY, { align: 'center' });
 
 
         // Funzione per aggiungere righe alla tabella
@@ -77,24 +77,37 @@ function generatePDF(surveyData, questionnaireName, userData, totalScore, json) 
                         break;
 
                     case 'matrixdynamic':
-                        const matrixAnswers = surveyData[element.name] || [];
-                        matrixAnswers.forEach((row, index) => {
-                            const rowText = `Riga ${index + 1}`;
-                            Object.keys(row).forEach(column => {
-                                const columnTitle = element.columns.find(col => col.name === column)?.title || column;
-                                const cellAnswer = row[column] || '0';
+                        if (element.columns) { // Verifica se `element.columns` esiste
+                            //console.log('Element columns:', element.columns); // Log delle colonne presenti nel `matrixdynamic`
 
-                                // Se la colonna è di tipo dropdown, ottieni il testo corrispondente
-                                if (element.columns.find(col => col.name === column).cellType === 'dropdown') {
-                                    const choice = element.columns.find(col => col.name === column).choices.find(choice => choice.value === cellAnswer);
-                                    const answerText = choice ? choice.text : '0';
-                                    addRowToTable(`${questionTitle} (${rowText}) - ${columnTitle}`, answerText);
-                                } else {
-                                    addRowToTable(`${questionTitle} (${rowText}) - ${columnTitle}`, cellAnswer);
-                                }
+                            const matrixAnswers = surveyData[element.name] || [];
+                            matrixAnswers.forEach((row, index) => {
+                                const rowText = `Riga ${index + 1}`;
+                                Object.keys(row).forEach(column => {
+                                    //console.log(`Column Name: ${column}`); // Log del nome della colonna
+                                    //console.log('Element Columns:', element.columns); // Ripristina le colonne per confrontarle
+
+                                    const columnTitle = element.columns.find(col => col.name === column)?.title || column;
+                                    const cellAnswer = row[column] || '0';
+
+                                    // Verifica il tipo della colonna
+                                    const columnDef = element.columns.find(col => col.name === column);
+                                    //console.log('Column Definition:', columnDef); // Log delle proprietà della colonna
+
+                                    if (columnDef && columnDef.cellType === 'dropdown') {
+                                        const choice = columnDef.choices.find(choice => choice.value === cellAnswer);
+                                        const answerText = choice ? choice.text : '0';
+                                        addRowToTable(`${questionTitle} (${rowText}) - ${columnTitle}`, answerText);
+                                    } else {
+                                        addRowToTable(`${questionTitle} (${rowText}) - ${columnTitle}`, cellAnswer);
+                                    }
+                                });
                             });
-                        });
+                        } else {
+                            //console.warn('Elemento matrixdynamic senza colonne');
+                        }
                         break;
+
 
                     case 'dropdown':
                         const dropdownChoice = element.choices.find(choice => choice.value === answer);
@@ -102,7 +115,7 @@ function generatePDF(surveyData, questionnaireName, userData, totalScore, json) 
                         break;
 
                     default:
-                        console.warn(`Tipo di domanda non gestito: ${element.type}`);
+                    //console.warn(`Tipo di domanda non gestito: ${element.type}`);
                 }
             });
         });

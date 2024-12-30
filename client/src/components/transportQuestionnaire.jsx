@@ -4,15 +4,12 @@ import { Model } from 'survey-react-ui';
 import "survey-core/defaultV2.min.css";
 import { themeJson } from "../surveyTheme";
 import axios from "axios";
-import { useRecoveryContext } from "../provider/provider";
 import generatePDF from "../pdfGeneratorQuestionnaires";
 
 function TransportQuestionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
   const [userData, setUserData] = useState({});
   const [initialData, setInitialData] = useState({}); // Stato per i dati iniziali
-  const [totalScore, setTotalScore] = useState(0);
-  const [CO2Emissions, setCO2Emissions] = useState(0);
 
   //          <p>Hai totalizzato un punteggio di: <span class="score">${totalScore}</span> punti.</p>
   const json = {
@@ -91,7 +88,7 @@ function TransportQuestionnaire({ certification_id }) {
           {
             "type": "html",
             "name": "question28",
-            "html": "<div style=\"font-family: Arial, sans-serif; font-size: 1.25rem; padding: 2rem; line-height: 1.75; background-color: #f9fafb; border-radius: 1.5rem; border: 0.1px solid #A3A3A3;\">\n  <h1 style=\"font-size: 2rem; font-weight: bold; margin-bottom: 1rem; color: #2d7044;\">\n    Questionario trasporti\n  </h1>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    Regolamento per la Compilazione del Questionario\n  </h2>\n\n  <p style=\"margin-bottom: 0.25rem;\">\n    Benvenuto nel questionario sui trasporti! Ti chiediamo di leggere attentamente le seguenti istruzioni per compilare\n    correttamente tutte le sezioni. Il questionario è progettato per raccogliere informazioni più accurate possibili per <strong>calcolare le emissioni di CO2 e il voto di sostenibilità</strong>, quindi è\n    fondamentale seguire queste linee guida. \n    <strong style=\"font-weight: 600;\">\n      Tutte le domande sono obbligatorie (hanno un asterisco rosso \n      <span style=\"color: #f56565;\">*</span>)\n    </strong>.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    1. Compilazione Onesta e Rilevante\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Rispondi in modo sincero e accurato, fornendo informazioni che riflettano la tua situazione attuale. È obbligatorio rispondere a tutte le domande prima di completare il questionario. È però possibile interrompere il questionario e riprenderlo da dove si ha interrotto in quanto il sistema è dotato di <strong>AUTOSALVATAGGIO</strong>.\n    In alcune domande non è necessario selezionare tutte le voci (ad esempio, se non hai veicoli immatricolati nel 2023, non selezionare\n    2023 come anno. \n    <strong>La stessa cosa vale per tutte le altre domande che hanno menu a discesa</strong>).\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    2. Esattezza delle Risposte\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Assicurati che tutte le risposte fornite siano corrette e coerenti. Non inserire \"0\" se non possiedi veicoli immatricolati\n    in un certo anno: semplicemente non rispondere per quell'anno.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    3. Attenzione ai Dettagli\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Presta attenzione ai dettagli numerici. Se una domanda richiede un numero, assicurati di inserire il valore\n    corretto, evitando stime imprecise.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    4. Rispetto dei Tempi\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Completa il questionario con calma. Una compilazione attenta e precisa è preferibile a una rapida e incompleta.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    5. Assistenza\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Se hai dubbi o difficoltà nella compilazione, contattaci per chiarimenti. È importante comprendere bene ogni\n    domanda prima di rispondere.\n  </p>\n\n  <p style=\"margin-bottom: 0.25rem;\">Grazie per la tua collaborazione!</p>\n</div>\n"
+            "html": "<div style=\"font-family: Arial, sans-serif; font-size: 1.25rem; padding: 2rem; line-height: 1.75; background-color: #f9fafb; border-radius: 1.5rem; border: 0.1px solid #A3A3A3;\">\n  <h1 style=\"font-size: 2rem; font-weight: bold; margin-bottom: 1rem; color: #2d7044;\">\n    Questionario trasporti\n  </h1>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    Regolamento per la Compilazione del Questionario\n  </h2>\n\n  <p style=\"margin-bottom: 0.25rem;\">\n    Benvenuto nel questionario sui trasporti! Ti chiediamo di leggere attentamente le seguenti istruzioni per compilare\n    correttamente tutte le sezioni. Il questionario è progettato per raccogliere informazioni più accurate possibili per <strong>calcolare le emissioni di CO2 e il voto di sostenibilità</strong>, quindi è\n    fondamentale seguire queste linee guida. \n    <strong style=\"font-weight: 600;\">\n      Tutte le domande sono obbligatorie (hanno un asterisco rosso \n      <span style=\"color: #f56565;\">*</span>)\n    </strong>.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    1. Guida alla compilazione\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Rispondi in modo sincero e accurato, fornendo informazioni che riflettano la tua situazione attuale. È obbligatorio rispondere a tutte le domande prima di completare il questionario. È però possibile interrompere il questionario e riprenderlo da dove si ha interrotto in quanto il sistema è dotato di <strong>AUTOSALVATAGGIO</strong>.\n    In alcune domande non è necessario selezionare tutte le voci (ad esempio, se non hai veicoli immatricolati nel 2023, non selezionare\n    2023 come anno. \n    <strong>La stessa cosa vale per tutte le altre domande che hanno menu a discesa</strong>). <strong style='color: red'>Al completamento del questionario, ogni volta che modifichi una risposta, premi il tasto TERMINA per aggiornare il risultato altrimenti i risultati non sarebbero coerenti con i dati inseriti</strong>.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    2. Esattezza delle Risposte\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Assicurati che tutte le risposte fornite siano corrette e coerenti. Non inserire \"0\" se non possiedi veicoli immatricolati\n    in un certo anno: semplicemente non rispondere per quell'anno.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    3. Attenzione ai Dettagli\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Presta attenzione ai dettagli numerici. Se una domanda richiede un numero, assicurati di inserire il valore\n    corretto.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    4. Rispetto dei Tempi\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Completa il questionario con calma. Una compilazione attenta e precisa è preferibile a una rapida e incompleta.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    5. Assistenza\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Se hai dubbi o difficoltà nella compilazione, contattaci per chiarimenti. È importante comprendere bene ogni\n    domanda prima di rispondere.\n  </p>\n\n  <p style=\"margin-bottom: 0.25rem;\">Grazie per la tua collaborazione!</p>\n</div>\n"
           },
           {
             "type": "radiogroup",
@@ -162,6 +159,7 @@ function TransportQuestionnaire({ certification_id }) {
                 "title": "Biciclette",
                 "score": 0
               },
+
               {
                 "name": "text8",
                 "title": "Trasporto su acqua",
@@ -565,7 +563,7 @@ function TransportQuestionnaire({ certification_id }) {
           {
             "type": "matrixdynamic",
             "name": "question29",
-            "title": "Sulla base dei veicoli termici adibiti al trasporto di persone che utilizzi, inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo nel terzo riquadro)\n",
+            "title": "Sulla base dei veicoli termici su gomma adibiti al trasporto di persone che utilizzi, inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione nel punto V.7)\n",
             "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati e fornire il voto complessivo al questionario.",
             "columns": [
               {
@@ -670,7 +668,7 @@ function TransportQuestionnaire({ certification_id }) {
               },
               {
                 "name": "emissioni di CO2 WLTP",
-                "title": "emissioni di CO2 WLTP - (alimentazione principale)",
+                "title": "emissioni di CO2 WLTP",
                 "cellType": "text",
                 "isRequired": true,
                 "placeholder": "137",
@@ -697,7 +695,7 @@ function TransportQuestionnaire({ certification_id }) {
           {
             "type": "matrixdynamic",
             "name": "question30",
-            "title": "Sulla base dei veicoli termici adibiti al trasporto di merci che utilizzi, inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo nel terzo riquadro)\n",
+            "title": "Sulla base dei veicoli termici su gomma adibiti al trasporto di merci che utilizzi, inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo nel punto V.7)\n",
             "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati e fornire il voto complessivo al questionario.",
             "columns": [
               {
@@ -719,48 +717,26 @@ function TransportQuestionnaire({ certification_id }) {
                 "placeholder": "2014"
               },
               {
-                "name": "Carburante",
+                "name": "Peso-veicolo",
                 "cellType": "dropdown",
-                "isRequired": true,
+                "placeholder": "Sotto 3.5 tonnellate",
                 "choices": [
                   {
-                    "value": "Benzina",
-                    "text": "Benzina"
+                    "value": "leggero",
+                    "text": "Sotto 3.5 tonnellate"
                   },
                   {
-                    "value": "Diesel",
-                    "text": "Diesel"
-                  },
-                  {
-                    "value": "GPL",
-                    "text": "GPL"
-                  },
-                  {
-                    "value": "Metano",
-                    "text": "Metano"
-                  },
-                  {
-                    "value": "Metano (monovalente)",
-                    "text": "Metano (monovalente)"
-                  },
-                  {
-                    "value": "Mild hybrid",
-                    "text": "Mild hybrid"
-                  },
-                  {
-                    "value": "Full hybrid",
-                    "text": "Full hybrid"
-                  },
-                  {
-                    "value": "Plug-in hybrid",
-                    "text": "Plug-in hybrid"
-                  },
-                  {
-                    "value": "Elettrico",
-                    "text": "Elettrico"
+                    "value": "pesante",
+                    "text": "Uguale o maggiore di 3.5 tonnellate"
                   }
                 ],
-                "placeholder": "Benzina"
+                "storeOthersAsComment": true
+              },
+              {
+                "name": "Carburante",
+                "title": "Carburante",
+                "cellType": "dropdown",
+                "choices": []
               },
               {
                 "name": "KM annui",
@@ -769,59 +745,44 @@ function TransportQuestionnaire({ certification_id }) {
                 "placeholder": "10000"
               },
               {
-                "name": "Utilizzo del veicolo",
+                "name": "Il veicolo viaggia",
                 "cellType": "dropdown",
                 "isRequired": true,
                 "choices": [
                   {
                     "value": 1,
-                    "text": "Per 2/3 del tempo viaggia con carico inferiore al 50% della capacità"
+                    "text": "Meno del 10% dei km con basso carico (<50%)"
                   },
                   {
                     "value": 2,
-                    "text": "Per il 50% del tempo viaggia con carico inferiore al 50% della capacità"
+                    "text": "10-30% dei km con basso carico (<50%)"
                   },
                   {
                     "value": 3,
-                    "text": "Per oltre 2/3 del tempo viaggia con carico pari almeno al 50% della capacità"
+                    "text": "30-50% dei km con carico medio (50-80%)"
                   },
                   {
                     "value": 4,
-                    "text": "Per oltre il 50% del tempo viaggia con carico pari almeno al 50% della capacità"
+                    "text": "50-60% dei km con carico medio-alto (50-80%)"
                   },
                   {
                     "value": 5,
-                    "text": "Per oltre 2/3 del tempo viaggia con carico pari almeno al 75% della capacità"
+                    "text": "60-80% dei km con alto carico (>80%)"
                   },
                   {
                     "value": 6,
-                    "text": "Per oltre il 50% del tempo viaggia con carico pari almeno al 75% della capacità"
+                    "text": "Almeno l’80% dei km con alto carico (>80%)"
                   }
                 ],
-                "placeholder": "2/3 del tempo con carico inferiore al 50% della capacità"
+                "placeholder": "Meno del 10% dei km con basso carico (<50%)"
               },
               {
                 "name": "emissioni di CO2 WLTP",
-                "title": "emissioni di CO2 WLTP - (alimentazione principale)",
+                "title": "emissioni di CO2 WLTP",
                 "cellType": "text",
                 "isRequired": true,
-                "placeholder": "190",
+                "placeholder": "200"
               },
-              {
-                "name": "emissioni di CO2 WLTP (GPL o metano)",
-                "title": "emissioni di CO2 WLTP (GPL o metano)",
-                "cellType": "text",
-                "visibleIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
-                "requiredIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
-                "placeholder": "150"
-              }
-            ],
-            "choices": [
-              1,
-              2,
-              3,
-              4,
-              5
             ],
             "cellType": "text",
             "rowCount": 1
@@ -912,33 +873,14 @@ function TransportQuestionnaire({ certification_id }) {
           {
             "type": "radiogroup",
             "name": "question23",
-            "title": "Sarebbe interessato ad una certificazione di 2° livello?",
-            "description": "ATTENZIONE: se selezioni Si manderai una richiesta di approvazione",
+            "title": "Sarebbe interessato ad una certificazione di 2° livello? (ATTENZIONE: se selezioni Si manderai una richiesta di approvazione)",
+            "description": "La certificazione di 2° livello è comprensiva di attività di auditing energetico* per la struttura (Vs. uffici direzionali) che ha appena certificato che pone l’obiettivo di capire in che modo l’energia viene utilizzata, quali sono le cause degli eventuali sprechi ed eventualmente quali interventi possono essere suggeriti all’utente. La proposta all’utente si traduce in un piano energetico che valuti non solo la fattibilità tecnica ma anche e soprattutto quella economica degli interventi migliorativi proposti.",
             "isRequired": true,
             "choices": [
               {
                 "value": "Item 1",
                 "text": "Si",
                 "score": 0
-              },
-              {
-                "value": "Item 2",
-                "text": "No",
-                "score": 0
-              }
-            ]
-          },
-          {
-            "type": "radiogroup",
-            "name": "question24",
-            "title": "Sarebbe interessato a portare avanti un’attività di auditing energetico* per la struttura (Vs. uffici direzionali) che ha appena certificato?",
-            "description": "Per auditing Energetico si intende quell’attività che si pone l’obiettivo di capire in che modo l’energia viene utilizzata, quali sono le cause degli eventuali sprechi ed eventualmente quali interventi possono essere suggeriti all’utente. La proposta all’utente si traduce in un piano energetico che valuti non solo la fattibilità tecnica ma anche e soprattutto quella economica degli interventi migliorativi proposti",
-            "isRequired": true,
-            "choices": [
-              {
-                "value": "Item 1",
-                "text": "Si",
-                "score": 80
               },
               {
                 "value": "Item 2",
@@ -1066,7 +1008,139 @@ function TransportQuestionnaire({ certification_id }) {
             ],
             "cellType": "text",
             "rowCount": 1
-          }
+          },
+                    {
+            "type": "matrixdynamic",
+            "name": "question30",
+            "title": "Sulla base dei veicoli termici adibiti al trasporto di merci che utilizzi, inserisci i dati specificati sotto, in particolare i chilometri percorsi in un anno e le emissioni di CO2 considerando l'omologazione WLTP (visibile sulla carta di circolazione del veicolo nel terzo riquadro)\n",
+            "description": "Domanda utile per calcolare le emissioni di CO2 dai veicoli utilizzati e fornire il voto complessivo al questionario.",
+            "columns": [
+              {
+                "name": "Marca",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "Iveco"
+              },
+              {
+                "name": "Modello",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "Daily"
+              },
+              {
+                "name": "Anno immatricolazione",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "2014"
+              },
+              {
+                "name": "Carburante",
+                "cellType": "dropdown",
+                "isRequired": true,
+                "choices": [
+                  {
+                    "value": "Benzina",
+                    "text": "Benzina"
+                  },
+                  {
+                    "value": "Diesel",
+                    "text": "Diesel"
+                  },
+                  {
+                    "value": "GPL",
+                    "text": "GPL"
+                  },
+                  {
+                    "value": "Metano",
+                    "text": "Metano"
+                  },
+                  {
+                    "value": "Metano (monovalente)",
+                    "text": "Metano (monovalente)"
+                  },
+                  {
+                    "value": "Mild hybrid",
+                    "text": "Mild hybrid"
+                  },
+                  {
+                    "value": "Full hybrid",
+                    "text": "Full hybrid"
+                  },
+                  {
+                    "value": "Plug-in hybrid",
+                    "text": "Plug-in hybrid"
+                  },
+                  {
+                    "value": "Elettrico",
+                    "text": "Elettrico"
+                  }
+                ],
+                "placeholder": "Benzina"
+              },
+              {
+                "name": "KM annui",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "10000"
+              },
+              {
+                "name": "Il veicolo viaggia",
+                "cellType": "dropdown",
+                "isRequired": true,
+                "choices": [
+                  {
+                    "value": 1,
+                    "text": "Meno del 10% dei km con basso carico (<50%)"
+                  },
+                  {
+                    "value": 2,
+                    "text": "10-30% dei km con basso carico (<50%)"
+                  },
+                  {
+                    "value": 3,
+                    "text": "30-50% dei km con carico medio (50-80%)"
+                  },
+                  {
+                    "value": 4,
+                    "text": "50-60% dei km con carico medio-alto (50-80%)"
+                  },
+                  {
+                    "value": 5,
+                    "text": "60-80% dei km con alto carico (>80%)"
+                  },
+                  {
+                    "value": 6,
+                    "text": "Almeno l’80% dei km con alto carico (>80%)"
+                  }
+                ],
+                "placeholder": "Meno del 10% dei km con basso carico (<50%)"
+              },
+              {
+                "name": "emissioni di CO2 WLTP",
+                "title": "emissioni di CO2 WLTP",
+                "cellType": "text",
+                "isRequired": true,
+                "placeholder": "190",
+              },
+              {
+                "name": "emissioni di CO2 WLTP (GPL o metano)",
+                "title": "emissioni di CO2 WLTP (GPL o metano)",
+                "cellType": "text",
+                "visibleIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
+                "requiredIf": "{row.Carburante} = 'GPL' or {row.Carburante} = 'Metano'",
+                "placeholder": "150"
+              }
+            ],
+            "choices": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "cellType": "text",
+            "rowCount": 1
+          },
   */
 
   const survey = new Model(json);
@@ -1112,7 +1186,7 @@ function TransportQuestionnaire({ certification_id }) {
           ? JSON.parse(response.data.survey_data)
           : response.data.survey_data;
 
-        setInitialData({ surveyData, pageNo: response.data.pageNo });
+        setInitialData({ surveyData, pageNo: response.data.pageNo, completed: response.data.completed, previousCO2emissions: response.data.co2emissions, previousScore: response.data.total_score });
       }
     } catch (error) {
       console.error("Error restoring survey data:", error);
@@ -1134,21 +1208,62 @@ function TransportQuestionnaire({ certification_id }) {
   useEffect(() => {
     // Aggiungi i gestori dell'evento onComplete
     survey.onValueChanged.add(saveSurveyData);
+
+
+    // Logica per aggiornare dinamicamente il dropdown "Carburante" nella domanda 30
+    // solo la domanda 30 sfruttera la logica perche e' l'unica che ha la colonna "Peso-veicolo" e "Carburante"
+    survey.onMatrixCellValueChanged.add((sender, options) => {
+      // Controlla se il valore modificato appartiene alla colonna "Peso-veicolo"
+      if (options.columnName === "Peso-veicolo") {
+        const selectedCategory = options.value; // Valore selezionato nella colonna "Categoria"
+
+        // Definisce le opzioni disponibili per il dropdown "Carburante"
+        const vehicleChoices = {
+          leggero: [
+            { value: 1, text: "Elettrico" },
+            { value: 2, text: "Ibrido plug-in (PHEV)" },
+            { value: 3, text: "Gas naturale compresso (CNG)" },
+            { value: 4, text: "Diesel Euro VI o superiori" },
+            { value: 5, text: "Biodiesel/Biogas" }
+          ],
+          pesante: [
+            { value: 6, text: "Elettrico" },
+            { value: 7, text: "Idrogeno (Fuel Cell)" },
+            { value: 8, text: "Gas naturale liquefatto (LNG)" },
+            { value: 9, text: "Diesel Euro VI o superiori" },
+            { value: 10, text: "Diesel Euro V o precedenti" },
+            { value: 11, text: "Biodiesel/Biogas" }
+          ]
+        };
+
+        // Accede alla riga corrente della matrice dinamica e alla domanda "Carburante"
+        const carburanteQuestion = options.row.getQuestionByName("Carburante");
+
+        // Aggiorna dinamicamente le opzioni del dropdown "Carburante" in base al peso del veicolo selezionata
+        carburanteQuestion.choices = vehicleChoices[selectedCategory] || [];
+
+        // Resetta il valore della cella "Carburane" per evitare incoerenze
+        options.row.setValue("Carburante", null);
+      }
+    });
+
+
     survey.onComplete.add(handleSurveyComplete);
 
+    //bottone che renderizza in pdf le risposte del questionario
     survey.addNavigationItem({
       id: "pdf-export",
       title: "Salva come PDF",
       action: () => {
         const updatedData = survey.data;  // Recupera i dati aggiornati
-        let totalScore = calcolaPunteggio(survey.data);
-        generatePDF(updatedData, "Questionario Trasporti", userData, totalScore, json)();  // Genera il PDF con i dati aggiornati
+        let resultsData = calcolaRisultati(survey.data);
+        generatePDF(updatedData, "Questionario Trasporti", userData, resultsData.punteggioTotale, json)();  // Genera il PDF con i dati aggiornati
       },
     });
 
     // Cleanup
     return () => {
-      survey.onValueChanged.remove(saveSurveyData);
+      survey.onValueChanged.remove(saveSurveyData); // Rimuovi l'evento quando il componente viene dismontato
       survey.onComplete.remove(handleSurveyComplete);
     };
   }, [survey]);
@@ -1156,7 +1271,7 @@ function TransportQuestionnaire({ certification_id }) {
 
 
   function handleSurveyComplete() {
-    let results = calcolaPunteggio(survey.data);
+    let results = calcolaRisultati(survey.data);
     saveSurveyDataComplete(survey, results.punteggioTotale, results.CO2emissions);
     //scroll to top of page
     window.scrollTo(0, 0);
@@ -1181,19 +1296,20 @@ function TransportQuestionnaire({ certification_id }) {
     }
   }
 
-  function saveSurveyData(survey) {
+  function saveSurveyData(survey) { //Utilizzato per salvare le risposte del questionario ad ogni risposta data o modificata
     const data = {
       surveyId: userInfo,
       certification_id,
-      totalScore,
+      totalScore: initialData.completed ? initialData.previousScore : 0,
+      CO2emissions: initialData.completed ? initialData.previousCO2emissions : 0,
       pageNo: survey.currentPageNo,
       surveyData: survey.data,
-      completed: false
+      completed: initialData.completed ? true : false
     };
     submitSurveyData(data);
   }
 
-  function saveSurveyDataComplete(survey, totalScore, CO2emissions) {
+  function saveSurveyDataComplete(survey, totalScore, CO2emissions) { //Utilizzato per salvare le risposte del questionario quando il questionario viene completato
     const data = {
       surveyId: userInfo,
       certification_id,
@@ -1223,7 +1339,7 @@ function TransportQuestionnaire({ certification_id }) {
   }
 
   // Funzione per calcolare il punteggio totale
-  function calcolaPunteggio(formData) {
+  function calcolaRisultati(formData) {
     let punteggioTotale = 0;
     let results = 0;
     let totalCO2Emissions = 0;
@@ -1236,29 +1352,30 @@ function TransportQuestionnaire({ certification_id }) {
         //console.log(`Elemento: ${element.name}, tipo: ${element.type}`);
         switch (element.type) {
           case 'radiogroup':
-            const punteggioRadiogroup = calcolaPunteggioRadiogroup(formData[element.name], element);
-            punteggioTotale += punteggioRadiogroup;
+            //const punteggioRadiogroup = calcolaPunteggioRadiogroup(formData[element.name], element);
+            //punteggioTotale += punteggioRadiogroup;
             //console.log(`Domanda: ${element.title}, Risposta: ${formData[element.name]}, Punteggio: ${punteggioRadiogroup}`);
             break;
           case 'multipletext':
-            const punteggioMultipletext = calcolaPunteggioMultipletext(formData[element.name], element);
-            punteggioTotale += punteggioMultipletext;
+            //const punteggioMultipletext = calcolaPunteggioMultipletext(formData[element.name], element);
+            //punteggioTotale += punteggioMultipletext;
             //console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMultipletext}`);
             break;
           case 'matrixdynamic':
-            if (element.name === 'question29') {
+            if (element.name === 'question29' || element.name === 'question30') {
               results = CO2EmissionsCalculator(formData[element.name], element, element.name);
+              totalCO2Emissions += results.CO2emissions;
+              totalScore += results.vehiclesScore;
             } else {
-              const punteggioMatrixdynamic = calcolaPunteggioMatrixdynamic(formData[element.name], element);
-              punteggioTotale += punteggioMatrixdynamic;
+              //const punteggioMatrixdynamic = calcolaPunteggioMatrixdynamic(formData[element.name], element);
+              //punteggioTotale += punteggioMatrixdynamic;
               //console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMatrixdynamic}`);
             }
             break;
           case 'panel':
             //console.log('Dati passati alla funzione calcolaPunteggioPanel:', formData[element.name], element);
-
-            const punteggioPanel = calcolaPunteggioPanel(formData[element.name], element);
-            punteggioTotale += punteggioPanel;
+            //const punteggioPanel = calcolaPunteggioPanel(formData[element.name], element);
+            //punteggioTotale += punteggioPanel;
             //console.log(`Pannello: ${element.title}, Punteggio: ${punteggioPanel}`);
             break;
           case 'html':
@@ -1273,14 +1390,17 @@ function TransportQuestionnaire({ certification_id }) {
 
     //const punteggioMassimo = 1115; //punteggio massimo possibile
 
-    console.log("punteggio", results.vehiclesScore);
-    console.log("CO2Emissions", results.CO2emissions);
+    console.log("punteggio", totalScore / 2);
+    console.log("CO2Emissions", totalCO2Emissions);
+
     return {
-      CO2emissions: results.CO2emissions, punteggioTotale: results.vehiclesScore
+      CO2emissions: totalCO2Emissions, punteggioTotale: totalScore / 2
     };
   }
 
-  function CO2EmissionsCalculator(responses, questionName) {
+  function CO2EmissionsCalculator(responses, question) {
+
+    console.log('questionName', question.name);
     let currentCO2Emissions = 0; //espresso in grammi
     let totalCO2Emissions = 0; //espresso in grammi
     let currentVehicleScore = 0;
@@ -1301,90 +1421,78 @@ function TransportQuestionnaire({ certification_id }) {
     ];
 
     const emissionClassesFreightTransport = [ //Trasporto merci
-      { class: "A", minEmissions: 0, maxEmissions: 50, maxScore: 100 },      // Emissioni molto basse
-      { class: "B", minEmissions: 51, maxEmissions: 100, maxScore: 90 },    // Emissioni basse
-      { class: "C", minEmissions: 101, maxEmissions: 150, maxScore: 80 },   // Emissioni moderate
-      { class: "D", minEmissions: 151, maxEmissions: 200, maxScore: 70 },   // Emissioni medio-alte
-      { class: "E", minEmissions: 201, maxEmissions: 250, maxScore: 60 },   // Emissioni alte
-      { class: "F", minEmissions: 251, maxEmissions: 300, maxScore: 50 },   // Emissioni molto alte
-      { class: "G", minEmissions: 301, maxEmissions: 400, maxScore: 40 },   // Emissioni elevate per carichi pesanti
-      { class: "H", minEmissions: 401, maxEmissions: 500, maxScore: 30 },   // Emissioni elevate per veicoli pesanti
-      { class: "I", minEmissions: 501, maxEmissions: 600, maxScore: 20 },   // Emissioni molto elevate
-      { class: "J", minEmissions: 601, maxEmissions: Infinity, maxScore: 10 } // Emissioni estremamente elevate
+      { class: "A", minEmissions: 0, maxEmissions: 0, maxScore: 100 },      // veicoli elettrici - idrogeno
+      { class: "B", minEmissions: 1, maxEmissions: 50, maxScore: 90 },      // Classe aggiuntiva per semplicita di implementazione (molto probabilmente non verra usato)
+      { class: "C", minEmissions: 50, maxEmissions: 100, maxScore: 80 },    // ibridi plug-in (sicuramente furgoni)
+      { class: "D", minEmissions: 101, maxEmissions: 150, maxScore: 70 },   // furgoni con biocarbruanti o biogas 
+      { class: "E", minEmissions: 151, maxEmissions: 200, maxScore: 60 },   // furgoni diesel euro VI o alcuni camion con biogas
+      { class: "F", minEmissions: 201, maxEmissions: 250, maxScore: 50 },   // Camion a gas naturale liquefatto, alcuni camion con biogas oppure alcuni furgoni molto inquinanti
+      { class: "G", minEmissions: 251, maxEmissions: 300, maxScore: 40 },   // Camion diesel euro VI 
+      { class: "H", minEmissions: 301, maxEmissions: 400, maxScore: 30 },   // Camion diesel euro VI o precedenti
+      { class: "I", minEmissions: 401, maxEmissions: 500, maxScore: 20 },   //  Classe aggiuntiva per semplicita di implementazione (molto probabilmente non verra usato)
+      { class: "J", minEmissions: 501, maxEmissions: Infinity, maxScore: 10 },   //  Classe aggiuntiva per semplicita di implementazione (molto probabilmente non verra usato)
     ];
 
-
     const penalities = {
-      1: 9, //2/3 del tempo con una sola persona a bordo
-      2: 8, //Per il 50% con una persona a bordo
-      3: 5, //Per oltre 2/3 del tempo con almeno 2 persone a bordo
-      4: 4, //Per oltre il 50% con almeno 2 persone a bordo
-      5: 2, //Per oltre 2/3 del tempo con almeno 3 o più persone a bordo
-      6: 0 //Per oltre il 50% con almeno 3 persone a bordo
+      1: 9, //2/3 del tempo con una sola persona a bordo - Meno del 10% dei km con basso carico (<50%)
+      2: 8, //Per il 50% con una persona a bordo - 10-30% dei km con basso carico (<50%)
+      3: 5, //Per oltre 2/3 del tempo con almeno 2 persone a bordo - 30-50% dei km con carico medio (50-80%) 
+      4: 4, //Per oltre il 50% con almeno 2 persone a bordo - 50-60% dei km con carico medio-alto (50-80%)
+      5: 2, //Per oltre 2/3 del tempo con almeno 3 o più persone a bordo - 60-80% dei km con alto carico (>80%)
+      6: 0 //Per oltre il 50% con almeno 3 persone a bordo - Almeno l’80% dei km con alto carico (>80%)
     };
-
-    if (responses === undefined) {
-      return;
-    }
 
     responses.forEach(row => {
       currentCO2Emissions = 0;
       totalVehicles++;
+      let averageCO2Emissions = 0 // Solo se GPL o metano
 
       //console.log(`Marca: ${row["Marca"]}, Modello: ${row["Modello"]}, Anno: ${row["Anno immatricolazione"]}, Carburante: ${row["Carburante"]}, km annui: ${row["km annui"]}, emissioni: ${row["emissioni di CO2 WLTP"]}, emissioni GPl o metano: : ${row["emissioni di CO2 WLTP (GPL o metano)"]}`);
       if (row["Carburante"] === "GPL" || row["Carburante"] === "Metano") {
-        currentCO2Emissions = parseInt(row["KM annui"]) * ((parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2); //Media tra le emissioni di due carburanti
+        currentCO2Emissions = parseInt(row["KM annui"]) * ((parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2); //Media tra le emissioni di due carburanti in quanto il veicolo è bifuel
         //console.log(currentCO2Emissions)
         totalCO2Emissions += currentCO2Emissions;
         console.log("currentCO2Emissions", currentCO2Emissions);
 
-        const averageCO2Emissions = (parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2;
+        averageCO2Emissions = (parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2;
         console.log("averageCO2Emissions", averageCO2Emissions);
-
-        const emissionClass = emissionClassesPeopleTransport.find((entry) =>
-          averageCO2Emissions >= entry.minEmissions && averageCO2Emissions <= entry.maxEmissions);
-        console.log("emissionClass", emissionClass);
-
-        console.log("Il veicolo viaggia", row["Il veicolo viaggia"]);
-        console.log("Penalita applicata", penalities[row["Il veicolo viaggia"]]);
-
-        //penalità sulla base della capienza dei veicoli
-        currentVehicleScore = emissionClass.maxScore - parseInt(penalities[row["Il veicolo viaggia"]]);
-        console.log("currentVehicleScore", currentVehicleScore);
-
-        totalVehiclesScore += currentVehicleScore;
 
       } else {
         currentCO2Emissions = parseInt(row["KM annui"]) * parseInt(row["emissioni di CO2 WLTP"] || 0);
         //console.log(currentCO2Emissions)
         totalCO2Emissions += currentCO2Emissions;
         console.log("currentCO2Emissions", currentCO2Emissions);
-
-        const emissionClass = emissionClassesPeopleTransport.find((entry) =>
-          row["emissioni di CO2 WLTP"] >= entry.minEmissions && row["emissioni di CO2 WLTP"] <= entry.maxEmissions);
-        console.log("emissionClass", emissionClass);
-
-        console.log("Il veicolo viaggia", row["Il veicolo viaggia"]);
-        console.log("Penalita applicata", penalities[row["Il veicolo viaggia"]]);
-
-        //penalità sulla base della capienza dei veicoli
-        currentVehicleScore = emissionClass.maxScore - parseInt(penalities[row["Il veicolo viaggia"]]);
-        console.log("currentVehicleScore", currentVehicleScore);
-
-        if (row["Carburante"] === "Full Hybrid") {
-          currentVehicleScore += 1;
-        } else if (row["Carburante"] === "Plug-in hybrid") {
-          currentVehicleScore += 2;
-        }
-
-        if (currentVehicleScore > emissionClass.maxScore) {
-          currentVehicleScore = emissionClass.maxScore;
-        }
-
-        console.log("currentVehicleScore", currentVehicleScore);
-
-        totalVehiclesScore += currentVehicleScore;
       }
+
+      let emissionClass = 0;
+
+      // Determina la classe di emissione applicabile
+      const emissionClasses = question.name === 'question29' //la domanda 29 è relativa al trasporto persone
+        ? emissionClassesPeopleTransport
+        : emissionClassesFreightTransport;
+
+      console.log('emission value GPl Metano', (parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2);
+      console.log('emission value other', parseInt(row["emissioni di CO2 WLTP"]));
+
+      const emissionsValue = (row["Carburante"] === "GPL" || row["Carburante"] === "Metano")
+        ? ((parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2)
+        : parseInt(row["emissioni di CO2 WLTP"]);
+
+      // Trova la classe di emissione corrispondente
+      emissionClass = emissionClasses.find((entry) =>
+        emissionsValue >= entry.minEmissions && emissionsValue <= entry.maxEmissions);
+
+
+      console.log("emissionClass", emissionClass);
+
+      console.log("Il veicolo viaggia", row["Il veicolo viaggia"]);
+      console.log("Penalita applicata", penalities[row["Il veicolo viaggia"]]);
+
+      //penalità sulla base della capienza dei veicoli
+      currentVehicleScore = emissionClass.maxScore - parseInt(penalities[row["Il veicolo viaggia"]]);
+      console.log("currentVehicleScore", currentVehicleScore);
+
+      totalVehiclesScore += currentVehicleScore;
 
     });
 
@@ -1602,8 +1710,6 @@ function TransportQuestionnaire({ certification_id }) {
 
     return punteggio;
   }
-
-
 
   return (
     <div className="overflow-hidden">

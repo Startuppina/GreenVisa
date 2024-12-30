@@ -52,7 +52,7 @@ function UserOrders() {
                                     )}
                                     <div>
                                         <p className="text-xl font-semibold">{order.product_name}</p>
-                                        <p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('en-CA')}</p>
+                                        <p className="text-gray-600">Data: {new Date(order.order_date).toLocaleDateString('ita')}</p>
                                     </div>
                                 </div>
                                 <div className="w-full flex flex-col md:flex-row justify-between">
