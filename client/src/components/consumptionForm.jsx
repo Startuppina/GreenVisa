@@ -27,6 +27,8 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         { label: "Gas Naturale (Metano)", unit: "Sm³" },
         { label: "GPL", unit: "mc" },
         { label: "Gasolio", unit: "mc" },
+        { label: "Benzina", unit: "lt" },
+        { label: "Idrogeno", unit: "Smc" },
         { label: "Olio combustibile", unit: "t" },
         { label: "Pellet", unit: "t" },
         { label: "Cippato di legna", unit: "t" },

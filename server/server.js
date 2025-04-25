@@ -517,6 +517,11 @@ app.put("/api/update-turnover", authenticateJWT, async (req, res) => {
       user_id,
     ]);
 
+    await pool.query("UPDATE buildings SET annual_turnover = $1 WHERE user_id = $2", [
+      turnover,
+      user_id,
+    ]);
+
     res.status(200).json({ message: "Fatturato aggiornato con successo" });
   } catch (err) {
     console.error(err);
@@ -2355,7 +2360,13 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       led,
       gasLamp,
       autoLightingControlSystem,
-      electricForniture
+      electricForniture,
+
+      ateco,
+      activityDescription,
+      annualTurnover,
+      employees,
+      prodProcessDescription
       //buildingScore
     } = req.body;
 
@@ -2410,6 +2421,11 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       gasLamp,
       electricityAnalyzer,
       autoLightingControlSystem,
+      ateco,
+      activityDescription,
+      annualTurnover,
+      employees,
+      prodProcessDescription
     ];
 
     const query = `
@@ -2433,9 +2449,15 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
         led,
         gas_lamp,
         analyzers,
-        autoLightingControlSystem
+        autoLightingControlSystem,
+
+        ateco,
+        activity_description,
+        annual_turnover,
+        num_employees,
+        prodProcessDesc
     ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
     )
   `;
 
@@ -2470,9 +2492,16 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       led,
       gasLamp,
       autoLightingControlSystem,
-      electricForniture
+      electricForniture,
+      ateco,
+      activityDescription,
+      annualTurnover,
+      employees,
+      prodProcessDescription
       //buildingScore
     } = req.body;
+
+
 
     //console.log(req.body);
 
@@ -2523,6 +2552,11 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       gasLamp,
       electricityAnalyzer,
       autoLightingControlSystem,
+      ateco,
+      activityDescription,
+      annualTurnover,
+      employees,
+      prodProcessDescription,
       id
     ];
 
@@ -2548,8 +2582,13 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
         led = $17,
         gas_lamp = $18,
         analyzers = $19,
-        autoLightingControlSystem = $20
-      WHERE id = $21
+        autoLightingControlSystem = $20,
+        ateco = $21,
+        activity_description = $22,
+        annual_turnover = $23,
+        num_employees = $24,
+        prodProcessDesc = $25
+      WHERE id = $26
   `, values);
 
     res.status(200).json({ msg: "Edificio aggiornato con successo" });
@@ -2663,6 +2702,7 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
   }
 })
 
+
 app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req, res) => {
   try {
     const { id, plant_id } = req.params;
@@ -2711,6 +2751,7 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
   }
 })
 
+
 app.get("/api/buildings/:id/fetch-plants", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
@@ -2744,6 +2785,119 @@ app.delete("/api/delete-plant/:id", authenticateJWT, async (req, res) => {
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
+
+
+app.get("/api/buildings/:id/fetch-gases", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+
+    const query2 = "SELECT COUNT(*) FROM climate_gas_altering WHERE building_id = $1 AND user_id = $2";
+    const values2 = [id, user_id];
+    const result2 = await pool.query(query2, values2);
+    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+
+    //console.log('Count from database:', count); // Log count
+
+    const rows = await pool.query(`SELECT * FROM climate_gas_altering WHERE building_id = $1 AND user_id = $2`, [id, user_id]);
+
+    res.status(200).json({ gases: rows.rows, count: count });
+  } catch (error) {
+    console.error('Error fetching gases:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+app.post("/api/buildings/:id/upload/gas", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    const {
+      type,
+      annualConsumption,
+      unitType,
+      usage
+    } = req.body;
+
+    if (!type || !annualConsumption || !unitType || !usage) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    const values = [
+      user_id, id,
+      type,
+      annualConsumption,
+      unitType,
+      usage
+    ];
+
+    await pool.query(`
+      INSERT INTO climate_gas_altering (
+        user_id, building_id, type, annual_consumption, unit_type, usage
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6
+      )
+    `, values);
+
+    res.status(200).json({ msg: "Gas clima alterante aggiunto con successo" });
+  } catch (error) {
+    console.error('Error adding gas:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.put("/api/buildings/:id/update/gas/:gas_id", authenticateJWT, async (req, res) => {
+  try {
+    const { id, gas_id } = req.params;
+    const { user_id } = req.user;
+    const {
+      type,
+      annualConsumption,
+      unitType,
+      usage
+    } = req.body;
+
+    if (!type || !annualConsumption || !unitType || !usage) {
+      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    const values = [
+      user_id, id,
+      type,
+      annualConsumption,
+      unitType,
+      usage,
+      gas_id
+    ];
+
+    await pool.query(`
+      UPDATE climate_gas_altering
+      SET type = $3, annual_consumption = $4, unit_type = $5, usage = $6
+      WHERE user_id = $1 AND building_id = $2 AND id = $7
+    `, values);
+
+    res.status(200).json({ msg: "Gas clima alterante aggiornato con successo." });
+  } catch (error) {
+    console.error('Error updating gas:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+})
+
+app.delete("/api/delete-gas/:id", authenticateJWT, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.user;
+    console.log('user_id:', user_id);
+    console.log('id:', id);
+
+    await pool.query(`DELETE FROM climate_gas_altering WHERE id = $1 AND user_id = $2`, [id, user_id]);
+    res.status(200).json({ msg: "Gas clima alterante eliminato con successo" });
+  } catch (error) {
+    console.error('Error deleting gas:', error.message);
+    res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
 
 app.get("/api/:buildingID/fetch-user-energies", authenticateJWT, async (req, res) => {
   try {

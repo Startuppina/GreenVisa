@@ -18,6 +18,7 @@ const Signup = () => {
     const [messagePopup, setMessagePopup] = useState('');
     const [acceptedTerms, setAcceptedTerms] = useState(false); // Gestisci il checkbox dei termini
     const [company_name, setCompany_name] = useState('');
+    const [page, setPage] = useState(1);
 
     const navigate = useNavigate();
 
@@ -91,6 +92,8 @@ const Signup = () => {
                 <div className='flex flex-col items-center justify-center mb-5 mt-4'>
                     <img src="/img/logo.png" alt="logo" className='w-[60%] max-w-[200px] p-0' />
                 </div>
+
+                <h1 className='text-center font-bold text-[#2d7044]'>FASE 1: CONFIGURAZIONE DEL REFERENTE</h1>
 
                 <form onSubmit={handleSubmit} className="w-full">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">

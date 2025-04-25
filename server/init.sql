@@ -3,12 +3,12 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(255) NOT NULL, --nome e cognome del referente 
     company_name VARCHAR(255) NOT NULL, --nome dell'azienda, ragione sociale 
     email VARCHAR(255) NOT NULL UNIQUE,
-    phone_number VARCHAR(255),
+    phone_number VARCHAR(255) DEFAULT NULL UNIQUE,
     p_iva VARCHAR(11) UNIQUE,
     tax_code VARCHAR(16) DEFAULT NULL UNIQUE, --codice fiscale
-    legal_headquarter VARCHAR(255), -- sede legale
-    turnover DECIMAL(10, 2), --fatturato
-    administrator BOOLEAN NOT NULL,
+    legal_headquarter VARCHAR(255) DEFAULT NULL, -- sede legale
+    turnover INTEGER DEFAULT NULL, --fatturato
+    administrator BOOLEAN DEFAULT FALSE,
     password_digest TEXT
 
     CHECK (LENGTH(p_iva) = 11 AND p_iva ~ '^[0-9]+$')
@@ -198,7 +198,14 @@ CREATE TABLE IF NOT EXISTS buildings (
     emissionMark INTEGER DEFAULT NULL,
     emissionCO2 DECIMAL(10, 5) DEFAULT NULL,
     areaEmissionCO2 DECIMAL(10, 5) DEFAULT NULL,
-    results_visible BOOLEAN DEFAULT FALSE
+    results_visible BOOLEAN DEFAULT FALSE,
+
+    -- gli attributi sotto saranno specifici solamente per edifici industriali
+    ateco VARCHAR(8) DEFAULT NULL,
+    activity_description VARCHAR(300) DEFAULT NULL,
+    annual_turnover INTEGER DEFAULT NULL,
+    num_employees INTEGER DEFAULT NULL,
+    prodProcessDesc VARCHAR(300) DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_consumptions (
@@ -207,6 +214,16 @@ CREATE TABLE IF NOT EXISTS user_consumptions (
     building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
     energy_source VARCHAR(50) NOT NULL,
     consumption DECIMAL(10, 2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS climate_gas_altering (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- assuming you have a users table with an id field
+    building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
+    type VARCHAR(50) DEFAULT NULL,
+    annual_consumption DECIMAL(10, 2) DEFAULT NULL,
+    unit_type VARCHAR(50) DEFAULT NULL,
+    usage VARCHAR(50) DEFAULT NULL
 );
 
 

@@ -138,6 +138,66 @@ function Building() {
                     </div>
                 </div>
 
+                {/* Contenitore per i dati principali (Codice ATECO, Numero dipendenti, Fatturato annuo) */}
+                {true && (
+                    <div className="flex flex-col items-stretch justify-center">
+                        {/* Dati principali (Codice ATECO, Numero dipendenti, Fatturato annuo) in linea orizzontale su schermi grandi */}
+                        <div className="flex flex-col lg:flex-row gap-6">
+                            <div className="w-full lg:w-1/3 p-4">
+                                <div className="flex justify-between mb-2">
+                                    <span className="font-semibold">Codice ATECO:</span>
+                                    <span id="lighting">{buildingData.ateco}</span>
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/3 p-4">
+                                <div className="flex justify-between mb-2">
+                                    <span className="font-semibold">Numero dipendenti:</span>
+                                    <span id="lighting">{buildingData.num_employees}</span>
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/3 p-4">
+                                <div className="flex justify-between mb-2">
+                                    <span className="font-semibold">Fatturato annuo:</span>
+                                    <span id="lighting">{buildingData.annual_turnover}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Contenitore per le descrizioni (attività e processi produttivi), sempre sotto i 3 dati */}
+                        <div className="flex flex-col w-full lg:w-full p-4">
+                            {/* Descrizione attività */}
+                            <div className="flex flex-col mb-4">
+                                <span className="font-semibold mb-2">Descrizione attività:</span>
+                                <textarea
+                                    id="lighting"
+                                    value={buildingData.activity_description || ''}
+                                    readOnly
+                                    className="w-full h-24 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg p-2.5 mb-2"
+                                    maxLength={300}
+                                    placeholder="Descrizione attività (max 300 caratteri)"
+                                />
+                                <div className="text-right text-sm text-gray-500">{buildingData.activity_description ? `${buildingData.activity_description.length}/300` : "0/300"}</div>
+                            </div>
+
+                            {/* Descrizione processi produttivi */}
+                            <div className="flex flex-col mb-4">
+                                <span className="font-semibold mb-2">Descrizione processi produttivi:</span>
+                                <textarea
+                                    id="lighting"
+                                    value={buildingData.prodprocessdesc || ''}
+                                    readOnly
+                                    className="w-full h-24 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg p-2.5 mb-2"
+                                    maxLength={300}
+                                    placeholder="Descrizione processi produttivi (max 300 caratteri)"
+                                />
+                                <div className="text-right text-sm text-gray-500">{buildingData.prodprocessdesc ? `${buildingData.prodprocessdesc.length}/300` : "0/300"}</div>
+                            </div>
+                        </div>
+                    </div>
+                )
+                }
+
+
                 <div className="flex justify-center">
                     <button
                         className="p-2 w-[150px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mb-4"

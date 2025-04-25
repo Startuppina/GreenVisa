@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // Ascolta su tutte le interfacce di rete
     port: 3000,
+    watch: {
+      usePolling: true,
+    },
   },
   resolve: {
     alias: {

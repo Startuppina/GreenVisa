@@ -9,6 +9,7 @@ import Plants from "./components/plants";
 import Solars from "./components/solars";
 import Photovoltaics from "./components/photovoltaics";
 import Consumption from "./components/comsumption";
+import ClimateAlteringGases from "./components/climateAlteringGases";
 import { EmissionsCalculator } from "./components/emissionsCalculator";
 import { useRecoveryContext } from "./provider/provider";
 import { MutatingDots } from "react-loader-spinner";
@@ -105,6 +106,15 @@ function BuildingPage() {
                         </button>
 
                         <button
+                            className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'gasAlteranti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                            onClick={() => {
+                                toggleSection("gasAlteranti");
+                            }}
+                        >
+                            <span className="text-arial text-xl">Gas clima alteranti</span>
+                        </button>
+
+                        <button
                             className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'solari' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
 
                             onClick={() => {
@@ -144,6 +154,18 @@ function BuildingPage() {
                             <span className="text-arial text-xl">Consumi annui</span>
                         </button>
 
+                        {true && (
+                            <button
+                                className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'gasAlteranti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
+                                onClick={() => {
+                                    toggleSection("gasAlteranti");
+                                }}
+                            >
+                                <span className="text-arial text-xl">Gas clima alteranti</span>
+                            </button>
+                        )}
+
+
                         <button
                             className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'solari' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
 
@@ -170,6 +192,7 @@ function BuildingPage() {
 
             {activeSection === "impianti" && <Plants />}
             {activeSection === "consumi" && <Consumption />}
+            {activeSection === "gasAlteranti" && <ClimateAlteringGases />}
             {activeSection === "solari" && <Solars />}
             {activeSection === "fotovoltaici" && <Photovoltaics />}
             {

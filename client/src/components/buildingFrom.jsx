@@ -26,6 +26,13 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const [gasLamp, setGasLamp] = useState(parseInt(buildingData.gas_lamp) || 0);
     const [electricForniture, setElectricForniture] = useState(buildingData.electricity_forniture || "");
     const [autoLightingControlSystem, setAutoLightingControlSystem] = useState(buildingData.autolightingcontrolsystem || "");
+
+    const [ateco, setAteco] = useState(buildingData.ateco || "");
+    const [activityDescription, setActivityDescription] = useState(buildingData.activity_description || "");
+    const [annualTurnover, setAnnualTurnover] = useState(buildingData.annual_turnover || 0);
+    const [employees, setEmployees] = useState(buildingData.num_employees || 0);
+    const [prodProcessDescription, setProdProcessDescription] = useState(buildingData.prodprocessdesc || ""); //descrizione processi produttivi
+
     const [isLoading, setIsLoading] = useState(false);
 
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -35,6 +42,34 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchInfo = async () => {
+
+            console.log("env", import.meta.env.VITE_REACT_SERVER_ADDRESS);
+
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.status === 200) {
+                    setAnnualTurnover(response.data.turnover);
+                    console.log("annual turnover:", response.data.turnover);
+                    return;
+                }
+
+            } catch (error) {
+                setMessagePopup(error.response?.data?.msg || error.message);
+                setButtonPopup(true);
+            }
+        }
+
+        fetchInfo();
+
+    }, []);
 
     const handleUpdateBuilding = async (e) => {
         e.preventDefault();
@@ -64,6 +99,13 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         formData.append('lighting', lighting);
         formData.append('led', led);
         formData.append('gasLamp', gasLamp);
+
+        formData.append('ateco', ateco || null); // Se vuoto, invia null
+        formData.append('activityDescription', activityDescription || null); // Se vuoto, invia null
+        formData.append('annualTurnover', annualTurnover || 0); // Se vuoto, invia 0
+        formData.append('employees', employees || 0); // Se vuoto, invia 0
+        formData.append('prodProcessDescription', prodProcessDescription || null); // Se vuoto, invia null
+
 
         console.log('Form data:', formData);
 
@@ -138,6 +180,12 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         formData.append('led', led);
         formData.append('gasLamp', gasLamp);
 
+        formData.append('ateco', ateco || null); // Se vuoto, invia null
+        formData.append('activityDescription', activityDescription || null); // Se vuoto, invia null
+        formData.append('annualTurnover', annualTurnover || 0); // Se vuoto, invia 0
+        formData.append('employees', employees || 0); // Se vuoto, invia 0
+        formData.append('prodProcessDescription', prodProcessDescription || null); // Se vuoto, invia null
+
         console.log('Form data:', formData);
 
         try {
@@ -153,7 +201,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     setMessagePopup(response.data.msg);
                     setButtonPopup(true);
                     setIsLoading(false);
-                    setName("");
+                    /*setName("");
                     //setDescription("");
                     setAddress("");
                     setUsage("");
@@ -172,7 +220,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     setElectricForniture("");
                     setLighting(0);
                     setLed(0);
-                    setGasLamp(0);
+                    setGasLamp(0);*/
                     setAddBuildingTrigger(!addBuildingTrigger);
 
                     setMessagePopup("edificio aggiunto con successo");
@@ -213,6 +261,10 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     const handleGasChange = (e) => setGasLamp(e.target.value);
     const handleElectricFornitureChange = (e) => setElectricForniture(e.target.value);
     const handleAutoLightingControlSystemChange = (e) => setAutoLightingControlSystem(e.target.value);
+    const handleAtecoChange = (e) => setAteco(e.target.value);
+    const handleEmployeesChange = (e) => setEmployees(e.target.value);
+    const handleActivityDescriptionChange = (e) => setActivityDescription(e.target.value);
+    const handleProdProcessChange = (e) => setProdProcessDescription(e.target.value);
 
     const options = [
         {
@@ -311,6 +363,66 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
             <div className="w-[98.5%] mx-auto md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border bg-white border-gray-300 shadow-xl">
                 <h2 className="text-2xl font-bold text-center mb-6">{isEdit ? 'Modifica Edificio' : 'Aggiungi un nuovo Edificio'}</h2>
                 <form onSubmit={handleSubmit} className="flex flex-col">
+
+                    {/* Informazioni aggiuntive per edifici industriali */}
+                    {true && (
+                        <div className="mb-6">
+                            <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                                <label className="flex flex-col w-full md:w-1/2">
+                                    <span className="block mb-2">Codice Ateco</span>
+                                    <input
+                                        type="text"
+                                        value={ateco}
+                                        onChange={handleAtecoChange}
+                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                                    />
+                                </label>
+                                <label className="flex flex-col w-full md:w-1/2">
+                                    <span className="block mb-2">Numero dipendenti</span>
+                                    <input
+                                        type="number"
+                                        value={employees}
+                                        onChange={handleEmployeesChange}
+                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                                    />
+                                </label>
+                            </div>
+                            <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                                <label className="flex flex-col w-full">
+                                    <span className="block mb-2">Descrizione dell'attività svolta (massimo 300 caratteri)</span>
+                                    <textarea
+                                        value={activityDescription}
+                                        onChange={(e) => {
+                                            if (e.target.value.length <= 300) {
+                                                handleActivityDescriptionChange(e);
+                                            }
+                                        }}
+                                        maxLength="300"
+                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                                    />
+                                    <span className="text-sm text-gray-500 mt-1">{`${activityDescription.length}/300 caratteri`}</span>
+                                </label>
+                            </div>
+                            <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                                <label className="flex flex-col w-full">
+                                    <span className="block mb-2">Descrizione dei processi produttivi (massimo 300 caratteri)</span>
+                                    <textarea
+                                        value={prodProcessDescription}
+                                        onChange={(e) => {
+                                            if (e.target.value.length <= 300) {
+                                                handleProdProcessChange(e);
+                                            }
+                                        }}
+                                        maxLength="300"
+                                        className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                                    />
+                                    <span className="text-sm text-gray-500 mt-1">{`${prodProcessDescription.length}/300 caratteri`}</span>
+                                </label>
+                            </div>
+                        </div>
+                    )
+                    }
+
                     {/* Sezione Informazioni Generali */}
                     <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
@@ -506,7 +618,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     </div>
 
                     <div className="mb-6">
-                        <h3 className="text-xl font-bold text-center mb-4">Corpi illuminanti (inserisci il numero di dispositivi di illuminazione)</h3>
+                        <h3 className="text-lg font-bold text-center mb-4">Corpi illuminanti (inserisci il numero di dispositivi di illuminazione)</h3>
                         <div className="flex flex-col md:flex-row md:gap-4">
                             <label className="flex flex-col w-full md:w-1/3">
                                 <div className="flex flex-col items-center space-y-4 mb-2">
@@ -572,6 +684,8 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                 ))}
                             </select>
                         </label>
+
+
                     </div>
 
                     {/* Bottone di Invio */}

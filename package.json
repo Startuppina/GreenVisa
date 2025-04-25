@@ -1,1 +1,13 @@
-{}
+{
+  "name": "greenvisa",
+  "version": "1.0.0.0",
+  "description": "This repository is made for the new project green visa. Made to refresh the green visa website by using different technologies. React and material UI are used for this purpose",
+  "main": "./client/src/App.jsx",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chionne27/GreenVisa.git"
+  },
+  "keywords": [],
+  "author": "Chionne Daniel",
+  "license": "ISC"
+}

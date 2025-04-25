@@ -6,13 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { useRecoveryContext } from "../provider/provider";
 
 
-function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
-    const [description, setDescription] = useState(plant.description || "");
-    const [plantType, setPlantType] = useState(plant.plant_type || "");
-    const [serviceType, setServiceType] = useState(plant.service_type || "");
-    const [generatorType, setGeneratorType] = useState(plant.generator_type || "");
-    const [generatorDescription, setGeneratorDescription] = useState(plant.generator_description || "");
-    const [fuelType, setFuelType] = useState(plant.fuel_type || "");
+function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
+    const [type, setType] = useState(gas.type || "");
+    const [annualConsumption, setAnnualConsumption] = useState(gas.annual_consumption || "");
+    const [unitType, setUnitType] = useState(gas.unit_type || "");
+    const [usage, setUsage] = useState(gas.usage || "");
     const [isLoading, setIsLoading] = useState(false);
 
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -22,21 +20,19 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
 
     const navigate = useNavigate();
 
-    const handleUpdatePlant = async () => {
+    const handleUpdateGas = async () => {
         const token = localStorage.getItem("token");
         const id = buildingID;
 
         const formData = {
-            description,
-            plantType,
-            serviceType,
-            generatorType,
-            generatorDescription: generatorType === "Altro" ? generatorDescription : "",
-            fuelType,
+            type,
+            annualConsumption,
+            unitType,
+            usage
         };
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/plant/${plant.id}`, formData, {
+            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/gas/${gas.id}`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -68,7 +64,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
         setIsLoading(true);
 
         if (isEdit) {
-            handleUpdatePlant();
+            handleUpdateGas();
             return;
         }
 
@@ -76,17 +72,15 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
         const id = buildingID;
 
         const formData = {
-            description,
-            plantType,
-            serviceType,
-            generatorType,
-            generatorDescription: generatorType === "Altro" ? generatorDescription : "",
-            fuelType,
+            type,
+            annualConsumption,
+            unitType,
+            usage
         };
 
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/plant`, formData, {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/gas`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -100,12 +94,10 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                     setIsLoading(false);
 
                     // Reset dei dati del modulo
-                    setDescription("");
-                    setPlantType("");
-                    setServiceType("");
-                    setGeneratorType("");
-                    setGeneratorDescription("");
-                    setFuelType("");
+                    setType("");
+                    setAnnualConsumption("");
+                    setUnitType("");
+                    setUsage("");
 
                     triggerRefresh(); // Trigger refresh in Plants component
 
@@ -123,13 +115,59 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
         }
     };
 
-    const handleDescriptionChange = (e) => setDescription(e.target.value);
-    const handlePlantTypeChange = (e) => setPlantType(e.target.value);
-    const handleServiceTypeChange = (e) => setServiceType(e.target.value);
-    const handleGeneratorTypeChange = (e) => setGeneratorType(e.target.value);
-    const handleGeneratorDescriptionChange = (e) => setGeneratorDescription(e.target.value);
-    const handleFuelTypeChange = (e) => setFuelType(e.target.value);
+    const handleTypeChange = (e) => setType(e.target.value);
+    const handleAnnualConsumptionChange = (e) => setAnnualConsumption(e.target.value);
+    const handleUnitTypeChange = (e) => setUnitType(e.target.value);
+    const handleUsageChange = (e) => setUsage(e.target.value);
 
+    const gasNames = [
+        "Idrogeno verde - zero emissioni",
+        "R1233ZD",
+        "R1234YF",
+        "R1234ZE",
+        "R125A",
+        "R134A",
+        "R23",
+        "R236FA",
+        "R245FA",
+        "R290",
+        "R32",
+        "R404A",
+        "R407A",
+        "R407C",
+        "R407F",
+        "R407H",
+        "R408A",
+        "R409A",
+        "R410A",
+        "R413A",
+        "R417A",
+        "R422A",
+        "R422B",
+        "R422D",
+        "R427A",
+        "R434A",
+        "R437A",
+        "R438A",
+        "R448A",
+        "R449A",
+        "R450A",
+        "R452A",
+        "R452B",
+        "R454A",
+        "R454B",
+        "R454C",
+        "R455A",
+        "R456A",
+        "R507",
+        "R508B",
+        "R513A",
+        "R515B",
+        "R600a",
+        "R744"
+    ];
+
+    /*
     const options = [
         {
             plantTypes: [
@@ -228,7 +266,6 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                 "Gas Naturale (Metano)",
                 "GPL",
                 "Gasolio",
-                "Benzina",
                 "Olio combustibile",
                 "Pellet",
                 "Cippato di legna",
@@ -246,7 +283,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
 
     const generatorOptions = options[0].generatorTypes.find(
         (gen) => gen.type === plantType
-    )?.options || [];
+    )?.options || [];*/
 
     return (
         <div className="w-full mx-auto flex justify-center">
@@ -254,91 +291,69 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                 {messagePopup}
             </MessagePopUp>
             <div className="w-full mx-auto my-10 md:m-4 rounded-2xl font-arial text-xl px-10 py-6 border border-gray-300 shadow-xl bg-[#f6f3f3] mb-4">
-                <h2 className="text-2xl font-bold text-center mb-6">{isEdit ? "Modifica Impianto" : "Aggiungi un impianto"}</h2>
+                <h2 className="text-2xl font-bold text-center mb-6">{isEdit ? "Modifica gas clima alterante" : "Aggiungi un gas clima alterante"}</h2>
                 <form onSubmit={handleSubmit} className="flex flex-col">
 
                     <div className="mb-6">
                         <label className="flex flex-col w-full">
-                            <span className="block mb-2">Descrizione</span>
+                            <span className="block mb-2">Tipologia</span>
+                            <select
+                                value={unitType}
+                                onChange={handleTypeChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            >
+                                <option value="" disabled>Tipologia</option>
+                                {gasNames.map((gasName) => (
+                                    <option key={gasName} value={gasName}>
+                                        {gasName}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                        <label className="flex flex-col w-full md:w-1/2">
+                            <span className="block mb-2">Consumo annuo</span>
                             <input
                                 type="text"
-                                value={description}
-                                onChange={handleDescriptionChange}
+                                value={annualConsumption}
+                                onChange={handleAnnualConsumptionChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             />
                         </label>
-                    </div>
+                        <label className="flex flex-col w-full md:w-1/2">
+                            <span className="block mb-2">Unità di misura</span>
+                            <select
+                                value={unitType}
+                                onChange={handleUnitTypeChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                            >
+                                <option value="" disabled>Seleziona l'unità di misura del gas selezionato</option>
+                                <option value="kg_CO2e">kg CO₂e</option>
+                                <option value="ton_CO2e">ton CO₂e</option>
+                                <option value="g_CH4">g CH₄</option>
+                                <option value="kg_CH4">kg CH₄</option>
+                                <option value="g_N2O">g N₂O</option>
+                                <option value="kg_N2O">kg N₂O</option>
+                                <option value="ppm">ppm</option>
+                                <option value="ppb">ppb</option>
+                            </select>
 
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
-                        <label className="flex flex-col w-full md:w-1/2">
-                            <span className="block mb-2">L'edificio è dotato di servizio di</span>
-                            <select
-                                value={serviceType}
-                                onChange={handleServiceTypeChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                            >
-                                <option value="" disabled>Seleziona tipo di servizio</option>
-                                {options[0].serviceTypes.map((cat, index) => (
-                                    <option key={index} value={cat}>{cat}</option>
-                                ))}
-                            </select>
-                        </label>
-                        <label className="flex flex-col w-full md:w-1/2">
-                            <span className="block mb-2">Tipo di impianto</span>
-                            <select
-                                value={plantType}
-                                onChange={handlePlantTypeChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                            >
-                                <option value="" disabled>Tipo di impianto</option>
-                                {options[0].plantTypes.map((cat, index) => (
-                                    <option key={index} value={cat}>{cat}</option>
-                                ))}
-                            </select>
                         </label>
                     </div>
 
                     <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
-                            <span className="block mb-2">Tipo di generatore</span>
+                            <span className="block mb-2">Utilizzo</span>
                             <select
-                                value={generatorType}
-                                onChange={handleGeneratorTypeChange}
+                                value={usage}
+                                onChange={handleUsageChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
-                                <option value="" disabled>Seleziona tipo di generatore</option>
-                                {plantType && serviceType && options[0].generatorTypes
-                                    .find(type => type.type === plantType)
-                                    ?.serviceSpecificOptions[serviceType]?.map((option, index) => (
-                                        <option key={index} value={option}>{option}</option>
-                                    ))}
-                            </select>
-                        </label>
-                        {generatorType === "Altro" && (
-                            <label className="flex flex-col w-full md:w-1/2">
-                                <span className="block mb-2">Descrizione del generatore (punteggio assegnato a seguito di revisione)</span>
-                                <input
-                                    type="text"
-                                    value={generatorDescription}
-                                    onChange={handleGeneratorDescriptionChange}
-                                    className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                                />
-                            </label>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
-                        <label className="flex flex-col w-full md:w-1/2">
-                            <span className="block mb-2">Tipo di carburante</span>
-                            <select
-                                value={fuelType}
-                                onChange={handleFuelTypeChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
-                            >
-                                <option value="" disabled>Seleziona tipo di carburante</option>
-                                {options[0].fuelTypes.map((cat, index) => (
-                                    <option key={index} value={cat}>{cat}</option>
-                                ))}
+                                <option value="" disabled>Seleziona il contesto di utilizzo del gas</option>
+                                <option value="Produzione">Produzione</option>
+                                {/*<option value="Altro">Altra produzione termica</option>*/}
                             </select>
                         </label>
                     </div>
@@ -378,4 +393,4 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
     );
 }
 
-export default PlantForm;
+export default ClimateGasAlteringForm;
