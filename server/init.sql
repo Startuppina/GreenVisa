@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     legal_headquarter VARCHAR(255) DEFAULT NULL, -- sede legale
     turnover INTEGER DEFAULT NULL, --fatturato
     administrator BOOLEAN DEFAULT FALSE,
-    password_digest TEXT
+    password_digest TEXT,
+    isVerified BOOLEAN DEFAULT FALSE,
+    token VARCHAR(255) DEFAULT NULL -- Token per la verifica dell'indirizzo email
 
     CHECK (LENGTH(p_iva) = 11 AND p_iva ~ '^[0-9]+$')
     CHECK (LENGTH(tax_code) = 16 AND tax_code ~ '^[A-Z0-9]+$')

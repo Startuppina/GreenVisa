@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require('cors');
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const pool = require("./db"); // Your database connection pool
@@ -15,7 +16,8 @@ const bodyParser = require('body-parser');
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 const { disconnect } = require("process");
-const { v4: uuidv4 } = require('uuid')
+const { v4: uuidv4 } = require('uuid');
+const { user } = require("pg/lib/defaults");
 
 const port = 8080;
 
@@ -24,21 +26,10 @@ const pass_sender = process.env.PASS_SENDER;
 
 const app = express();
 
-// Middleware per il CORS
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, session-id');
-  next();
-});
-
-app.options('*', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, session-id');
-  res.sendStatus(204); // Status code 204: No Content
-});
-
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 
 DOMPurify = createDOMPurify(new JSDOM().window);
 
@@ -170,19 +161,42 @@ app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, r
 
 
 app.post("/api/signup", async (req, res) => {
-  const { username, company_name, email, password, phone } = req.body;
+  const { username, company_name, email, confirmEmail, password, phone, company_website, pec, noCompanyEmail } = req.body;
 
   // Check if all fields are filled
-  if (!email || !company_name || !password || !username || !phone) {
+  if (!email || !confirmEmail || !company_name || !password || !username || !phone || !company_website || !pec) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
-  } else if (!passwordCheck(password)) { //implement password check defined below
+  }
+  if (!passwordCheck(password)) { //implement password check defined below
     return res
       .status(400)
       .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" });
-  } else if (!emailCheck(email)) {
+  }
+  if (!emailCheck(email)) {
     return res.status(400).json({ msg: "Email non valida" });
-  } else if (!phoneCheck(phone)) {
+  }
+  if (!emailCheck(confirmEmail)) {
+    return res.status(400).json({ msg: "Email non valida" });
+  }
+  if (email !== confirmEmail) {
+    return res.status(400).json({ msg: "Le email non corrispondono" });
+  }
+  if (!emailCheck(pec)) {
+    return res.status(400).json({ msg: "PEC non valida" });
+  }
+  if (!phoneCheck(phone)) {
     return res.status(400).json({ msg: "Numero di telefono non valido" });
+  }
+
+  if (noCompanyEmail) {
+    // Se l'utente non ha la email aziendale verra contattato telefonicamente 
+  } else {
+    const emailDomain = email.split("@")[1];
+    const websiteDomain = company_website.split("www.")[1];
+
+    if (emailDomain !== websiteDomain) {
+      return res.status(400).json({ msg: "il dominio della email non corrisponde al dominio del sito aziendale fornito" });
+    }
   }
 
   try {
@@ -200,15 +214,29 @@ app.post("/api/signup", async (req, res) => {
     const intSuffix = phone.slice(2);
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
-    await pool.query(
-      "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, turnover, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+    const result2 = await pool.query(
+      "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, turnover, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
       [username, company_name, email, newPhone, null, null, null, null, false, hashedPassword]
     );
 
-    sendWelcomeEmail({
-      recipient_email: email,
-      recipient_name: username,
-    });
+    if (result2.rowCount > 0) {
+      const userID = result2.rows[0].id;
+      const userToken = uuidv4();
+
+      const updateResult = await pool.query(
+        "UPDATE users SET token = $1 WHERE id = $2",
+        [userToken, userID]
+      );
+
+      if (updateResult.rowCount > 0) {
+        // Tutto ok -> mando email di conferma
+        sendConfirmationEmail({
+          recipient_email: email,
+          recipient_name: username,
+          token: userToken,
+        });
+      }
+    }
 
     return res.status(200).json({ msg: "Utente registrato" });
   } catch (error) {
@@ -216,6 +244,50 @@ app.post("/api/signup", async (req, res) => {
     return res
       .status(500)
       .json({ msg: "Errore durante la registrazione dell'utente" });
+  }
+});
+
+app.get('/api/verify', async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).json({ success: false, message: 'Token mancante' });
+  }
+
+  try {
+    // Cerca l'utente con quel token
+    const result = await pool.query(
+      'SELECT * FROM users WHERE token = $1',
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      // Nessun utente trovato con quel token
+      return res.status(404).json({ success: false, message: 'Token non valido o scaduto' });
+    }
+
+    const userId = result.rows[0].id;
+    const email = result.rows[0].email;
+    const username = result.rows[0].username;
+
+    const updateResult = await pool.query(
+      'UPDATE users SET isVerified = true, token = NULL WHERE id = $1',
+      [userId]
+    );
+
+    if (updateResult.rowCount > 0) {
+      // Invia email di benvenuto solo se l'UPDATE ha modificato qualcosa
+      sendWelcomeEmail({
+        recipient_email: email,
+        recipient_name: username,
+      });
+
+      return res.status(200).json({ success: true, message: 'Account verificato' });
+    }
+
+  } catch (error) {
+    console.error('Errore durante la verifica del token:', error);
+    return res.status(500).json({ success: false, message: 'Errore interno del server' });
   }
 });
 
@@ -241,6 +313,11 @@ app.post("/api/login", async (req, res) => {
 
     if (!isMatch) {
       return res.status(400).json({ msg: "Password errata" });
+    }
+
+    console.log("isVerified:", user.isverified);
+    if (!user.isverified) {
+      return res.status(400).json({ msg: "Account non verificato" });
     }
 
     let token;
@@ -591,6 +668,139 @@ app.post("/api/send-email-message", async (req, res) => {
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
+
+function sendConfirmationEmail({ recipient_email, recipient_name, token }) {
+  return new Promise((resolve, reject) => {
+    var transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: email_sender,
+        pass: pass_sender,
+      },
+    });
+
+    const mail_configs = {
+      from: email_sender,
+      to: recipient_email,
+      subject: "Green Visa - verifica account",
+      html: `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Verifica account Green Visa</title>
+            <style>
+                body {
+                    font-family: Helvetica, Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f9f9f9;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 50px auto;
+                    background-color: #ffffff;
+                    padding: 30px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header img {
+                    width: 150px;
+                    margin-bottom: 10px;
+                }
+                .header h1 {
+                    font-size: 1.8em;
+                    color: #2d7044;
+                    margin: 0;
+                }
+                .body {
+                    padding: 20px 10px;
+                    text-align: center;
+                }
+                .body h2 {
+                    font-size: 1.4em;
+                    color: #333333;
+                    margin-bottom: 10px;
+                }
+                .body p {
+                    font-size: 1.1em;
+                    line-height: 1.6;
+                    color: #555555;
+                }
+                .cta-button {
+                    display: inline-block;
+                    background-color: #2d7044;
+                    color: white;
+                    text-decoration: none;
+                    padding: 12px 24px;
+                    font-size: 1.2em;
+                    font-weight: bold;
+                    border-radius: 4px;
+                    margin: 20px 0;
+                }
+                .footer {
+                    padding-top: 20px;
+                    text-align: center;
+                    font-size: 0.9em;
+                    color: #888888;
+                }
+                .footer p {
+                    margin: 5px 0;
+                }
+                @media screen and (max-width: 600px) {
+                    .container {
+                        width: 100%;
+                        padding: 15px;
+                    }
+                    .header h1 {
+                        font-size: 1.6em;
+                    }
+                    .body h2 {
+                        font-size: 1.2em;
+                    }
+                    .cta-button {
+                        font-size: 1em;
+                        padding: 10px 20px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa Logo">
+                    <h1>Verifica il tuo account</h1>
+                </div>
+                <div class="body">
+                    <h2>Ciao ${recipient_name},</h2>
+                    <p>Abbiamo ricevuto una richiesta di verifica per il tuo account Green Visa.</p>
+                    <p>Per verificare il tuo account, clicca sul link sottostante:</p>
+                    <a class="cta-button" href="${process.env.CLIENT_URL}/AccountVerified?token=${token}">Verifica il tuo account</a>
+                </div>
+                <div class="footer">
+                  <p>Green Visa</p>
+                  <p>La sostenibilità con un click!</p>
+                </div>
+            </div>
+        </body>
+        </html>`,
+    };
+
+    transporter.sendMail(mail_configs, function (error, info) {
+      if (error) {
+        console.log(error);
+        reject(error);
+      } else {
+        console.log("Email inviata: " + info.response);
+        resolve(info);
+      }
+    });
+  });
+}
 
 function sendWelcomeEmail({ recipient_email, recipient_name }) {
   return new Promise((resolve, reject) => {
@@ -3986,9 +4196,9 @@ app.listen(port, '0.0.0.0', async () => {
       console.log("PASS_ADMIN:", process.env.PASS_ADMIN);
       const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Hash the passwords
       await pool.query(
-        `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest)
-         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [process.env.USERNAME_ADMIN, "green_visa", process.env.EMAIL_ADMIN, null, null, null, null, true, hashedPassword]
+        `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest, isVerified)
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [process.env.USERNAME_ADMIN, "green_visa", process.env.EMAIL_ADMIN, null, null, null, null, true, hashedPassword, true]
       );
       console.log('Admin creato con successo.');
     } else {

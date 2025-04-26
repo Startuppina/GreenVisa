@@ -1,8 +1,8 @@
 # Dockerfile per il server
-FROM node:22-alpine
+FROM node:alpine
 
 # Crea e imposta la directory di lavoro
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Copia i file del package e installa le dipendenze
 COPY package*.json ./

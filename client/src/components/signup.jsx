@@ -10,6 +10,7 @@ const Signup = () => {
     const [username, setUsername] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
+    const [confirmEmail, setConfirmEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -18,6 +19,9 @@ const Signup = () => {
     const [messagePopup, setMessagePopup] = useState('');
     const [acceptedTerms, setAcceptedTerms] = useState(false); // Gestisci il checkbox dei termini
     const [company_name, setCompany_name] = useState('');
+    const [company_website, setCompanyWebsite] = useState('');
+    const [pec, setPec] = useState('');
+    const [noCompanyEmail, setNoCompanyEmail] = useState(false);
     const [page, setPage] = useState(1);
 
     const navigate = useNavigate();
@@ -26,9 +30,13 @@ const Signup = () => {
     const handleCompanyNameChange = (e) => setCompany_name(e.target.value);
     const handlePhoneChange = (value) => setPhone(value);
     const handleEmailChange = (e) => setEmail(e.target.value);
+    const handleConfirmEmailChange = (e) => setConfirmEmail(e.target.value);
     const handlePasswordChange = (e) => setPassword(e.target.value);
     const handleConfirmPasswordChange = (e) => setConfirmPassword(e.target.value);
     const handleTermsChange = (e) => setAcceptedTerms(e.target.checked);
+    const handleCompanyWebsiteChange = (e) => setCompanyWebsite(e.target.value);
+    const handlePecChange = (e) => setPec(e.target.value);
+    const handleNoCompanyEmailChange = () => setNoCompanyEmail(e.target.checked);
     const toggleShowPassword = () => setShowPassword(!showPassword);
     const togglePassInfo = () => setPassInfo(!passInfo);
 
@@ -43,7 +51,7 @@ const Signup = () => {
 
         setPhone(`+${phone}`);
 
-        const formData = { username, company_name, email, password, phone };
+        const formData = { username, company_name, email, confirmEmail, password, phone, company_website, pec, noCompanyEmail };
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/signup`, formData, {
@@ -59,11 +67,14 @@ const Signup = () => {
                 setCompany_name('');
                 setPhone('');
                 setEmail('');
+                setConfirmEmail('');
                 setPassword('');
                 setConfirmPassword('');
                 setAcceptedTerms(false);
+                setCompanyWebsite('');
+                setPec('');
 
-                navigate('/login');
+                navigate('/VerifyAccount');
             }
 
         } catch (error) {
@@ -77,15 +88,15 @@ const Signup = () => {
     };
 
     return (
-        <div className="bg-[url('/img/login.jpg')] bg-cover h-screen bg-center bg-no-repeat py-10 flex items-center justify-center">
+        <div>
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
 
             {passInfo && <PassInfo onClose={closePassInfo} />}
 
-            <div className="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[70%] lg:max-w-[80%] p-4 h-[83vh] flex flex-col items-center justify-start bg-white rounded-lg shadow-lg overflow-y-auto relative">
-                <div className="absolute top-4 left-4 text-arial text-[#2d7044] text-xl font-bold cursor-pointer">
+            <div className="w-full p-4 flex flex-col items-center justify-center overflow-y-auto">
+                <div className="w-full text-arial text-start text-[#2d7044] text-xl font-bold cursor-pointer">
                     <Link to="/">Home</Link>
                 </div>
 
@@ -93,9 +104,10 @@ const Signup = () => {
                     <img src="/img/logo.png" alt="logo" className='w-[60%] max-w-[200px] p-0' />
                 </div>
 
-                <h1 className='text-center font-bold text-[#2d7044]'>FASE 1: CONFIGURAZIONE DEL REFERENTE</h1>
-
                 <form onSubmit={handleSubmit} className="w-full">
+
+                    <h1 className='text-start font-bold text-[#2d7044] text-lg'>Informazioni del referente</h1>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
                         <div className="w-full">
                             <label htmlFor="username" className="block text-xl">Nome e cognome del referente</label>
@@ -105,32 +117,6 @@ const Signup = () => {
                                 id="username"
                                 value={username}
                                 onChange={handleUsernameChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
-                            />
-                        </div>
-
-                        <div className="w-full">
-                            <label htmlFor="company_name" className="block text-xl">Ragione sociale</label>
-                            <input
-                                type="text"
-                                name="company_name"
-                                id="company_name"
-                                value={company_name}
-                                onChange={handleCompanyNameChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
-                        <div className="w-full">
-                            <label htmlFor="email" className="block text-xl">Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                id="email"
-                                value={email}
-                                onChange={handleEmailChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
                             />
                         </div>
@@ -208,6 +194,100 @@ const Signup = () => {
                         </div>
                     </div>
 
+                    <h1 className='text-start font-bold text-[#2d7044] text-lg'>Informazioni Aziendali</h1>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
+                        <div className="w-full">
+                            <label htmlFor="company_name" className="block text-xl">Ragione sociale</label>
+                            <input
+                                type="text"
+                                name="company_name"
+                                id="company_name"
+                                value={company_name}
+                                onChange={handleCompanyNameChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                            />
+                        </div>
+
+                        <div className="w-full">
+                            <label htmlFor="company_name" className="block text-xl">Sito web aziendale</label>
+                            <input
+                                type="text"
+                                name="company_website"
+                                id="company_website"
+                                value={company_website}
+                                onChange={handleCompanyWebsiteChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
+                        <div className="w-full">
+                            <label htmlFor="email" className="block text-xl">Email aziendale</label>
+                            <input
+                                type="email"
+                                name="email"
+                                id="email"
+                                value={email}
+                                onChange={handleEmailChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                            />
+                        </div>
+
+                        <div className="w-full">
+                            <label htmlFor="email" className="block text-xl">Conferma email aziendale</label>
+                            <input
+                                type="email"
+                                name="email_confirm"
+                                id="email_confirm"
+                                value={confirmEmail}
+                                onChange={handleConfirmEmailChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                            />
+                        </div>
+
+
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
+
+                        <div className="flex items-start w-full  mx-auto mb-5">
+                            <div className="h-5">
+                                <input
+                                    id="noCompanyEmail"
+                                    aria-describedby="noCompanyEmail"
+                                    type="checkbox"
+                                    className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300"
+                                    onChange={handleNoCompanyEmailChange}
+                                />
+                            </div>
+
+                            <div className="ml-3">
+                                <label htmlFor="terms" className="text-black">
+                                    <a className=" hover:underline" href="#">
+                                        Non ho una email aziendale
+                                    </a>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
+                        <div className="w-full">
+                            <label htmlFor="company_name" className="block text-xl">PEC</label>
+                            <input
+                                type="text"
+                                name="pec"
+                                id="pec"
+                                value={pec}
+                                onChange={handlePecChange}
+                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                            />
+                        </div>
+                    </div>
+
+
                     <div className="flex items-start w-full  mx-auto mb-5">
                         <div className="h-5">
                             <input
@@ -241,8 +321,6 @@ const Signup = () => {
             </div>
 
         </div>
-
-
     );
 };
 

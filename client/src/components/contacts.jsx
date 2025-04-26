@@ -79,7 +79,7 @@ function Contacts() {
 
     return (
         <>
-            <div className="w-full min-h-screen md:bg-[url('/img/login.jpg')] bg-[#f6f3f3] bg-cover bg-center bg-no-repeat flex items-center justify-center md:p-8">
+            <div className="w-full min-h-screen md:bg-[#2d7044] bg-[#f6f3f3] bg-cover bg-center bg-no-repeat flex items-center justify-center md:p-8">
                 <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                     {messagePopup}
                 </MessagePopUp>

@@ -27,6 +27,8 @@ import NotFoundPage from './notFoundPage.jsx';
 import UserBuldingsPageAdmin from './userBuldingsPageAdmin.jsx';
 import ReportPage from './reportPage.jsx';
 import CertificationPage from './CertificationPage.jsx';
+import ConfirmAccountPage from './confirmAccountPage.jsx';
+import VerifyAccount from './accountVerifiedPage.jsx';
 
 const router = createBrowserRouter([
   {
@@ -126,6 +128,14 @@ const router = createBrowserRouter([
     path: "/certification",
     element: <CertificationPage />,
   },
+  {
+    path: "/VerifyAccount",
+    element: <ConfirmAccountPage />,
+  },
+  {
+    path: "/AccountVerified",
+    element: <VerifyAccount />,
+  }
 ]);
 
 {/*<React.StrictMode>

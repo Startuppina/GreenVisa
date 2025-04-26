@@ -59,7 +59,7 @@ const Login = () => {
     };
 
     return (
-        <div className="w-screen h-screen bg-[url('/img/login.jpg')] bg-cover bg-center bg-no-repeat m-0 p-0 flex items-center justify-center">
+        <div className="w-screen h-screen bg-[#406d50] bg-cover bg-center bg-no-repeat m-0 p-0 flex items-center justify-center">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
