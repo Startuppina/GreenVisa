@@ -11,14 +11,11 @@ function Payment_cart() {
 
     useEffect(() => {
         const getCartProducts = async () => {
-            const token = localStorage.getItem('token');
+
 
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-cart`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
 
                 if (response.status === 200) {

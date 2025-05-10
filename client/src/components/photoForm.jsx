@@ -12,7 +12,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = 'empty' }) {
     const { buildingID, triggerRefresh } = useRecoveryContext();
 
     const handleUpdatePhoto = async () => {
-        const token = localStorage.getItem("token");
+        ;
         const id = buildingID;
 
         const formData = {
@@ -21,10 +21,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = 'empty' }) {
 
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update-photovoltaic/${photo.id}`, formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {
@@ -58,7 +55,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = 'empty' }) {
             return;
         }
 
-        const token = localStorage.getItem("token");
+        ;
         const id = buildingID;
 
         const formData = {
@@ -67,10 +64,7 @@ function PhotoForm({ photo = 'empty', isEdit, onButtonClick = 'empty' }) {
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/photovoltaic`, formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

@@ -50,9 +50,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    withCredentials: true
                 });
 
                 if (response.status === 200) {
@@ -75,7 +73,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         e.preventDefault();
         setIsLoading(true);
 
-        const token = localStorage.getItem("token");
+        ;
 
         const formData = new FormData();
         formData.append('id', buildingID);
@@ -111,10 +109,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-building`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                withCredentials: true
             });
 
             if (response.status === 200) {
@@ -155,7 +150,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
         setIsLoading(true);
 
-        const token = localStorage.getItem("token");
+        ;
 
         const formData = new FormData();
         formData.append('id', buildingID);
@@ -190,10 +185,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-building`, formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

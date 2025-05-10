@@ -34,7 +34,7 @@ function ClimateAlteringGases() {
     useEffect(() => {
 
         const fetchGases = async () => {
-            const token = localStorage.getItem("token");
+            ;
             const id = buildingID;
             if (!id) {
                 console.log('No building ID available');
@@ -42,10 +42,7 @@ function ClimateAlteringGases() {
             }
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-gases`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 console.log('Gases data:', response.data); // Log the response data
                 if (response.status === 200) {
@@ -63,14 +60,11 @@ function ClimateAlteringGases() {
     }, [buildingID, refresh]); // Added buildingID as a dependency, also plantrigger as a dependency
 
     const deleteGas = async () => {
-        const token = localStorage.getItem('token');
+
         const { id } = gasToDelete;
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-gas/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

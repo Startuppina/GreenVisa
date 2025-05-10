@@ -21,7 +21,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
     const navigate = useNavigate();
 
     const handleUpdateGas = async () => {
-        const token = localStorage.getItem("token");
+        ;
         const id = buildingID;
 
         const formData = {
@@ -33,10 +33,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/gas/${gas.id}`, formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {
@@ -68,7 +65,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
             return;
         }
 
-        const token = localStorage.getItem("token");
+        ;
         const id = buildingID;
 
         const formData = {
@@ -81,10 +78,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/gas`, formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

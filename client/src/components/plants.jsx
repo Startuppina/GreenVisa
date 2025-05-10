@@ -34,7 +34,7 @@ function Plants() {
     useEffect(() => {
 
         const fetchPlants = async () => {
-            const token = localStorage.getItem("token");
+            ;
             const id = buildingID;
             if (!id) {
                 console.log('No building ID available');
@@ -42,10 +42,7 @@ function Plants() {
             }
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-plants`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 console.log('Plants data:', response.data); // Log the response data
                 if (response.status === 200) {
@@ -63,14 +60,11 @@ function Plants() {
     }, [buildingID, refresh]); // Added buildingID as a dependency, also plantrigger as a dependency
 
     const deletePlant = async () => {
-        const token = localStorage.getItem('token');
+
         const { id } = plantsToDelete;
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-plant/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

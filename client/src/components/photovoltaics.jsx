@@ -30,7 +30,7 @@ function Photovoltaics() {
 
     useEffect(() => {
         const fetchPhotos = async () => {
-            const token = localStorage.getItem("token");
+            ;
             const id = buildingID;
             if (!id) {
                 console.log('No building ID available');
@@ -38,10 +38,7 @@ function Photovoltaics() {
             }
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-photovoltaics`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 console.log('Photos data:', response.data); // Log the response data
                 if (response.status === 200) {
@@ -58,14 +55,11 @@ function Photovoltaics() {
 
 
     const deletePhotovoltaic = async () => {
-        const token = localStorage.getItem('token');
+
         const { id } = photoToDelete;
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-photovoltaic/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

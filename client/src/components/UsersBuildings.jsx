@@ -12,12 +12,10 @@ function UsersBuildings() {
 
     // Funzione per recuperare tutti gli utenti
     const fetchUserInfo = async () => {
-        const token = localStorage.getItem("token");
+        ;
         try {
             const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-info-by-buildings`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                withCredentials: true,
             });
             if (response.status === 200) {
                 setAllUserInfo(response.data); // Imposta tutti gli utenti

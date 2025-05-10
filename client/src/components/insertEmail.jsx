@@ -41,9 +41,7 @@ const InsertEmail = () => {
 
           try {
             const response2 = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send_recovery_email`, { email, OTP }, {
-              headers: {
-                'Authorization': `Bearer ${recoveryToken}`
-              }
+              withCredentials: true
             });
 
             console.log(response2.data);

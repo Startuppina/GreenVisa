@@ -53,9 +53,7 @@ const UserPage = () => {
 
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    withCredentials: true
                 });
 
                 if (response.status === 200) {
@@ -71,7 +69,6 @@ const UserPage = () => {
             } catch (error) {
 
                 if (error.response && error.response.status === 401) {
-                    localStorage.removeItem('token');
                     navigate('/login');
                     return;
                 }
@@ -84,9 +81,7 @@ const UserPage = () => {
 
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-questionnaires`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    withCredentials: true
                 });
 
                 if (response.status === 200) {
@@ -114,14 +109,11 @@ const UserPage = () => {
     const logout = async () => {
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/logout`, {}, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {
                 console.log('Logout effettuato con successo');
-                localStorage.removeItem('activeSection');
             } else {
                 setMessagePopup(`Errore durante l'invio della richiesta di logout: ${response.statusText}`);
                 setButtonPopup(true);
@@ -131,8 +123,6 @@ const UserPage = () => {
             setMessagePopup(`Errore durante l'invio della richiesta di logout: ${error.message}`);
             setButtonPopup(true);
         }
-
-        localStorage.removeItem('token');
         navigate('/login');
     };
 
@@ -143,18 +133,14 @@ const UserPage = () => {
 
     const deleteAccount = async () => {
         try {
-            const token = localStorage.getItem('token');
+
 
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-account`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {
                 console.log('Account cancellato con successo');
-                localStorage.removeItem('token');
-                localStorage.removeItem('activeSection')
                 navigate('/');
             } else {
                 console.error('Error:', response.statusText);
@@ -188,11 +174,9 @@ const UserPage = () => {
     useEffect(() => {
         const fetchUserApprovations = async () => {
             try {
-                const token = localStorage.getItem('token');
+
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-approved-requests`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setApprovations(response.data);
@@ -207,14 +191,12 @@ const UserPage = () => {
     }, []);
 
     const handleCancel = async (approvation_id) => {
-        const token = localStorage.getItem('token');
+
 
         try {
             // Effettua la richiesta di aggiornamento
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/cancel-approvation/${approvation_id}`, {}, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             // Verifica che la risposta sia stata ricevuta con successo
@@ -240,17 +222,16 @@ const UserPage = () => {
 
     const handleSwitch = (section) => {
         setActiveSection(section);
-        localStorage.setItem('activeSection', section); // Memorizza la sezione nel localStorage
     };
 
-    useEffect(() => {
-        const storedSection = localStorage.getItem('activeSection');
-        if (storedSection) {
-            setActiveSection(storedSection);
-        } else {
-            setActiveSection('user'); // Se non c'è una sezione salvata, di default mostra la sezione 'user'
-        }
-    }, []);
+    // useEffect(() => {
+    //     const storedSection = localStorage.getItem('activeSection');
+    //     if (storedSection) {
+    //         setActiveSection(storedSection);
+    //     } else {
+    //         setActiveSection('user'); // Se non c'è una sezione salvata, di default mostra la sezione 'user'
+    //     }
+    // }, []);
 
     const [windowWidth, setWindowWidth] = useState(window.innerWidth); // Stato per tenere traccia della larghezza della finestra per mostrare o meno userData modifier in un certo modo
 
@@ -268,18 +249,16 @@ const UserPage = () => {
     useEffect(() => {
         const fetchIsUserCertifiable = async () => {
             try {
-                const token = localStorage.getItem('token');
+
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/is-user-certificable`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setIsUserCertifiable(response.data.isCertificable);
                     console.log(response.data.isCertificable);
                 }
             } catch (error) {
-                console.log('Errore nella verifa della certificabilità dell\'utente:');
+                console.log('Errore nella verifica della certificabilità dell\'utente:');
                 setMessagePopup('Errore');
                 setButtonPopup(true);
             }

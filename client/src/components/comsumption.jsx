@@ -29,12 +29,9 @@ function Consumption() {
 
         const fetchConsumptionData = async () => {
             try {
-                const token = localStorage.getItem("token");
+                ;
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-consumption-data`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setConsumptionData(response.data.consumptions);
@@ -50,17 +47,14 @@ function Consumption() {
     }, [refresh]);
 
     const deleteConsumption = async () => {
-        const token = localStorage.getItem('token');
+
         const { id } = consumptionToDelete;
 
         console.log("Consumption ID to delete:", id);
 
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/delete-consumption/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
             if (response.status === 200) {
                 const updatedConsumptions = consumptionData.filter((consumption) => consumption.id !== id);

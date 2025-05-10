@@ -15,9 +15,7 @@ const CodeUsage = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-published-assinged-codes`,
           {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+            withCredentials: true
           }
         );
         if (response.status === 200) {

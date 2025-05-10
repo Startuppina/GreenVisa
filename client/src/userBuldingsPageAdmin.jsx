@@ -19,9 +19,7 @@ function UserBuldingsPageAdmin() {
         const fetchUserBuildings = async () => {
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-buildings/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setUserBuildings(response.data);
@@ -46,9 +44,7 @@ function UserBuldingsPageAdmin() {
 
         try {
             const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-building-plants-solars-photos/${id}/${buildingId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                withCredentials: true
             });
             if (response.status === 200) {
                 setBuildingPlants(response.data.plants);

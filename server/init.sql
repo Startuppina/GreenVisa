@@ -4,16 +4,17 @@ CREATE TABLE IF NOT EXISTS users (
     company_name VARCHAR(255) NOT NULL, --nome dell'azienda, ragione sociale 
     email VARCHAR(255) NOT NULL UNIQUE,
     phone_number VARCHAR(255) DEFAULT NULL UNIQUE,
-    p_iva VARCHAR(11) UNIQUE,
+    p_iva VARCHAR(13) UNIQUE,
     tax_code VARCHAR(16) DEFAULT NULL UNIQUE, --codice fiscale
     legal_headquarter VARCHAR(255) DEFAULT NULL, -- sede legale
     turnover INTEGER DEFAULT NULL, --fatturato
     administrator BOOLEAN DEFAULT FALSE,
     password_digest TEXT,
     isVerified BOOLEAN DEFAULT FALSE,
-    token VARCHAR(255) DEFAULT NULL -- Token per la verifica dell'indirizzo email
+    token VARCHAR(255) DEFAULT NULL, -- Token per la verifica dell'indirizzo email
+    first_login BOOLEAN DEFAULT TRUE -- Se l'utente ha effettuato il login per la prima volta verra indirizzato nella pagina di acquisto della certificazione
 
-    CHECK (LENGTH(p_iva) = 11 AND p_iva ~ '^[0-9]+$')
+    CHECK (p_iva ~ '^[A-Z]{2}[0-9]{11}$')
     CHECK (LENGTH(tax_code) = 16 AND tax_code ~ '^[A-Z0-9]+$')
 
 );

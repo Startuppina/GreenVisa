@@ -44,13 +44,9 @@ function AllNews() {
 
     useEffect(() => {
         const fetchNews = async () => {
-            const token = localStorage.getItem("token");
-
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/news`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setNews(response.data);
@@ -71,15 +67,12 @@ function AllNews() {
         if (!itemToDelete) return;
 
         const { id } = itemToDelete;
-        const token = localStorage.getItem("token");
 
         try {
             const response = await axios.delete(
                 `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-news/${id}`,
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    withCredentials: true,
                 }
             );
             if (response.status === 200) {
@@ -107,7 +100,6 @@ function AllNews() {
         const { id, ...editedData } = itemToEdit;
         const elements = { id, ...editedData };
         console.log(elements);
-        const token = localStorage.getItem("token");
 
         try {
             const formData = new FormData();
@@ -123,10 +115,7 @@ function AllNews() {
                 `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-news/${id}`,
                 formData,
                 {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                        Authorization: `Bearer ${token}`,
-                    },
+                    withCredentials: true,
                 }
             );
 

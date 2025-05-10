@@ -20,8 +20,10 @@
     "install": "^0.13.0",
     "jodit": "^4.2.27",
     "jodit-react": "^4.1.2",
+    "js-cookie": "^3.0.5",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.3",
+    "lodash": "^4.17.21",
     "react": "^18.3.1",
     "react-credit-cards-2": "^1.0.2",
     "react-dom": "^18.3.1",
@@ -35,7 +37,8 @@
     "slick-carousel": "^1.8.1",
     "survey-core": "^1.12.7",
     "survey-pdf": "^1.12.7",
-    "survey-react-ui": "^1.12.7"
+    "survey-react-ui": "^1.12.7",
+    "validate-vat": "^0.9.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

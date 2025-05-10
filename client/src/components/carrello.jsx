@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
 import { MutatingDots } from 'react-loader-spinner';
 import { useNavigate } from 'react-router-dom';
+import { isAuthenticated } from "./isAuthenticated";
 
 function Carrello() {
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -17,21 +18,14 @@ function Carrello() {
 
     const navigate = useNavigate();
 
-
     useEffect(() => {
         const getCartProducts = async () => {
-            const token = localStorage.getItem('token');
-            console.log("token: ", token);
-            const sessionID = localStorage.getItem('session_id');
-            console.log("sessionID: ", sessionID);
-
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-cart`, {
                     headers: {
-                        'Content-Type': 'application/json',
-                        ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
-                        ...(sessionID && { 'session-id': sessionID })  // Aggiungi session-id header se sessionId esiste
-                    }
+                        'Content-Type': 'application/json',  // Aggiungi l'Authorization header se il token esiste
+                    },
+                    withCredentials: true,
                 });
 
 
@@ -59,16 +53,16 @@ function Carrello() {
     }, [setCartProducts, setQuantities, setIsEmpty]);
 
     const handleQuantityChange = async (productId, newQuantity) => {
-        const token = localStorage.getItem('token');
+
         const sessionID = localStorage.getItem('session_id');
 
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-quantity/${productId}`, { quantity: newQuantity }, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
                     ...(sessionID && { 'session-id': sessionID })  // Aggiungi session-id header se sessionId esiste
-                }
+                },
+                withCredentials: true
             });
             if (response.status === 200) {
                 setQuantities(prevQuantities => ({
@@ -83,15 +77,12 @@ function Carrello() {
     }
 
     const handleRemoveProduct = async (productId) => {
-        const token = localStorage.getItem('token');
-        const sessionID = localStorage.getItem('session_id');
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/remove-from-cart/${productId}`, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token && { 'Authorization': `Bearer ${token}` }),  // Aggiungi l'Authorization header se il token esiste
-                    ...(sessionID && { 'session-id': sessionID })  // Aggiungi session-id header se sessionId esiste
-                }
+                },
+                withCredentials: true
             });
             if (response.status === 200) {
                 setCartProducts(prevProducts => {
@@ -112,12 +103,6 @@ function Carrello() {
 
     const handleCheckout = async () => {
         setIsLoading(true);
-        const token = localStorage.getItem('token');
-
-        if (!token) {
-            navigate('/login');
-            return;
-        }
 
         const productsData = cartProducts.map(product => ({
             id: product.product_id,
@@ -141,10 +126,7 @@ function Carrello() {
             console.log(promoCode);
 
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/get-code-id`, { code: promoCode }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
             if (response.status === 200) {
                 console.log(response.data);
@@ -160,10 +142,7 @@ function Carrello() {
         try {
             // Esegui il checkout e redirigi l'utente alla pagina appropriata
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/checkout-session`, checkoutData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {
@@ -178,14 +157,9 @@ function Carrello() {
     };
 
     const applyPromoCode = async () => {
-        const token = localStorage.getItem('token');
-
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/apply-promo-code`, { code: promoCode }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true,
             });
             if (response.status === 200) {
                 setMessagePopUp(response.data.msg);
@@ -314,7 +288,7 @@ function Carrello() {
             </div>
             {isEmpty ? null : (
                 <div className="w-[90%] md:w-[70%] h-auto p-5 text-arial text-xl mx-auto">
-                    {localStorage.getItem("token") && (
+                    {isAuthenticated() && (
                         <>
                             <p>Codice Promozionale</p>
                             <div className="w-full h-auto flex flex-col md:flex-row gap-4 md:gap-12 items-center justify-between mb-10">

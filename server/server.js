@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const pool = require("./db"); // Your database connection pool
@@ -18,6 +19,7 @@ const createDOMPurify = require('dompurify');
 const { disconnect } = require("process");
 const { v4: uuidv4 } = require('uuid');
 const { user } = require("pg/lib/defaults");
+const validate = require('validate-vat');
 
 const port = 8080;
 
@@ -25,11 +27,6 @@ const email_sender = process.env.EMAIL_SENDER;
 const pass_sender = process.env.PASS_SENDER;
 
 const app = express();
-
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}));
 
 DOMPurify = createDOMPurify(new JSDOM().window);
 
@@ -56,23 +53,56 @@ app.use('/uploaded_img', express.static(path.join(__dirname, 'uploaded_img')));
 
 const secretKey = process.env.SECRET_KEY;
 
+//const purify = DOMPurify(window);
+app.use(cookieParser());
+app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+// Middleware per la gestione dei cookie per gli utenti non autenticati
+app.use((req, res, next) => {
+  const token = req.cookies.accessToken;
+
+  if (!token) {
+    let sessionId = req.cookies.sessionId;
+
+    if (!sessionId) {
+      sessionId = '_' + Math.random().toString(36).substr(2, 9);
+      res.cookie('sessionId', sessionId, {
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax',
+        maxAge: 3 * 24 * 60 * 60 * 1000 // 3 days 
+      });
+    }
+  }
+
+  next();
+});
+
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const token = req.cookies.accessToken; // il cookie contiene solo il token
 
-  if (authHeader) {
-    const token = authHeader.split(" ")[1]; // Extract token from "Bearer <token>"
-
+  if (token) {
     jwt.verify(token, secretKey, (err, user) => {
       if (err) {
         console.error("Errore di verifica del token:", err);
 
         if (err.name === "TokenExpiredError") {
-          // Token scaduto
+          res.clearCookie('accessToken', {
+            httpOnly: false,
+            secure: false,  // Impostalo su true se stai usando HTTPS
+            sameSite: 'Lax'
+          });
           return res.status(401).json({ msg: "Sessione scaduta, rieffettua il login per continuare" });
         }
 
-        //return res.sendStatus(403); // Non valid token or expired
+        return res.sendStatus(403); // Token non valido
       }
 
       req.user = user;
@@ -84,11 +114,6 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-
-//const purify = DOMPurify(window);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 
 //only for admin
 function authenticateAdmin(req, res, next) {
@@ -139,6 +164,10 @@ cron.schedule('0 * * * *', () => {
   deleteExpiredPromoCodes();
 });
 
+app.get('/api/authenticated', authenticateJWT, (req, res) => {
+  return res.status(200).json({ msg: 'Utente autenticato', user: req.user }); // 200 OK
+});
+
 app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, res) => {
 
   try {
@@ -161,10 +190,10 @@ app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, r
 
 
 app.post("/api/signup", async (req, res) => {
-  const { username, company_name, email, confirmEmail, password, phone, company_website, pec, noCompanyEmail } = req.body;
+  const { username, company_name, email, confirmEmail, password, phone, company_website, pec, vat, noCompanyEmail, legal_headquarter } = req.body;
 
   // Check if all fields are filled
-  if (!email || !confirmEmail || !company_name || !password || !username || !phone || !company_website || !pec) {
+  if (!email || !confirmEmail || !company_name || !password || !username || !phone || !company_website || !pec || !vat || !legal_headquarter) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
   }
   if (!passwordCheck(password)) { //implement password check defined below
@@ -188,16 +217,14 @@ app.post("/api/signup", async (req, res) => {
     return res.status(400).json({ msg: "Numero di telefono non valido" });
   }
 
-  if (noCompanyEmail) {
-    // Se l'utente non ha la email aziendale verra contattato telefonicamente 
-  } else {
-    const emailDomain = email.split("@")[1];
-    const websiteDomain = company_website.split("www.")[1];
+  const emailDomain = email.split("@")[1];
+  const websiteDomain = company_website.split("www.")[1];
 
-    if (emailDomain !== websiteDomain) {
-      return res.status(400).json({ msg: "il dominio della email non corrisponde al dominio del sito aziendale fornito" });
-    }
+  console.log("noCompanyEmail:", noCompanyEmail);
+  if (emailDomain !== websiteDomain && !noCompanyEmail) {
+    return res.status(400).json({ msg: "il dominio della email non corrisponde al dominio del sito aziendale fornito" });
   }
+
 
   try {
     const result = await pool.query(
@@ -216,8 +243,12 @@ app.post("/api/signup", async (req, res) => {
 
     const result2 = await pool.query(
       "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, turnover, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
-      [username, company_name, email, newPhone, null, null, null, null, false, hashedPassword]
+      [username, company_name, email, newPhone, vat, null, legal_headquarter, null, false, hashedPassword]
     );
+
+    if (noCompanyEmail) {
+      return res.status(200).json({ notCompanyEmail: true });
+    }
 
     if (result2.rowCount > 0) {
       const userID = result2.rows[0].id;
@@ -244,6 +275,27 @@ app.post("/api/signup", async (req, res) => {
     return res
       .status(500)
       .json({ msg: "Errore durante la registrazione dell'utente" });
+  }
+});
+
+app.post('/api/check-vat', async (req, res) => {
+  try {
+    const { vatNumber } = req.body;
+
+    if (!vatNumber) {
+      return res.status(400).json({ success: false, msg: "Partita IVA mancante" });
+    }
+
+    const isValid = await vatCheck(vatNumber);
+
+    if (isValid.valid) {
+      return res.status(200).json({ success: true, companyName: isValid.companyName, address: isValid.address, msg: "Partita IVA valida" });
+    } else {
+      return res.status(400).json({ success: false, msg: "Partita IVA non valida o non attiva" });
+    }
+  } catch (error) {
+    console.error("Errore durante il controllo della partita IVA:", error);
+    return res.status(500).json({ success: false, msg: "Errore interno al server" });
   }
 });
 
@@ -291,9 +343,43 @@ app.get('/api/verify', async (req, res) => {
   }
 });
 
+app.post("/api/send-verify-email", authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+    //verify if the email exists in the database
+    const { userID } = req.body;
+    const result = await pool.query(
+      "SELECT username, email FROM users WHERE id = $1",
+      [userID]
+    );
+    if (result.rows.length === 0) {
+      return res.status(400).json({ msg: "Non esiste un utente con questo id" });
+    }
+
+    const userToken = uuidv4();
+
+    const updateResult = await pool.query(
+      "UPDATE users SET token = $1 WHERE id = $2",
+      [userToken, userID]
+    );
+
+    if (updateResult.rowCount > 0) {
+      sendConfirmationEmail({
+        recipient_email: result.rows[0].email,
+        recipient_name: result.rows[0].username,
+        token: userToken,
+      });
+      return res.status(200).json({ msg: "Email di verifica inviata correttamente" });
+    }
+  } catch (error) {
+    console.error("Errore durante l'invio dell'email di verifica:", error);
+    return res.status(500).json({ msg: "Errore durante l'invio dell'email di verifica" });
+  }
+})
+
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
-  const sessionID = req.header('session-id');
+  const sessionID = req.cookies.sessionId;
+  console.log("sessionID:", sessionID);
 
   if (!email || !password) {
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
@@ -329,17 +415,34 @@ app.post("/api/login", async (req, res) => {
     }
 
     const user_id = user.id;
-    //console.log("user_id:", user_id);
-    //console.log("sessionID:", sessionID);
+    const first_login = user.first_login;
+    console.log("first_login:", first_login);
+    if (first_login) {
+      await pool.query("UPDATE users SET first_login = false WHERE id = $1", [user_id]);
+    }
 
     if (sessionID) {
       // Update user_id and session_id in cart table if session_id is not null
       await pool.query("UPDATE cart SET user_id = $1, session_id = NULL  WHERE session_id = $2", [user_id, sessionID])
     }
 
+    res.cookie('accessToken', token, {
+      httpOnly: false,
+      secure: false, // in poducazione mettere true
+      sameSite: 'Lax',
+      maxAge: 3 * 24 * 60 * 60 * 1000 // 3 days
+    });
+
+    res.clearCookie('sessionId', {
+      httpOnly: false,
+      secure: false, // Impostalo su true se stai usando HTTPS
+      sameSite: 'Lax'
+    });
+
+
     return res
       .status(200)
-      .json({ msg: "Login effettuato con successo!", token });
+      .json({ msg: "Login effettuato con successo!", token, first_login });
   } catch (error) {
     console.error("Errore durante il login:", error);
     return res
@@ -349,6 +452,11 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.post("/api/logout", authenticateJWT, (req, res) => {
+  res.clearCookie('accessToken', {
+    httpOnly: false,
+    secure: false, // Impostalo su true se stai usando HTTPS
+    sameSite: 'Lax'
+  });
   res.status(200).json({ msg: "Logout effettuato con successo!" });
 });
 
@@ -364,6 +472,18 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
     if (result.rowCount === 0) {
       return res.status(404).json({ message: "Account non trovato" });
     }
+
+    res.clearCookie('accessToken', {
+      httpOnly: false,
+      secure: false, // Impostalo su true se stai usando HTTPS
+      sameSite: 'Lax'
+    });
+
+    res.clearCookie('sessionId', {
+      httpOnly: true,
+      secure: false, // Impostalo su true se stai usando HTTPS
+      sameSite: 'Lax'
+    });
 
     res.status(200).json({ message: "Account eliminato con successo" });
   } catch (err) {
@@ -476,55 +596,55 @@ app.put("/api/update-email", authenticateJWT, async (req, res) => {
   }
 })
 
-app.put("/api/update-company-name", authenticateJWT, async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const { company_name } = req.body;
+// app.put("/api/update-company-name", authenticateJWT, async (req, res) => {
+//   try {
+//     const { user_id } = req.user;
+//     const { company_name } = req.body;
 
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+//     const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Utente non trovato" });
-    }
+//     if (result.rows.length === 0) {
+//       return res.status(404).json({ message: "Utente non trovato" });
+//     }
 
-    await pool.query("UPDATE users SET company_name = $1 WHERE id = $2", [
-      company_name,
-      user_id,
-    ]);
+//     await pool.query("UPDATE users SET company_name = $1 WHERE id = $2", [
+//       company_name,
+//       user_id,
+//     ]);
 
-    res.status(200).json({ message: "Nome azienda aggiornato con successo" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Errore interno del server" });
-  }
-});
+//     res.status(200).json({ message: "Nome azienda aggiornato con successo" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Errore interno del server" });
+//   }
+// });
 
-app.put("/api/update-piva", authenticateJWT, async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const { piva } = req.body;
+// app.put("/api/update-piva", authenticateJWT, async (req, res) => {
+//   try {
+//     const { user_id } = req.user;
+//     const { piva } = req.body;
 
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+//     const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Utente non trovato" });
-    }
+//     if (result.rows.length === 0) {
+//       return res.status(404).json({ message: "Utente non trovato" });
+//     }
 
-    if (!pivaCheck(piva)) {
-      return res.status(400).json({ message: "Partita IVA non valida" });
-    }
+//     if (!vatCheck(piva)) {
+//       return res.status(400).json({ message: "Partita IVA non valida" });
+//     }
 
-    await pool.query("UPDATE users SET p_iva = $1 WHERE id = $2", [
-      piva,
-      user_id,
-    ]);
+//     await pool.query("UPDATE users SET p_iva = $1 WHERE id = $2", [
+//       piva,
+//       user_id,
+//     ]);
 
-    res.status(200).json({ message: "Partita IVA aggiornata con successo" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Errore interno del server" });
-  }
-});
+//     res.status(200).json({ message: "Partita IVA aggiornata con successo" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Errore interno del server" });
+//   }
+// });
 
 app.put("/api/update-tax-code", authenticateJWT, async (req, res) => {
   try {
@@ -553,28 +673,28 @@ app.put("/api/update-tax-code", authenticateJWT, async (req, res) => {
   }
 });
 
-app.put("/api/update-legal-headquarter", authenticateJWT, async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const { legal_headquarter } = req.body;
+// app.put("/api/update-legal-headquarter", authenticateJWT, async (req, res) => {
+//   try {
+//     const { user_id } = req.user;
+//     const { legal_headquarter } = req.body;
 
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+//     const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Utente non trovato" });
-    }
+//     if (result.rows.length === 0) {
+//       return res.status(404).json({ message: "Utente non trovato" });
+//     }
 
-    await pool.query("UPDATE users SET legal_headquarter = $1 WHERE id = $2", [
-      legal_headquarter,
-      user_id,
-    ]);
+//     await pool.query("UPDATE users SET legal_headquarter = $1 WHERE id = $2", [
+//       legal_headquarter,
+//       user_id,
+//     ]);
 
-    res.status(200).json({ message: "Sede legale aggiornata con successo" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Errore interno del server" });
-  }
-});
+//     res.status(200).json({ message: "Sede legale aggiornata con successo" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Errore interno del server" });
+//   }
+// });
 
 app.put("/api/update-turnover", authenticateJWT, async (req, res) => {
   try {
@@ -615,6 +735,21 @@ app.get("/api/fetch-users", authenticateJWT, authenticateAdmin, async (req, res)
 
     const result = await pool.query("SELECT * FROM users order by id ASC");
     res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Errore interno del server" });
+  }
+})
+
+app.get("/api/fetch-not-verified-users", authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+
+    if (req.user.role !== "administrator") {
+      return res.status(401).json({ message: "Non sei autorizzato" });
+    }
+
+    const result = await pool.query("SELECT * FROM users WHERE isVerified = false and administrator = false order by id ASC ");
+    res.status(200).json({ rows: result.rows, count: result.rows.length });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Errore interno del server" });
@@ -1687,9 +1822,10 @@ app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async 
 app.post("/api/cart-insertion/:id", async (req, res) => {
   try {
     const { id } = req.params; // ID della certificazione
-    const { name, image, price, quantity, option, session_id } = req.body;
+    const { name, image, price, quantity, option } = req.body;
+    console.log("Dati ricevuti:", req.body);
 
-    if (req.headers.authorization) {
+    if (req.cookies.accessToken) {
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
           if (err) {
@@ -1703,8 +1839,8 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
     const user_id = req.user?.user_id; // Obtain the user ID from the JWT if needed
 
     // Check if user_id or session_id is present
-    if (!user_id && !session_id) {
-      return res.status(400).json({ msg: "Devi essere autenticato o avere un session_id per inserire nel carrello" });
+    if (!user_id && !req.cookies.sessionId) {
+      return res.status(400).json({ msg: "Devi essere autenticato o avere un id di sessione per inserire nel carrello" });
     }
 
     if (!option) {
@@ -1761,7 +1897,7 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
     } else {
       // Control for anonymous users
       cartQuery = "SELECT * FROM cart WHERE session_id = $1 AND product_id = $2";
-      cartValues = [session_id, id];
+      cartValues = [req.cookies.sessionId, id];
     }
 
     const cartResult = await pool.query(cartQuery, cartValues);
@@ -1781,7 +1917,7 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
     } else {
       // Insert into the cart for anonymous users
       insertQuery = "INSERT INTO cart (session_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
-      insertValues = [session_id, id, name, image, quantity, option, finalPrice];
+      insertValues = [req.cookies.sessionId, id, name, image, quantity, option, finalPrice];
     }
 
     await pool.query(insertQuery, insertValues);
@@ -1797,7 +1933,7 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
 app.get("/api/fetch-user-cart", async (req, res) => {
   try {
 
-    if (req.headers.authorization) {
+    if (req.cookies.accessToken) {
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
           if (err) {
@@ -1808,8 +1944,9 @@ app.get("/api/fetch-user-cart", async (req, res) => {
       });
     }
 
-    const user_id = req.user?.user_id;
-    const session_id = req.header('session-id');
+    const user_id = req.user?.user_id; // Obtain the user ID from the JWT if needed
+    console.log("User ID:", user_id);
+    const session_id = req.cookies.sessionId;
     //console.log("User ID:", user_id);
     //console.log("Session ID:", session_id);
 
@@ -1817,6 +1954,7 @@ app.get("/api/fetch-user-cart", async (req, res) => {
     let query;
     let values;
     let query2;
+
 
     if (user_id) {
       query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
@@ -1881,7 +2019,7 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (req.headers.authorization) {
+    if (req.cookies.accessToken) {
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
           if (err) {
@@ -1893,7 +2031,7 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
     }
 
     const user_id = req.user?.user_id;
-    const session_id = req.header('session-id');
+    const session_id = req.cookies.sessionId;
 
     let query;
     let values;
@@ -4166,9 +4304,33 @@ function phoneCheck(phone) {
   return re.test(String(phone).toLowerCase());
 }
 
-function pivaCheck(piva) {
-  const pivaRegex = /^[0-9]{11}$/;  // Must be 11 digits
-  return pivaRegex.test(piva);
+async function vatCheck(vatNumber) {
+  try {
+
+    if (!vatNumber || vatNumber.length < 3) {
+      return false;
+    }
+
+    const pivaRegex = /^[A-Z]{2}[0-9]{11}$/;
+    if (!pivaRegex.test(vatNumber)) {
+      return false;
+    }
+
+    const countryCode = vatNumber.slice(0, 2).toUpperCase();
+    const number = vatNumber.slice(2);
+
+    const validationInfo = await new Promise((resolve, reject) => {
+      validate(countryCode, number, (err, info) => {
+        if (err) reject(err);
+        else resolve(info);
+      });
+    });
+
+    return { valid: validationInfo.valid, companyName: validationInfo.name, address: validationInfo.address }; // true o false
+  } catch (error) {
+    console.error('Errore durante la verifica della partita IVA:', error);
+    return false;
+  }
 }
 
 function cfCheck(cf) {
@@ -4183,8 +4345,6 @@ app.use((err, req, res, next) => {
 })
 
 
-
-
 app.listen(port, '0.0.0.0', async () => {
   //console.log(`Server in ascolto sulla porta ${port}`);
 
@@ -4196,9 +4356,9 @@ app.listen(port, '0.0.0.0', async () => {
       console.log("PASS_ADMIN:", process.env.PASS_ADMIN);
       const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Hash the passwords
       await pool.query(
-        `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest, isVerified)
-         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [process.env.USERNAME_ADMIN, "green_visa", process.env.EMAIL_ADMIN, null, null, null, null, true, hashedPassword, true]
+        `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest, isVerified, first_login)
+         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [process.env.USERNAME_ADMIN, "green_visa", process.env.EMAIL_ADMIN, null, null, null, null, true, hashedPassword, true, false]
       );
       console.log('Admin creato con successo.');
     } else {

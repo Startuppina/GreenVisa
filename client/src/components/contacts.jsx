@@ -54,9 +54,7 @@ function Contacts() {
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-message`, contactData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

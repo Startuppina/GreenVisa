@@ -733,7 +733,7 @@ function WellnessQuestionnaire({ certification_id }) {
     const fetchInfo = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          withCredentials: true,
         });
 
         if (response.status === 200) {
@@ -754,11 +754,11 @@ function WellnessQuestionnaire({ certification_id }) {
 
   async function restoreSurveyData(surveyId) {
     console.log("Restoring survey data for survey ID:", surveyId);
-    const token = localStorage.getItem('token');
+
     console.log("certification_id:", certification_id);
     try {
       const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses-fetch`, {
-        headers: { "Authorization": `Bearer ${token}` },
+        withCredentials: true,
         params: {
           certification_id: certification_id
         }
@@ -823,14 +823,11 @@ function WellnessQuestionnaire({ certification_id }) {
 
 
   async function submitSurveyData(data) {
-    const token = localStorage.getItem('token');
+
     console.log("Submitting survey data:", data);
     try {
       await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses`, data, {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+        withCredentials: true,
       });
       console.log("Survey data saved successfully");
     } catch (error) {

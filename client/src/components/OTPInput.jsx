@@ -46,9 +46,7 @@ export default function OTPInput() {
         OTP: OTP,
         recipient_email: email,
       }, {
-        headers: {
-          "Authorization": `Bearer ${recoveryToken}`,
-        },
+        withCredentials: true
       })
       .then(() => {
         setDisable(true);

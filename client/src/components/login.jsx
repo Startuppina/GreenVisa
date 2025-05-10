@@ -11,9 +11,12 @@ const Login = () => {
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleEmailChange = (e) => setEmail(e.target.value);
     const handlePasswordChange = (e) => setPassword(e.target.value);
+
+    const toggleShowPassword = () => setShowPassword(!showPassword);
 
     const navigateToOtp = async (e) => {
         navigate('/InsertEmail');
@@ -22,28 +25,25 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const formData = { email, password };
-        const sessionID = localStorage.getItem('session_id');
+        const formData = { email, password };;
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/login`, formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(sessionID && { 'session-id': sessionID })
-                },
+                withCredentials: true
             });
 
             if (response.status === 200) {
                 console.log('Login successful:', response.data);
-                localStorage.setItem('token', response.data.token);
-                localStorage.setItem('activeSection', "user");
                 localStorage.removeItem('session_id');
 
                 // reset the form fields
                 setEmail('');
                 setPassword('');
-
-                navigate('/User');
+                if (response.data.first_login) {
+                    navigate('/Products');
+                } else {
+                    navigate('/User');
+                }
             } else {
                 console.error('Error:', response.data.msg);
                 //alert(response.data.msg);
@@ -80,13 +80,27 @@ const Login = () => {
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[80%] lg:w-[60%]'>
                             <label htmlFor="email" className='block text-xl'>Email</label>
-                            <input type="email" name="email" id="email" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handleEmailChange} />
+                            <div className="flex items-center justify-between">
+                                <input type="email" name="email" id="email" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handleEmailChange} />
+                            </div>
                         </div>
                     </div>
                     <div className='flex flex-col items-center justify-center mb-5'>
                         <div className='w-[80%] lg:w-[60%]'>
-                            <label htmlFor="password" className='block text-xl' >Password</label>
-                            <input type="password" name="password" id="password" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handlePasswordChange} />
+                            <div className="flex items-center justify-between">
+                                <label htmlFor="password" className='block text-xl' >Password</label>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-black">Mostra password</span>
+                                    <input
+                                        type="checkbox"
+                                        name="showPassword"
+                                        id="showPassword"
+                                        onClick={toggleShowPassword}
+                                        className="cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+                            <input type={showPassword ? "text" : "password"} name="password" id="password" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handlePasswordChange} />
                         </div>
                     </div>
                     <p className='font-arial text-xl w-full text-center'>Password dimenticata? <span className='text-[#2d7044]'><a onClick={navigateToOtp} className='cursor-pointer'>Clicca qui</a></span></p>

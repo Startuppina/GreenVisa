@@ -29,6 +29,7 @@ import ReportPage from './reportPage.jsx';
 import CertificationPage from './CertificationPage.jsx';
 import ConfirmAccountPage from './confirmAccountPage.jsx';
 import VerifyAccount from './accountVerifiedPage.jsx';
+import ConfirmAccountPageNoCompanyEmail from './confirmAccountPageNoCompanyEmail.jsx';
 
 const router = createBrowserRouter([
   {
@@ -135,6 +136,10 @@ const router = createBrowserRouter([
   {
     path: "/AccountVerified",
     element: <VerifyAccount />,
+  },
+  {
+    path: "/VerifyAccountNoCompanyEmail",
+    element: <ConfirmAccountPageNoCompanyEmail />,
   }
 ]);
 
