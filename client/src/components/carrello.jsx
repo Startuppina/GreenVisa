@@ -54,13 +54,10 @@ function Carrello() {
 
     const handleQuantityChange = async (productId, newQuantity) => {
 
-        const sessionID = localStorage.getItem('session_id');
-
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-quantity/${productId}`, { quantity: newQuantity }, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(sessionID && { 'session-id': sessionID })  // Aggiungi session-id header se sessionId esiste
                 },
                 withCredentials: true
             });

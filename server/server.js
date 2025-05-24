@@ -86,7 +86,7 @@ app.use((req, res, next) => {
 
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
-  const token = req.cookies.accessToken; // il cookie contiene solo il token
+  const token = req.cookies.accessToken || req.cookies.recoveryToken || null; // Prendi il token presente dal cookie
 
   if (token) {
     jwt.verify(token, secretKey, (err, user) => {
@@ -770,6 +770,12 @@ app.post("/api/send_email", async (req, res) => {
         secretKey,
         { expiresIn: "1h" }
       )
+      res.cookie('recoveryToken', recoveryToken, {
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax',
+        maxAge: 6 * 10 * 60 * 1000 // 1 hour
+      });
       //console.log(recoveryToken);
       res.status(200).json({ exist: true, token: recoveryToken });
     } else {
@@ -1443,6 +1449,12 @@ app.put("/api/change-password", authenticateJWT, async (req, res) => {
 
     // Execute the query
     await pool.query(query, values);
+
+    res.clearCookie('recoveryToken', {
+      httpOnly: false,
+      secure: false,  // Impostalo su true se stai usando HTTPS
+      sameSite: 'Lax'
+    });
 
     res.status(200).json({ message: "Password modificata con successo" });
   } catch (err) {

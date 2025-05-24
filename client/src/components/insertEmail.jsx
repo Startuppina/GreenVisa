@@ -16,9 +16,10 @@ const InsertEmail = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-
     try {
-      const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send_email`, { email });
+      const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send_email`, { email }, {
+        withCredentials: true
+      });
 
       console.log(response.data);
 
@@ -30,8 +31,6 @@ const InsertEmail = () => {
 
       if (response.status === 200) {
         const recoveryToken = response.data.token;
-        localStorage.setItem('recoveryToken', recoveryToken);
-
         console.log(recoveryToken);
 
         if (recoveryToken) {

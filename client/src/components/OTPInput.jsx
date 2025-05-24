@@ -40,7 +40,6 @@ export default function OTPInput() {
   function resendOTP() {
     if (disable) return;
 
-    const recoveryToken = localStorage.getItem("recoveryToken");
     axios
       .post("http://localhost:5000/send_recovery_email", {
         OTP: OTP,

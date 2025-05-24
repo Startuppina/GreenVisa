@@ -34,7 +34,6 @@ const Login = () => {
 
             if (response.status === 200) {
                 console.log('Login successful:', response.data);
-                localStorage.removeItem('session_id');
 
                 // reset the form fields
                 setEmail('');
