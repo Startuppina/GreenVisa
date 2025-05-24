@@ -6,82 +6,17 @@ import { themeJson } from "../surveyTheme";
 import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
 import generatePDF from "../pdfGeneratorQuestionnaires";
+import { set } from "jodit/esm/core/helpers";
 
 
 function WellnessQuestionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
   const [userData, setUserData] = useState({});
   const [initialData, setInitialData] = useState({}); // Stato per i dati iniziali
-  const [totalScore, setTotalScore] = useState(0);
+  const [completedData, setCompletedData] = useState(null); // Stato per i dati completati
 
   const json = {
     "completeText": "Termina",
-    "completedHtml": `
-      <style>
-        .completed-page {
-          text-align: center;
-          font-family: Arial, sans-serif;
-          color: #333;
-          padding: 20px;
-        }
-        .logo-container {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 20px;
-        }
-        .logo {
-          max-width: 150px;
-          margin-bottom: 20px;
-
-        }
-        .message {
-          font-size: 18px;
-          margin-bottom: 20px;
-        }
-        .message p {
-          margin-bottom: 10px;
-          font-size: 24px;
-        }
-        .message .score {
-          font-size: 20px;
-          font-weight: bold;
-          color: #007bff;
-        }
-        .button-container {
-          display: flex;
-          justify-content: center;
-        }
-        .button-container button {
-        font-size: 20px;
-        padding: 0.5rem; /* p-2 */
-        width: 200px; /* w-[150px] */
-        z-index: 10; /* z-10 */
-        background-color: #2d7044; /* bg-[#2d7044] */
-        color: white; /* text-white */
-        border-radius: 0.5rem; /* rounded-lg */
-        border: 2px solid transparent; /* border-2 border-transparent */
-        transition: background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out; /* transition-colors duration-300 ease-in-out */
-      }
-      .button-container button:hover {
-        background-color: white; /* hover:bg-white */
-        color: #2d7044; /* hover: */
-        border-color: #2d7044; /* hover:border-[#2d7044] */
-      }
-        
-      </style>
-      <div class="completed-page">
-        <div class="logo-container">
-          <img src="/public/img/logo.png" alt="Logo" class="logo">
-        </div>
-        <div class="message">
-          <h2>Questionario completato!</h2>
-          <p>Controlla la pagina utente per vedere il punteggio accumulato</p>
-          <div class="button-container">
-            <button onclick="window.location.href = '/User';">Torna alla pagina utente</button>
-          </div>
-        </div>
-      </div>
-    `,
     "pages": [
       {
         "name": "page1",
@@ -814,6 +749,8 @@ function WellnessQuestionnaire({ certification_id }) {
 
   function handleSurveyComplete() {
     let totalScore = calcolaPunteggio(survey.data);
+    console.log("totalScore:", totalScore);
+    setCompletedData(totalScore);
     saveSurveyDataComplete(survey, totalScore);
     //scroll to top of page
     window.scrollTo(0, 0);
@@ -900,7 +837,31 @@ function WellnessQuestionnaire({ certification_id }) {
 
   return (
     <div className="overflow-hidden">
-      <Survey model={survey} />
+      <div className="flex pt-20 items-center justify-center p-4">
+        {completedData ? (
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-xl w-full text-center space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Questionario completato!
+            </h2>
+            <div className="space-y-4">
+              <p className="text-lg md:text-xl text-gray-700">
+                Hai totalizzato un punteggio di:
+                <span className="block text-4xl md:text-5xl font-extrabold text-red-600 mt-2">
+                  {completedData} / 10
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={() => window.location.href = "/User"}
+              className="mt-6 px-6 py-3 text-white bg-[#2d7044] hover:bg-white hover:text-[#2d7044] border-2 border-[#2d7044] hover:bg-[#2d7044] font-semibold rounded-lg transition-colors duration-300"
+            >
+              Torna alla pagina utente
+            </button>
+          </div>
+        ) : (
+          <Survey model={survey} />
+        )}
+      </div>
     </div>
   );
 }

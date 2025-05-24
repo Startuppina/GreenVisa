@@ -391,7 +391,7 @@ const UserPage = () => {
                                                 <div className='flex flex-col mb-2'>
                                                     <h2 className="text-2xl font-semibold text-gray-800">Questionario per la categoria: {info.product_category}</h2>
                                                     <div className="text-gray-600">Stato: <span className="font-semibold text-gray-800">{info.completed ? 'Completato' : 'Non completato'}</span></div>
-                                                    <div className="text-gray-600">Data completamento: <span className="font-semibold text-gray-800">{new Date(info.date).toLocaleDateString('ita')}</span></div>
+                                                    <div className="text-gray-600">Data completamento: <span className="font-semibold text-gray-800">{info.date ? new Date(info.date).toLocaleDateString('ita') : "-"}</span></div>
                                                 </div>
                                                 <div className='flex flex-col mb-2 text-right'>
                                                     <div className="text-gray-600">Voto: <span className="font-semibold text-gray-800">{info.completed ? info.total_score : "-"}</span> / 10</div>
