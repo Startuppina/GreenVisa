@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -71,13 +71,28 @@ const Signup = () => {
         []
     );
 
+    useEffect(() => {
+        if (noCompanyEmail) {
+            const emailDomain = email.split("@")[1];
+            const websiteDomain = company_website.split("www.")[1];
+
+            if (emailDomain === websiteDomain) {
+                setNoCompanyEmail(false);
+            }
+        }
+    }, [email, company_website, noCompanyEmail]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Implementare l'encription della password. Il server dovra avere solo il hash della password, non la password in chiaro
-
         if (password !== confirmPassword) {
             setMessagePopup('Le password non corrispondono');
+            setButtonPopup(true);
+            return;
+        }
+
+        if (!acceptedTerms) {
+            setMessagePopup('Devi accettare i termini e le condizioni');
             setButtonPopup(true);
             return;
         }
@@ -88,6 +103,13 @@ const Signup = () => {
             return;
         }
 
+        const emailDomain = email.split("@")[1];
+        const websiteDomain = company_website.split("www.")[1];
+        console.log(emailDomain);
+        console.log(websiteDomain);
+        console.log(noCompanyEmail);
+
+        console.log(noCompanyEmail);
         setPhone(`+${phone}`);
 
         const formData = { username, company_name, email, confirmEmail, password, phone, company_website, pec, vat, noCompanyEmail, legal_headquarter };
@@ -100,17 +122,17 @@ const Signup = () => {
 
             if (response.status === 200) {
                 //reset fields
-                setUsername('');
-                setCompany_name('');
-                setPhone('');
-                setEmail('');
-                setConfirmEmail('');
-                setPassword('');
-                setConfirmPassword('');
-                setAcceptedTerms(false);
-                setCompanyWebsite('');
-                setPec('');
-                setVat('');
+                // setUsername('');
+                // setCompany_name('');
+                // setPhone('');
+                // setEmail('');
+                // setConfirmEmail('');
+                // setPassword('');
+                // setConfirmPassword('');
+                // setAcceptedTerms(false);
+                // setCompanyWebsite('');
+                // setPec('');
+                // setVat('');
 
                 if (response.data.notCompanyEmail) {
                     navigate('/VerifyAccountNoCompanyEmail');

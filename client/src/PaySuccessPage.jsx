@@ -83,7 +83,7 @@ function PaySuccessPage() {
         <div className="flex items-center justify-center pt-8 px-4">
           <div className='flex flex-col items-center justify-center'>
             <h1 className="w-[90%] font-arial font-bold text-4xl text-center pb-3">
-              Pagamento Effettuato con successo!
+              Pagamento effettuato con successo!
             </h1>
             <div className='text-xl text-arial text-center w-1/2'>Nella pagina utente puoi accedere alla questionario relativo alla certificazione acquistata</div>
             <MutatingDots

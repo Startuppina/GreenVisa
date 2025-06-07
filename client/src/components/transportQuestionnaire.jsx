@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Survey } from "survey-react-ui";
 import { Model } from 'survey-react-ui';
 import "survey-core/defaultV2.min.css";
@@ -6,12 +6,14 @@ import { themeJson } from "../surveyTheme";
 import axios from "axios";
 import generatePDF from "../pdfGeneratorQuestionnaires";
 import { set } from "jodit/esm/core/helpers";
+import AutosavePopup from "./autosavePopup";
 
 function TransportQuestionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
   const [userData, setUserData] = useState({});
   const [initialData, setInitialData] = useState({}); // Stato per i dati iniziali
   const [completedData, setCompletedData] = useState(null); // Stato per i dati completati
+  const [buttonPopup, setButtonPopup] = useState(false);
 
   //          <p>Hai totalizzato un punteggio di: <span class="score">${totalScore}</span> punti.</p>
   const json = {
@@ -1079,7 +1081,11 @@ function TransportQuestionnaire({ certification_id }) {
           },
   */
 
-  const survey = new Model(json);
+  const surveyRef = useRef(null);
+  if (!surveyRef.current) {
+    surveyRef.current = new Model(json);
+  }
+  const survey = surveyRef.current;
 
   useEffect(() => {
     const fetchInfo = async () => {
@@ -1138,7 +1144,7 @@ function TransportQuestionnaire({ certification_id }) {
     }
     survey.applyTheme(themeJson);
 
-  }, [survey]);
+  }, [initialData]);
 
 
   useEffect(() => {
@@ -1202,7 +1208,7 @@ function TransportQuestionnaire({ certification_id }) {
       survey.onValueChanged.remove(saveSurveyData); // Rimuovi l'evento quando il componente viene dismontato
       survey.onComplete.remove(handleSurveyComplete);
     };
-  }, [survey]);
+  }, []);
 
 
 
@@ -1228,6 +1234,13 @@ function TransportQuestionnaire({ certification_id }) {
         withCredentials: true,
       });
       //console.log("Survey data saved successfully");
+
+      setButtonPopup(true);
+
+      setTimeout(() => {
+        setButtonPopup(false);
+      }, 3000);
+
     } catch (error) {
       console.error("Error saving survey data:", error);
     }
@@ -1674,7 +1687,10 @@ function TransportQuestionnaire({ certification_id }) {
           </button>
         </div>
       ) : (
-        <Survey model={survey} />
+        <>
+          <AutosavePopup trigger={buttonPopup} setTrigger={setButtonPopup} />
+          <Survey model={survey} />
+        </>
       )}
     </div>
 
