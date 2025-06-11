@@ -11,6 +11,7 @@ export default defineConfig({
     hmr: true,
     watch: {
       usePolling: true,
-    }
+    },
+    allowedHosts: ['localhost', 'vps-0fde778b.vps.ovh.net'],
   },
 })
