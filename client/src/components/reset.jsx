@@ -39,15 +39,11 @@ export default function Reset() {
       return;
     }
 
-    const recoveryToken = localStorage.getItem("recoveryToken");
-
     try {
       const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/change-password`, {
         password
       }, {
-        headers: {
-          'Authorization': `Bearer ${recoveryToken}`
-        }
+        withCredentials: true,
       });
 
       if (response.status === 200) {

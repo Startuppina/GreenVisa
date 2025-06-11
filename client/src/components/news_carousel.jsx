@@ -105,7 +105,7 @@ const NewsCarousel = () => {
     };
 
     const deleteNews = async () => {
-        const token = localStorage.getItem('token');
+
         if (!token) {
             setMessagePopup('Token non trovato');
             setButtonPopup(true);
@@ -114,10 +114,7 @@ const NewsCarousel = () => {
 
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-news/${newToDelete}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

@@ -8,7 +8,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./server/uploaded_img:/usr/src/app/uploaded_img
+      - ./server/uploaded_img:/app/uploaded_img
     depends_on:
       db:
         condition: service_healthy # Attende che il db sia sano
@@ -18,11 +18,14 @@ services:
       context: ./client
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "5173:5173"
     volumes:
-      - client-data:/usr/src/app/data
+      - ./client/src:/app/src
+      - /app/node_modules
     depends_on:
       - server
+    environment:
+      - CHOKIDAR_USEPOLLING=true
 
   db:
     image: postgres
@@ -55,5 +58,6 @@ services:
 
 volumes:
   green-visa-db:
-  server-data:
   client-data:
+
+

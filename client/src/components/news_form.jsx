@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import MessagePopUp from './messagePopUp';
 import { MutatingDots } from 'react-loader-spinner';
 
-
-
 const NewsForm = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -49,14 +47,6 @@ const NewsForm = () => {
         console.log('Content:', content);
         console.log('Image:', image);
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setIsLoading(false);
-            setMessagePopUp("Per favore effettua il login");
-            setButtonPopup(true);
-            return;
-        }
-
         const formData = new FormData();
         formData.append('title', title);
         formData.append('content', content);
@@ -66,10 +56,7 @@ const NewsForm = () => {
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-news`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`,
-                },
+                withCredentials: true,
             })
 
             if (response.status == 200) {

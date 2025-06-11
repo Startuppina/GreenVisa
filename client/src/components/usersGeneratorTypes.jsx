@@ -25,9 +25,7 @@ export default function UsersGeneratorTypes({ sendDataToParent }) {
                 plant_id,
                 generatorType
             }, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                withCredentials: true,
             });
 
             console.log('Risposta del server:', response.data);
@@ -49,9 +47,7 @@ export default function UsersGeneratorTypes({ sendDataToParent }) {
         const fetchUsersGeneratorData = async () => {
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/users-generator-types`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    withCredentials: true,
                 });
 
                 console.log('Risposta del server:', response.data);

@@ -10,9 +10,9 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
     const [newUsername, setNewUsername] = useState('');
     const [newPhone, setNewPhone] = useState('');
     const [newEmail, setNewEmail] = useState('');
-    const [newCompanyName, setNewCompanyName] = useState('');
-    const [newLegalHeadquarter, setNewLegalHeadquarter] = useState('');
-    const [newPiva, setNewPiva] = useState('');
+    // const [newCompanyName, setNewCompanyName] = useState('');
+    // const [newLegalHeadquarter, setNewLegalHeadquarter] = useState('');
+    // const [newPiva, setNewPiva] = useState('');
     const [newTaxCode, setNewTaxCode] = useState('');
     const [newTurnover, setNewTurnover] = useState('');
 
@@ -24,22 +24,19 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
     const handleUsernameChange = (e) => setNewUsername(e.target.value);
     const handlePhoneChange = (value) => setNewPhone(value);
     const handleEmailChange = (e) => setNewEmail(e.target.value);
-    const handleCompanyNameChange = (e) => setNewCompanyName(e.target.value);
-    const handleLegalHeadquarterChange = (e) => setNewLegalHeadquarter(e.target.value);
+    // const handleCompanyNameChange = (e) => setNewCompanyName(e.target.value);
+    // const handleLegalHeadquarterChange = (e) => setNewLegalHeadquarter(e.target.value);
     const handleTurnoverChange = (e) => setNewTurnover(e.target.value);
-    const handlePivaChange = (e) => setNewPiva(e.target.value);
+    // const handlePivaChange = (e) => setNewPiva(e.target.value);
     const handleTaxCodeChange = (e) => setNewTaxCode(e.target.value.toUpperCase());
 
     const handleUsernameModifier = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
+
 
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-username`, { username: newUsername }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                withCredentials: true,
             });
 
             if (response.status === 200) {
@@ -57,15 +54,12 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
 
     const handlePhoneModifier = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
+
 
         setNewPhone(`+${newPhone}`);
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-phone`, { phone_number: newPhone }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                withCredentials: true,
             });
 
             if (response.status === 200) {
@@ -83,14 +77,11 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
 
     const handleEmailModifier = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
+
 
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-email`, { email: newEmail }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                withCredentials: true,
             });
 
             if (response.status === 200) {
@@ -107,63 +98,60 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         }
     };
 
-    const handleCompanyNameModifier = async (e) => {
-        e.preventDefault();
-        const token = localStorage.getItem('token');
-        try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-company-name`, { company_name: newCompanyName }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (response.status === 200) {
-                setMessagePopup("Nome azienda aggiornato con successo");
-                setButtonPopup(true);
-                setNewCompanyName('');
-                triggerRefresh();
-                setUserInfo({ ...userInfo, company_name: newCompanyName });
-            }
-        } catch (error) {
-            setMessagePopup(error.response?.data?.message || error.message);
-            setButtonPopup(true);
-        }
-    }
+    // const handleCompanyNameModifier = async (e) => {
+    //     e.preventDefault();
+    //    
+    //     try {
+    //         const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-company-name`, { company_name: newCompanyName }, {
+    //             headers: {
+    //                 'Authorization': `Bearer ${token}`,
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
+    //         if (response.status === 200) {
+    //             setMessagePopup("Nome azienda aggiornato con successo");
+    //             setButtonPopup(true);
+    //             setNewCompanyName('');
+    //             triggerRefresh();
+    //             setUserInfo({ ...userInfo, company_name: newCompanyName });
+    //         }
+    //     } catch (error) {
+    //         setMessagePopup(error.response?.data?.message || error.message);
+    //         setButtonPopup(true);
+    //     }
+    // }
 
-    const handlePivaModifier = async (e) => {
-        e.preventDefault();
-        const token = localStorage.getItem('token');
+    // const handlePivaModifier = async (e) => {
+    //     e.preventDefault();
+    //    
 
-        try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-piva`, { piva: newPiva }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (response.status === 200) {
-                setMessagePopup("Partita IVA aggiornata con successo");
-                setButtonPopup(true);
-                setNewPiva('');
-                triggerRefresh();
-                setUserInfo({ ...userInfo, p_iva: newPiva });
-            }
-        } catch (error) {
-            setMessagePopup(error.response?.data?.message || error.message);
-            setButtonPopup(true);
-        }
-    }
+    //     try {
+    //         const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-piva`, { piva: newPiva }, {
+    //             headers: {
+    //                 'Authorization': `Bearer ${token}`,
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
+    //         if (response.status === 200) {
+    //             setMessagePopup("Partita IVA aggiornata con successo");
+    //             setButtonPopup(true);
+    //             setNewPiva('');
+    //             triggerRefresh();
+    //             setUserInfo({ ...userInfo, p_iva: newPiva });
+    //         }
+    //     } catch (error) {
+    //         setMessagePopup(error.response?.data?.message || error.message);
+    //         setButtonPopup(true);
+    //     }
+    // }
 
     const handleTaxCodeModifier = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
+
 
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-tax-code`, { tax_code: newTaxCode }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                withCredentials: true,
             });
             if (response.status === 200) {
                 setMessagePopup("Codice fiscale aggiornato con successo");
@@ -178,39 +166,36 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
         }
     }
 
-    const handleLegalHeadquarterModifier = async (e) => {
-        e.preventDefault();
-        const token = localStorage.getItem('token');
-        try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-legal-headquarter`, { legal_headquarter: newLegalHeadquarter }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (response.status === 200) {
-                setMessagePopup("Sede legale aggiornata con successo");
-                setButtonPopup(true);
-                setNewLegalHeadquarter('');
-                triggerRefresh();
-                setUserInfo({ ...userInfo, legal_headquarter: newLegalHeadquarter });
-            }
-        } catch (error) {
-            setMessagePopup(`Errore durante l'aggiornamento della sede legale: ${error.message}`);
-            setButtonPopup(true);
-        }
-    }
+    // const handleLegalHeadquarterModifier = async (e) => {
+    //     e.preventDefault();
+    //    
+    //     try {
+    //         const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-legal-headquarter`, { legal_headquarter: newLegalHeadquarter }, {
+    //             headers: {
+    //                 'Authorization': `Bearer ${token}`,
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
+    //         if (response.status === 200) {
+    //             setMessagePopup("Sede legale aggiornata con successo");
+    //             setButtonPopup(true);
+    //             setNewLegalHeadquarter('');
+    //             triggerRefresh();
+    //             setUserInfo({ ...userInfo, legal_headquarter: newLegalHeadquarter });
+    //         }
+    //     } catch (error) {
+    //         setMessagePopup(`Errore durante l'aggiornamento della sede legale: ${error.message}`);
+    //         setButtonPopup(true);
+    //     }
+    // }
 
     const handleTurnoverModifier = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
+
         console.log("newTurnover:", newTurnover);
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-turnover`, { turnover: newTurnover }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                withCredentials: true,
             });
             if (response.status === 200) {
                 setMessagePopup("Fatturato aggiornato con successo");
@@ -248,12 +233,12 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
                 >
                     Username
                 </button>
-                <button
+                {/* <button
                     className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'company' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                     onClick={() => toggleSection('company')}
                 >
                     Ragione Sociale
-                </button>
+                </button> */}
                 <button
                     className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'email' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                     onClick={() => toggleSection('email')}
@@ -266,24 +251,24 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
                 >
                     Telefono
                 </button>
-                <button
+                {/* <button
                     className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'piva' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                     onClick={() => toggleSection('piva')}
                 >
                     Partita IVA
-                </button>
+                </button> */}
                 <button
                     className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'tax_code' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                     onClick={() => toggleSection('tax_code')}
                 >
                     Codice Fiscale
                 </button>
-                <button
+                {/* <button
                     className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'headquarter' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                     onClick={() => toggleSection('headquarter')}
                 >
                     Sede Legale
-                </button>
+                </button> */}
                 <button
                     className={`p-2 text-sm md:text-xl w-auto ${activeInput === 'turnover' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} rounded-lg border-2 border-[#2d7044] hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
                     onClick={() => toggleSection('turnover')}

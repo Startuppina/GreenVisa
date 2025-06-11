@@ -43,14 +43,11 @@ function AllProducts() {
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const token = localStorage.getItem("token");
             try {
                 const response = await axios.get(
                     `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/products-info`,
                     {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
+                        withCredentials: true
                     }
                 );
                 if (response.status === 200) {
@@ -90,15 +87,12 @@ function AllProducts() {
         if (!itemToDelete) return;
 
         const { id } = itemToDelete;
-        const token = localStorage.getItem("token");
 
         try {
             const response = await axios.delete(
                 `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-product/${id}`,
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    withCredentials: true
                 }
             );
             if (response.status === 200) {
@@ -130,7 +124,6 @@ function AllProducts() {
         const { id, ...editedData } = itemToEdit;
         const elements = { id, ...editedData };
         console.log(elements);
-        const token = localStorage.getItem("token");
 
         try {
             const formData = new FormData();
@@ -146,10 +139,7 @@ function AllProducts() {
                 `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-product/${id}`,
                 formData,
                 {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                        Authorization: `Bearer ${token}`,
-                    },
+                    withCredentials: true
                 }
             );
 

@@ -3,15 +3,18 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(255) NOT NULL, --nome e cognome del referente 
     company_name VARCHAR(255) NOT NULL, --nome dell'azienda, ragione sociale 
     email VARCHAR(255) NOT NULL UNIQUE,
-    phone_number VARCHAR(255),
-    p_iva VARCHAR(11) UNIQUE,
+    phone_number VARCHAR(255) DEFAULT NULL UNIQUE,
+    p_iva VARCHAR(13) UNIQUE,
     tax_code VARCHAR(16) DEFAULT NULL UNIQUE, --codice fiscale
-    legal_headquarter VARCHAR(255), -- sede legale
-    turnover DECIMAL(10, 2), --fatturato
-    administrator BOOLEAN NOT NULL,
-    password_digest TEXT
+    legal_headquarter VARCHAR(255) DEFAULT NULL, -- sede legale
+    turnover INTEGER DEFAULT NULL, --fatturato
+    administrator BOOLEAN DEFAULT FALSE,
+    password_digest TEXT,
+    isVerified BOOLEAN DEFAULT FALSE,
+    token VARCHAR(255) DEFAULT NULL, -- Token per la verifica dell'indirizzo email
+    first_login BOOLEAN DEFAULT TRUE -- Se l'utente ha effettuato il login per la prima volta verra indirizzato nella pagina di acquisto della certificazione
 
-    CHECK (LENGTH(p_iva) = 11 AND p_iva ~ '^[0-9]+$')
+    CHECK (p_iva ~ '^[A-Z]{2}[0-9]{11}$')
     CHECK (LENGTH(tax_code) = 16 AND tax_code ~ '^[A-Z0-9]+$')
 
 );
@@ -198,7 +201,14 @@ CREATE TABLE IF NOT EXISTS buildings (
     emissionMark INTEGER DEFAULT NULL,
     emissionCO2 DECIMAL(10, 5) DEFAULT NULL,
     areaEmissionCO2 DECIMAL(10, 5) DEFAULT NULL,
-    results_visible BOOLEAN DEFAULT FALSE
+    results_visible BOOLEAN DEFAULT FALSE,
+
+    -- gli attributi sotto saranno specifici solamente per edifici industriali
+    ateco VARCHAR(8) DEFAULT NULL,
+    activity_description VARCHAR(300) DEFAULT NULL,
+    annual_turnover INTEGER DEFAULT NULL,
+    num_employees INTEGER DEFAULT NULL,
+    prodProcessDesc VARCHAR(300) DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_consumptions (
@@ -207,6 +217,16 @@ CREATE TABLE IF NOT EXISTS user_consumptions (
     building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
     energy_source VARCHAR(50) NOT NULL,
     consumption DECIMAL(10, 2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS climate_gas_altering (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- assuming you have a users table with an id field
+    building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
+    type VARCHAR(50) DEFAULT NULL,
+    annual_consumption DECIMAL(10, 2) DEFAULT NULL,
+    unit_type VARCHAR(50) DEFAULT NULL,
+    usage VARCHAR(50) DEFAULT NULL
 );
 
 

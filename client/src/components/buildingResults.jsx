@@ -17,9 +17,7 @@ function BuildingResults() {
         const fetchResults = async () => {
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-results/${buildingID}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    withCredentials: true
                 });
 
                 if (response.status === 200) {

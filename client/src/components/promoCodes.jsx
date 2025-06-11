@@ -45,13 +45,11 @@ function PromoCodes() {
 
     useEffect(() => {
         const fetchPromoCodes = async () => {
-            const token = localStorage.getItem("token");
+            ;
 
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-promo-codes`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    withCredentials: true,
                 });
 
                 if (response.status === 200 && Array.isArray(response.data.promocodes)) {
@@ -69,12 +67,10 @@ function PromoCodes() {
         };
 
         const fetchUsers = async () => {
-            const token = localStorage.getItem("token");
+            ;
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-users`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    withCredentials: true,
                 });
                 if (response.status === 200) {
                     setUsers(response.data);
@@ -102,12 +98,10 @@ function PromoCodes() {
     };
 
     const deleteCode = async () => {
-        const token = localStorage.getItem("token");
+        ;
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-promo-code/${promoCodeToDelete}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                withCredentials: true,
             });
             if (response.status === 200) {
                 setPromoCodes(prevPromoCodes =>
@@ -127,12 +121,10 @@ function PromoCodes() {
 
 
     const publishCode = async () => {
-        const token = localStorage.getItem("token");
+        ;
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/publish-promo-code/${promoCodeToPublish}`, {}, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                withCredentials: true,
             });
             if (response.status === 200) {
                 setPopupConfirmPublish(false);  // Chiudi il popup di conferma
@@ -152,12 +144,10 @@ function PromoCodes() {
     const assignCodeToUsers = async () => {
 
         console.log("selectedUsers:", selectedUsers);
-        const token = localStorage.getItem("token");
+        ;
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/assign-promo-code-to-users/${promoCodeToPublish}`, { selectedUsers }, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                withCredentials: true,
             });
             if (response.status === 200) {
                 setMessagePopUp(response.data.msg);
@@ -174,12 +164,10 @@ function PromoCodes() {
     }
 
     const fetchUsersNotAssignedCodes = async (codeId) => {
-        const token = localStorage.getItem("token");
+        ;
         try {
             const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-users-not-assigned-codes/${codeId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                withCredentials: true,
             });
             if (response.status === 200) {
                 setUsersNotAssignedCodes(response.data.users);

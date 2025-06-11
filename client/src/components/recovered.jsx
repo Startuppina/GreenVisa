@@ -5,7 +5,6 @@ export default function Recovered() {
   const navigate = useNavigate();
 
   const returnToLogin = () => {
-    localStorage.removeItem('recoveryToken');
     navigate('/login');
   };
 

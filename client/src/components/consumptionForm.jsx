@@ -27,6 +27,8 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         { label: "Gas Naturale (Metano)", unit: "Sm³" },
         { label: "GPL", unit: "mc" },
         { label: "Gasolio", unit: "mc" },
+        { label: "Benzina", unit: "lt" },
+        { label: "Idrogeno", unit: "Smc" },
         { label: "Olio combustibile", unit: "t" },
         { label: "Pellet", unit: "t" },
         { label: "Cippato di legna", unit: "t" },
@@ -38,12 +40,9 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
     useEffect(() => {
         const fetchUserEnergies = async () => {
             try {
-                const token = localStorage.getItem("token");
+                ;
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-user-energies`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setUserEnergies(response.data.energies);
@@ -68,12 +67,9 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         };
 
         try {
-            const token = localStorage.getItem("token");
+            ;
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/add-consumption`, consumption, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
             if (response.status === 200) {
                 setTimeout(() => {
@@ -102,7 +98,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
     const handleUpdateElectricityConsumption = async (e) => {
         e.preventDefault();
         setIsLoadingElectricity(true);
-        const token = localStorage.getItem("token");
+        ;
 
         const consumption = {
             energy_source: "Elettricità",
@@ -112,10 +108,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         try {
 
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             })
 
             if (response.status === 200) {
@@ -156,12 +149,9 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         };
 
         try {
-            const token = localStorage.getItem("token");
+            ;
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/add-consumption`, consumption, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
+                withCredentials: true
             });
 
             if (response.status === 200) {
@@ -207,12 +197,9 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         try {
 
-            const token = localStorage.getItem("token");
+            ;
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             })
 
             if (response.status === 200) {

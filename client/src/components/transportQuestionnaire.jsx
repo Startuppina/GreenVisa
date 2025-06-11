@@ -1,86 +1,24 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Survey } from "survey-react-ui";
 import { Model } from 'survey-react-ui';
 import "survey-core/defaultV2.min.css";
 import { themeJson } from "../surveyTheme";
 import axios from "axios";
 import generatePDF from "../pdfGeneratorQuestionnaires";
+import { set } from "jodit/esm/core/helpers";
+import AutosavePopup from "./autosavePopup";
 
 function TransportQuestionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
   const [userData, setUserData] = useState({});
   const [initialData, setInitialData] = useState({}); // Stato per i dati iniziali
+  const [completedData, setCompletedData] = useState(null); // Stato per i dati completati
+  const [buttonPopup, setButtonPopup] = useState(false);
 
   //          <p>Hai totalizzato un punteggio di: <span class="score">${totalScore}</span> punti.</p>
   const json = {
     //"title": "Certificazione trasporti",
     "completeText": "Termina",
-    "completedHtml": `
-      <style>
-        .completed-page {
-          text-align: center;
-          font-family: Arial, sans-serif;
-          color: #333;
-          padding: 20px;
-        }
-        .logo-container {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 20px;
-        }
-        .logo {
-          max-width: 150px;
-          margin-bottom: 20px;
-
-        }
-        .message {
-          font-size: 18px;
-          margin-bottom: 20px;
-        }
-        .message p {
-          margin-bottom: 10px;
-          font-size: 24px;
-        }
-        .message .score {
-          font-size: 20px;
-          font-weight: bold;
-          color: #007bff;
-        }
-        .button-container {
-          display: flex;
-          justify-content: center;
-        }
-        .button-container button {
-        font-size: 20px;
-        padding: 0.5rem; /* p-2 */
-        width: 200px; /* w-[150px] */
-        z-index: 10; /* z-10 */
-        background-color: #2d7044; /* bg-[#2d7044] */
-        color: white; /* text-white */
-        border-radius: 0.5rem; /* rounded-lg */
-        border: 2px solid transparent; /* border-2 border-transparent */
-        transition: background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out; /* transition-colors duration-300 ease-in-out */
-      }
-      .button-container button:hover {
-        background-color: white; /* hover:bg-white */
-        color: #2d7044; /* hover: */
-        border-color: #2d7044; /* hover:border-[#2d7044] */
-      }
-        
-      </style>
-      <div class="completed-page">
-        <div class="logo-container">
-          <img src="/public/img/logo.png" alt="Logo" class="logo">
-        </div>
-        <div class="message">
-          <h2>Questionario completato!</h2>
-          <p>Controlla la pagina utente per vedere il punteggio accumulato</p>
-          <div class="button-container">
-            <button onclick="window.location.href = '/User';">Torna alla pagina utente</button>
-          </div>
-        </div>
-      </div>
-    `,
     "pages": [
       {
         "name": "page1",
@@ -1143,13 +1081,17 @@ function TransportQuestionnaire({ certification_id }) {
           },
   */
 
-  const survey = new Model(json);
+  const surveyRef = useRef(null);
+  if (!surveyRef.current) {
+    surveyRef.current = new Model(json);
+  }
+  const survey = surveyRef.current;
 
   useEffect(() => {
     const fetchInfo = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          withCredentials: true,
         });
 
         if (response.status === 200) {
@@ -1170,11 +1112,11 @@ function TransportQuestionnaire({ certification_id }) {
 
   async function restoreSurveyData(surveyId) {
     //console.log("Restoring survey data for survey ID:", surveyId);
-    const token = localStorage.getItem('token');
+
     //console.log("certification_id:", certification_id);
     try {
       const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses-fetch`, {
-        headers: { "Authorization": `Bearer ${token}` },
+        withCredentials: true,
         params: {
           certification_id: certification_id
         }
@@ -1202,7 +1144,7 @@ function TransportQuestionnaire({ certification_id }) {
     }
     survey.applyTheme(themeJson);
 
-  }, [survey]);
+  }, [initialData]);
 
 
   useEffect(() => {
@@ -1266,12 +1208,16 @@ function TransportQuestionnaire({ certification_id }) {
       survey.onValueChanged.remove(saveSurveyData); // Rimuovi l'evento quando il componente viene dismontato
       survey.onComplete.remove(handleSurveyComplete);
     };
-  }, [survey]);
+  }, []);
 
 
 
   function handleSurveyComplete() {
     let results = calcolaRisultati(survey.data);
+    setCompletedData({
+      totalScore: results.punteggioTotale,
+      emissions: results.CO2emissions.toFixed(2),
+    });
     saveSurveyDataComplete(survey, results.punteggioTotale, results.CO2emissions);
     //scroll to top of page
     window.scrollTo(0, 0);
@@ -1281,16 +1227,20 @@ function TransportQuestionnaire({ certification_id }) {
 
 
   async function submitSurveyData(data) {
-    const token = localStorage.getItem('token');
+
     //console.log("Submitting survey data:", data);
     try {
       await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses`, data, {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+        withCredentials: true,
       });
       //console.log("Survey data saved successfully");
+
+      setButtonPopup(true);
+
+      setTimeout(() => {
+        setButtonPopup(false);
+      }, 3000);
+
     } catch (error) {
       console.error("Error saving survey data:", error);
     }
@@ -1324,13 +1274,10 @@ function TransportQuestionnaire({ certification_id }) {
 
   const secondLevelCertification = async (userInfo, certification_id) => {
 
-    const token = localStorage.getItem('token');
+
     try {
       await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/second-level-certification`, { userInfo, certification_id }, {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+        withCredentials: true,
       });
       //console.log("Second Level Certification completed successfully");
     } catch (error) {
@@ -1349,17 +1296,17 @@ function TransportQuestionnaire({ certification_id }) {
     json.pages.forEach(page => {
       page.elements.forEach(element => {
         // Controlla il tipo di elemento e calcola il punteggio
-        //console.log(`Elemento: ${element.name}, tipo: ${element.type}`);
+        //console.log(`Elemento: ${ element.name }, tipo: ${ element.type } `);
         switch (element.type) {
           case 'radiogroup':
             //const punteggioRadiogroup = calcolaPunteggioRadiogroup(formData[element.name], element);
             //punteggioTotale += punteggioRadiogroup;
-            //console.log(`Domanda: ${element.title}, Risposta: ${formData[element.name]}, Punteggio: ${punteggioRadiogroup}`);
+            //console.log(`Domanda: ${ element.title }, Risposta: ${ formData[element.name] }, Punteggio: ${ punteggioRadiogroup } `);
             break;
           case 'multipletext':
             //const punteggioMultipletext = calcolaPunteggioMultipletext(formData[element.name], element);
             //punteggioTotale += punteggioMultipletext;
-            //console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMultipletext}`);
+            //console.log(`Domanda: ${ element.title }, Risposte: ${ JSON.stringify(formData[element.name]) }, Punteggio: ${ punteggioMultipletext } `);
             break;
           case 'matrixdynamic':
             if (element.name === 'question29' || element.name === 'question30') {
@@ -1369,24 +1316,24 @@ function TransportQuestionnaire({ certification_id }) {
             } else {
               //const punteggioMatrixdynamic = calcolaPunteggioMatrixdynamic(formData[element.name], element);
               //punteggioTotale += punteggioMatrixdynamic;
-              //console.log(`Domanda: ${element.title}, Risposte: ${JSON.stringify(formData[element.name])}, Punteggio: ${punteggioMatrixdynamic}`);
+              //console.log(`Domanda: ${ element.title }, Risposte: ${ JSON.stringify(formData[element.name]) }, Punteggio: ${ punteggioMatrixdynamic } `);
             }
             break;
           case 'panel':
             //console.log('Dati passati alla funzione calcolaPunteggioPanel:', formData[element.name], element);
             //const punteggioPanel = calcolaPunteggioPanel(formData[element.name], element);
             //punteggioTotale += punteggioPanel;
-            //console.log(`Pannello: ${element.title}, Punteggio: ${punteggioPanel}`);
+            //console.log(`Pannello: ${ element.title }, Punteggio: ${ punteggioPanel } `);
             break;
           case 'html':
             break;
           default:
-            console.warn(`Tipo di domanda non gestito: ${element.type}`);
+            console.warn(`Tipo di domanda non gestito: ${element.type} `);
         }
       });
     });
 
-    //console.log(`Punteggio totale: ${punteggioTotale}`);
+    //console.log(`Punteggio totale: ${ punteggioTotale } `);
 
     //const punteggioMassimo = 1115; //punteggio massimo possibile
 
@@ -1447,7 +1394,7 @@ function TransportQuestionnaire({ certification_id }) {
       totalVehicles++;
       let averageCO2Emissions = 0 // Solo se GPL o metano
 
-      //console.log(`Marca: ${row["Marca"]}, Modello: ${row["Modello"]}, Anno: ${row["Anno immatricolazione"]}, Carburante: ${row["Carburante"]}, km annui: ${row["km annui"]}, emissioni: ${row["emissioni di CO2 WLTP"]}, emissioni GPl o metano: : ${row["emissioni di CO2 WLTP (GPL o metano)"]}`);
+      //console.log(`Marca: ${ row["Marca"] }, Modello: ${ row["Modello"] }, Anno: ${ row["Anno immatricolazione"] }, Carburante: ${ row["Carburante"] }, km annui: ${ row["km annui"] }, emissioni: ${ row["emissioni di CO2 WLTP"] }, emissioni GPl o metano: : ${ row["emissioni di CO2 WLTP (GPL o metano)"] } `);
       if (row["Carburante"] === "GPL" || row["Carburante"] === "Metano") {
         currentCO2Emissions = parseInt(row["KM annui"]) * ((parseInt(row["emissioni di CO2 WLTP"]) + parseInt(row["emissioni di CO2 WLTP (GPL o metano)"])) / 2); //Media tra le emissioni di due carburanti in quanto il veicolo è bifuel
         //console.log(currentCO2Emissions)
@@ -1510,7 +1457,7 @@ function TransportQuestionnaire({ certification_id }) {
   // Funzione per calcolare il punteggio per le domande di tipo radiogroup
   function calcolaPunteggioRadiogroup(response, element) {
 
-    ////console.log(`parametri radiogroup:`, response, element);
+    ////console.log(`parametri radiogroup: `, response, element);
     let punteggio = 0;
     if (response && element.choices) {
       const scelta = element.choices.find(choice => choice.value === response);
@@ -1533,10 +1480,10 @@ function TransportQuestionnaire({ certification_id }) {
   function calcolaPunteggioMultipletext(response, element) {
     let punteggio = 0;
     element.items.forEach(item => {
-      //console.log(`Item: ${item.name}, Risposta: ${response[item.name]}`);
+      //console.log(`Item: ${ item.name }, Risposta: ${ response[item.name] } `);
       if (response[item.name]) {
         punteggio += item.score || 0;
-        ////console.log(`Punteggio multiple text: ${punteggio}`);
+        ////console.log(`Punteggio multiple text: ${ punteggio } `);
       }
     });
     return punteggio;
@@ -1635,11 +1582,11 @@ function TransportQuestionnaire({ certification_id }) {
 
     // Funzione per calcolare il punteggio in base al carburante
     const calcolaPunteggioCarburante = (response) => {
-      //console.log(`Column 2: ${response["Column 2"]}`);
-      //console.log(`carburante: ${fuelScores[response["Column 2"]]}`);
+      //console.log(`Column 2: ${ response["Column 2"] } `);
+      //console.log(`carburante: ${ fuelScores[response["Column 2"]] } `);
       const penalitaCarburante = penalitaPerCarburante[response["Column 2"]] || 0;
       const punteggio = ((fuelScores[response["Column 2"]] - penalitaCarburante) * parseInt(response["Column 1"])) || 0; //calcolo punteggio per ogni riga = numero mezzi * punteggio Euro
-      //console.log(`punteggio con penalita: ${punteggio}`);
+      //console.log(`punteggio con penalita: ${ punteggio } `);
       mezziTotali += parseInt(response["Column 1"]);
       return punteggio;
     };
@@ -1665,12 +1612,12 @@ function TransportQuestionnaire({ certification_id }) {
           mezziTotali += parseInt(row["Column 1"]);
           const punteggioAnno = yearScores[row["Column 3"]] * parseInt(row["Column 1"]) || 0;
           punteggioTotale += punteggioAnno;
-          //console.log(`Domanda: ${element.name}, Risposta: Si, Anno: ${row["Column 3"]}, Punteggio: ${punteggioAnno}`);
+          //console.log(`Domanda: ${ element.name }, Risposta: Si, Anno: ${ row["Column 3"] }, Punteggio: ${ punteggioAnno } `);
         } else if (row["Column 2"] === 0) {
           // Se la risposta è "No", il punteggio è 0
           mezziTotali += parseInt(row["Column 1"]);
           punteggioTotale += 0;
-          //console.log(`Domanda: ${element.name}, Risposta: No, Punteggio: 0`);
+          //console.log(`Domanda: ${ element.name }, Risposta: No, Punteggio: 0`);
         }
       } else if (element.name === 'question15' || element.name === 'question14' || element.name === 'question13' || element.name === 'question12' || element.name === 'question11' || element.name === 'question10') {
         const punteggioCarburante = calcolaPunteggioCarburante(row);
@@ -1694,14 +1641,14 @@ function TransportQuestionnaire({ certification_id }) {
   function calcolaPunteggioPanel(formData, panel) {
     let punteggio = 0;
 
-    //console.log(`parametri pannello:`, formData, panel);
+    //console.log(`parametri pannello: `, formData, panel);
 
     if (formData && panel.elements) {
       panel.elements.forEach(element => {
         if (element.type === 'radiogroup') {
           const punteggioRadiogroup = calcolaPunteggioRadiogroup(formData[element.name], element);
           punteggio += punteggioRadiogroup;
-          //console.log(`Domanda nel pannello: ${element.name}, Risposta: ${formData[element.name]}, Punteggio: ${punteggioRadiogroup}`);
+          //console.log(`Domanda nel pannello: ${ element.name }, Risposta: ${ formData[element.name] }, Punteggio: ${ punteggioRadiogroup } `);
         } else if (element.type === 'text') {
           // Puoi aggiungere logica specifica per i campi di testo se necessario
         }
@@ -1712,9 +1659,41 @@ function TransportQuestionnaire({ certification_id }) {
   }
 
   return (
-    <div className="overflow-hidden">
-      <Survey model={survey} />
+    <div className="flex pt-20 items-center justify-center p-4">
+      {completedData ? (
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-xl w-full text-center space-y-6">
+          <h2 className="text-3xl md:text-4xl font-bold">
+            Questionario completato!
+          </h2>
+          <div className="space-y-4">
+            <p className="text-lg md:text-xl text-gray-700">
+              Hai totalizzato un punteggio di:
+              <span className="block text-4xl md:text-5xl font-extrabold text-red-600 mt-2">
+                {completedData.totalScore} / 10
+              </span>
+            </p>
+            <p className="text-lg md:text-xl text-gray-700">
+              Emissioni totali:
+              <span className="block text-3xl md:text-4xl font-bold text-blue-600 mt-2">
+                {completedData.emissions} kg CO₂e
+              </span>
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.href = "/User"}
+            className="mt-6 px-6 py-3 text-white bg-[#2d7044] hover:bg-white hover:text-[#2d7044] border-2 border-[#2d7044] hover:bg-[#2d7044] font-semibold rounded-lg transition-colors duration-300"
+          >
+            Torna alla pagina utente
+          </button>
+        </div>
+      ) : (
+        <>
+          <AutosavePopup trigger={buttonPopup} setTrigger={setButtonPopup} />
+          <Survey model={survey} />
+        </>
+      )}
     </div>
+
   );
 }
 

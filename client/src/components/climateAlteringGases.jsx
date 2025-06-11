@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import PlantForm from "./plantForm";
+import ClimateGasAlteringForm from "./climateGasAlteringForm";
 import { useRecoveryContext } from "../provider/provider";
 import ConfirmPopUp from "./confirmPopUp";
 import MessagePopUp from "./messagePopUp";
 
-function Plants() {
-    const [plants, setPlants] = useState([]); // Inizializzato come array vuoto
-    const [numPlants, setNumPlants] = useState(0);
-    const [showPlantForm, setShowPlantForm] = useState(false);
-    const [showPlantFormModifier, setShowPlantFormModifier] = useState(null);
+function ClimateAlteringGases() {
 
-    const [plantsToDelete, setPlantsToDelete] = useState(null);
+    const [gases, setGases] = useState([]); // Inizializzato come array vuoto
+    const [numGases, setNumGases] = useState(0);
+    const [showGasFrom, setShowGasFrom] = useState(false);
+    const [showGasFormModifier, setShowGasFormModifier] = useState(null);
+
+    const [gasToDelete, setGasToDelete] = useState(null);
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
 
@@ -20,20 +21,19 @@ function Plants() {
 
     const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
 
-
     // Crea una ref per il form
     const formRef = useRef(null);
 
     useEffect(() => {
-        if (showPlantForm && formRef.current) {
+        if (showGasFrom && formRef.current) {
             formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-    }, [showPlantForm]);
+    }, [showGasFrom]);
 
 
     useEffect(() => {
 
-        const fetchPlants = async () => {
+        const fetchGases = async () => {
             ;
             const id = buildingID;
             if (!id) {
@@ -41,36 +41,36 @@ function Plants() {
                 return;
             }
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-plants`, {
+                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-gases`, {
                     withCredentials: true
                 });
-                console.log('Plants data:', response.data); // Log the response data
+                console.log('Gases data:', response.data); // Log the response data
                 if (response.status === 200) {
-                    setPlants(response.data.plants); // Controllo aggiuntivo
-                    setNumPlants(response.data.count);
+                    setGases(response.data.gases); // Controllo aggiuntivo
+                    setNumGases(response.data.count);
 
 
                 }
             } catch (error) {
-                setMessagePopup('Errore durante il recupero degli impianti');
+                setMessagePopup('Errore durante il recupero dei gas clima alteranti');
                 setButtonPopup(true);
             }
         };
-        fetchPlants();
+        fetchGases();
     }, [buildingID, refresh]); // Added buildingID as a dependency, also plantrigger as a dependency
 
-    const deletePlant = async () => {
+    const deleteGas = async () => {
 
-        const { id } = plantsToDelete;
+        const { id } = gasToDelete;
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-plant/${id}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-gas/${id}`, {
                 withCredentials: true
             });
 
             if (response.status === 200) {
-                const updatedPlants = plants.filter((plant) => plant.id !== id);
-                setPlants(updatedPlants);
-                setNumPlants(updatedPlants.length);
+                const updatedGases = gases.filter((gas) => gas.id !== id);
+                setGases(updatedGases);
+                setNumGases(updatedGases.length);
                 setPopupConfirmDelete(false);
                 setMessagePopup('Gas clima alterante eliminato con successo');
                 setButtonPopup(true);
@@ -78,14 +78,14 @@ function Plants() {
                 triggerRefresh();
             }
         } catch (error) {
-            setMessagePopup('Errore durante l\'eliminazione dell\'impianto');
+            setMessagePopup('Errore durante l\'eliminazione dell gas clima alterante');
             setButtonPopup(true);
         }
     };
 
     const cancelEdit = () => {
-        setShowPlantFormModifier(null);
-        setShowPlantForm(false);
+        setShowGasFormModifier(null);
+        setShowGasFrom(false);
     };
 
     return (
@@ -93,7 +93,7 @@ function Plants() {
             <ConfirmPopUp
                 trigger={popupConfirmDelete}
                 setTrigger={setPopupConfirmDelete}
-                onButtonClick={deletePlant}
+                onButtonClick={deleteGas}
             >
                 {messageConfirm}
             </ConfirmPopUp>
@@ -102,11 +102,11 @@ function Plants() {
             </MessagePopUp>
             <div className=" bg-[#D9D9D9] rounded-lg mx-2 lg:mx-14">
                 <div className="flex flex-row justify-between">
-                    <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti</h1>
+                    <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Gas clima alteranti utilizzati per la produzione</h1>
                     <div className="flex flex-col items-center justify-center m-2">
                         <button
                             className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                            onClick={() => setShowPlantForm(!showPlantForm)}
+                            onClick={() => setShowGasFrom(!showGasFrom)}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -126,67 +126,50 @@ function Plants() {
                     </div>
                 </div>
 
-                {numPlants === 0 ? (
+                {numGases === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
-                        <div className="text-center pb-4">Nessun impianto presente</div>
+                        <div className="text-center pb-4">Nessun gas clima alterante presente</div>
                         {/*<button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>*/}
                     </div>
                 ) : (
                     <div className="flex flex-col mx-4 max-h-[70vh] overflow-y-auto mb-4">
-                        {plants.map((plant, index) => ( // Controllo per prevenire plants undefined
+                        {gases.map((gas, index) => ( // Controllo per prevenire plants undefined
                             <div
                                 className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
-                                key={plant.id}
+                                key={gas.id}
                             >
                                 <div className="">
-                                    <strong>Descrizione:</strong> {plant.description}
+                                    <strong>Tipologia:</strong> {gas.type}
                                 </div>
                                 <div className="">
-                                    <strong>Tipo di impianto:</strong> {plant.plant_type}
+                                    <strong>Consumo annuo:</strong> {gas.annual_consumption}
                                 </div>
                                 <div className="">
-                                    <strong>Tipo di servizio:</strong> {plant.service_type}
+                                    <strong>Unità di misura:</strong> {gas.unit_type}
                                 </div>
                                 <div className="">
-                                    <strong>Tipo di generatore:</strong> {plant.generator_type}
+                                    <strong>Utilizzo:</strong> {gas.usage}
                                 </div>
-                                <div className="">
-                                    <strong>Descrizione tipologia:</strong> {plant.generator_description ? plant.generator_description : 'N/D'}
-                                </div>
-                                <div className="">
-                                    <strong>Punteggio assegnato alla tipologia di generatore (definito nella descrizione):</strong> {plant.generator_assigned_score > 0 ? plant.generator_assigned_score : 'N/D'}
-                                </div>
-                                <div className="">
-                                    <strong>Elemento consumato dal generatore:</strong> {plant.fuel_type}
-                                </div>
-                                {/*<div className="">
-                                    <strong>Quantità (metano e biogas [SMC], biodiesel e GPL [litri], olio e cippato [ton], pellet [kg]):</strong> {plant.quantity}
-                                </div>
-                                <div className="">
-                                    <strong>Fornitura elettrica per altri servizi nell'edificio:</strong> {plant.electricity_supply}
-                                </div>
-                                <div className="mt-10">
-                                    <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {parseFloat(plant.plantscore) + parseFloat(plant.generator_assigned_score)}
-                                </div>*/}
+
                                 <div className="flex justify-end gap-2">
                                     <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
-                                        onClick={() => setShowPlantFormModifier(showPlantFormModifier === plant.id ? null : plant.id)}                                    >
-                                        {showPlantFormModifier === plant.id ? 'Annulla' : 'Modifica'}
+                                        onClick={() => setShowGasFormModifier(showGasFormModifier === gas.id ? null : gas.id)}                                    >
+                                        {showGasFormModifier === gas.id ? 'Annulla' : 'Modifica'}
                                     </button>
                                     <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
                                         onClick={() => {
-                                            setPlantsToDelete({
-                                                id: plant.id,
+                                            setGasToDelete({
+                                                id: gas.id,
                                             });
                                             setMessageConfirm(
-                                                "Sei sicuro di voler eliminare questo impianto solare?"
+                                                "Sei sicuro di voler eliminare questo gas?"
                                             );
                                             setPopupConfirmDelete(true);
                                         }}>
                                         Elimina
                                     </button>
                                 </div>
-                                {showPlantFormModifier === plant.id && <PlantForm plant={plant} isEdit={true} onButtonClick={cancelEdit} />}
+                                {showGasFormModifier === gas.id && <ClimateGasAlteringForm gas={gas} isEdit={true} onButtonClick={cancelEdit} />}
                             </div>
                         ))}
                     </div>
@@ -195,10 +178,10 @@ function Plants() {
 
             </div>
             <div ref={formRef}>
-                {showPlantForm && (<div className="flex justify-center"><PlantForm plant="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
+                {showGasFrom && (<div className="flex justify-center"><ClimateGasAlteringForm gas="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
             </div>
         </div >
     );
 }
 
-export default Plants;
+export default ClimateAlteringGases;

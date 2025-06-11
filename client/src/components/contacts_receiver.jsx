@@ -34,14 +34,11 @@ const MessagesDashboard = () => {
 
     useEffect(() => {
         const fetchMessages = async () => {
-            const token = localStorage.getItem('token');
+
 
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/messages`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setMessages(response.data.messages);
@@ -54,13 +51,10 @@ const MessagesDashboard = () => {
         };
 
         const fetchAdminUsername = async () => {
-            const token = localStorage.getItem('token');
+
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/admin-username`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setAdmin(response.data.username);
@@ -80,14 +74,11 @@ const MessagesDashboard = () => {
         if (!messageToDelete) return;
 
         const { id } = messageToDelete;
-        const token = localStorage.getItem('token');
+
 
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-message/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
             if (response.status === 200) {
                 setMessages(prevMessages => prevMessages.filter(message => message.id !== id));
@@ -107,14 +98,11 @@ const MessagesDashboard = () => {
     };
 
     const handleSendEmail = async (email) => {
-        const token = localStorage.getItem('token');
+
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-email-message`, { email }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {
@@ -131,13 +119,10 @@ const MessagesDashboard = () => {
     const sendResponse = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        const token = localStorage.getItem('token');
+
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-message-response`, { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

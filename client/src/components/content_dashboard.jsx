@@ -21,6 +21,7 @@ import NewsForm from "./news_form";
 const Dashboard = () => {
   const [totalMessages, setTotalMessages] = useState(0);
   const [totalRequests, setTotalRequests] = useState(0);
+  const [numUsersToVerify, setNumUsersToVerify] = useState(0);
 
   const [showOrders, setShowOrders] = useState(false);
   const navigate = useNavigate();
@@ -33,14 +34,11 @@ const Dashboard = () => {
   useEffect(() => {
 
     const fetchMessages = async () => {
-      const token = localStorage.getItem('token');
+
 
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/messages`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+          withCredentials: true
         });
         if (response.status === 200) {
           setTotalMessages(response.data.count);
@@ -52,13 +50,10 @@ const Dashboard = () => {
     };
 
     const fetchRequests = async () => {
-      const token = localStorage.getItem("token");
+      ;
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-second-level-requests`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+          withCredentials: true
         });
 
         if (response.status === 200) {
@@ -69,8 +64,25 @@ const Dashboard = () => {
         setButtonPopup(true);
       }
     };
+
+    const fetchNotVerifiedUsers = async () => {
+      ;
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-not-verified-users`, {
+          withCredentials: true
+        });
+        if (response.status === 200) {
+          setNumUsersToVerify(response.data.count);
+        }
+      } catch (error) {
+        setMessagePopUp("Errore durante il recupero degli utenti non verificati");
+        setButtonPopup(true);
+      }
+    };
+
     fetchMessages();
     fetchRequests();
+    fetchNotVerifiedUsers();
   }, []);
 
 
@@ -441,7 +453,7 @@ const Dashboard = () => {
 
         <div className={`flex flex-col justify-start items-start gap-4 mr-4  ${window.innerWidth < 1024 ? 'hidden' : 'block'}`}>
 
-          <div className="flex justify-center items-start gap-2">
+          <div className="relative flex justify-center items-start gap-2">
             <button
               className={`mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === "users" ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
               onClick={() => {
@@ -466,6 +478,11 @@ const Dashboard = () => {
                 />
               </svg>
             </button>
+            {numUsersToVerify > 0 && (
+              <span className="absolute top-0 right-14 transform translate-x-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-red-500 rounded-full text-white text-sm">
+                {numUsersToVerify}
+              </span>
+            )}
             <span className={`transition-opacity duration-300 ease-in-out ${activeSection === "users" || visible === "users" ? 'opacity-100' : 'opacity-0'}`}>
               Utenti
             </span>

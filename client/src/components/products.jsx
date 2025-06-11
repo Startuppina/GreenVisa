@@ -60,9 +60,7 @@ function Products() {
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/products-info`, {
                     params: { order: productOrdering },
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                    withCredentials: true,
                 });
 
                 if (response.status === 200) {
@@ -99,7 +97,7 @@ function Products() {
 
     const deleteProduct = async () => {
 
-        const token = localStorage.getItem('token');
+
         if (!token) {
             setMessagePopUp('Token non trovato');
             setButtonPopup(true);
@@ -108,10 +106,7 @@ function Products() {
 
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-product/${productToDelete}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true,
             })
 
             if (response.status === 200) {

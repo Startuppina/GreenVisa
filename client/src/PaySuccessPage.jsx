@@ -27,14 +27,11 @@ function PaySuccessPage() {
   }, []);
 
   const remove_user_cart = async () => {
-    const token = localStorage.getItem('token');
+
 
     try {
       const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/remove-user-cart`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        withCredentials: true
       });
       if (response.status === 200) {
         console.log(response.data);
@@ -48,7 +45,7 @@ function PaySuccessPage() {
   };
 
   const createOrder = async () => {
-    const token = localStorage.getItem('token');
+
 
     const orderData = localStorage.getItem('productsIDs');
     const codeID = localStorage.getItem('codeId');
@@ -64,10 +61,7 @@ function PaySuccessPage() {
       //IL POST VERRA FATTO DUE VOLTE, QUINDI DUE ORDINI INVECE CHE UNO IN QUANTO IN MAIN.JS C'E'
       //REACT STRICT MODE CHE IN AMBIENTE DI PRODUZIONE E' DISABILITATO
       const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/create-order`, { orderData: JSON.parse(orderData), codeID: code }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        withCredentials: true
       });
 
       if (response.status === 200) {
@@ -89,7 +83,7 @@ function PaySuccessPage() {
         <div className="flex items-center justify-center pt-8 px-4">
           <div className='flex flex-col items-center justify-center'>
             <h1 className="w-[90%] font-arial font-bold text-4xl text-center pb-3">
-              Pagamento Effettuato con successo!
+              Pagamento effettuato con successo!
             </h1>
             <div className='text-xl text-arial text-center w-1/2'>Nella pagina utente puoi accedere alla questionario relativo alla certificazione acquistata</div>
             <MutatingDots

@@ -16,13 +16,10 @@ export default function SecondLevelCerts({ sendDataToParent }) {
 
     useEffect(() => {
         const fetchRequests = async () => {
-            const token = localStorage.getItem("token");
+            ;
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-second-level-requests`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true,
                 });
 
                 if (response.status === 200) {
@@ -38,17 +35,14 @@ export default function SecondLevelCerts({ sendDataToParent }) {
     }, []); // Rimuovi request dalle dipendenze
 
     const approveRequest = async (request_id, user_requestor_id) => {
-        const token = localStorage.getItem("token");
+        ;
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/approve-second-level-request`, {
                 request_id,
                 user_requestor_id
             }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true,
             });
 
             if (response.status === 200) {
@@ -72,15 +66,12 @@ export default function SecondLevelCerts({ sendDataToParent }) {
 
     const deleteRequest = async () => {
         setPopupConfirmDelete(false);
-        const token = localStorage.getItem("token");
+        ;
         console.log("token :", token);
 
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-second-level-request`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                withCredentials: true,
                 params: {
                     request_id: requestToDelete.request_id,
                     user_requestor_id: requestToDelete.user_id

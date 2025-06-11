@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { isAuthenticated } from "./isAuthenticated";
 
 function Navbar() {
     const [showMenu, setShowMenu] = useState(window.innerWidth > 800); // Check if screen width is greater than 800px
@@ -17,9 +18,9 @@ function Navbar() {
         };
     }, []);
 
-    const handleUserIconClick = async () => {
-        const token = localStorage.getItem("token");
-        if (token === null) {
+    const handleUserIconClick = () => {
+        const authenticated = isAuthenticated();
+        if (!authenticated) {
             navigate("/login");
         } else {
             navigate("/user");

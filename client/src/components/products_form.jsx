@@ -47,7 +47,7 @@ function ProductsForm() {
 
         setIsLoading(true);
 
-        const token = localStorage.getItem("token");
+        ;
 
         const formData = new FormData();
         formData.append('name', name);
@@ -62,10 +62,7 @@ function ProductsForm() {
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-product`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true,
             });
 
             if (response.status === 200) {

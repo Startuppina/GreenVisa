@@ -54,9 +54,7 @@ function Contacts() {
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-message`, contactData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {
@@ -79,7 +77,7 @@ function Contacts() {
 
     return (
         <>
-            <div className="w-full min-h-screen md:bg-[url('/img/login.jpg')] bg-[#f6f3f3] bg-cover bg-center bg-no-repeat flex items-center justify-center md:p-8">
+            <div className="w-full min-h-screen md:bg-[#2d7044] bg-[#f6f3f3] bg-cover bg-center bg-no-repeat flex items-center justify-center md:p-8">
                 <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                     {messagePopup}
                 </MessagePopUp>

@@ -45,16 +45,13 @@ function PromoCodeForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem("token");
+        ;
 
         setIsLoading(true);
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/create-promo-code`, { code, discount, start, expiration, category }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true,
             });
 
             if (response.status === 200) {

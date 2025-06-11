@@ -31,9 +31,7 @@ function ProductDetails() {
 
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/product-details/${id}`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                    withCredentials: true
                 });
 
                 if (response.status === 200) {
@@ -51,22 +49,7 @@ function ProductDetails() {
 
 
     const handleCartInsertion = async () => {
-        const token = localStorage.getItem("token");
-
         console.log("Valore di valueFromSelect prima dell'invio:", valueFromSelect);
-
-        // Funzione per generare un identificatore unico (session_id) se non esiste già
-        const getSessionID = () => {
-            let sessionID = localStorage.getItem("session_id");
-            if (!sessionID) {
-                sessionID = '_' + Math.random().toString(36).substr(2, 9); // Genera session_id
-                localStorage.setItem("session_id", sessionID);
-            }
-            return sessionID;
-        };
-
-        // Controllo se l'utente è autenticato
-        const isAuthenticated = !!token;  // true se c'è un token, altrimenti false
 
         const cartData = {
             name: product.name,
@@ -74,18 +57,16 @@ function ProductDetails() {
             price: product.price,
             quantity: quantity,
             option: valueFromSelect,
-            session_id: isAuthenticated ? null : getSessionID()  // Invia session_id per utenti anonimi
         };
 
-        console.log(cartData);
+        console.log("Dati del carrello:", cartData);
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/cart-insertion/${id}`, cartData, {
                 headers: {
                     'Content-Type': 'application/json',
-                    // Invia il token JWT solo se l'utente è autenticato
-                    'Authorization': isAuthenticated ? `Bearer ${token}` : undefined
-                }
+                },
+                withCredentials: true
             });
 
             if (response.status === 200) {

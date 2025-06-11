@@ -35,13 +35,10 @@ export default function Buildings() {
     useEffect(() => {
         const fetchBuildings = async () => {
             setBuildingID(0);
-            const token = localStorage.getItem('token');
+
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-buildings`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
 
                 if (response.status === 200) {
@@ -54,14 +51,10 @@ export default function Buildings() {
         };
 
         const fetchUserTotalQuantity = async () => {
-            const token = localStorage.getItem('token');
+
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-all-user-quantity`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setTotalQuantity(response.data.quantity);
@@ -78,14 +71,11 @@ export default function Buildings() {
     }, [addBuildingTrigger]);
 
     const deleteBuilding = async () => {
-        const token = localStorage.getItem('token');
+
         const { id } = buildingToDelete;
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-building/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
 
             if (response.status === 200) {

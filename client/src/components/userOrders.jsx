@@ -10,9 +10,7 @@ function UserOrders() {
 
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-orders`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    withCredentials: true,
                 });
 
                 if (Array.isArray(response.data)) {

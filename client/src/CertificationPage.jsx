@@ -47,7 +47,7 @@ const CertificationPage = () => {
         const fetchInfo = async () => {
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    withCredentials: true
                 });
 
                 if (response.status === 200) {
@@ -70,7 +70,7 @@ const CertificationPage = () => {
         <>
             <ScrollToTop />
             <Navbar />
-            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup} MessagePopUp>
                 {messagePopup}
             </MessagePopUp>
             <div className="font-arial text-xl mt-10 h-screen">

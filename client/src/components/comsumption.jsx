@@ -29,12 +29,9 @@ function Consumption() {
 
         const fetchConsumptionData = async () => {
             try {
-                const token = localStorage.getItem("token");
+                ;
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-consumption-data`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setConsumptionData(response.data.consumptions);
@@ -50,17 +47,14 @@ function Consumption() {
     }, [refresh]);
 
     const deleteConsumption = async () => {
-        const token = localStorage.getItem('token');
+
         const { id } = consumptionToDelete;
 
         console.log("Consumption ID to delete:", id);
 
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/delete-consumption/${id}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                withCredentials: true
             });
             if (response.status === 200) {
                 const updatedConsumptions = consumptionData.filter((consumption) => consumption.id !== id);
@@ -116,9 +110,9 @@ function Consumption() {
                 {messageConfirm}
             </ConfirmPopUp>
 
-            <div className="bg-[#D9D9D9] rounded-xl mx-2 lg:mx-14 p-4">
+            <div className="bg-[#D9D9D9] rounded-lg mx-2 lg:mx-14">
                 <div className="flex flex-row justify-between">
-                    <h1 className="text-2xl font-bold mb-4 text-center">Consumi annui caricati</h1>
+                    <h1 className="text-2xl font-bold mb-2 text-center p-4">Consumi annui caricati</h1>
                     <div className="flex flex-col items-center justify-center m-2">
                         <button
                             className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
@@ -145,7 +139,7 @@ function Consumption() {
 
                 {/* Consumi Caricati */}
                 {consumptionData.length === 0 ? (
-                    <div className="text-center">Nessun consumo caricato</div>
+                    <div className="text-center pb-8">Nessun consumo caricato</div>
                 ) : (
                     <div className="flex flex-col h-auto overflow-y-auto mb-4">
                         {consumptionData.map((data, index) => (

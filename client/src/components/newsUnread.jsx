@@ -46,13 +46,10 @@ function NewsUnread() {
 
     useEffect(() => {
         const fetchNews = async () => {
-            const token = localStorage.getItem("token");
+            ;
             try {
                 const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/news-unread`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    withCredentials: true
                 });
                 if (response.status === 200) {
                     setNews(response.data);
