@@ -277,7 +277,65 @@ function UserBuldingsPageAdmin() {
                                         </div>
                                     </div>
                                 </div>
+
                             </div>
+                            {true && (
+                                <div className="flex flex-col items-stretch justify-center">
+                                    {/* Dati principali (Codice ATECO, Numero dipendenti, Fatturato annuo) in linea orizzontale su schermi grandi */}
+                                    <div className="flex flex-col lg:flex-row gap-6">
+                                        <div className="w-full lg:w-1/3 p-4">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="font-semibold">Codice ATECO:</span>
+                                                <span id="lighting">{selectedBuilding.ateco}</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-full lg:w-1/3 p-4">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="font-semibold">Numero dipendenti:</span>
+                                                <span id="lighting">{selectedBuilding.num_employees}</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-full lg:w-1/3 p-4">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="font-semibold">Fatturato annuo:</span>
+                                                <span id="lighting">{selectedBuilding.annual_turnover.toLocaleString('it-IT')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Contenitore per le descrizioni (attività e processi produttivi), sempre sotto i 3 dati */}
+                                    <div className="flex flex-col w-full lg:w-full p-4">
+                                        {/* Descrizione attività */}
+                                        <div className="flex flex-col mb-4">
+                                            <span className="font-semibold mb-2">Descrizione attività:</span>
+                                            <textarea
+                                                id="lighting"
+                                                value={selectedBuilding.activity_description || ''}
+                                                readOnly
+                                                className="w-full h-24 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg p-2.5 mb-2"
+                                                maxLength={300}
+                                                placeholder="Descrizione attività (max 300 caratteri)"
+                                            />
+                                            <div className="text-right text-sm text-gray-500">{selectedBuilding.activity_description ? `${selectedBuilding.activity_description.length}/300` : "0/300"}</div>
+                                        </div>
+
+                                        {/* Descrizione processi produttivi */}
+                                        <div className="flex flex-col mb-4">
+                                            <span className="font-semibold mb-2">Descrizione processi produttivi:</span>
+                                            <textarea
+                                                id="lighting"
+                                                value={selectedBuilding.prodprocessdesc || ''}
+                                                readOnly
+                                                className="w-full h-24 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg p-2.5 mb-2"
+                                                maxLength={300}
+                                                placeholder="Descrizione processi produttivi (max 300 caratteri)"
+                                            />
+                                            <div className="text-right text-sm text-gray-500">{selectedBuilding.prodprocessdesc ? `${selectedBuilding.prodprocessdesc.length}/300` : "0/300"}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                            }
                         </div>
                     )}
 

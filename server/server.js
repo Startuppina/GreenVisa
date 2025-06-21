@@ -87,7 +87,6 @@ app.use((req, res, next) => {
 // Middleware to verify JWT token
 const authenticateJWT = (req, res, next) => {
   const token = req.cookies.accessToken || req.cookies.recoveryToken || null; // Prendi il token presente dal cookie
-
   if (token) {
     jwt.verify(token, secretKey, (err, user) => {
       if (err) {
@@ -2732,7 +2731,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
 
     //console.log(req.body);
 
-
+    console.log("Dati dell'ordine:", req.body);
 
     if (!name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
@@ -3835,7 +3834,7 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
     const values = [user_id, certification_id, pageNo, surveyData, totalScore, CO2emissions, completed]; // Aggiungi totalScore
 
     const result = await pool.query(query, values);
-    res.status(201).json({ id: result.rows[0].id });
+    res.status(200).json({ id: result.rows[0].id });
   } catch (err) {
     console.error("Error inserting or updating survey response:", err);
     res.status(500).json({ error: 'Internal server error' });
@@ -4206,10 +4205,10 @@ app.put("/api/insert-results/:buildingID", authenticateJWT, async (req, res) => 
   const { user_id } = req.user;
   const { buildingID } = req.params;
   const { finalVote, totalCO2Emissions, areaCO2Emissions } = req.body;
-  //console.log("buildingID:", buildingID);
-  //console.log("user_id:", user_id);
-  //console.log("finalVote:", finalVote);
-  //console.log("totalCO2Emissions:", totalCO2Emissions);
+  console.log("buildingID:", buildingID);
+  console.log("user_id:", user_id);
+  console.log("finalVote:", finalVote);
+  console.log("totalCO2Emissions:", totalCO2Emissions);
 
 
   try {
@@ -4323,6 +4322,7 @@ async function vatCheck(vatNumber) {
       return false;
     }
 
+    //non tutte le societa scelgono di rendere pubblici nome e indirizzo nel sistema VIES.
     const pivaRegex = /^[A-Z]{2}[0-9]{11}$/;
     if (!pivaRegex.test(vatNumber)) {
       return false;

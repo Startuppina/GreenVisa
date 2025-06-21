@@ -185,6 +185,9 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-building`, formData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 withCredentials: true
             });
 

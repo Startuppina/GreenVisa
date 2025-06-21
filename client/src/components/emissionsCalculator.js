@@ -53,8 +53,8 @@ export async function EmissionsCalculator(buildingID) {
         const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-emissions-data`, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            },
+            withCredentials: true
         });
 
         if (response.status === 200) {
@@ -92,9 +92,9 @@ export async function EmissionsCalculator(buildingID) {
 
     const region = buildingData.location.trim().toLowerCase();
 
-    for (const [category, regions] of Object.entries(regionCategories)) {
+    for (const [regionLocation, regions] of Object.entries(regionCategories)) {
         if (regions.map(r => r.toLowerCase()).includes(region)) {
-            buildingLocation = category;
+            buildingLocation = regionLocation;
             break;
         }
     }
@@ -572,8 +572,8 @@ export async function EmissionsCalculator(buildingID) {
         const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/insert-results/${buildingID}`, { finalVote, totalCO2Emissions, areaCO2Emissions }, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            },
+            withCredentials: true
         });
         if (response.status === 200) {
             return {

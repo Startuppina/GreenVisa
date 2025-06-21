@@ -110,7 +110,7 @@ function Consumption() {
                 {messageConfirm}
             </ConfirmPopUp>
 
-            <div className="bg-[#D9D9D9] rounded-lg mx-2 lg:mx-14">
+            <div className="bg-[#D9D9D9] rounded-lg mx-2 lg:mx-14 p-4">
                 <div className="flex flex-row justify-between">
                     <h1 className="text-2xl font-bold mb-2 text-center p-4">Consumi annui caricati</h1>
                     <div className="flex flex-col items-center justify-center m-2">
@@ -139,7 +139,7 @@ function Consumption() {
 
                 {/* Consumi Caricati */}
                 {consumptionData.length === 0 ? (
-                    <div className="text-center pb-8">Nessun consumo caricato</div>
+                    <div className="text-center p-8">Nessun consumo caricato</div>
                 ) : (
                     <div className="flex flex-col h-auto overflow-y-auto mb-4">
                         {consumptionData.map((data, index) => (
