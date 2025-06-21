@@ -67,7 +67,6 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         };
 
         try {
-            ;
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/add-consumption`, consumption, {
                 withCredentials: true
             });
@@ -98,7 +97,6 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
     const handleUpdateElectricityConsumption = async (e) => {
         e.preventDefault();
         setIsLoadingElectricity(true);
-        ;
 
         const consumption = {
             energy_source: "Elettricità",
@@ -108,6 +106,9 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         try {
 
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 withCredentials: true
             })
 
