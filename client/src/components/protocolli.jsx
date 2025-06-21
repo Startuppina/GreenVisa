@@ -18,7 +18,7 @@ function Protocolli() {
                     <img src="/img/restaurant.png" title="restaurants" className={imgStyle}/>
                 </div>*/}
                 <p className="font-arial text-xl text-white w-full md:w-[85%] p-4 text-justify mb-7">
-                    Ogni protocollo permetti di misurare con rigore scientifico le emissioni di CO2 in base alla struttura:<br />
+                    Ogni protocollo permette di misurare con rigore scientifico le emissioni di CO2 in base alla struttura:<br />
                     <strong>HOSPITALITY</strong>: hotel, B&B, residence e qualsiasi struttura ricettiva.<br />
                     <strong>SPA & WELLNESS</strong>: centri wellness, piscine ed ogni edificio dedicato al relax e alla cura della persona.<br />
                     <strong>TRASPORTI</strong>: ridurre le emissioni in un settore fondamentale per le organizzazione rappresenta una sfida al giorno d’oggi.<br />
