@@ -7,10 +7,8 @@ import { useRecoveryContext } from "../provider/provider";
 
 
 function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
-    const [type, setType] = useState(gas.type || "");
-    const [annualConsumption, setAnnualConsumption] = useState(gas.annual_consumption || "");
-    const [unitType, setUnitType] = useState(gas.unit_type || "");
-    const [usage, setUsage] = useState(gas.usage || "");
+    const [type, setType] = useState(gas.gas_type || "");
+    const [quantityKg, setQuantityKg] = useState(gas.quantity_kg || "");
     const [isLoading, setIsLoading] = useState(false);
 
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -26,9 +24,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
         const formData = {
             type,
-            annualConsumption,
-            unitType,
-            usage
+            quantityKg,
         };
 
         try {
@@ -70,9 +66,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
         const formData = {
             type,
-            annualConsumption,
-            unitType,
-            usage
+            quantityKg,
         };
 
 
@@ -89,9 +83,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
                     // Reset dei dati del modulo
                     setType("");
-                    setAnnualConsumption("");
-                    setUnitType("");
-                    setUsage("");
+                    setQuantityKg("");
 
                     triggerRefresh(); // Trigger refresh in Plants component
 
@@ -110,9 +102,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
     };
 
     const handleTypeChange = (e) => setType(e.target.value);
-    const handleAnnualConsumptionChange = (e) => setAnnualConsumption(e.target.value);
-    const handleUnitTypeChange = (e) => setUnitType(e.target.value);
-    const handleUsageChange = (e) => setUsage(e.target.value);
+    const handlequantityKgChange = (e) => setQuantityKg(e.target.value);
 
     const gasNames = [
         "Idrogeno verde - zero emissioni",
@@ -292,7 +282,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
                         <label className="flex flex-col w-full">
                             <span className="block mb-2">Tipologia</span>
                             <select
-                                value={unitType}
+                                value={type}
                                 onChange={handleTypeChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             >
@@ -311,12 +301,12 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
                             <span className="block mb-2">Consumo annuo</span>
                             <input
                                 type="text"
-                                value={annualConsumption}
-                                onChange={handleAnnualConsumptionChange}
+                                value={quantityKg}
+                                onChange={handlequantityKgChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                             />
                         </label>
-                        <label className="flex flex-col w-full md:w-1/2">
+                        {/* <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Unità di misura</span>
                             <select
                                 value={unitType}
@@ -334,10 +324,10 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
                                 <option value="ppb">ppb</option>
                             </select>
 
-                        </label>
+                        </label> */}
                     </div>
 
-                    <div className="flex flex-col md:flex-row md:gap-4 mb-6">
+                    {/* <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
                             <span className="block mb-2">Utilizzo</span>
                             <select
@@ -347,10 +337,9 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
                             >
                                 <option value="" disabled>Seleziona il contesto di utilizzo del gas</option>
                                 <option value="Produzione">Produzione</option>
-                                {/*<option value="Altro">Altra produzione termica</option>*/}
                             </select>
                         </label>
-                    </div>
+                    </div> */}
 
                     {isLoading ? (
                         <div className="flex justify-center items-center mt-5">

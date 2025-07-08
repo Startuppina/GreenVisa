@@ -139,17 +139,21 @@ function ClimateAlteringGases() {
                                 key={gas.id}
                             >
                                 <div className="">
-                                    <strong>Tipologia:</strong> {gas.type}
+                                    <strong>Tipologia:</strong> {gas.gas_type}
                                 </div>
                                 <div className="">
-                                    <strong>Consumo annuo:</strong> {gas.annual_consumption}
+                                    {gas.plant_id ? (
+                                        <span><strong>Quantità dispersa negli ultimi 12 mesi:</strong> {gas.quantity_kg}</span>
+                                    ) : (
+                                        <span><strong>Quantità consumata:</strong> {gas.quantity_kg}</span>
+                                    )}
                                 </div>
-                                <div className="">
-                                    <strong>Unità di misura:</strong> {gas.unit_type}
-                                </div>
-                                <div className="">
-                                    <strong>Utilizzo:</strong> {gas.usage}
-                                </div>
+
+                                {gas.plant_id && (
+                                    <div className="">
+                                        <strong>Impianto:</strong> {gas.plant_name}
+                                    </div>
+                                )}
 
                                 <div className="flex justify-end gap-2">
                                     <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'

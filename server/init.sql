@@ -219,16 +219,6 @@ CREATE TABLE IF NOT EXISTS user_consumptions (
     consumption DECIMAL(10, 2) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS climate_gas_altering (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- assuming you have a users table with an id field
-    building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,  -- assuming you have a buildings table with an id field
-    type VARCHAR(50) DEFAULT NULL,
-    annual_consumption DECIMAL(10, 2) DEFAULT NULL,
-    unit_type VARCHAR(50) DEFAULT NULL,
-    usage VARCHAR(50) DEFAULT NULL
-);
-
 
 CREATE TABLE IF NOT EXISTS plants (
     id SERIAL PRIMARY KEY,
@@ -244,6 +234,20 @@ CREATE TABLE IF NOT EXISTS plants (
     --quantity INTEGER CHECK (quantity > 0),  -- Quantity must be a positive integer
     --electricity_supply VARCHAR(50) NOT NULL,
     --plantScore DECIMAL(10,2) DEFAULT 0.0
+);
+
+CREATE TABLE IF NOT EXISTS refrigerant_gases (
+    id SERIAL PRIMARY KEY,
+    gas_type VARCHAR(50) NOT NULL,          -- es. R410A
+    quantity_kg NUMERIC(10, 2) NOT NULL,    -- quantità usata/diffusa
+    plant_id INTEGER, 
+    building_id INTEGER REFERENCES buildings(id) ON DELETE CASCADE,               
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,        -- chiave esterna opzionale
+
+    CONSTRAINT fk_plant -- chiave esterna
+      FOREIGN KEY (plant_id)
+      REFERENCES plants(id)
+      ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS solars (
