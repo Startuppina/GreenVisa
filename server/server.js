@@ -3024,13 +3024,20 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
       generatorType,
       generatorDescription,
       fuelType,
-      //quantity, 
-      //electricitySupply, 
-      //plantScore 
+      hasGasLeak = false,
+      refrigerantGases = [],
     } = req.body;
 
     if (!description || !plantType || !serviceType || !generatorType || !fuelType) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    let validGases = [];
+    if (hasGasLeak) {
+      validGases = refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
+      if (validGases.length === 0) {
+        return res.status(400).json({ msg: "Devi inserire almeno un gas refrigerante" });
+      }
     }
 
     const values = [
@@ -3046,15 +3053,40 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
       //plantScore
     ];
 
-    await pool.query(`
+    const insertPlantResult = await pool.query(`
       INSERT INTO plants (
         user_id, building_id, description, plant_type, service_type, generator_type, generator_description, fuel_type
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8
-      )
+      ) RETURNING id
     `, values);
 
-    res.status(200).json({ msg: "Impianto aggiunto con successo" });
+    const plant_id = insertPlantResult.rows[0].id;
+
+    if (hasGasLeak && refrigerantGases.length > 0) {
+
+      // Prepariamo query per inserire gas refrigeranti
+      for (const gas of validGases) {
+        const { type, quantity } = gas;
+        await pool.query(`
+          INSERT INTO refrigerant_gases (
+            gas_type, quantity_kg, plant_id, building_id, user_id
+          ) VALUES ($1, $2, $3, $4, $5)
+        `, [
+          type,
+          Number(quantity),
+          plant_id,
+          id,
+          user_id
+        ]);
+      }
+    }
+    if (hasGasLeak) {
+      res.status(200).json({ msg: "Impianto e gas refrigeranti aggiunti con successo" });
+    } else {
+      res.status(200).json({ msg: "Impianto aggiunto con successo" });
+    }
+
   } catch (error) {
     console.error('Error adding plant:', error.message);
     res.status(500).json({ msg: "Errore interno del server" });
@@ -3073,13 +3105,20 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
       generatorType,
       generatorDescription,
       fuelType,
-      //quantity, 
-      //electricitySupply, 
-      //plantScore 
+      hasGasLeak = false,
+      refrigerantGases = [],
     } = req.body;
 
     if (!description || !plantType || !serviceType || !generatorType) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+    }
+
+    let validGases = [];
+    if (hasGasLeak) {
+      validGases = refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
+      if (validGases.length === 0) {
+        return res.status(400).json({ msg: "Devi inserire almeno un gas refrigerante" });
+      }
     }
 
     const values = [
@@ -3097,13 +3136,39 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
       plant_id
     ];
 
-    await pool.query(`
+    const updatePlantResult = await pool.query(`
       UPDATE plants
       SET description = $3, plant_type = $4, service_type = $5, generator_type = $6, generator_description = $7, fuel_type = $8
       WHERE user_id = $1 AND building_id = $2 AND id = $9
+      RETURNING id
     `, values);
 
-    res.status(200).json({ msg: "Impianto aggiornato con successo. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente" });
+    const _plant_id = updatePlantResult.rows[0].id;
+
+    if (hasGasLeak && refrigerantGases.length > 0) {
+
+      // Prepariamo query per inserire gas refrigeranti
+      for (const gas of validGases) {
+        const { type, quantity } = gas;
+        await pool.query(`
+          INSERT INTO refrigerant_gases (
+            gas_type, quantity_kg, plant_id, building_id, user_id
+          ) VALUES ($1, $2, $3, $4, $5)
+        `, [
+          type,
+          Number(quantity),
+          plant_id,
+          id,
+          user_id
+        ]);
+      }
+    }
+    if (hasGasLeak) {
+      res.status(200).json({ msg: "Impianto aggiornato con successo e aggiunti gas refrigeranti. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente" });
+    } else {
+      res.status(200).json({ msg: "Impianto aggiornato con successo. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente" });
+    }
+
   } catch (error) {
     console.error('Error updating plant:', error.message);
     res.status(500).json({ msg: "Errore interno del server" });
@@ -3151,14 +3216,22 @@ app.get("/api/buildings/:id/fetch-gases", authenticateJWT, async (req, res) => {
     const { id } = req.params;
     const { user_id } = req.user;
 
-    const query2 = "SELECT COUNT(*) FROM climate_gas_altering WHERE building_id = $1 AND user_id = $2";
+    const query2 = "SELECT COUNT(*) FROM refrigerant_gases WHERE building_id = $1 AND user_id = $2";
     const values2 = [id, user_id];
     const result2 = await pool.query(query2, values2);
     const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
 
     //console.log('Count from database:', count); // Log count
 
-    const rows = await pool.query(`SELECT * FROM climate_gas_altering WHERE building_id = $1 AND user_id = $2`, [id, user_id]);
+    const rows = await pool.query(`
+      SELECT 
+        rg.*, 
+        p.description AS plant_name
+      FROM refrigerant_gases rg
+      LEFT JOIN plants p ON rg.plant_id = p.id
+      WHERE rg.user_id = $1 AND rg.building_id = $2;
+    `, [id, user_id]);
+
 
     res.status(200).json({ gases: rows.rows, count: count });
   } catch (error) {
@@ -3173,28 +3246,24 @@ app.post("/api/buildings/:id/upload/gas", authenticateJWT, async (req, res) => {
     const { user_id } = req.user;
     const {
       type,
-      annualConsumption,
-      unitType,
-      usage
+      quantityKg,
     } = req.body;
 
-    if (!type || !annualConsumption || !unitType || !usage) {
+    if (!type || !quantityKg) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
     }
 
     const values = [
       user_id, id,
       type,
-      annualConsumption,
-      unitType,
-      usage
+      quantityKg,
     ];
 
     await pool.query(`
-      INSERT INTO climate_gas_altering (
-        user_id, building_id, type, annual_consumption, unit_type, usage
+      INSERT INTO refrigerant_gases (
+        user_id, building_id, gas_type, quantity_kg
       ) VALUES (
-        $1, $2, $3, $4, $5, $6
+        $1, $2, $3, $4
       )
     `, values);
 
@@ -3211,28 +3280,24 @@ app.put("/api/buildings/:id/update/gas/:gas_id", authenticateJWT, async (req, re
     const { user_id } = req.user;
     const {
       type,
-      annualConsumption,
-      unitType,
-      usage
+      quantityKg,
     } = req.body;
 
-    if (!type || !annualConsumption || !unitType || !usage) {
+    if (!type || !quantityKg) {
       return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
     }
 
     const values = [
       user_id, id,
       type,
-      annualConsumption,
-      unitType,
-      usage,
+      quantityKg,
       gas_id
     ];
 
     await pool.query(`
-      UPDATE climate_gas_altering
-      SET type = $3, annual_consumption = $4, unit_type = $5, usage = $6
-      WHERE user_id = $1 AND building_id = $2 AND id = $7
+      UPDATE refrigerant_gases
+      SET gas_type = $3, quantity_kg = $4
+      WHERE user_id = $1 AND building_id = $2 AND id = $5
     `, values);
 
     res.status(200).json({ msg: "Gas clima alterante aggiornato con successo." });
@@ -3249,7 +3314,7 @@ app.delete("/api/delete-gas/:id", authenticateJWT, async (req, res) => {
     console.log('user_id:', user_id);
     console.log('id:', id);
 
-    await pool.query(`DELETE FROM climate_gas_altering WHERE id = $1 AND user_id = $2`, [id, user_id]);
+    await pool.query(`DELETE FROM refrigerant_gases WHERE id = $1 AND user_id = $2`, [id, user_id]);
     res.status(200).json({ msg: "Gas clima alterante eliminato con successo" });
   } catch (error) {
     console.error('Error deleting gas:', error.message);
@@ -3614,6 +3679,12 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     );
     //console.log("userConsumptions:", userConsumptions.rows);
 
+    const userRefrigerantGasesResult = await pool.query(
+      "SELECT gas_type, quantity_kg FROM refrigerant_gases WHERE user_id = $1 AND building_id = $2;",
+      [user_id, buildingID]
+    );
+
+    const userRefrigerantGases = userRefrigerantGasesResult.rows;
 
     // Extract the fuel types from the rows
     const plantFuelTypes = plantsConsumptions.rows.map(row => row.fuel_type);
@@ -3690,7 +3761,7 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     const result4 = await pool.query(query4, values4);
     const consumptions = result4.rows;
 
-    res.status(200).json({ buildingData: building, plants: plants, solaData: solaData, photoData: photoData, consumptionsData: consumptions });
+    res.status(200).json({ buildingData: building, plants: plants, solaData: solaData, photoData: photoData, consumptionsData: consumptions, refrigerantGases: userRefrigerantGases });
 
   } catch (error) {
     console.error('Error fetching photovoltaics:', error.message);

@@ -14,6 +14,8 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
     const [generatorDescription, setGeneratorDescription] = useState(plant.generator_description || "");
     const [fuelType, setFuelType] = useState(plant.fuel_type || "");
     const [isLoading, setIsLoading] = useState(false);
+    const [hasGasLeak, setHasGasLeak] = useState(false);
+    const [refrigerantGases, setRefrigerantGases] = useState([]);
 
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
@@ -23,17 +25,37 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
     const navigate = useNavigate();
 
     const handleUpdatePlant = async () => {
-        ;
         const id = buildingID;
+        let formData;
 
-        const formData = {
-            description,
-            plantType,
-            serviceType,
-            generatorType,
-            generatorDescription: generatorType === "Altro" ? generatorDescription : "",
-            fuelType,
-        };
+        if (hasGasLeak) {
+            const validGases = refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
+            if (validGases.length === 0) {
+                setMessagePopup("Devi inserire almeno un gas refrigerante. Altrimenti rimuovi la spunta");
+                setButtonPopup(true);
+                setIsLoading(false);
+                return;
+            }
+            formData = {
+                description,
+                plantType,
+                serviceType,
+                generatorType,
+                generatorDescription: generatorType === "Altro" ? generatorDescription : "",
+                fuelType,
+                hasGasLeak,
+                refrigerantGases: validGases
+            };
+        } else {
+            formData = {
+                description,
+                plantType,
+                serviceType,
+                generatorType,
+                generatorDescription: generatorType === "Altro" ? generatorDescription : "",
+                fuelType,
+            };
+        }
 
         try {
             const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/plant/${plant.id}`, formData, {
@@ -71,15 +93,39 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
 
         ;
         const id = buildingID;
+        let formData;
 
-        const formData = {
-            description,
-            plantType,
-            serviceType,
-            generatorType,
-            generatorDescription: generatorType === "Altro" ? generatorDescription : "",
-            fuelType,
-        };
+        console.log('hasGasLeak:', hasGasLeak);
+        console.log('refrigerantGases:', refrigerantGases);
+
+        if (hasGasLeak) {
+            const validGases = refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
+            if (validGases.length === 0) {
+                setMessagePopup("Devi inserire almeno un gas refrigerante. Altrimenti rimuovi la spunta");
+                setButtonPopup(true);
+                setIsLoading(false);
+                return;
+            }
+            formData = {
+                description,
+                plantType,
+                serviceType,
+                generatorType,
+                generatorDescription: generatorType === "Altro" ? generatorDescription : "",
+                fuelType,
+                hasGasLeak,
+                refrigerantGases: validGases
+            };
+        } else {
+            formData = {
+                description,
+                plantType,
+                serviceType,
+                generatorType,
+                generatorDescription: generatorType === "Altro" ? generatorDescription : "",
+                fuelType,
+            };
+        }
 
 
         try {
@@ -100,6 +146,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                     setGeneratorType("");
                     setGeneratorDescription("");
                     setFuelType("");
+                    setRefrigerantGases([]);
 
                     triggerRefresh(); // Trigger refresh in Plants component
 
@@ -242,6 +289,81 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
         (gen) => gen.type === plantType
     )?.options || [];
 
+    const gasNames = [
+        "Idrogeno verde - zero emissioni",
+        "R1233ZD",
+        "R1234YF",
+        "R1234ZE",
+        "R125A",
+        "R134A",
+        "R23",
+        "R236FA",
+        "R245FA",
+        "R290",
+        "R32",
+        "R404A",
+        "R407A",
+        "R407C",
+        "R407F",
+        "R407H",
+        "R408A",
+        "R409A",
+        "R410A",
+        "R413A",
+        "R417A",
+        "R422A",
+        "R422B",
+        "R422D",
+        "R427A",
+        "R434A",
+        "R437A",
+        "R438A",
+        "R448A",
+        "R449A",
+        "R450A",
+        "R452A",
+        "R452B",
+        "R454A",
+        "R454B",
+        "R454C",
+        "R455A",
+        "R456A",
+        "R507",
+        "R508B",
+        "R513A",
+        "R515B",
+        "R600a",
+        "R744"
+    ];
+
+    const handleGasChange = (index, field, value) => {
+        const updatedGases = [...refrigerantGases];
+        updatedGases[index][field] = value;
+        setRefrigerantGases(updatedGases);
+    };
+
+    const addGasField = () => {
+        setRefrigerantGases([...refrigerantGases, { type: "", quantity: "" }]);
+    };
+
+    const removeGasField = (index) => {
+        const updated = refrigerantGases.filter((_, i) => i !== index);
+        setRefrigerantGases(updated);
+    };
+
+    // Nuovo handler per il checkbox gas leak
+    const handleHasGasLeakChange = (e) => {
+        setHasGasLeak(e.target.checked);
+        if (e.target.checked && refrigerantGases.length === 0) {
+            setRefrigerantGases([{ type: "", quantity: "" }]);
+        }
+        if (!e.target.checked) {
+            setRefrigerantGases([]);
+        }
+    };
+
+
+
     return (
         <div className="w-full mx-auto flex justify-center">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
@@ -336,6 +458,76 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
                             </select>
                         </label>
                     </div>
+
+
+                    <div className="mb-6">
+                        <label className="flex items-center space-x-3">
+                            <input
+                                type="checkbox"
+                                checked={hasGasLeak}
+                                onChange={handleHasGasLeakChange}
+                                className="w-5 h-5"
+                            />
+                            <span className="text-lg">
+                                Il seguente impianto ha disperso gas refrigeranti negli ultimi 12 mesi?
+                            </span>
+                        </label>
+                    </div>
+
+
+                    {hasGasLeak && (
+                        <div className="mb-6 bg-white p-4 rounded-xl border border-gray-300 shadow-inner">
+                            <h3 className="text-xl font-semibold mb-4">Gas refrigeranti dispersi</h3>
+
+                            {refrigerantGases.map((gas, index) => (
+                                <div key={index} className="flex flex-col justify-center md:flex-row md:items-end md:gap-4 mb-4">
+                                    <label className="flex flex-col w-full md:w-1/2">
+                                        <span className="block mb-2">Tipo di gas</span>
+                                        <select
+                                            value={gas.type}
+                                            onChange={(e) => handleGasChange(index, "type", e.target.value)}
+                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                                        >
+                                            <option value="">Seleziona un gas</option>
+                                            {gasNames.map((option, idx) => (
+                                                <option key={idx} value={option}>{option}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+
+                                    <label className="flex flex-col w-full md:w-1/3">
+                                        <span className="block mb-2">Quantità (kg)</span>
+                                        <input
+                                            type="number"
+                                            value={gas.quantity}
+                                            onChange={(e) => handleGasChange(index, "quantity", e.target.value)}
+                                            className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
+                                        />
+                                    </label>
+
+
+                                    <button
+                                        type="button"
+                                        onClick={() => removeGasField(index)}
+                                        className="text-red-600 hover:text-red-800 mt-2 md:mt-0"
+                                        title="Rimuovi"
+                                    >
+                                        Elimina
+                                    </button>
+
+                                </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={addGasField}
+                                className="text-[#2d7044] text-lg font-semibold hover:underline mt-2"
+                            >
+                                + Aggiungi un altro gas
+                            </button>
+                        </div>
+                    )}
+
 
                     {isLoading ? (
                         <div className="flex justify-center items-center mt-5">
