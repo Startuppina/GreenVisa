@@ -1,6 +1,6 @@
 # Green-Visa
 
-This repository is made for the new project green visa. Made to refresh the green visa website by using different technologies. React and material UI are used for this purpose
+This repository is made for the new project green visa. Made to refresh the green visa website by using different technologies. React.j and vite are used for this purpose
 
 ## How to create a new react + vite folder
 
