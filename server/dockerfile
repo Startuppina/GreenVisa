@@ -1,5 +1,5 @@
 # Dockerfile per il server
-FROM node:alpine
+FROM node:20-alpine
 
 # Crea e imposta la directory di lavoro
 WORKDIR /app

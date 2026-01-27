@@ -9,5 +9,9 @@
   },
   "keywords": [],
   "author": "Chionne Daniel",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "buffer-equal-constant-time": "^1.0.1",
+    "jwa": "^2.0.1"
+  }
 }

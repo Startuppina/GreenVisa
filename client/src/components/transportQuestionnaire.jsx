@@ -38,8 +38,8 @@ function TransportQuestionnaire({ certification_id }) {
         if (data.success) {
           setInitialData({ surveyData: data.surveyData, pageNo: data.pageNo, completed: data.completed, previousCO2emissions: data.co2emissions, previousScore: data.total_score });
         } else {
-          setMessagePopup(data.error.response?.data?.msg || data.error.message);
-          setbuttonPopup(true);
+          // setMessagePopup(data.error.response?.data?.msg || data.error.message);
+          // setbuttonPopup(true);
         }
       } else {
         setMessagePopup(result.error.response?.data?.msg || result.error.message);
