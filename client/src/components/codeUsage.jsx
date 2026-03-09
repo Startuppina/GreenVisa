@@ -45,10 +45,10 @@ const CodeUsage = () => {
       {codici.map((codice, index) => (
         <div
           key={index} // Aggiungi una chiave unica per migliorare le prestazioni di React
-          className="mb-4 flex flex-row items-center lg:items-start justify-between bg-white p-4 rounded-lg shadow tranform transition duration-300 hover:scale-[1.02] hover:shadow-lg"
+          className="mb-4 flex flex-row items-center lg:items-start justify-between bg-white p-4 rounded-lg shadow-sm tranform transition duration-300 hover:scale-[1.02] hover:shadow-lg"
         >
           <div className="flex flex-col items-start space-y-2 lg:space-y-0 w-full lg:w-auto">
-            <span className="text-lg font-mono text-red-500 flex-shrink-0">{codice.code}</span>
+            <span className="text-lg font-mono text-red-500 shrink-0">{codice.code}</span>
             <span className="text-lg font-mono text-gray-700">Utilizzo: {codice.used_by}</span>
           </div>
           <button

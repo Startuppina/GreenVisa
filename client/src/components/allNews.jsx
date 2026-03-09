@@ -164,7 +164,7 @@ function AllNews() {
     }, 300);
 
     return (
-        <div className="w-full mb-8 border rounded-2xl shadow-lg p-4 h-[100vh] overflow-y-auto">
+        <div className="w-full mb-8 border rounded-2xl shadow-lg p-4 h-screen overflow-y-auto">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopUp}
             </MessagePopUp>
@@ -211,7 +211,7 @@ function AllNews() {
                                         <img
                                             src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${newsItem.image}`}
                                             alt={newsItem.title}
-                                            className="w-full h-full object-cover rounded mb-2"
+                                            className="w-full h-full object-cover rounded-sm mb-2"
                                         />
                                     </div>
                                 </div>

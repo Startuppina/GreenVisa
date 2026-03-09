@@ -75,7 +75,7 @@ function Vantaggi() {
             <Slider {...Settings}>
                 {Items.map(item => (
                     <div key={item.id} className="items-center gap-4 mb-0 w-[40%] mx-auto p-0 px-14">
-                        <div className="w-[100%]">
+                        <div className="w-full">
                             <h3 className="text-xl md:text-2xl font-arial font-bold text-center mb-2">{item.title}</h3>
                             <p className="text-xl font-arial text-justify">{item.text}</p>
                         </div>

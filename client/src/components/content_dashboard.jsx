@@ -421,7 +421,7 @@ const Dashboard = () => {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="h-10 w-10 flex-shrink-0 mr-4"
+                className="h-10 w-10 shrink-0 mr-4"
               >
                 <g>
                   <path
@@ -822,7 +822,7 @@ const Dashboard = () => {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="h-8 w-8 flex-shrink-0"
+                  className="h-8 w-8 shrink-0"
                 >
                   <g>
                     <path

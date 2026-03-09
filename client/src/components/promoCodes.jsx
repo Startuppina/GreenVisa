@@ -231,7 +231,7 @@ function PromoCodes() {
                                             <input
                                                 type="checkbox"
                                                 id={`user-${index}`}
-                                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-sm"
                                                 checked={selectedUsers.includes(user.username)} // Controlla se è selezionato
                                                 onChange={() => handleCheckboxChange(user.username)} // Aggiorna lo stato
                                             />

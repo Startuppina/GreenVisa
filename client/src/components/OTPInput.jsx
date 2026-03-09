@@ -127,7 +127,7 @@ export default function OTPInput() {
                         <input
                           ref={(el) => inputRefs.current[index] = el}
                           maxLength="1"
-                          className="w-full h-full flex flex-col items-center justify-center text-center px-5 outline-none rounded-xl border border-gray-200 text-lg bg-white focus:bg-gray-50 focus:ring-1 ring-blue-700"
+                          className="w-full h-full flex flex-col items-center justify-center text-center px-5 outline-hidden rounded-xl border border-gray-200 text-lg bg-white focus:bg-gray-50 focus:ring-1 ring-blue-700"
                           type="text"
                           value={value}
                           onChange={(e) => handleChange(e, index)}
@@ -141,7 +141,7 @@ export default function OTPInput() {
                     <div>
                       <a
                         onClick={() => verifyOTP()}
-                        className="font-bold flex flex-row cursor-pointer items-center justify-center text-center text-xl w-full border rounded-xl outline-none py-5 bg-[#2d7044] text-white hover:bg-white hover:text-[#2d7044] hover:border-2 hover:border-[#2d7044] transition-colors duration-300 ease-in-out"
+                        className="font-bold flex flex-row cursor-pointer items-center justify-center text-center text-xl w-full border rounded-xl outline-hidden py-5 bg-[#2d7044] text-white hover:bg-white hover:text-[#2d7044] hover:border-2 hover:border-[#2d7044] transition-colors duration-300 ease-in-out"
                       >
                         Verifica
                       </a>

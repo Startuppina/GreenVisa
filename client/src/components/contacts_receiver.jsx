@@ -154,7 +154,7 @@ const MessagesDashboard = () => {
             >
                 {messagePopUp}
             </ConfirmPopUp>
-            <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
+            <div className="grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
                 <h1 className="text-2xl font-bold text-black text-center pb-10">Messaggi degli Utenti</h1>
 
                 <div className="mb-6">

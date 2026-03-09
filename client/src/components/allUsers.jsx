@@ -185,7 +185,7 @@ function AllUsers() {
                     </button>
                 </div>
                 {activeSection === "registeredUsers" && (
-                    <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
+                    <div className="grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
                         <h1 className="text-2xl font-bold text-black text-center pb-10">Utenti registrati</h1>
 
                         {/* Campo di ricerca */}
@@ -343,7 +343,7 @@ function AllUsers() {
                     </div>
                 )}
                 {activeSection == "toVerifyUsers" && (
-                    <div className="flex-grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
+                    <div className="grow text-arial text-xl p-4 rounded-2xl border shadow-xl py-6">
                         <h1 className="text-2xl font-bold text-black text-center pb-10">Utenti da verificare</h1>
 
                         {/* Campo di ricerca */}

@@ -173,7 +173,7 @@ const NewsCarousel = () => {
                                         </div>
                                     </div>
                                     <div className="text-arial text-2xl text-black font-bold text-center p-4 flex items-center justify-center">
-                                        <p className="overflow-ellipsis whitespace-nowrap overflow-hidden text-center">
+                                        <p className="text-ellipsis whitespace-nowrap overflow-hidden text-center">
                                             {item.title}
                                         </p>
                                     </div>

@@ -36,7 +36,7 @@ export default {
     function ({ addUtilities }) {
       addUtilities({
         '.fade-out': {
-          '@apply opacity-0 transition-opacity duration-[2000ms] ease-out': {},
+          '@apply opacity-0 transition-opacity duration-2000 ease-out': {},
           height: '0',
           overflow: 'hidden',
           padding: '0',
