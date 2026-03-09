@@ -36,7 +36,6 @@ const SECRET_KEY = process.env.SECRET_KEY;
 const {
   emailCheck,
   passwordCheck,
-  phoneCheck,
   cfCheck,
 } = require("./utils/regexValidator");
 
@@ -169,12 +168,12 @@ app.post("/api/signup", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
+    const emailResult = await pool.query(
       "SELECT email FROM users WHERE email = $1",
       [email],
     );
 
-    if (result.rows.length > 0) {
+    if (emailResult.rows.length > 0) {
       return res.status(400).json({ msg: "Email già in uso" });
     }
 
@@ -183,7 +182,7 @@ app.post("/api/signup", async (req, res) => {
     const intSuffix = phone.slice(2);
     const newPhone = `+${intPrefix} ${intSuffix}`;
 
-    const result2 = await pool.query(
+    const creationResult = await pool.query(
       "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, turnover, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
       [
         username,
@@ -203,13 +202,13 @@ app.post("/api/signup", async (req, res) => {
       return res.status(200).json({ notCompanyEmail: true });
     }
 
-    if (result2.rowCount > 0) {
-      const userID = result2.rows[0].id;
+    if (creationResult.rowCount > 0) {
+      const userId = creationResult.rows[0].id;
       const userToken = uuidv4();
 
       const updateResult = await pool.query(
         "UPDATE users SET token = $1 WHERE id = $2",
-        [userToken, userID],
+        [userToken, userId],
       );
 
       if (updateResult.rowCount > 0) {
@@ -294,7 +293,7 @@ app.get("/api/verify", async (req, res) => {
 
     if (updateResult.rowCount > 0) {
       // Invia email di benvenuto solo se l'UPDATE ha modificato qualcosa
-      sendWelcomeEmail({
+      sendWelcomeMail({
         recipient_email: email,
         recipient_name: username,
       });
@@ -823,115 +822,15 @@ function sendConfirmationEmail({ recipient_email, recipient_name, token }) {
       },
     });
 
+    const {
+      generateTemplate,
+    } = require("./templates/confirmationMailTemplate");
+
     const mail_configs = {
       from: email_sender,
       to: recipient_email,
       subject: "Green Visa - verifica account",
-      html: `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Verifica account Green Visa</title>
-            <style>
-                body {
-                    font-family: Helvetica, Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: #f9f9f9;
-                }
-                .container {
-                    max-width: 600px;
-                    margin: 50px auto;
-                    background-color: #ffffff;
-                    padding: 30px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
-                .header {
-                    text-align: center;
-                    padding-bottom: 20px;
-                }
-                .header img {
-                    width: 150px;
-                    margin-bottom: 10px;
-                }
-                .header h1 {
-                    font-size: 1.8em;
-                    color: #2d7044;
-                    margin: 0;
-                }
-                .body {
-                    padding: 20px 10px;
-                    text-align: center;
-                }
-                .body h2 {
-                    font-size: 1.4em;
-                    color: #333333;
-                    margin-bottom: 10px;
-                }
-                .body p {
-                    font-size: 1.1em;
-                    line-height: 1.6;
-                    color: #555555;
-                }
-                .cta-button {
-                    display: inline-block;
-                    background-color: #2d7044;
-                    color: white;
-                    text-decoration: none;
-                    padding: 12px 24px;
-                    font-size: 1.2em;
-                    font-weight: bold;
-                    border-radius: 4px;
-                    margin: 20px 0;
-                }
-                .footer {
-                    padding-top: 20px;
-                    text-align: center;
-                    font-size: 0.9em;
-                    color: #888888;
-                }
-                .footer p {
-                    margin: 5px 0;
-                }
-                @media screen and (max-width: 600px) {
-                    .container {
-                        width: 100%;
-                        padding: 15px;
-                    }
-                    .header h1 {
-                        font-size: 1.6em;
-                    }
-                    .body h2 {
-                        font-size: 1.2em;
-                    }
-                    .cta-button {
-                        font-size: 1em;
-                        padding: 10px 20px;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa Logo">
-                    <h1>Verifica il tuo account</h1>
-                </div>
-                <div class="body">
-                    <h2>Ciao ${recipient_name},</h2>
-                    <p>Abbiamo ricevuto una richiesta di verifica per il tuo account Green Visa.</p>
-                    <p>Per verificare il tuo account, clicca sul link sottostante:</p>
-                    <a class="cta-button" href="${process.env.CLIENT_URL}/AccountVerified?token=${token}">Verifica il tuo account</a>
-                </div>
-                <div class="footer">
-                  <p>Green Visa</p>
-                  <p>La sostenibilità con un click!</p>
-                </div>
-            </div>
-        </body>
-        </html>`,
+      html: generateTemplate(recipient_name, token),
     };
 
     transporter.sendMail(mail_configs, function (error, info) {
@@ -946,7 +845,7 @@ function sendConfirmationEmail({ recipient_email, recipient_name, token }) {
   });
 }
 
-function sendWelcomeEmail({ recipient_email, recipient_name }) {
+function sendWelcomeMail({ recipient_email, recipient_name }) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
       service: "gmail",
@@ -956,117 +855,13 @@ function sendWelcomeEmail({ recipient_email, recipient_name }) {
       },
     });
 
+    const { generateTemplate } = require("./templates/welcomeMailTemplate");
+
     const mail_configs = {
       from: email_sender,
       to: recipient_email,
       subject: "Benvenuto in Green Visa!",
-      html: `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Benvenuto in Green Visa</title>
-            <style>
-                body {
-                    font-family: Helvetica, Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: #f9f9f9;
-                }
-                .container {
-                    max-width: 600px;
-                    margin: 50px auto;
-                    background-color: #ffffff;
-                    padding: 30px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
-                .header {
-                    text-align: center;
-                    padding-bottom: 20px;
-                }
-                .header img {
-                    width: 150px;
-                    margin-bottom: 10px;
-                }
-                .header h1 {
-                    font-size: 1.8em;
-                    color: #2d7044;
-                    margin: 0;
-                }
-                .body {
-                    padding: 20px 10px;
-                    text-align: center;
-                }
-                .body h2 {
-                    font-size: 1.4em;
-                    color: #333333;
-                    margin-bottom: 10px;
-                }
-                .body p {
-                    font-size: 1.1em;
-                    line-height: 1.6;
-                    color: #555555;
-                }
-                .cta-button {
-                    display: inline-block;
-                    background-color: #2d7044;
-                    color: white;
-                    text-decoration: none;
-                    padding: 12px 24px;
-                    font-size: 1.2em;
-                    font-weight: bold;
-                    border-radius: 4px;
-                    margin: 20px 0;
-                }
-                .footer {
-                    padding-top: 20px;
-                    text-align: center;
-                    font-size: 0.9em;
-                    color: #888888;
-                }
-                .footer p {
-                    margin: 5px 0;
-                }
-                @media screen and (max-width: 600px) {
-                    .container {
-                        width: 100%;
-                        padding: 15px;
-                    }
-                    .header h1 {
-                        font-size: 1.6em;
-                    }
-                    .body h2 {
-                        font-size: 1.2em;
-                    }
-                    .cta-button {
-                        font-size: 1em;
-                        padding: 10px 20px;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa Logo">
-                    <h1>Benvenuto in Green Visa!</h1>
-                </div>
-                <div class="body">
-                    <h2>Ciao ${recipient_name},</h2>
-                    <p>Siamo entusiasti di darti il benvenuto nella nostra comunità di utenti che scelgono la sostenibilità.</p>
-                    <p>Green Visa ti offre strumenti innovativi per supportare il tuo viaggio verso un futuro più verde e consapevole.</p>
-                    <p>Inizia subito il tuo percorso esplorando tutte le funzionalità disponibili sul nostro portale.</p>
-                    <a href="${process.env.CLIENT_URL}" class="cta-button">Esplora Green Visa</a>
-                </div>
-                <div class="footer">
-                    <p>Grazie per aver scelto Green Visa.</p>
-                    <p>La sostenibilità con un click!</p>
-                    <p><strong>Green Visa Team</strong></p>
-                </div>
-            </div>
-        </body>
-        </html>`,
+      html: generateTemplate(recipient_name),
     };
 
     transporter.sendMail(mail_configs, (error, info) => {
@@ -1078,7 +873,7 @@ function sendWelcomeEmail({ recipient_email, recipient_name }) {
   });
 }
 
-function sendEmail({ recipient_email, OTP }) {
+function sendOTPMail({ recipient_email, OTP }) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
       service: "gmail",
@@ -1089,104 +884,13 @@ function sendEmail({ recipient_email, OTP }) {
       },
     });
 
+    const { generateTemplate } = require("./templates/otpMailTemplate");
+
     const mail_configs = {
       from: email_sender,
       to: recipient_email,
       subject: "Green Visa Codice di verifica",
-      html: `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Green Visa - OTP Verification</title>
-            <style>
-                body {
-                    font-family: Helvetica, Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: #f4f4f4;
-                }
-                .container {
-                    max-width: 600px;
-                    margin: 50px auto;
-                    background-color: #ffffff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                }
-                .logo {
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
-                .logo img {
-                    width: 150px;
-                }
-                .content {
-                    text-align: center;
-                }
-                .content h1 {
-                    font-size: 1.4em;
-                    color: #2d7044;
-                    font-weight: 600;
-                }
-                .content p {
-                    font-size: 1.1em;
-                    color: #333333;
-                }
-                .otp {
-                    background: #2d7044;
-                    color: white;
-                    display: inline-block;
-                    padding: 10px 20px;
-                    border-radius: 4px;
-                    font-size: 1.5em;
-                    font-weight: bold;
-                    margin: 20px 0;
-                }
-                .footer {
-                    text-align: right;
-                    padding-top: 20px;
-                    color: #aaa;
-                    font-size: 0.8em;
-                    line-height: 1.5;
-                }
-                @media screen and (max-width: 600px) {
-                    .container {
-                        width: 100%;
-                        padding: 10px;
-                    }
-                    .content h1 {
-                        font-size: 1.2em;
-                    }
-                    .content p {
-                        font-size: 1em;
-                    }
-                    .otp {
-                        font-size: 1.2em;
-                        padding: 8px 16px;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="logo">
-                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa">
-                </div>
-                <div class="content">
-                    <h1>Green Visa</h1>
-                    <p>Ciao,</p>
-                    <p>Grazie per aver utilizzato Green Visa. Usa il seguente codice OTP per recuperare la tua password. Il codice è valido per 5 minuti:</p>
-                    <div class="otp">${OTP}</div>
-                    <p>Saluti,<br />Green Visa</p>
-                </div>
-                <div class="footer">
-                    <p>Green Visa</p>
-                    <p>La sostenibilità con un click!</p>
-                </div>
-            </div>
-        </body>
-        </html>`,
+      html: generateTemplate(OTP),
     };
 
     transporter.sendMail(mail_configs, function (error, info) {
@@ -1212,89 +916,13 @@ function sendEmailMessage({ recipient_email }) {
       },
     });
 
+    const { generateTemplate } = require("./templates/helpMailTemplate");
+
     const mail_configs = {
       from: email_sender,
       to: recipient_email,
       subject: "Green Visa Presa in carico",
-      html: `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Green Visa - Presa in carico</title>
-            <style>
-                body {
-                    font-family: Helvetica, Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: #f4f4f4;
-                }
-                .container {
-                    max-width: 600px;
-                    margin: 50px auto;
-                    background-color: #ffffff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                }
-                .logo {
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
-                .logo img {
-                    width: 150px;
-                }
-                .content {
-                    text-align: center;
-                }
-                .content h1 {
-                    font-size: 1.4em;
-                    color: #2d7044;
-                    font-weight: 600;
-                }
-                .content p {
-                    font-size: 1.1em;
-                    color: #333333;
-                }
-                .footer {
-                    text-align: right;
-                    padding-top: 20px;
-                    color: #aaa;
-                    font-size: 0.8em;
-                    line-height: 1.5;
-                }
-                @media screen and (max-width: 600px) {
-                    .container {
-                        width: 100%;
-                        padding: 10px;
-                    }
-                    .content h1 {
-                        font-size: 1.2em;
-                    }
-                    .content p {
-                        font-size: 1em;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="logo">
-                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa">
-                </div>
-                <div class="content">
-                    <h1>Green Visa</h1>
-                    <p>Ciao,</p>
-                    <p>Grazie per aver scelto Green Visa. Il messagio da te inviato e' stato preso in carico. Ricevera al piu' presto una email di risposta</p>
-                    <p>Saluti,<br />Green Visa</p>
-                </div>
-                <div class="footer">
-                    <p>Green Visa</p>
-                    <p>La sostenibilità con un click!</p>
-                </div>
-            </div>
-        </body>
-        </html>`,
+      html: generateTemplate(),
     };
 
     transporter.sendMail(mail_configs, function (error, info) {
@@ -1326,89 +954,18 @@ function sendEmailResponse({
       },
     });
 
+    const { generateTemplate } = require("./templates/contentmailTemplate");
+
     const mail_configs = {
       from: email_sender,
       to: recipient_email,
       subject: "Green Visa Risposta",
-      html: `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Green Visa - Risposta</title>
-            <style>
-                body {
-                    font-family: Helvetica, Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: #f4f4f4;
-                }
-                .container {
-                    max-width: 600px;
-                    margin: 50px auto;
-                    background-color: #ffffff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                }
-                .logo {
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
-                .logo img {
-                    width: 150px;
-                }
-                .content {
-                    text-align: center;
-                }
-                .content h1 {
-                    font-size: 1.4em;
-                    color: #2d7044;
-                    font-weight: 600;
-                }
-                .content p {
-                    font-size: 1.1em;
-                    color: #333333;
-                }
-                .footer {
-                    text-align: right;
-                    padding-top: 20px;
-                    color: #aaa;
-                    font-size: 0.8em;
-                    line-height: 1.5;
-                }
-                @media screen and (max-width: 600px) {
-                    .container {
-                        width: 100%;
-                        padding: 10px;
-                    }
-                    .content h1 {
-                        font-size: 1.2em;
-                    }
-                    .content p {
-                        font-size: 1em;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="logo">
-                    <img src="${process.env.SERVER_URL}/logo2.png" alt="Green Visa">
-                </div>
-                <div class="content">
-                    <h1>${email_title}</h1>
-                    <p>Ciao ${receiver_username},</p>
-                    <p>${email_content}</p>
-                    <p>Saluti,<br />${admin_username} da Green Visa</p>
-                </div>
-                <div class="footer">
-                    <p>Green Visa</p>
-                    <p>La sostenibilità con un click!</p>
-                </div>
-            </div>
-        </body>
-        </html>`,
+      html: generateTemplate(
+        email_title,
+        email_content,
+        receiver_username,
+        admin_username,
+      ),
     };
 
     transporter.sendMail(mail_configs, function (error, info) {
@@ -1425,7 +982,7 @@ function sendEmailResponse({
 
 app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
   const { email, OTP } = req.body;
-  sendEmail({ recipient_email: email, OTP })
+  sendOTPMail({ recipient_email: email, OTP })
     .then((response) => {
       res.status(200).json(response);
     })
