@@ -1,41 +1,66 @@
 const express = require("express");
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const pool = require("./db"); // Your database connection pool
+
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const multer = require("multer");
-const fs = require('fs');
+const fs = require("fs");
 const path = require("path");
+
 require("dotenv").config();
-const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
-const cron = require('node-cron');
-const pricingFunctions = require('./priceCalculator');
-const bodyParser = require('body-parser');
-const { JSDOM } = require('jsdom');
-const createDOMPurify = require('dompurify');
+const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
+const cron = require("node-cron");
+const pricingFunctions = require("./priceCalculator");
+const bodyParser = require("body-parser");
+const { JSDOM } = require("jsdom");
+
+const createDOMPurify = require("dompurify");
 const { disconnect } = require("process");
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 const { user } = require("pg/lib/defaults");
-const validate = require('validate-vat');
+const validate = require("validate-vat");
+
+const { RegistrationBody } = require("./utils/registrationValidator");
 
 const port = 8080;
 
 const email_sender = process.env.EMAIL_SENDER;
 const pass_sender = process.env.PASS_SENDER;
 
+const SECRET_KEY = process.env.SECRET_KEY;
+
+const {
+  emailCheck,
+  passwordCheck,
+  phoneCheck,
+  cfCheck,
+} = require("./utils/regexValidator");
+
 const app = express();
+// CORS Configuration
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://vps-0fde778b.vps.ovh.net:5173"],
+    credentials: true,
+  }),
+);
+
+app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.static("img")); // Directory statica per immagini
+app.use("/uploaded_img", express.static(path.join(__dirname, "uploaded_img")));
 
 DOMPurify = createDOMPurify(new JSDOM().window);
 
-
-app.use(express.static("img"));
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'uploaded_img');
+    const uploadPath = path.join(__dirname, "uploaded_img");
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
@@ -46,82 +71,14 @@ const storage = multer.diskStorage({
   },
 });
 
-
 const upload = multer({ storage: storage });
 
-app.use('/uploaded_img', express.static(path.join(__dirname, 'uploaded_img')));
-
-const secretKey = process.env.SECRET_KEY;
-
 //const purify = DOMPurify(window);
-app.use(cookieParser());
-app.use(express.json());
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://vps-0fde778b.vps.ovh.net:5173'],
-  credentials: true
-}));
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 
-// Middleware per la gestione dei cookie per gli utenti non autenticati
-app.use((req, res, next) => {
-  const token = req.cookies.accessToken;
-
-  if (!token) {
-    let sessionId = req.cookies.sessionId;
-
-    if (!sessionId) {
-      sessionId = '_' + Math.random().toString(36).substr(2, 9);
-      res.cookie('sessionId', sessionId, {
-        httpOnly: false,
-        secure: false,
-        sameSite: 'Lax',
-        maxAge: 3 * 24 * 60 * 60 * 1000 // 3 days 
-      });
-    }
-  }
-
-  next();
-});
-
-// Middleware to verify JWT token
-const authenticateJWT = (req, res, next) => {
-  const token = req.cookies.accessToken || req.cookies.recoveryToken || null; // Prendi il token presente dal cookie
-  if (token) {
-    jwt.verify(token, secretKey, (err, user) => {
-      if (err) {
-        console.error("Errore di verifica del token:", err);
-
-        if (err.name === "TokenExpiredError") {
-          res.clearCookie('accessToken', {
-            httpOnly: false,
-            secure: false,  // Impostalo su true se stai usando HTTPS
-            sameSite: 'Lax'
-          });
-          return res.status(401).json({ msg: "Sessione scaduta, rieffettua il login per continuare" });
-        }
-
-        return res.sendStatus(403); // Token non valido
-      }
-
-      req.user = user;
-      next();
-    });
-  } else {
-    console.error("Nessun token fornito");
-    res.sendStatus(401); // Unauthorized
-  }
-};
-
-
-//only for admin
-function authenticateAdmin(req, res, next) {
-  if (req.user && req.user.role === "administrator") {
-    next();
-  } else {
-    res.status(403).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
-}
+const { containsSessionId } = require("./middleware/authMiddleware");
+const { authenticateJWT } = require("./middleware/jwtMiddleware");
+app.use(containsSessionId);
+app.use(authenticateJWT);
 
 const cleanUpCart = async () => {
   try {
@@ -132,103 +89,89 @@ const cleanUpCart = async () => {
     `);
     //console.log('Pulizia del carrello completata.');
   } catch (error) {
-    console.error('Errore nella pulizia del carrello:', error);
+    console.error("Errore nella pulizia del carrello:", error);
   }
 };
 
-cron.schedule('0 0 */3 * *', cleanUpCart);
+cron.schedule("0 0 */3 * *", cleanUpCart);
 
-async function deleteExpiredPromoCodes() {
-  try {
-    const currentDate = new Date();
-    const isoDateString = currentDate.toISOString();
+// -- DELETE PROMO CODES -- TASK
+require("./tasks/promoCodeTask");
 
-    const query = `
-          DELETE FROM promocodes
-          WHERE expiration <= NOW()
-      `;
-
-    const values = [isoDateString];
-    const result = await pool.query(query);
-
-    //console.log(`Deleted ${result.rowCount} expired promo codes`);
-  } catch (error) {
-    console.error('Error deleting expired promo codes:', error);
-  }
-};
-
-// Cancel all expired promo codes every 1 hour
-cron.schedule('0 * * * *', () => {
-  //console.log('Running scheduled job to delete expired promo codes');
-  deleteExpiredPromoCodes();
+app.get("/api/authenticated", authenticateJWT, (req, res) => {
+  return res.status(200).json({ msg: "Utente autenticato", user: req.user });
 });
 
-app.get('/api/authenticated', authenticateJWT, (req, res) => {
-  return res.status(200).json({ msg: 'Utente autenticato', user: req.user }); // 200 OK
-});
+app.get(
+  "/api/admin-username",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { user_id } = req.user;
+      const query = "SELECT username FROM users WHERE id = $1";
+      const result = await pool.query(query, [user_id]);
+      const username = result.rows[0].username;
+      res.status(200).json({ username });
+    } catch (error) {
+      console.error(
+        "Errore durante la richiesta dell'username dell'admin:",
+        error,
+      );
 
-app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, res) => {
-
-  try {
-    const { role, user_id } = req.user;
-    if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+      res.status(500).json({ msg: "Errore durante la richiesta" });
     }
-
-    const query = "SELECT username FROM users WHERE id = $1";
-    const values = [user_id];
-    const result = await pool.query(query, values);
-    const username = result.rows[0].username;
-    res.status(200).json({ username });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Errore durante la richiesta" });
-  }
-})
-
+  },
+);
 
 app.post("/api/signup", async (req, res) => {
-  const { username, company_name, email, confirmEmail, password, phone, company_website, pec, vat, noCompanyEmail, legal_headquarter } = req.body;
+  const {
+    username,
+    company_name,
+    email,
+    confirmEmail,
+    password,
+    phone,
+    company_website,
+    pec,
+    vat,
+    noCompanyEmail,
+    legal_headquarter,
+  } = req.body;
 
-  // Check if all fields are filled
-  if (!email || !confirmEmail || !company_name || !password || !username || !phone || !company_website || !pec || !vat || !legal_headquarter) {
-    return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
-  }
-  if (!passwordCheck(password)) { //implement password check defined below
-    return res
-      .status(400)
-      .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" });
-  }
-  if (!emailCheck(email)) {
-    return res.status(400).json({ msg: "Email non valida" });
-  }
-  if (!emailCheck(confirmEmail)) {
-    return res.status(400).json({ msg: "Email non valida" });
-  }
-  if (email !== confirmEmail) {
-    return res.status(400).json({ msg: "Le email non corrispondono" });
-  }
-  if (!emailCheck(pec)) {
-    return res.status(400).json({ msg: "PEC non valida" });
-  }
-  if (!phoneCheck(phone)) {
-    return res.status(400).json({ msg: "Numero di telefono non valido" });
-  }
+  const registrationBody = new RegistrationBody(
+    username,
+    company_name,
+    email,
+    confirmEmail,
+    password,
+    phone,
+    company_website,
+    pec,
+    vat,
+    noCompanyEmail,
+    legal_headquarter,
+  );
+
+  // Oggetto voluto a gestire tutti i campi e il body della richiesta
+  registrationBody.validateFields(res);
 
   const emailDomain = email.split("@")[1];
   const websiteDomain = company_website.split("www.")[1];
 
+  // Non so cosa sia questa roba arcaica -- Ale
   console.log("noCompanyEmail:", noCompanyEmail);
-  if (emailDomain !== websiteDomain && !noCompanyEmail) {
-    return res.status(400).json({ msg: "il dominio della email non corrisponde al dominio del sito aziendale fornito" });
-  }
 
+  if (emailDomain !== websiteDomain && !noCompanyEmail) {
+    return res.status(400).json({
+      msg: "il dominio della email non corrisponde al dominio del sito aziendale fornito",
+    });
+  }
 
   try {
     const result = await pool.query(
       "SELECT email FROM users WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (result.rows.length > 0) {
@@ -242,7 +185,18 @@ app.post("/api/signup", async (req, res) => {
 
     const result2 = await pool.query(
       "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, turnover, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
-      [username, company_name, email, newPhone, vat, null, legal_headquarter, null, false, hashedPassword]
+      [
+        username,
+        company_name,
+        email,
+        newPhone,
+        vat,
+        null,
+        legal_headquarter,
+        null,
+        false,
+        hashedPassword,
+      ],
     );
 
     if (noCompanyEmail) {
@@ -255,7 +209,7 @@ app.post("/api/signup", async (req, res) => {
 
       const updateResult = await pool.query(
         "UPDATE users SET token = $1 WHERE id = $2",
-        [userToken, userID]
+        [userToken, userID],
       );
 
       if (updateResult.rowCount > 0) {
@@ -277,44 +231,56 @@ app.post("/api/signup", async (req, res) => {
   }
 });
 
-app.post('/api/check-vat', async (req, res) => {
+app.post("/api/check-vat", async (req, res) => {
   try {
     const { vatNumber } = req.body;
 
     if (!vatNumber) {
-      return res.status(400).json({ success: false, msg: "Partita IVA mancante" });
+      return res
+        .status(400)
+        .json({ success: false, msg: "Partita IVA mancante" });
     }
 
     const isValid = await vatCheck(vatNumber);
 
     if (isValid.valid) {
-      return res.status(200).json({ success: true, companyName: isValid.companyName, address: isValid.address, msg: "Partita IVA valida" });
+      return res.status(200).json({
+        success: true,
+        companyName: isValid.companyName,
+        address: isValid.address,
+        msg: "Partita IVA valida",
+      });
     } else {
-      return res.status(400).json({ success: false, msg: "Partita IVA non valida o non attiva" });
+      return res
+        .status(400)
+        .json({ success: false, msg: "Partita IVA non valida o non attiva" });
     }
   } catch (error) {
     console.error("Errore durante il controllo della partita IVA:", error);
-    return res.status(500).json({ success: false, msg: "Errore interno al server" });
+    return res
+      .status(500)
+      .json({ success: false, msg: "Errore interno al server" });
   }
 });
 
-app.get('/api/verify', async (req, res) => {
+app.get("/api/verify", async (req, res) => {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).json({ success: false, message: 'Token mancante' });
+    return res.status(400).json({ success: false, message: "Token mancante" });
   }
 
   try {
     // Cerca l'utente con quel token
-    const result = await pool.query(
-      'SELECT * FROM users WHERE token = $1',
-      [token]
-    );
+    const result = await pool.query("SELECT * FROM users WHERE token = $1", [
+      token,
+    ]);
 
     if (result.rows.length === 0) {
       // Nessun utente trovato con quel token
-      return res.status(404).json({ success: false, message: 'Token non valido o scaduto' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Token non valido o scaduto" });
     }
 
     const userId = result.rows[0].id;
@@ -322,8 +288,8 @@ app.get('/api/verify', async (req, res) => {
     const username = result.rows[0].username;
 
     const updateResult = await pool.query(
-      'UPDATE users SET isVerified = true, token = NULL WHERE id = $1',
-      [userId]
+      "UPDATE users SET isVerified = true, token = NULL WHERE id = $1",
+      [userId],
     );
 
     if (updateResult.rowCount > 0) {
@@ -333,47 +299,61 @@ app.get('/api/verify', async (req, res) => {
         recipient_name: username,
       });
 
-      return res.status(200).json({ success: true, message: 'Account verificato' });
+      return res
+        .status(200)
+        .json({ success: true, message: "Account verificato" });
     }
-
   } catch (error) {
-    console.error('Errore durante la verifica del token:', error);
-    return res.status(500).json({ success: false, message: 'Errore interno del server' });
+    console.error("Errore durante la verifica del token:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Errore interno del server" });
   }
 });
 
-app.post("/api/send-verify-email", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-    //verify if the email exists in the database
-    const { userID } = req.body;
-    const result = await pool.query(
-      "SELECT username, email FROM users WHERE id = $1",
-      [userID]
-    );
-    if (result.rows.length === 0) {
-      return res.status(400).json({ msg: "Non esiste un utente con questo id" });
+app.post(
+  "/api/send-verify-email",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      //verify if the email exists in the database
+      const { userID } = req.body;
+      const result = await pool.query(
+        "SELECT username, email FROM users WHERE id = $1",
+        [userID],
+      );
+      if (result.rows.length === 0) {
+        return res
+          .status(400)
+          .json({ msg: "Non esiste un utente con questo id" });
+      }
+
+      const userToken = uuidv4();
+
+      const updateResult = await pool.query(
+        "UPDATE users SET token = $1 WHERE id = $2",
+        [userToken, userID],
+      );
+
+      if (updateResult.rowCount > 0) {
+        sendConfirmationEmail({
+          recipient_email: result.rows[0].email,
+          recipient_name: result.rows[0].username,
+          token: userToken,
+        });
+        return res
+          .status(200)
+          .json({ msg: "Email di verifica inviata correttamente" });
+      }
+    } catch (error) {
+      console.error("Errore durante l'invio dell'email di verifica:", error);
+      return res
+        .status(500)
+        .json({ msg: "Errore durante l'invio dell'email di verifica" });
     }
-
-    const userToken = uuidv4();
-
-    const updateResult = await pool.query(
-      "UPDATE users SET token = $1 WHERE id = $2",
-      [userToken, userID]
-    );
-
-    if (updateResult.rowCount > 0) {
-      sendConfirmationEmail({
-        recipient_email: result.rows[0].email,
-        recipient_name: result.rows[0].username,
-        token: userToken,
-      });
-      return res.status(200).json({ msg: "Email di verifica inviata correttamente" });
-    }
-  } catch (error) {
-    console.error("Errore durante l'invio dell'email di verifica:", error);
-    return res.status(500).json({ msg: "Errore durante l'invio dell'email di verifica" });
-  }
-})
+  },
+);
 
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
@@ -408,60 +388,69 @@ app.post("/api/login", async (req, res) => {
     let token;
     //check if user is admin
     if (user.administrator) {
-      token = jwt.sign({ user_id: user.id, role: "administrator" }, secretKey, { expiresIn: "3d" });
+      token = jwt.sign(
+        { user_id: user.id, role: "administrator" },
+        SECRET_KEY,
+        {
+          expiresIn: "3d",
+        },
+      );
     } else {
-      token = jwt.sign({ user_id: user.id, role: "user" }, secretKey, { expiresIn: "3d" });
+      token = jwt.sign({ user_id: user.id, role: "user" }, SECRET_KEY, {
+        expiresIn: "3d",
+      });
     }
 
     const user_id = user.id;
     const first_login = user.first_login;
     console.log("first_login:", first_login);
     if (first_login) {
-      await pool.query("UPDATE users SET first_login = false WHERE id = $1", [user_id]);
+      await pool.query("UPDATE users SET first_login = false WHERE id = $1", [
+        user_id,
+      ]);
     }
 
     if (sessionID) {
       // Update user_id and session_id in cart table if session_id is not null
-      await pool.query("UPDATE cart SET user_id = $1, session_id = NULL  WHERE session_id = $2", [user_id, sessionID])
+      await pool.query(
+        "UPDATE cart SET user_id = $1, session_id = NULL  WHERE session_id = $2",
+        [user_id, sessionID],
+      );
     }
 
-    res.cookie('accessToken', token, {
+    res.cookie("accessToken", token, {
       httpOnly: false,
       secure: false, // in poducazione mettere true
-      sameSite: 'Lax',
-      maxAge: 3 * 24 * 60 * 60 * 1000 // 3 days
+      sameSite: "Lax",
+      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
     });
 
-    res.clearCookie('sessionId', {
+    res.clearCookie("sessionId", {
       httpOnly: false,
       secure: false, // Impostalo su true se stai usando HTTPS
-      sameSite: 'Lax'
+      sameSite: "Lax",
     });
-
 
     return res
       .status(200)
       .json({ msg: "Login effettuato con successo!", token, first_login });
   } catch (error) {
     console.error("Errore durante il login:", error);
-    return res
-      .status(500)
-      .json({ msg: "Errore durante il login. Riprova" });
+    return res.status(500).json({ msg: "Errore durante il login. Riprova" });
   }
 });
 
 app.post("/api/logout", authenticateJWT, (req, res) => {
-  res.clearCookie('accessToken', {
+  res.clearCookie("accessToken", {
     httpOnly: false,
     secure: false, // Impostalo su true se stai usando HTTPS
-    sameSite: 'Lax'
+    sameSite: "Lax",
   });
   res.status(200).json({ msg: "Logout effettuato con successo!" });
 });
 
 app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
   try {
-
     const { user_id } = req.user;
 
     const result = await pool.query("DELETE FROM users WHERE id = $1", [
@@ -472,16 +461,16 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
       return res.status(404).json({ message: "Account non trovato" });
     }
 
-    res.clearCookie('accessToken', {
+    res.clearCookie("accessToken", {
       httpOnly: false,
       secure: false, // Impostalo su true se stai usando HTTPS
-      sameSite: 'Lax'
+      sameSite: "Lax",
     });
 
-    res.clearCookie('sessionId', {
+    res.clearCookie("sessionId", {
       httpOnly: true,
       secure: false, // Impostalo su true se stai usando HTTPS
-      sameSite: 'Lax'
+      sameSite: "Lax",
     });
 
     res.status(200).json({ message: "Account eliminato con successo" });
@@ -557,9 +546,10 @@ app.put("/api/update-phone", authenticateJWT, async (req, res) => {
       user_id,
     ]);
 
-    res
-      .status(200)
-      .json({ message: "Numero di telefono aggiornato con successo", newPhone });
+    res.status(200).json({
+      message: "Numero di telefono aggiornato con successo",
+      newPhone,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Errore interno del server" });
@@ -593,7 +583,7 @@ app.put("/api/update-email", authenticateJWT, async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Errore interno del server" });
   }
-})
+});
 
 // app.put("/api/update-company-name", authenticateJWT, async (req, res) => {
 //   try {
@@ -650,7 +640,9 @@ app.put("/api/update-tax-code", authenticateJWT, async (req, res) => {
     const { user_id } = req.user;
     const { tax_code } = req.body;
 
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      user_id,
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Utente non trovato" });
@@ -702,7 +694,9 @@ app.put("/api/update-turnover", authenticateJWT, async (req, res) => {
 
     console.log("turnover:", turnover);
 
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [user_id]);
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      user_id,
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Utente non trovato" });
@@ -713,10 +707,10 @@ app.put("/api/update-turnover", authenticateJWT, async (req, res) => {
       user_id,
     ]);
 
-    await pool.query("UPDATE buildings SET annual_turnover = $1 WHERE user_id = $2", [
-      turnover,
-      user_id,
-    ]);
+    await pool.query(
+      "UPDATE buildings SET annual_turnover = $1 WHERE user_id = $2",
+      [turnover, user_id],
+    );
 
     res.status(200).json({ message: "Fatturato aggiornato con successo" });
   } catch (err) {
@@ -725,55 +719,62 @@ app.put("/api/update-turnover", authenticateJWT, async (req, res) => {
   }
 });
 
-app.get("/api/fetch-users", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
+app.get(
+  "/api/fetch-users",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "administrator") {
+        return res.status(401).json({ message: "Non sei autorizzato" });
+      }
 
-    if (req.user.role !== "administrator") {
-      return res.status(401).json({ message: "Non sei autorizzato" });
+      const result = await pool.query("SELECT * FROM users order by id ASC");
+      res.status(200).json(result.rows);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Errore interno del server" });
     }
+  },
+);
 
-    const result = await pool.query("SELECT * FROM users order by id ASC");
-    res.status(200).json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Errore interno del server" });
-  }
-})
+app.get(
+  "/api/fetch-not-verified-users",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "administrator") {
+        return res.status(401).json({ message: "Non sei autorizzato" });
+      }
 
-app.get("/api/fetch-not-verified-users", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-
-    if (req.user.role !== "administrator") {
-      return res.status(401).json({ message: "Non sei autorizzato" });
+      const result = await pool.query(
+        "SELECT * FROM users WHERE isVerified = false and administrator = false order by id ASC ",
+      );
+      res.status(200).json({ rows: result.rows, count: result.rows.length });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Errore interno del server" });
     }
-
-    const result = await pool.query("SELECT * FROM users WHERE isVerified = false and administrator = false order by id ASC ");
-    res.status(200).json({ rows: result.rows, count: result.rows.length });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Errore interno del server" });
-  }
-})
-
+  },
+);
 
 app.post("/api/send_email", async (req, res) => {
   try {
     //verifica se l'email esiste nel database
     const result = await pool.query(
       "SELECT id, email FROM users WHERE email = $1",
-      [req.body.email]
+      [req.body.email],
     );
     if (result.rows.length > 0) {
-      const recoveryToken = jwt.sign(
-        { id: result.rows[0].id },
-        secretKey,
-        { expiresIn: "1h" }
-      )
-      res.cookie('recoveryToken', recoveryToken, {
+      const recoveryToken = jwt.sign({ id: result.rows[0].id }, SECRET_KEY, {
+        expiresIn: "1h",
+      });
+      res.cookie("recoveryToken", recoveryToken, {
         httpOnly: false,
         secure: false,
-        sameSite: 'Lax',
-        maxAge: 6 * 10 * 60 * 1000 // 1 hour
+        sameSite: "Lax",
+        maxAge: 6 * 10 * 60 * 1000, // 1 hour
       });
       //console.log(recoveryToken);
       res.status(200).json({ exist: true, token: recoveryToken });
@@ -791,18 +792,21 @@ app.post("/api/send-email-message", async (req, res) => {
     //verify if the email exists in the database
     const result = await pool.query(
       "SELECT id, email FROM users WHERE email = $1",
-      [req.body.email]
+      [req.body.email],
     );
     if (result.rows.length === 0) {
-      return res.status(400).json({ msg: "Non esiste un utente con questa email" });
+      return res
+        .status(400)
+        .json({ msg: "Non esiste un utente con questa email" });
     }
 
     sendEmailMessage({
       recipient_email: req.body.email,
     });
 
-    return res.status(200).json({ msg: "Email di presa in carico inviata correttamente" });
-
+    return res
+      .status(200)
+      .json({ msg: "Email di presa in carico inviata correttamente" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Errore interno del server" });
@@ -1074,7 +1078,6 @@ function sendWelcomeEmail({ recipient_email, recipient_name }) {
   });
 }
 
-
 function sendEmail({ recipient_email, OTP }) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
@@ -1082,7 +1085,7 @@ function sendEmail({ recipient_email, OTP }) {
       auth: {
         //BEACUSE SECURITY, THE CREDENTIALS MUST BE IN .ENV
         user: email_sender,
-        pass: pass_sender
+        pass: pass_sender,
       },
     });
 
@@ -1186,7 +1189,6 @@ function sendEmail({ recipient_email, OTP }) {
         </html>`,
     };
 
-
     transporter.sendMail(mail_configs, function (error, info) {
       if (error) {
         console.error("Errore nell'invio dell'email:", error);
@@ -1206,7 +1208,7 @@ function sendEmailMessage({ recipient_email }) {
       auth: {
         //BEACUSE SECURITY, THE CREDENTIALS MUST BE IN .ENV
         user: email_sender,
-        pass: pass_sender
+        pass: pass_sender,
       },
     });
 
@@ -1307,14 +1309,20 @@ function sendEmailMessage({ recipient_email }) {
   });
 }
 
-function sendEmailResponse({ recipient_email, email_title, email_content, receiver_username, admin_username }) {
+function sendEmailResponse({
+  recipient_email,
+  email_title,
+  email_content,
+  receiver_username,
+  admin_username,
+}) {
   return new Promise((resolve, reject) => {
     var transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         //BEACUSE SECURITY, THE CREDENTIALS MUST BE IN .ENV
         user: email_sender,
-        pass: pass_sender
+        pass: pass_sender,
       },
     });
 
@@ -1403,7 +1411,6 @@ function sendEmailResponse({ recipient_email, email_title, email_content, receiv
         </html>`,
     };
 
-
     transporter.sendMail(mail_configs, function (error, info) {
       if (error) {
         console.error("Errore nell'invio dell'email:", error);
@@ -1434,9 +1441,9 @@ app.put("/api/change-password", authenticateJWT, async (req, res) => {
     const { id } = req.user;
 
     if (!passwordCheck(password)) {
-      return res
-        .status(400)
-        .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" });
+      return res.status(400).json({
+        msg: "Password non corretta. Segui le info per ottenere una password sicura",
+      });
     }
 
     // Hash the new password
@@ -1449,10 +1456,10 @@ app.put("/api/change-password", authenticateJWT, async (req, res) => {
     // Execute the query
     await pool.query(query, values);
 
-    res.clearCookie('recoveryToken', {
+    res.clearCookie("recoveryToken", {
       httpOnly: false,
-      secure: false,  // Impostalo su true se stai usando HTTPS
-      sameSite: 'Lax'
+      secure: false, // Impostalo su true se stai usando HTTPS
+      sameSite: "Lax",
     });
 
     res.status(200).json({ message: "Password modificata con successo" });
@@ -1462,44 +1469,56 @@ app.put("/api/change-password", authenticateJWT, async (req, res) => {
   }
 });
 
+app.post(
+  "/api/upload-news",
+  authenticateJWT,
+  authenticateAdmin,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const image = req.file;
+      const { title, content } = req.body;
+      const { role } = req.user;
 
-app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
-  try {
-    const image = req.file;
-    const { title, content } = req.body;
-    const { role } = req.user;
+      if (role !== "administrator") {
+        return res
+          .status(400)
+          .json({ msg: "Non hai i permessi per caricare notizie" });
+      }
 
-    if (role !== "administrator") {
-      return res.status(400).json({ msg: "Non hai i permessi per caricare notizie" });
-    }
+      if (!req.user || !req.user.user_id) {
+        //console.log("ID utente mancante:", req.user);
+        return res.status(400).json({ msg: "ID utente mancante" });
+      }
 
-    if (!req.user || !req.user.user_id) {
-      //console.log("ID utente mancante:", req.user);
-      return res.status(400).json({ msg: "ID utente mancante" });
-    }
+      if (!title || !content) {
+        return res.status(400).json({ msg: "Titolo e contenuto mancanti" });
+      }
 
-    if (!title || !content) {
-      return res.status(400).json({ msg: "Titolo e contenuto mancanti" });
-    }
+      if (!image) {
+        return res.status(400).json({ msg: "Immagine mancante" });
+      }
 
-    if (!image) {
-      return res.status(400).json({ msg: "Immagine mancante" });
-    }
+      const sanitizedContent = DOMPurify.sanitize(content);
+      const insertNewsQuery =
+        "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4) RETURNING id";
+      const values = [
+        req.user.user_id,
+        title,
+        sanitizedContent,
+        image.filename,
+      ];
 
-    const sanitizedContent = DOMPurify.sanitize(content);
-    const insertNewsQuery = "INSERT INTO news (user_id, title, content, image) VALUES ($1, $2, $3, $4) RETURNING id";
-    const values = [req.user.user_id, title, sanitizedContent, image.filename];
+      // begin transaction
+      const client = await pool.connect();
+      await client.query("BEGIN");
 
-    // begin transaction
-    const client = await pool.connect();
-    await client.query('BEGIN');
+      // Insert the news into the database
+      const resNews = await client.query(insertNewsQuery, values);
+      const newsId = resNews.rows[0].id;
 
-    // Insert the news into the database
-    const resNews = await client.query(insertNewsQuery, values);
-    const newsId = resNews.rows[0].id;
-
-    // update news read status
-    const updateReadStatusQuery = `
+      // update news read status
+      const updateReadStatusQuery = `
       INSERT INTO news_read_status (user_id, news_id)
       SELECT u.id, $1
       FROM users u
@@ -1508,24 +1527,23 @@ app.post("/api/upload-news", authenticateJWT, authenticateAdmin, upload.single("
       WHERE nrs.id IS NULL;
     `;
 
-    /*La query aggiunge con la LEFT JOIN un record in news_read_status per ogni utente che 
+      /*La query aggiunge con la LEFT JOIN un record in news_read_status per ogni utente che 
     non ha ancora letto la notizia specificata, garantendo di evitare duplicati grazie alla 
     condizione WHERE nrs.id IS NULL. */
 
-    await client.query(updateReadStatusQuery, [newsId]);
+      await client.query(updateReadStatusQuery, [newsId]);
 
-    // complete transaction
-    await client.query('COMMIT');
-    client.release();
+      // complete transaction
+      await client.query("COMMIT");
+      client.release();
 
-    res.status(200).json({ msg: "Notizia caricata con successo" });
-
-  } catch (error) {
-    console.error("Errore nel caricamento della notizia:", error);
-    res.status(500).json({ msg: "Errore nel caricamento della notizia" });
-  }
-});
-
+      res.status(200).json({ msg: "Notizia caricata con successo" });
+    } catch (error) {
+      console.error("Errore nel caricamento della notizia:", error);
+      res.status(500).json({ msg: "Errore nel caricamento della notizia" });
+    }
+  },
+);
 
 app.get("/api/news", async (req, res) => {
   try {
@@ -1561,11 +1579,15 @@ app.get("/api/article/:id", async (req, res) => {
     const idsResult = await pool.query("SELECT id FROM news");
 
     // Convert IDs to an array of numbers
-    const ids = idsResult.rows.map(row => row.id);
+    const ids = idsResult.rows.map((row) => row.id);
     // Sanitize content with DOMPurify
     result.rows[0].content = DOMPurify.sanitize(result.rows[0].content);
 
-    res.status(200).json({ article: result.rows[0], countnews: countNews.rows[0].count, ids });
+    res.status(200).json({
+      article: result.rows[0],
+      countnews: countNews.rows[0].count,
+      ids,
+    });
   } catch (error) {
     console.error("Errore nel recupero dell'articolo:", error);
     res.status(500).json({ msg: "Errore nel recupero dell'articolo" });
@@ -1587,18 +1609,19 @@ app.put("/api/set-news-read/:id", authenticateJWT, async (req, res) => {
     await pool.query(query, values);
 
     res.status(200).json({ msg: "Notizia impostata come letta correttamente" });
-
   } catch (error) {
     console.error("Errore nell'impostazione della notizia come letta:", error);
-    res.status(500).json({ msg: "Errore nell'impostazione della notizia come letta" });
+    res
+      .status(500)
+      .json({ msg: "Errore nell'impostazione della notizia come letta" });
   }
-
-})
+});
 
 app.get("/api/news-unread", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
-    const query = "SELECT * FROM news JOIN news_read_status ON news.id = news_read_status.news_id WHERE news_read_status.user_id = $1 AND is_read = FALSE";
+    const query =
+      "SELECT * FROM news JOIN news_read_status ON news.id = news_read_status.news_id WHERE news_read_status.user_id = $1 AND is_read = FALSE";
     const values = [user_id];
     const result = await pool.query(query, values);
     res.status(200).json(result.rows);
@@ -1606,125 +1629,142 @@ app.get("/api/news-unread", authenticateJWT, async (req, res) => {
     console.error("Errore nel recupero delle notizie:", error);
     res.status(500).json({ msg: "Errore nel recupero delle notizie" });
   }
-})
-
-
-app.delete("/api/delete-news/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const { role } = req.user;
-    if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-    }
-
-    const query = "SELECT * FROM news WHERE id = $1";
-    const values = [id];
-    const result = await pool.query(query, values);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ msg: "Nessun Articolo trovato" });
-    }
-    // delte image from uploaded folder
-    const image = result.rows[0].image;
-    const path = `./uploaded_img/${image}`;
-    fs.unlinkSync(path);
-
-    //delete article
-    const query2 = "DELETE FROM news WHERE id = $1";
-    await pool.query(query2, values);
-    res.status(200).json({ msg: "Articolo eliminato con successo" });
-  } catch (error) {
-    console.error("Errore nel cancellamento", error);
-    res.status(500).json({ msg: "Errore nel cancellamento" });
-  }
 });
 
+app.delete(
+  "/api/delete-news/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const { role } = req.user;
+      if (role !== "administrator") {
+        return res
+          .status(200)
+          .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+      }
+
+      const query = "SELECT * FROM news WHERE id = $1";
+      const values = [id];
+      const result = await pool.query(query, values);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ msg: "Nessun Articolo trovato" });
+      }
+      // delte image from uploaded folder
+      const image = result.rows[0].image;
+      const path = `./uploaded_img/${image}`;
+      fs.unlinkSync(path);
+
+      //delete article
+      const query2 = "DELETE FROM news WHERE id = $1";
+      await pool.query(query2, values);
+      res.status(200).json({ msg: "Articolo eliminato con successo" });
+    } catch (error) {
+      console.error("Errore nel cancellamento", error);
+      res.status(500).json({ msg: "Errore nel cancellamento" });
+    }
+  },
+);
+
 // create api to apload categriues of a product. categories is an enum
-app.get('/api/categories', async (req, res) => {
+app.get("/api/categories", async (req, res) => {
   try {
     const query = `
           SELECT unnest(enum_range(NULL::category_type)) AS category
       `;
     const result = await pool.query(query);
-    const categories = result.rows.map(row => row.category);
+    const categories = result.rows.map((row) => row.category);
     res.json(categories);
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    res.status(500).send('Server Error');
+    console.error("Error fetching categories:", error);
+    res.status(500).send("Server Error");
   }
 });
 
-app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
-  try {
-    const image = req.file;
-    const { name, category, tag, info, cod } = req.body;
-    const { user_id, role } = req.user;
+app.post(
+  "/api/upload-product",
+  authenticateJWT,
+  authenticateAdmin,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const image = req.file;
+      const { name, category, tag, info, cod } = req.body;
+      const { user_id, role } = req.user;
 
-    if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-    }
+      if (role !== "administrator") {
+        return res
+          .status(200)
+          .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+      }
 
-    if (!name || !category || !tag || !info || !cod) {
-      return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
-    }
+      if (!name || !category || !tag || !info || !cod) {
+        return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
+      }
 
-    const checkCodQuery = "SELECT * FROM products WHERE cod = $1";
-    const checkCodValues = [cod];
-    const checkCodResult = await pool.query(checkCodQuery, checkCodValues);
-    if (checkCodResult.rows.length > 0) {
-      return res.status(400).json({ msg: "Codice certificazione già esistente. Inserisci un codice diverso" });
-    }
+      const checkCodQuery = "SELECT * FROM products WHERE cod = $1";
+      const checkCodValues = [cod];
+      const checkCodResult = await pool.query(checkCodQuery, checkCodValues);
+      if (checkCodResult.rows.length > 0) {
+        return res.status(400).json({
+          msg: "Codice certificazione già esistente. Inserisci un codice diverso",
+        });
+      }
 
-    // set price based on category 
-    let price;
-    switch (category) {
-      case "Certificazione hotel":
-        //price = 350;
-        price = 0.5;
-        break;
-      case "Certificazione spa e resorts":
-        //price = 350;
-        price = 0.5;
-        break;
-      case "Certificazione trasporti":
-        //price = 350;
-        price = 0.5;
-        break;
-      case "Certificazione industria":
-        //price = 350;
-        price = 0.5;
-        break;
-      case "Certificazione store e retail":
-        //price = 350;
-        price = 0.5;
-        break;
-      case "Certificazione bar e ristoranti":
-        //price = 300;
-        price = 0.5;
-        break;
-      default:
-        price = 0;
-        break;
-    }
+      // set price based on category
+      let price;
+      switch (category) {
+        case "Certificazione hotel":
+          //price = 350;
+          price = 0.5;
+          break;
+        case "Certificazione spa e resorts":
+          //price = 350;
+          price = 0.5;
+          break;
+        case "Certificazione trasporti":
+          //price = 350;
+          price = 0.5;
+          break;
+        case "Certificazione industria":
+          //price = 350;
+          price = 0.5;
+          break;
+        case "Certificazione store e retail":
+          //price = 350;
+          price = 0.5;
+          break;
+        case "Certificazione bar e ristoranti":
+          //price = 300;
+          price = 0.5;
+          break;
+        default:
+          price = 0;
+          break;
+      }
 
-    // Check if price is valid
-    const parsedPrice = parseFloat(price);
-    if (parsedPrice <= 0) {
-      return res.status(400).json({ msg: "Prezzo non valido" });
-    }
+      // Check if price is valid
+      const parsedPrice = parseFloat(price);
+      if (parsedPrice <= 0) {
+        return res.status(400).json({ msg: "Prezzo non valido" });
+      }
 
-    // Check if image is present
-    if (!image) {
-      return res.status(400).json({ msg: "Immagine mancante" });
-    }
+      // Check if image is present
+      if (!image) {
+        return res.status(400).json({ msg: "Immagine mancante" });
+      }
 
-    if (info.length > 500) {
-      return res.status(400).json({ msg: "La descrizione è troppo lunga. Max 100 caratteri" });
-    }
+      if (info.length > 500) {
+        return res
+          .status(400)
+          .json({ msg: "La descrizione è troppo lunga. Max 100 caratteri" });
+      }
 
-    // Create Stripe product
-    /*const stripeProduct = await stripe.products.create({
+      // Create Stripe product
+      /*const stripeProduct = await stripe.products.create({
       name: name,
       description: info,
       metadata: {
@@ -1734,26 +1774,40 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
       }
     });*/
 
-    // Insert product into database
-    const query = `
+      // Insert product into database
+      const query = `
       INSERT INTO products (user_id, name, price, image, info, cod, category, tag, stripe_product_id) 
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `;
-    const values = [user_id, name, parsedPrice, image.filename, info, cod, category, tag, null];
+      const values = [
+        user_id,
+        name,
+        parsedPrice,
+        image.filename,
+        info,
+        cod,
+        category,
+        tag,
+        null,
+      ];
 
-    await pool.query(query, values);
-    res.status(200).json({ msg: "Certificazione caricata con successo" });
-  } catch (error) {
-    console.error("Errore durante il caricamento della certificazione:", error);
-    res.status(500).json({ msg: "Errore durante il caricamento della certificazione" });
-  }
-});
-
-
+      await pool.query(query, values);
+      res.status(200).json({ msg: "Certificazione caricata con successo" });
+    } catch (error) {
+      console.error(
+        "Errore durante il caricamento della certificazione:",
+        error,
+      );
+      res
+        .status(500)
+        .json({ msg: "Errore durante il caricamento della certificazione" });
+    }
+  },
+);
 
 app.get("/api/products-info", async (req, res) => {
   try {
-    const { order = "default" } = req.query;  // Aggiungi un valore di default per evitare errori
+    const { order = "default" } = req.query; // Aggiungi un valore di default per evitare errori
     // Get the total number of products
     const query = "SELECT COUNT(*) FROM products";
     const result = await pool.query(query);
@@ -1773,14 +1827,14 @@ app.get("/api/products-info", async (req, res) => {
     }
 
     const result2 = await pool.query(query2);
-    res.status(200).json({ numProducts: result.rows[0].count, products: result2.rows });
-
+    res
+      .status(200)
+      .json({ numProducts: result.rows[0].count, products: result2.rows });
   } catch (error) {
     console.error("Errore nel recupero dei prodotti", error);
     res.status(500).json({ msg: "Errore nel recupero dei prodotti" });
   }
 });
-
 
 app.get("/api/product-details/:id", async (req, res) => {
   try {
@@ -1797,38 +1851,45 @@ app.get("/api/product-details/:id", async (req, res) => {
     console.error("Errore nel recupero della certificazione", error);
     res.status(500).json({ msg: "Errore nel recupero della certificazione" });
   }
-})
-
-app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { role } = req.user;
-
-    if (role !== "administrator") {
-      return res.status(400).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-    }
-
-    const query = "SELECT * FROM products WHERE id = $1";
-    const values = [id];
-    const result = await pool.query(query, values);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ msg: "Nessuna certificazione trovato" });
-    }
-    // delte image from uploaded folder
-    const image = result.rows[0].image;
-    const path = `./uploaded_img/${image}`;
-    fs.unlinkSync(path);
-
-    //delete article
-    const query2 = "DELETE FROM products WHERE id = $1";
-    await pool.query(query2, values);
-    res.status(200).json({ msg: "Certificazione eliminata con successo" });
-  } catch (error) {
-    console.error("Errore nel cancellamento", error);
-    res.status(500).json({ msg: "Errore nel cancellamento" });
-  }
 });
+
+app.delete(
+  "/api/delete-product/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { role } = req.user;
+
+      if (role !== "administrator") {
+        return res
+          .status(400)
+          .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+      }
+
+      const query = "SELECT * FROM products WHERE id = $1";
+      const values = [id];
+      const result = await pool.query(query, values);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ msg: "Nessuna certificazione trovato" });
+      }
+      // delte image from uploaded folder
+      const image = result.rows[0].image;
+      const path = `./uploaded_img/${image}`;
+      fs.unlinkSync(path);
+
+      //delete article
+      const query2 = "DELETE FROM products WHERE id = $1";
+      await pool.query(query2, values);
+      res.status(200).json({ msg: "Certificazione eliminata con successo" });
+    } catch (error) {
+      console.error("Errore nel cancellamento", error);
+      res.status(500).json({ msg: "Errore nel cancellamento" });
+    }
+  },
+);
 
 app.post("/api/cart-insertion/:id", async (req, res) => {
   try {
@@ -1851,7 +1912,9 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
 
     // Check if user_id or session_id is present
     if (!user_id && !req.cookies.sessionId) {
-      return res.status(400).json({ msg: "Devi essere autenticato o avere un id di sessione per inserire nel carrello" });
+      return res.status(400).json({
+        msg: "Devi essere autenticato o avere un id di sessione per inserire nel carrello",
+      });
     }
 
     if (!option) {
@@ -1907,14 +1970,17 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
       cartValues = [user_id, id];
     } else {
       // Control for anonymous users
-      cartQuery = "SELECT * FROM cart WHERE session_id = $1 AND product_id = $2";
+      cartQuery =
+        "SELECT * FROM cart WHERE session_id = $1 AND product_id = $2";
       cartValues = [req.cookies.sessionId, id];
     }
 
     const cartResult = await pool.query(cartQuery, cartValues);
 
     if (cartResult.rows.length > 0) {
-      return res.status(400).json({ msg: "La certificazione è già nel carrello" });
+      return res
+        .status(400)
+        .json({ msg: "La certificazione è già nel carrello" });
     }
 
     // Insert the product into the cart
@@ -1923,27 +1989,42 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
 
     if (user_id) {
       // Insert into the cart for authenticated users
-      insertQuery = "INSERT INTO cart (user_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+      insertQuery =
+        "INSERT INTO cart (user_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
       insertValues = [user_id, id, name, image, quantity, option, finalPrice];
     } else {
       // Insert into the cart for anonymous users
-      insertQuery = "INSERT INTO cart (session_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
-      insertValues = [req.cookies.sessionId, id, name, image, quantity, option, finalPrice];
+      insertQuery =
+        "INSERT INTO cart (session_id, product_id, name, image, quantity, option, price) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+      insertValues = [
+        req.cookies.sessionId,
+        id,
+        name,
+        image,
+        quantity,
+        option,
+        finalPrice,
+      ];
     }
 
     await pool.query(insertQuery, insertValues);
 
-    res.status(200).json({ msg: "Certificazione aggiunta al carrello con successo" });
+    res
+      .status(200)
+      .json({ msg: "Certificazione aggiunta al carrello con successo" });
   } catch (error) {
-    console.error("Errore nell'aggiungere la certificazione al carrello:", error);
-    res.status(500).json({ msg: "Errore nell'aggiungere la certificazione al carrello" });
+    console.error(
+      "Errore nell'aggiungere la certificazione al carrello:",
+      error,
+    );
+    res
+      .status(500)
+      .json({ msg: "Errore nell'aggiungere la certificazione al carrello" });
   }
 });
 
-
 app.get("/api/fetch-user-cart", async (req, res) => {
   try {
-
     if (req.cookies.accessToken) {
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
@@ -1961,32 +2042,30 @@ app.get("/api/fetch-user-cart", async (req, res) => {
     //console.log("User ID:", user_id);
     //console.log("Session ID:", session_id);
 
-
     let query;
     let values;
     let query2;
 
-
     if (user_id) {
-      query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
+      query =
+        "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_id = $1";
       query2 = "SELECT COUNT(*) FROM cart WHERE user_id = $1";
       values = [user_id];
     } else {
-      query = "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.session_id = $1";
+      query =
+        "SELECT cart.product_id AS product_id, cart.quantity AS quantity, products.name AS name, products.image AS image, cart.price AS price, cart.option AS option, products.category AS category FROM cart JOIN products ON cart.product_id = products.id WHERE cart.session_id = $1";
       query2 = "SELECT COUNT(*) FROM cart WHERE session_id = $1";
       values = [session_id];
     }
 
-
     const result = await pool.query(query, values);
     const result2 = await pool.query(query2, values);
     res.status(200).json({ cart: result.rows, count: result2.rows[0].count });
-
   } catch (error) {
     console.error("Errore nel recupero del carrello:", error);
     res.status(500).json({ msg: "Errore nel recupero del carrello" });
   }
-})
+});
 
 app.put("/api/update-quantity/:id", async (req, res) => {
   try {
@@ -2005,16 +2084,18 @@ app.put("/api/update-quantity/:id", async (req, res) => {
     }
 
     const user_id = req.user?.user_id;
-    const session_id = req.header('session-id');
+    const session_id = req.header("session-id");
 
     let query;
     let values;
 
     if (user_id) {
-      query = "UPDATE cart SET quantity = $1 WHERE user_id = $2 AND product_id = $3";
+      query =
+        "UPDATE cart SET quantity = $1 WHERE user_id = $2 AND product_id = $3";
       values = [quantity, user_id, id];
     } else {
-      query = "UPDATE cart SET quantity = $1 WHERE session_id = $2 AND product_id = $3";
+      query =
+        "UPDATE cart SET quantity = $1 WHERE session_id = $2 AND product_id = $3";
       values = [quantity, session_id, id];
     }
 
@@ -2024,7 +2105,7 @@ app.put("/api/update-quantity/:id", async (req, res) => {
     console.error("Errore nell'aggiornare la quantità:", error);
     res.status(500).json({ msg: "Errore nell'aggiornare la quantità" });
   }
-})
+});
 
 app.delete("/api/remove-from-cart/:id", async (req, res) => {
   try {
@@ -2047,7 +2128,6 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
     let query;
     let values;
 
-
     if (user_id) {
       query = "DELETE FROM cart WHERE user_id = $1 AND product_id = $2";
       values = [user_id, id];
@@ -2057,10 +2137,17 @@ app.delete("/api/remove-from-cart/:id", async (req, res) => {
     }
 
     const result = await pool.query(query, values);
-    res.status(200).json({ msg: "Certificazione rimossa dal carrello con successo" });
+    res
+      .status(200)
+      .json({ msg: "Certificazione rimossa dal carrello con successo" });
   } catch (error) {
-    console.error("Errore nel rimuovere la certificazione dal carrello:", error);
-    res.status(500).json({ msg: "Errore nel rimuovere la certificazione dal carrello" });
+    console.error(
+      "Errore nel rimuovere la certificazione dal carrello:",
+      error,
+    );
+    res
+      .status(500)
+      .json({ msg: "Errore nel rimuovere la certificazione dal carrello" });
   }
 });
 
@@ -2068,7 +2155,8 @@ app.post("/api/send-message", async (req, res) => {
   try {
     const { name, email, company_name, phone, subject, message } = req.body;
 
-    const query = "INSERT INTO contacts (name_surname, email, company_name, phone_number, subject, message) VALUES ($1, $2, $3, $4, $5, $6)";
+    const query =
+      "INSERT INTO contacts (name_surname, email, company_name, phone_number, subject, message) VALUES ($1, $2, $3, $4, $5, $6)";
     const values = [name, email, company_name, phone, subject, message];
     await pool.query(query, values);
     res.status(200).json({ msg: "Messaggio inviato con successo" });
@@ -2079,7 +2167,6 @@ app.post("/api/send-message", async (req, res) => {
 });
 
 app.get("/api/messages", authenticateJWT, async (req, res) => {
-
   try {
     const query = "SELECT * FROM contacts";
     const result = await pool.query(query);
@@ -2091,249 +2178,345 @@ app.get("/api/messages", authenticateJWT, async (req, res) => {
 
     const query2 = "SELECT COUNT(*) FROM contacts";
     const result2 = await pool.query(query2);
-    res.status(200).json({ messages: result.rows, count: result2.rows[0].count });
-
+    res
+      .status(200)
+      .json({ messages: result.rows, count: result2.rows[0].count });
   } catch (error) {
     console.error("Errore nel recupero dei messaggi:", error);
     res.status(500).json({ msg: "Errore nel recupero dei messaggi" });
   }
-})
-
-app.delete("/api/delete-message/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { role } = req.user;
-
-    if (role !== "administrator") {
-      return res.status(400).json({ msg: "Non hai i permessi per eliminare questo messaggio" });
-    }
-
-    const query = "DELETE FROM contacts WHERE id = $1";
-    const values = [id];
-    await pool.query(query, values);
-
-    res.status(200).json({ msg: "Messaggio eliminato con successo" });
-  } catch (error) {
-    console.error("Errore nell'eliminazione del messaggio:", error);
-    res.status(500).json({ msg: "Errore nell'eliminazione del messaggio" });
-  }
-})
-
-app.put("/api/edit-news/:id", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
-
-  try {
-    const { title, content } = req.body;
-    const image = req.file;
-    const { id } = req.params;
-    const { role } = req.user;
-    if (role !== "administrator") {
-      return res.status(400).json({ msg: "Non hai i permessi per modificare le notizie" });
-    }
-
-    if (!title || !content) {
-      return res.status(400).json({ msg: "Titolo e contenuto mancanti" });
-    }
-
-    if (!image) {
-      return res.status(400).json({ msg: "Immagine mancante" });
-    }
-
-    //remove previous image from updated_img
-    const query_img = "SELECT image FROM news WHERE id = $1";
-    const values_img = [id];
-    const result_img = await pool.query(query_img, values_img);
-    const previous_image = result_img.rows[0].image;
-    const path = `./uploaded_img/${previous_image}`;
-    fs.unlinkSync(path);
-
-    const query = "UPDATE news SET (title, content, image) = ($1, $2, $3) WHERE id = $4";
-    const values = [title, content, image?.filename, id];
-    await pool.query(query, values);
-
-    const query2 = "SELECT * FROM news WHERE id = $1";
-    const values2 = [id];
-    const result = await pool.query(query2, values2);
-    res.status(200).json({ msg: "Notizie aggiornate correttamente", tuple: result.rows });
-  } catch (error) {
-    console.error("Errore nell'aggiornare le notizie:", error);
-    res.status(500).json({ msg: "Errore nell'aggiornare le notizie" });
-  }
-})
-
-app.put("/api/edit-product/:id", authenticateJWT, authenticateAdmin, upload.single("image"), async (req, res) => {
-
-  try {
-    const { name, price, info, cod, category, tag } = req.body;
-    const image = req.file;
-    const { id } = req.params;
-    const { role, user_id } = req.user;
-    if (role !== "administrator") {
-      return res.status(400).json({ msg: "Non hai i permessi per modificare le certificazioni" });
-    }
-
-    if (!name || !price || !info || !cod || !category || !tag) {
-      return res.status(400).json({ msg: "I campi nome, prezzo, info, codice, categoria e tag sono obbligatori" });
-    }
-
-    if (!image) {
-      return res.status(400).json({ msg: "Immagine mancante" });
-    }
-
-    //remove previous image from updated_img
-    const query_img = "SELECT image FROM products WHERE id = $1";
-    const values_img = [id];
-    const result_img = await pool.query(query_img, values_img);
-    const previous_image = result_img.rows[0].image;
-    const path = `./uploaded_img/${previous_image}`;
-    fs.unlinkSync(path);
-
-    const query = "UPDATE products SET (name, price, image, info, cod, category, tag) = ($1, $2, $3, $4, $5, $6, $7) WHERE id = $8 AND user_id = $9";
-    const values = [name, price, image?.filename, info, cod, category, tag, id, user_id];
-    const result = await pool.query(query, values);
-    res.status(200).json({ msg: "Certificazione aggiornata con successo", tuple: result.rows });
-  } catch (error) {
-    console.error("Errore nell'aggiornare le certificazioni:", error);
-    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
-  }
-})
-
-app.post("/api/create-promo-code", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-    const { code, discount, start, expiration, category } = req.body;
-    if (!code || !discount || !start || !expiration || !category) {
-      return res.status(400).json({ msg: "Completa tutti i campi" });
-    } else if (code.length > 20) {
-      return res.status(400).json({ msg: "Il codice non deve superare i 20 caratteri" });
-    } else if (start > expiration) {
-      return res.status(400).json({ msg: "La data di inizio non deve superare la data di fine" });
-    } else if (start < Date.now()) {
-      return res.status(400).json({ msg: "Data di inizio non corretta" });
-    }
-
-    const date = new Date(expiration);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const formattedDate = `${year}-${month}-${day}`;
-
-    const query = "INSERT INTO promocodes (code, discount, used_by, start, expiration) VALUES ($1, $2, $3, $4, $5)";
-    const values = [code, discount, category, start, formattedDate];
-    const result = await pool.query(query, values);
-    res.status(200).json({ msg: "Codice promozionale aggiunto con successo" });
-  } catch (error) {
-    console.error("Errore nell'inserimento del codice:", error);
-    res.status(500).json({ msg: "Errore nell'inserimento del codice" });
-  }
-})
-
-app.get("/api/fetch-promo-codes", authenticateJWT, authenticateAdmin, async (req, res) => {
-
-  try {
-    const query = "SELECT * FROM promocodes";
-    const result = await pool.query(query);
-    res.status(200).json({ promocodes: result.rows });
-  } catch (error) {
-    console.error("Errore nell'aggiornare caricare le certificazioni:", error);
-    res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
-  }
-})
-
-app.get("/api/fetch-published-assinged-codes", authenticateJWT, async (req, res) => {
-
-  try {
-    const { user_id } = req.user;
-
-    const query = "SELECT code, used_by FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id";
-    const result = await pool.query(query);
-
-    //fetch users's assigned codes
-    const query2 = "SELECT code, used_by FROM promocodes_assignments JOIN promocodes ON promocodes_assignments.promocode_id = promocodes.id WHERE promocodes_assignments.user_id = $1";
-    const values2 = [user_id];
-    const result2 = await pool.query(query2, values2);
-
-    if (result2.rows.length > 0) {
-      result.rows = [...result.rows, ...result2.rows]; // Concatenate the results
-    }
-
-    res.status(200).json({ codes: result.rows });
-  } catch (error) {
-    console.error("Errore nell fetching dei codici pubblicati:", error);
-    res.status(500).json({ msg: "Errore nell fetching dei codici pubblicati" });
-  }
-})
-
-app.post("/api/publish-promo-code/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Verifica se il codice è già pubblicato
-    const check = "SELECT * FROM promocodes_publishment WHERE promocode_id = $1";
-    const queryCheck = await pool.query(check, [id]);
-    if (queryCheck.rows.length > 0) {
-      return res.status(400).json({ msg: "Codice promozionale già pubblicato." });
-    }
-
-    // Inserisce il codice nella tabella
-    const query = "INSERT INTO promocodes_publishment (promocode_id) VALUES ($1)";
-    await pool.query(query, [id]);
-
-    // Risposta di successo
-    res.status(200).json({ msg: "Certificazione pubblicata con successo" });
-  } catch (error) {
-    console.error("Errore durante la pubblicazione del codice promozionale:", error);
-    res.status(500).json({ msg: "Errore interno del server durante la pubblicazione del codice promozionale." });
-  }
 });
 
-app.get("/api/fetch-users-not-assigned-codes/:codeId", authenticateJWT, authenticateAdmin, async (req, res) => {
+app.delete(
+  "/api/delete-message/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { role } = req.user;
 
-  try {
-    const { codeId } = req.params;
-    const query = "SELECT username, company_name FROM users WHERE id NOT IN (SELECT user_id FROM promocodes_assignments WHERE promocode_id = $1)";
-    const values = [codeId];
-    const result = await pool.query(query, values);
-    res.status(200).json({ users: result.rows });
-  } catch (error) {
-    console.error("Errore nel trovare gli utenti:", error);
-    res.status(500).json({ msg: "Errore nel trovare gli utenti" });
-  }
-})
-
-app.post("/api/assign-promo-code-to-users/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { selectedUsers } = req.body;
-
-    console.log("Selected users:", selectedUsers);
-
-    for (const user of selectedUsers) {
-      // Recupera l'ID dell'utente
-      const fetchUserId = "SELECT id FROM users WHERE username = $1";
-      const values = [user];
-      const userResult = await pool.query(fetchUserId, values);
-
-      if (userResult.rows.length === 0) {
-        throw new Error(`Utente con username ${user} non trovato.`);
+      if (role !== "administrator") {
+        return res
+          .status(400)
+          .json({ msg: "Non hai i permessi per eliminare questo messaggio" });
       }
 
-      const userID = userResult.rows[0].id;
+      const query = "DELETE FROM contacts WHERE id = $1";
+      const values = [id];
+      await pool.query(query, values);
 
-      // Assegna il codice promozionale
-      const query = "INSERT INTO promocodes_assignments (promocode_id, user_id) VALUES ($1, $2)";
-      await pool.query(query, [id, userID]);
+      res.status(200).json({ msg: "Messaggio eliminato con successo" });
+    } catch (error) {
+      console.error("Errore nell'eliminazione del messaggio:", error);
+      res.status(500).json({ msg: "Errore nell'eliminazione del messaggio" });
     }
+  },
+);
 
-    res.status(200).json({ msg: `Codice promozionale assegnato agli utenti (${selectedUsers.join(", ")}) con successo` });
-  } catch (error) {
-    console.error("Errore durante l'assegnazione del codice promozionale agli utenti:", error);
-    res.status(500).json({ msg: "Errore interno del server durante l'assegnazione del codice promozionale agli utenti." });
-  }
-});
+app.put(
+  "/api/edit-news/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { title, content } = req.body;
+      const image = req.file;
+      const { id } = req.params;
+      const { role } = req.user;
+      if (role !== "administrator") {
+        return res
+          .status(400)
+          .json({ msg: "Non hai i permessi per modificare le notizie" });
+      }
 
+      if (!title || !content) {
+        return res.status(400).json({ msg: "Titolo e contenuto mancanti" });
+      }
 
+      if (!image) {
+        return res.status(400).json({ msg: "Immagine mancante" });
+      }
+
+      //remove previous image from updated_img
+      const query_img = "SELECT image FROM news WHERE id = $1";
+      const values_img = [id];
+      const result_img = await pool.query(query_img, values_img);
+      const previous_image = result_img.rows[0].image;
+      const path = `./uploaded_img/${previous_image}`;
+      fs.unlinkSync(path);
+
+      const query =
+        "UPDATE news SET (title, content, image) = ($1, $2, $3) WHERE id = $4";
+      const values = [title, content, image?.filename, id];
+      await pool.query(query, values);
+
+      const query2 = "SELECT * FROM news WHERE id = $1";
+      const values2 = [id];
+      const result = await pool.query(query2, values2);
+      res
+        .status(200)
+        .json({ msg: "Notizie aggiornate correttamente", tuple: result.rows });
+    } catch (error) {
+      console.error("Errore nell'aggiornare le notizie:", error);
+      res.status(500).json({ msg: "Errore nell'aggiornare le notizie" });
+    }
+  },
+);
+
+app.put(
+  "/api/edit-product/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { name, price, info, cod, category, tag } = req.body;
+      const image = req.file;
+      const { id } = req.params;
+      const { role, user_id } = req.user;
+      if (role !== "administrator") {
+        return res
+          .status(400)
+          .json({ msg: "Non hai i permessi per modificare le certificazioni" });
+      }
+
+      if (!name || !price || !info || !cod || !category || !tag) {
+        return res.status(400).json({
+          msg: "I campi nome, prezzo, info, codice, categoria e tag sono obbligatori",
+        });
+      }
+
+      if (!image) {
+        return res.status(400).json({ msg: "Immagine mancante" });
+      }
+
+      //remove previous image from updated_img
+      const query_img = "SELECT image FROM products WHERE id = $1";
+      const values_img = [id];
+      const result_img = await pool.query(query_img, values_img);
+      const previous_image = result_img.rows[0].image;
+      const path = `./uploaded_img/${previous_image}`;
+      fs.unlinkSync(path);
+
+      const query =
+        "UPDATE products SET (name, price, image, info, cod, category, tag) = ($1, $2, $3, $4, $5, $6, $7) WHERE id = $8 AND user_id = $9";
+      const values = [
+        name,
+        price,
+        image?.filename,
+        info,
+        cod,
+        category,
+        tag,
+        id,
+        user_id,
+      ];
+      const result = await pool.query(query, values);
+      res.status(200).json({
+        msg: "Certificazione aggiornata con successo",
+        tuple: result.rows,
+      });
+    } catch (error) {
+      console.error("Errore nell'aggiornare le certificazioni:", error);
+      res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
+    }
+  },
+);
+
+app.post(
+  "/api/create-promo-code",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { code, discount, start, expiration, category } = req.body;
+      if (!code || !discount || !start || !expiration || !category) {
+        return res.status(400).json({ msg: "Completa tutti i campi" });
+      } else if (code.length > 20) {
+        return res
+          .status(400)
+          .json({ msg: "Il codice non deve superare i 20 caratteri" });
+      } else if (start > expiration) {
+        return res
+          .status(400)
+          .json({ msg: "La data di inizio non deve superare la data di fine" });
+      } else if (start < Date.now()) {
+        return res.status(400).json({ msg: "Data di inizio non corretta" });
+      }
+
+      const date = new Date(expiration);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const formattedDate = `${year}-${month}-${day}`;
+
+      const query =
+        "INSERT INTO promocodes (code, discount, used_by, start, expiration) VALUES ($1, $2, $3, $4, $5)";
+      const values = [code, discount, category, start, formattedDate];
+      const result = await pool.query(query, values);
+      res
+        .status(200)
+        .json({ msg: "Codice promozionale aggiunto con successo" });
+    } catch (error) {
+      console.error("Errore nell'inserimento del codice:", error);
+      res.status(500).json({ msg: "Errore nell'inserimento del codice" });
+    }
+  },
+);
+
+app.get(
+  "/api/fetch-promo-codes",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const query = "SELECT * FROM promocodes";
+      const result = await pool.query(query);
+      res.status(200).json({ promocodes: result.rows });
+    } catch (error) {
+      console.error(
+        "Errore nell'aggiornare caricare le certificazioni:",
+        error,
+      );
+      res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
+    }
+  },
+);
+
+app.get(
+  "/api/fetch-published-assinged-codes",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { user_id } = req.user;
+
+      const query =
+        "SELECT code, used_by FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id";
+      const result = await pool.query(query);
+
+      //fetch users's assigned codes
+      const query2 =
+        "SELECT code, used_by FROM promocodes_assignments JOIN promocodes ON promocodes_assignments.promocode_id = promocodes.id WHERE promocodes_assignments.user_id = $1";
+      const values2 = [user_id];
+      const result2 = await pool.query(query2, values2);
+
+      if (result2.rows.length > 0) {
+        result.rows = [...result.rows, ...result2.rows]; // Concatenate the results
+      }
+
+      res.status(200).json({ codes: result.rows });
+    } catch (error) {
+      console.error("Errore nell fetching dei codici pubblicati:", error);
+      res
+        .status(500)
+        .json({ msg: "Errore nell fetching dei codici pubblicati" });
+    }
+  },
+);
+
+app.post(
+  "/api/publish-promo-code/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Verifica se il codice è già pubblicato
+      const check =
+        "SELECT * FROM promocodes_publishment WHERE promocode_id = $1";
+      const queryCheck = await pool.query(check, [id]);
+      if (queryCheck.rows.length > 0) {
+        return res
+          .status(400)
+          .json({ msg: "Codice promozionale già pubblicato." });
+      }
+
+      // Inserisce il codice nella tabella
+      const query =
+        "INSERT INTO promocodes_publishment (promocode_id) VALUES ($1)";
+      await pool.query(query, [id]);
+
+      // Risposta di successo
+      res.status(200).json({ msg: "Certificazione pubblicata con successo" });
+    } catch (error) {
+      console.error(
+        "Errore durante la pubblicazione del codice promozionale:",
+        error,
+      );
+      res.status(500).json({
+        msg: "Errore interno del server durante la pubblicazione del codice promozionale.",
+      });
+    }
+  },
+);
+
+app.get(
+  "/api/fetch-users-not-assigned-codes/:codeId",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { codeId } = req.params;
+      const query =
+        "SELECT username, company_name FROM users WHERE id NOT IN (SELECT user_id FROM promocodes_assignments WHERE promocode_id = $1)";
+      const values = [codeId];
+      const result = await pool.query(query, values);
+      res.status(200).json({ users: result.rows });
+    } catch (error) {
+      console.error("Errore nel trovare gli utenti:", error);
+      res.status(500).json({ msg: "Errore nel trovare gli utenti" });
+    }
+  },
+);
+
+app.post(
+  "/api/assign-promo-code-to-users/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { selectedUsers } = req.body;
+
+      console.log("Selected users:", selectedUsers);
+
+      for (const user of selectedUsers) {
+        // Recupera l'ID dell'utente
+        const fetchUserId = "SELECT id FROM users WHERE username = $1";
+        const values = [user];
+        const userResult = await pool.query(fetchUserId, values);
+
+        if (userResult.rows.length === 0) {
+          throw new Error(`Utente con username ${user} non trovato.`);
+        }
+
+        const userID = userResult.rows[0].id;
+
+        // Assegna il codice promozionale
+        const query =
+          "INSERT INTO promocodes_assignments (promocode_id, user_id) VALUES ($1, $2)";
+        await pool.query(query, [id, userID]);
+      }
+
+      res.status(200).json({
+        msg: `Codice promozionale assegnato agli utenti (${selectedUsers.join(", ")}) con successo`,
+      });
+    } catch (error) {
+      console.error(
+        "Errore durante l'assegnazione del codice promozionale agli utenti:",
+        error,
+      );
+      res.status(500).json({
+        msg: "Errore interno del server durante l'assegnazione del codice promozionale agli utenti.",
+      });
+    }
+  },
+);
 
 app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
-
   try {
     const { code } = req.body;
     const { user_id } = req.user;
@@ -2341,7 +2524,8 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
     if (!code) {
       return res.status(400).json({ msg: "Nessun codice inserito" });
     }
-    const query = "SELECT * FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
+    const query =
+      "SELECT * FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
     const values = [code];
     const result = await pool.query(query, values);
     const used_by = result.rows[0].used_by;
@@ -2349,66 +2533,79 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
     const code_id = result.rows[0].id;
 
     if (result.rows.length > 0) {
-
       if (used_by === "Tutti") {
-        return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
+        return res.status(200).json({
+          msg: "Codice valido, lo sconto verra applicato sui prodotti relativi",
+          discount: result.rows[0].discount,
+          used_by: used_by,
+          discount: discount,
+          code_id: code_id,
+        });
       }
 
-      const queryCheck = await pool.query("SELECT category FROM cart JOIN products on cart.product_id = products.id WHERE cart.user_id = $1", [user_id]);
-      const cartCategories = queryCheck.rows.map(row => row.category); // fetch the category of each product in the cart
+      const queryCheck = await pool.query(
+        "SELECT category FROM cart JOIN products on cart.product_id = products.id WHERE cart.user_id = $1",
+        [user_id],
+      );
+      const cartCategories = queryCheck.rows.map((row) => row.category); // fetch the category of each product in the cart
       if (cartCategories.includes(used_by)) {
-        return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
+        return res.status(200).json({
+          msg: "Codice valido, lo sconto verra applicato sui prodotti relativi",
+          discount: result.rows[0].discount,
+          used_by: used_by,
+          discount: discount,
+          code_id: code_id,
+        });
       } else {
-        return res.status(400).json({ msg: "Codice non valido per le certificazioni inserite nel carrello" });
-
+        return res.status(400).json({
+          msg: "Codice non valido per le certificazioni inserite nel carrello",
+        });
       }
-
     } else {
       return res.status(400).json({ msg: "Codice non esistente" });
     }
-
   } catch (error) {
     console.error("Errore nell'inserimento del codice:", error);
     res.status(500).json({ msg: "Errore" });
   }
-
-})
+});
 
 app.post("/api/get-code-id", authenticateJWT, async (req, res) => {
-
   try {
     const { code } = req.body;
     if (code === "") {
       res.status(200).json({ msg: "nessun codice inserito" });
     } else {
-      const query = "SELECT promocode_id FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
+      const query =
+        "SELECT promocode_id FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
       const values = [code];
       const result = await pool.query(query, values);
 
       res.status(200).json({ codeId: result.rows[0].promocode_id });
     }
-
-
   } catch (error) {
     console.error("Errore nella richiesta dell'id del codice:", error);
     res.status(500).json({ msg: "Errore" });
   }
-})
+});
 
-app.delete("/api/delete-promo-code/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
-
-  try {
-    const { id } = req.params;
-    //console.log(`ID: ${id}`);
-    const query = "DELETE FROM promocodes WHERE id = $1";
-    await pool.query(query, [id]);
-    res.status(200).json({ msg: "Certificazione eliminata con successo" });
-  } catch (error) {
-    console.error("Errore nella cancellazione del codice:", error);
-    res.status(500).json({ msg: "Errore nella cancellazione del codice" });
-  }
-})
-
+app.delete(
+  "/api/delete-promo-code/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      //console.log(`ID: ${id}`);
+      const query = "DELETE FROM promocodes WHERE id = $1";
+      await pool.query(query, [id]);
+      res.status(200).json({ msg: "Certificazione eliminata con successo" });
+    } catch (error) {
+      console.error("Errore nella cancellazione del codice:", error);
+      res.status(500).json({ msg: "Errore nella cancellazione del codice" });
+    }
+  },
+);
 
 app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
   try {
@@ -2418,7 +2615,8 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
     // check if the promo code is valid
     let promo = null;
     if (promoCode) {
-      const promoQuery = "SELECT * FROM promocodes WHERE code = $1 AND start <= CURRENT_DATE AND expiration >= CURRENT_DATE";
+      const promoQuery =
+        "SELECT * FROM promocodes WHERE code = $1 AND start <= CURRENT_DATE AND expiration >= CURRENT_DATE";
       const promoValues = [promoCode];
       const promoResult = await pool.query(promoQuery, promoValues);
 
@@ -2441,7 +2639,9 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       const productResult = await pool.query(productQuery, productValues);
 
       if (productResult.rows.length === 0) {
-        return res.status(400).json({ msg: `Certificazione con ID ${id} non trovata` });
+        return res
+          .status(400)
+          .json({ msg: `Certificazione con ID ${id} non trovata` });
       }
 
       const productInfo = productResult.rows[0];
@@ -2449,7 +2649,10 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       let productPrice = price; // default price
 
       if (promo) {
-        if (promo.used_by === "Tutti" || promo.used_by.includes(productInfo.category)) {
+        if (
+          promo.used_by === "Tutti" ||
+          promo.used_by.includes(productInfo.category)
+        ) {
           // Apply the promo code to compatible products
           productPrice = price * (1 - promo.discount / 100);
         }
@@ -2461,12 +2664,11 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       //const path = `http://localhost:8080/uploaded_img/${image}`
       ////console.log("path: ", path)
 
-
       items.push({
         price_data: {
-          currency: 'eur',
+          currency: "eur",
           product_data: {
-            name: name
+            name: name,
             //images: [path],
           },
           unit_amount: finalPriceInCents,
@@ -2477,24 +2679,28 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
 
     // Create a checkout session
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ["card"],
       line_items: items,
-      mode: 'payment',
+      mode: "payment",
       success_url: `${process.env.CLIENT_URL}/PaymentSuccess`,
       cancel_url: `${process.env.CLIENT_URL}/Cart`,
       metadata: {
         user_id: user_id,
-        promo_code: promoCode || '',
+        promo_code: promoCode || "",
       },
     });
 
     res.status(200).json({ url: session.url });
   } catch (error) {
-    console.error("Errore durante la creazione della sessione di checkout:", error);
-    res.status(500).json({ msg: "Errore durante la creazione della sessione di checkout" });
+    console.error(
+      "Errore durante la creazione della sessione di checkout:",
+      error,
+    );
+    res
+      .status(500)
+      .json({ msg: "Errore durante la creazione della sessione di checkout" });
   }
 });
-
 
 app.post("/api/create-order", authenticateJWT, async (req, res) => {
   try {
@@ -2505,10 +2711,10 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
     console.log("Codice ID:", codeID);
     console.log("User ID:", user_id);
 
-
     for (const id of orderData) {
       // Recover the quantity and price of the product
-      const query = "SELECT quantity, price FROM cart WHERE user_id = $1 AND product_id = $2";
+      const query =
+        "SELECT quantity, price FROM cart WHERE user_id = $1 AND product_id = $2";
       const values = [user_id, id];
       const result = await pool.query(query, values);
 
@@ -2516,22 +2722,28 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
 
       // Check if the product is in the cart
       if (result.rows.length === 0) {
-        return res.status(404).json({ msg: `Certificazione con ID ${id} non trovato nel carrello.` });
+        return res.status(404).json({
+          msg: `Certificazione con ID ${id} non trovato nel carrello.`,
+        });
       }
 
       const quantity = result.rows[0].quantity;
       const price = result.rows[0].price;
-      const order_date = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      const order_date = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
 
-      const queryCheck = "SELECT * FROM orders WHERE user_id = $1 AND product_id = $2";
+      const queryCheck =
+        "SELECT * FROM orders WHERE user_id = $1 AND product_id = $2";
       const existingOrder = await pool.query(queryCheck, [user_id, id]);
 
       /*if (existingOrder.rows.length > 0) {
         return res.status(400).json({ msg: `Ordine già esistente per il prodotto ID ${id}.` });
       }*/
 
-
-      const query2 = "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)";
+      const query2 =
+        "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)";
       const values2 = [quantity, price, user_id, id, codeID, order_date];
       await pool.query(query2, values2);
 
@@ -2539,7 +2751,6 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
     }
 
     res.status(201).json({ msg: "Ordine creato con successo." });
-
   } catch (error) {
     console.error("Errore durante la creazione dell'ordine:", error);
     res.status(500).json({ msg: "Errore durante la creazione dell'ordine" });
@@ -2579,15 +2790,21 @@ app.get("/api/user-orders", authenticateJWT, async (req, res) => {
   }
 });
 
-app.get("/api/all-orders", authenticateJWT, authenticateAdmin, async (req, res) => {
-  try {
-    const { user_id, role } = req.user;
+app.get(
+  "/api/all-orders",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { user_id, role } = req.user;
 
-    if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-    }
+      if (role !== "administrator") {
+        return res
+          .status(200)
+          .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+      }
 
-    const query = `
+      const query = `
           SELECT
               users.username AS username,
               users.company_name AS company_name, 
@@ -2605,23 +2822,21 @@ app.get("/api/all-orders", authenticateJWT, authenticateAdmin, async (req, res) 
           JOIN
               users ON orders.user_id = users.id
       `;
-    const result = await pool.query(query);
+      const result = await pool.query(query);
 
-    if (result.rows.length === 0) {
-      return res.status(200).json({ msg: "Nessun ordine trovato" });
+      if (result.rows.length === 0) {
+        return res.status(200).json({ msg: "Nessun ordine trovato" });
+      }
+
+      res.status(200).json(result.rows);
+    } catch (error) {
+      console.error("Errore nel recupero degli ordini:", error);
+      res.status(500).json({ msg: "Errore nel recupero degli ordini" });
     }
-
-    res.status(200).json(result.rows);
-  } catch (error) {
-    console.error("Errore nel recupero degli ordini:", error);
-    res.status(500).json({ msg: "Errore nel recupero degli ordini" });
-  }
-});
-
-
+  },
+);
 
 app.delete("/api/remove-user-cart", authenticateJWT, async (req, res) => {
-
   try {
     const { user_id } = req.user;
 
@@ -2630,73 +2845,85 @@ app.delete("/api/remove-user-cart", authenticateJWT, async (req, res) => {
     const resultCart = await pool.query(queryCart, valuesCart);
     const image = resultCart.rows[0].image;
 
-
     const query = "DELETE FROM cart WHERE user_id = $1";
     const values = [user_id];
     await pool.query(query, values);
     res.status(200).json({ msg: "Carrello cancellato con successo" });
   } catch (error) {
-    console.error("Errore nella rimozione degli articoli utente dal carrello:", error);
+    console.error(
+      "Errore nella rimozione degli articoli utente dal carrello:",
+      error,
+    );
     res.status(500).json({ msg: "Internal server error" });
   }
-})
+});
 
+app.post(
+  "/api/send-message-response",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { emailTitle, emailContent, receiverEmail } = req.body;
+      const { role, user_id } = req.user;
 
-app.post("/api/send-message-response", authenticateJWT, authenticateAdmin, async (req, res) => {
+      if (role !== "administrator") {
+        return res
+          .status(200)
+          .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+      }
 
-  try {
-    const { emailTitle, emailContent, receiverEmail } = req.body;
-    const { role, user_id } = req.user;
+      if (!emailTitle || !emailContent) {
+        return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
+      }
 
-    if (role !== "administrator") {
-      return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+      if (!receiverEmail) {
+        return res
+          .status(400)
+          .json({ msg: "Problemi nel reperire l'email del destinatario" });
+      }
+
+      const result = await pool.query(
+        "SELECT id, username, email FROM users WHERE email = $1",
+        [receiverEmail],
+      );
+
+      if (result.rows.length === 0) {
+        return res
+          .status(400)
+          .json({ msg: "Non esiste un utente con questa email" });
+      }
+
+      const { username } = result.rows[0];
+
+      const myUsername = "SELECT username FROM users WHERE id = $1";
+      const values = [user_id];
+      const result2 = await pool.query(myUsername, values);
+      if (result2.rows.length === 0) {
+        return res
+          .status(400)
+          .json({ msg: "Non esiste un utente con questo ID" });
+      }
+
+      const admin_username = result2.rows[0].username;
+
+      sendEmailResponse({
+        recipient_email: receiverEmail,
+        email_title: emailTitle,
+        email_content: emailContent,
+        receiver_username: username,
+        admin_username: admin_username,
+      });
+
+      return res
+        .status(200)
+        .json({ msg: "Email di risposta inviata correttamente" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
-
-    if (!emailTitle || !emailContent) {
-      return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
-    }
-
-    if (!receiverEmail) {
-      return res.status(400).json({ msg: "Problemi nel reperire l'email del destinatario" });
-    }
-
-    const result = await pool.query(
-      "SELECT id, username, email FROM users WHERE email = $1",
-      [receiverEmail]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(400).json({ msg: "Non esiste un utente con questa email" });
-    }
-
-    const { username } = result.rows[0];
-
-    const myUsername = "SELECT username FROM users WHERE id = $1";
-    const values = [user_id];
-    const result2 = await pool.query(myUsername, values);
-    if (result2.rows.length === 0) {
-      return res.status(400).json({ msg: "Non esiste un utente con questo ID" });
-    }
-
-    const admin_username = result2.rows[0].username
-
-    sendEmailResponse({
-      recipient_email: receiverEmail,
-      email_title: emailTitle,
-      email_content: emailContent,
-      receiver_username: username,
-      admin_username: admin_username
-    });
-
-    return res.status(200).json({ msg: "Email di risposta inviata correttamente" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-
-})
-
+  },
+);
 
 app.post("/api/upload-building", authenticateJWT, async (req, res) => {
   try {
@@ -2725,7 +2952,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       activityDescription,
       annualTurnover,
       employees,
-      prodProcessDescription
+      prodProcessDescription,
       //buildingScore
     } = req.body;
 
@@ -2733,24 +2960,52 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
 
     console.log("Dati dell'ordine:", req.body);
 
-    if (!name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+    if (
+      !name ||
+      !address ||
+      !usage ||
+      !year ||
+      !area ||
+      !location ||
+      !renovation ||
+      !heating ||
+      !ventilation ||
+      !energyControl ||
+      !maintenance ||
+      !waterRecovery ||
+      !electricityCounter ||
+      !electricityAnalyzer ||
+      !electricForniture ||
+      !lighting ||
+      !led ||
+      !gasLamp ||
+      !autoLightingControlSystem
+    ) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
     if (isNaN(area)) {
-      return res.status(400).json({ msg: "Il campo 'area' deve essere un numero." });
+      return res
+        .status(400)
+        .json({ msg: "Il campo 'area' deve essere un numero." });
     }
 
     if (isNaN(lighting)) {
-      return res.status(400).json({ msg: "Il campo 'illuminazione' deve essere un numero." });
+      return res
+        .status(400)
+        .json({ msg: "Il campo 'illuminazione' deve essere un numero." });
     }
 
     if (isNaN(led)) {
-      return res.status(400).json({ msg: "Il campo 'LED' deve essere un numero." });
+      return res
+        .status(400)
+        .json({ msg: "Il campo 'LED' deve essere un numero." });
     }
 
     if (isNaN(gasLamp)) {
-      return res.status(400).json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
+      return res
+        .status(400)
+        .json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
     }
 
     const userId = req.user.user_id;
@@ -2784,7 +3039,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       activityDescription,
       annualTurnover,
       employees,
-      prodProcessDescription
+      prodProcessDescription,
     ];
 
     const query = `
@@ -2824,7 +3079,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
 
     res.status(200).json({ msg: "Edificio caricato con successo" });
   } catch (error) {
-    console.error('Error inserting building:', error.message);
+    console.error("Error inserting building:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
@@ -2856,32 +3111,59 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       activityDescription,
       annualTurnover,
       employees,
-      prodProcessDescription
+      prodProcessDescription,
       //buildingScore
     } = req.body;
 
-
-
     //console.log(req.body);
 
-    if (!id || !name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+    if (
+      !id ||
+      !name ||
+      !address ||
+      !usage ||
+      !year ||
+      !area ||
+      !location ||
+      !renovation ||
+      !heating ||
+      !ventilation ||
+      !energyControl ||
+      !maintenance ||
+      !waterRecovery ||
+      !electricityCounter ||
+      !electricityAnalyzer ||
+      !electricForniture ||
+      !lighting ||
+      !led ||
+      !gasLamp ||
+      !autoLightingControlSystem
+    ) {
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
     if (isNaN(area)) {
-      return res.status(400).json({ msg: "Il campo 'area' deve essere un numero." });
+      return res
+        .status(400)
+        .json({ msg: "Il campo 'area' deve essere un numero." });
     }
 
     if (isNaN(lighting)) {
-      return res.status(400).json({ msg: "Il campo 'illuminazione' deve essere un numero." });
+      return res
+        .status(400)
+        .json({ msg: "Il campo 'illuminazione' deve essere un numero." });
     }
 
     if (isNaN(led)) {
-      return res.status(400).json({ msg: "Il campo 'LED' deve essere un numero." });
+      return res
+        .status(400)
+        .json({ msg: "Il campo 'LED' deve essere un numero." });
     }
 
     if (isNaN(gasLamp)) {
-      return res.status(400).json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
+      return res
+        .status(400)
+        .json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
     }
 
     const userId = req.user.user_id;
@@ -2916,10 +3198,11 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       annualTurnover,
       employees,
       prodProcessDescription,
-      id
+      id,
     ];
 
-    await pool.query(`
+    await pool.query(
+      `
       UPDATE buildings
       SET
         name = $1,
@@ -2948,15 +3231,16 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
         num_employees = $24,
         prodProcessDesc = $25
       WHERE id = $26
-  `, values);
+  `,
+      values,
+    );
 
     res.status(200).json({ msg: "Edificio aggiornato con successo" });
   } catch (error) {
-    console.error('Error updating building:', error.message);
+    console.error("Error updating building:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
-
 
 app.delete("/api/delete-building/:id", authenticateJWT, async (req, res) => {
   try {
@@ -2967,9 +3251,8 @@ app.delete("/api/delete-building/:id", authenticateJWT, async (req, res) => {
     const values = [user_id, id];
     await pool.query(query, values);
     res.status(200).json({ msg: "Edificio rimosso con successo" });
-
   } catch (error) {
-    console.error('Error deleting building:', error.message);
+    console.error("Error deleting building:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
@@ -2982,220 +3265,273 @@ app.get("/api/fetch-buildings", authenticateJWT, async (req, res) => {
       return res.status(401).json({ msg: "Utente non autenticato" });
     }
 
-    const rows = await pool.query(`
+    const rows = await pool.query(
+      `
       SELECT * FROM buildings WHERE user_id = $1
-    `, [userId]);
+    `,
+      [userId],
+    );
 
-    const numBuildings = await pool.query(`
+    const numBuildings = await pool.query(
+      `
       SELECT COUNT(*) FROM buildings WHERE user_id = $1
-    `, [userId]);
+    `,
+      [userId],
+    );
 
     //console.log('Response:', rows.rows, numBuildings.rows[0].count);
 
-    res.status(200).json({ buildings: rows.rows, numBuildings: numBuildings.rows[0].count });
+    res
+      .status(200)
+      .json({ buildings: rows.rows, numBuildings: numBuildings.rows[0].count });
   } catch (error) {
-    console.error('Error fetching buildings:', error.message);
+    console.error("Error fetching buildings:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
-})
+});
 
 app.get("/api/fetch-building/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
 
-    const rows = await pool.query(`SELECT * FROM buildings WHERE id = $1 AND user_id = $2`, [id, user_id]);
+    const rows = await pool.query(
+      `SELECT * FROM buildings WHERE id = $1 AND user_id = $2`,
+      [id, user_id],
+    );
     res.status(200).json({ building: rows.rows[0] });
   } catch (error) {
-    console.error('Error fetching building:', error.message);
+    console.error("Error fetching building:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
-})
+});
 
+app.post(
+  "/api/buildings/:id/upload/plant",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { user_id } = req.user;
+      const {
+        description,
+        plantType,
+        serviceType,
+        generatorType,
+        generatorDescription,
+        fuelType,
+        hasGasLeak = false,
+        refrigerantGases = [],
+      } = req.body;
 
-app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-    const {
-      description,
-      plantType,
-      serviceType,
-      generatorType,
-      generatorDescription,
-      fuelType,
-      hasGasLeak = false,
-      refrigerantGases = [],
-    } = req.body;
-
-    if (!description || !plantType || !serviceType || !generatorType || !fuelType) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
-    }
-
-    let validGases = [];
-    if (hasGasLeak) {
-      validGases = refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
-      if (validGases.length === 0) {
-        return res.status(400).json({ msg: "Devi inserire almeno un gas refrigerante" });
+      if (
+        !description ||
+        !plantType ||
+        !serviceType ||
+        !generatorType ||
+        !fuelType
+      ) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, compilare tutti i campi" });
       }
-    }
 
-    const values = [
-      user_id, id,
-      description,
-      plantType,
-      serviceType,
-      generatorType,
-      generatorDescription,
-      fuelType,
-      //quantity, 
-      //electricitySupply, 
-      //plantScore
-    ];
+      let validGases = [];
+      if (hasGasLeak) {
+        validGases = refrigerantGases.filter(
+          (gas) =>
+            gas.type.trim() !== "" &&
+            gas.quantity !== "" &&
+            !isNaN(Number(gas.quantity)) &&
+            Number(gas.quantity) > 0,
+        );
+        if (validGases.length === 0) {
+          return res
+            .status(400)
+            .json({ msg: "Devi inserire almeno un gas refrigerante" });
+        }
+      }
 
-    const insertPlantResult = await pool.query(`
+      const values = [
+        user_id,
+        id,
+        description,
+        plantType,
+        serviceType,
+        generatorType,
+        generatorDescription,
+        fuelType,
+        //quantity,
+        //electricitySupply,
+        //plantScore
+      ];
+
+      const insertPlantResult = await pool.query(
+        `
       INSERT INTO plants (
         user_id, building_id, description, plant_type, service_type, generator_type, generator_description, fuel_type
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8
       ) RETURNING id
-    `, values);
+    `,
+        values,
+      );
 
-    const plant_id = insertPlantResult.rows[0].id;
+      const plant_id = insertPlantResult.rows[0].id;
 
-    if (hasGasLeak && refrigerantGases.length > 0) {
-
-      // Prepariamo query per inserire gas refrigeranti
-      for (const gas of validGases) {
-        const { type, quantity } = gas;
-        await pool.query(`
+      if (hasGasLeak && refrigerantGases.length > 0) {
+        // Prepariamo query per inserire gas refrigeranti
+        for (const gas of validGases) {
+          const { type, quantity } = gas;
+          await pool.query(
+            `
           INSERT INTO refrigerant_gases (
             gas_type, quantity_kg, plant_id, building_id, user_id
           ) VALUES ($1, $2, $3, $4, $5)
-        `, [
-          type,
-          Number(quantity),
-          plant_id,
-          id,
-          user_id
-        ]);
+        `,
+            [type, Number(quantity), plant_id, id, user_id],
+          );
+        }
       }
-    }
-    if (hasGasLeak) {
-      res.status(200).json({ msg: "Impianto e gas refrigeranti aggiunti con successo" });
-    } else {
-      res.status(200).json({ msg: "Impianto aggiunto con successo" });
-    }
-
-  } catch (error) {
-    console.error('Error adding plant:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
-
-
-app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req, res) => {
-  try {
-    const { id, plant_id } = req.params;
-    const { user_id } = req.user;
-    const {
-      description,
-      plantType,
-      serviceType,
-      generatorType,
-      generatorDescription,
-      fuelType,
-      hasGasLeak = false,
-      refrigerantGases = [],
-    } = req.body;
-
-    if (!description || !plantType || !serviceType || !generatorType) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
-    }
-
-    let validGases = [];
-    if (hasGasLeak) {
-      validGases = refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
-      if (validGases.length === 0) {
-        return res.status(400).json({ msg: "Devi inserire almeno un gas refrigerante" });
+      if (hasGasLeak) {
+        res
+          .status(200)
+          .json({ msg: "Impianto e gas refrigeranti aggiunti con successo" });
+      } else {
+        res.status(200).json({ msg: "Impianto aggiunto con successo" });
       }
+    } catch (error) {
+      console.error("Error adding plant:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    const values = [
-      user_id,
-      id,
-      description,
-      plantType,
-      serviceType,
-      generatorType,
-      generatorDescription,
-      fuelType,
-      //quantity, 
-      //electricitySupply, 
-      //plantScore, 
-      plant_id
-    ];
+app.put(
+  "/api/buildings/:id/update/plant/:plant_id",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id, plant_id } = req.params;
+      const { user_id } = req.user;
+      const {
+        description,
+        plantType,
+        serviceType,
+        generatorType,
+        generatorDescription,
+        fuelType,
+        hasGasLeak = false,
+        refrigerantGases = [],
+      } = req.body;
 
-    const updatePlantResult = await pool.query(`
+      if (!description || !plantType || !serviceType || !generatorType) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, compilare tutti i campi" });
+      }
+
+      let validGases = [];
+      if (hasGasLeak) {
+        validGases = refrigerantGases.filter(
+          (gas) =>
+            gas.type.trim() !== "" &&
+            gas.quantity !== "" &&
+            !isNaN(Number(gas.quantity)) &&
+            Number(gas.quantity) > 0,
+        );
+        if (validGases.length === 0) {
+          return res
+            .status(400)
+            .json({ msg: "Devi inserire almeno un gas refrigerante" });
+        }
+      }
+
+      const values = [
+        user_id,
+        id,
+        description,
+        plantType,
+        serviceType,
+        generatorType,
+        generatorDescription,
+        fuelType,
+        //quantity,
+        //electricitySupply,
+        //plantScore,
+        plant_id,
+      ];
+
+      const updatePlantResult = await pool.query(
+        `
       UPDATE plants
       SET description = $3, plant_type = $4, service_type = $5, generator_type = $6, generator_description = $7, fuel_type = $8
       WHERE user_id = $1 AND building_id = $2 AND id = $9
       RETURNING id
-    `, values);
+    `,
+        values,
+      );
 
-    const _plant_id = updatePlantResult.rows[0].id;
+      const _plant_id = updatePlantResult.rows[0].id;
 
-    if (hasGasLeak && refrigerantGases.length > 0) {
-
-      // Prepariamo query per inserire gas refrigeranti
-      for (const gas of validGases) {
-        const { type, quantity } = gas;
-        await pool.query(`
+      if (hasGasLeak && refrigerantGases.length > 0) {
+        // Prepariamo query per inserire gas refrigeranti
+        for (const gas of validGases) {
+          const { type, quantity } = gas;
+          await pool.query(
+            `
           INSERT INTO refrigerant_gases (
             gas_type, quantity_kg, plant_id, building_id, user_id
           ) VALUES ($1, $2, $3, $4, $5)
-        `, [
-          type,
-          Number(quantity),
-          plant_id,
-          id,
-          user_id
-        ]);
+        `,
+            [type, Number(quantity), plant_id, id, user_id],
+          );
+        }
       }
+      if (hasGasLeak) {
+        res.status(200).json({
+          msg: "Impianto aggiornato con successo e aggiunti gas refrigeranti. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente",
+        });
+      } else {
+        res.status(200).json({
+          msg: "Impianto aggiornato con successo. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating plant:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
-    if (hasGasLeak) {
-      res.status(200).json({ msg: "Impianto aggiornato con successo e aggiunti gas refrigeranti. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente" });
-    } else {
-      res.status(200).json({ msg: "Impianto aggiornato con successo. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente" });
+  },
+);
+
+app.get(
+  "/api/buildings/:id/fetch-plants",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { user_id } = req.user;
+
+      const query2 =
+        "SELECT COUNT(*) FROM plants WHERE building_id = $1 AND user_id = $2";
+      const values2 = [id, user_id];
+      const result2 = await pool.query(query2, values2);
+      const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+
+      //console.log('Count from database:', count); // Log count
+
+      const rows = await pool.query(
+        `SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`,
+        [id, user_id],
+      );
+
+      res.status(200).json({ plants: rows.rows, count: count });
+    } catch (error) {
+      console.error("Error fetching plants:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
-
-  } catch (error) {
-    console.error('Error updating plant:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
-
-
-app.get("/api/buildings/:id/fetch-plants", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-
-    const query2 = "SELECT COUNT(*) FROM plants WHERE building_id = $1 AND user_id = $2";
-    const values2 = [id, user_id];
-    const result2 = await pool.query(query2, values2);
-    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
-
-    //console.log('Count from database:', count); // Log count
-
-    const rows = await pool.query(`SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`, [id, user_id]);
-
-    res.status(200).json({ plants: rows.rows, count: count });
-  } catch (error) {
-    console.error('Error fetching plants:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-});
+  },
+);
 
 app.delete("/api/delete-plant/:id", authenticateJWT, async (req, res) => {
   try {
@@ -3205,37 +3541,39 @@ app.delete("/api/delete-plant/:id", authenticateJWT, async (req, res) => {
     await pool.query(`DELETE FROM plants WHERE id = $1`, [id]);
     res.status(200).json({ msg: "Impianto eliminato con successo" });
   } catch (error) {
-    console.error('Error deleting plant:', error.message);
+    console.error("Error deleting plant:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
-
 
 app.get("/api/buildings/:id/fetch-gases", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
 
-    const query2 = "SELECT COUNT(*) FROM refrigerant_gases WHERE building_id = $1 AND user_id = $2";
+    const query2 =
+      "SELECT COUNT(*) FROM refrigerant_gases WHERE building_id = $1 AND user_id = $2";
     const values2 = [id, user_id];
     const result2 = await pool.query(query2, values2);
     const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
 
     //console.log('Count from database:', count); // Log count
 
-    const rows = await pool.query(`
+    const rows = await pool.query(
+      `
       SELECT 
         rg.*, 
         p.description AS plant_name
       FROM refrigerant_gases rg
       LEFT JOIN plants p ON rg.plant_id = p.id
       WHERE rg.user_id = $1 AND rg.building_id = $2;
-    `, [id, user_id]);
-
+    `,
+      [id, user_id],
+    );
 
     res.status(200).json({ gases: rows.rows, count: count });
   } catch (error) {
-    console.error('Error fetching gases:', error.message);
+    console.error("Error fetching gases:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
@@ -3244,260 +3582,330 @@ app.post("/api/buildings/:id/upload/gas", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    const {
-      type,
-      quantityKg,
-    } = req.body;
+    const { type, quantityKg } = req.body;
 
     if (!type || !quantityKg) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+      return res
+        .status(400)
+        .json({ msg: "Per favore, compilare tutti i campi" });
     }
 
-    const values = [
-      user_id, id,
-      type,
-      quantityKg,
-    ];
+    const values = [user_id, id, type, quantityKg];
 
-    await pool.query(`
+    await pool.query(
+      `
       INSERT INTO refrigerant_gases (
         user_id, building_id, gas_type, quantity_kg
       ) VALUES (
         $1, $2, $3, $4
       )
-    `, values);
+    `,
+      values,
+    );
 
     res.status(200).json({ msg: "Gas clima alterante aggiunto con successo" });
   } catch (error) {
-    console.error('Error adding gas:', error.message);
+    console.error("Error adding gas:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
-})
+});
 
-app.put("/api/buildings/:id/update/gas/:gas_id", authenticateJWT, async (req, res) => {
-  try {
-    const { id, gas_id } = req.params;
-    const { user_id } = req.user;
-    const {
-      type,
-      quantityKg,
-    } = req.body;
+app.put(
+  "/api/buildings/:id/update/gas/:gas_id",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id, gas_id } = req.params;
+      const { user_id } = req.user;
+      const { type, quantityKg } = req.body;
 
-    if (!type || !quantityKg) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
-    }
+      if (!type || !quantityKg) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, compilare tutti i campi" });
+      }
 
-    const values = [
-      user_id, id,
-      type,
-      quantityKg,
-      gas_id
-    ];
+      const values = [user_id, id, type, quantityKg, gas_id];
 
-    await pool.query(`
+      await pool.query(
+        `
       UPDATE refrigerant_gases
       SET gas_type = $3, quantity_kg = $4
       WHERE user_id = $1 AND building_id = $2 AND id = $5
-    `, values);
+    `,
+        values,
+      );
 
-    res.status(200).json({ msg: "Gas clima alterante aggiornato con successo." });
-  } catch (error) {
-    console.error('Error updating gas:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
+      res
+        .status(200)
+        .json({ msg: "Gas clima alterante aggiornato con successo." });
+    } catch (error) {
+      console.error("Error updating gas:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
+    }
+  },
+);
 
 app.delete("/api/delete-gas/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    console.log('user_id:', user_id);
-    console.log('id:', id);
+    console.log("user_id:", user_id);
+    console.log("id:", id);
 
-    await pool.query(`DELETE FROM refrigerant_gases WHERE id = $1 AND user_id = $2`, [id, user_id]);
+    await pool.query(
+      `DELETE FROM refrigerant_gases WHERE id = $1 AND user_id = $2`,
+      [id, user_id],
+    );
     res.status(200).json({ msg: "Gas clima alterante eliminato con successo" });
   } catch (error) {
-    console.error('Error deleting gas:', error.message);
+    console.error("Error deleting gas:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
 
+app.get(
+  "/api/:buildingID/fetch-user-energies",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { user_id } = req.user;
+      const { buildingID } = req.params;
+      //console.log('buildingID:', buildingID);
 
-app.get("/api/:buildingID/fetch-user-energies", authenticateJWT, async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const { buildingID } = req.params;
-    //console.log('buildingID:', buildingID);
-
-    const rows = await pool.query(`SELECT DISTINCT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2 AND fuel_type <> 'Elettricità'`, [user_id, buildingID]);
-    res.status(200).json({ energies: rows.rows });
-  } catch (error) {
-    console.error('Error fetching energies:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
-
-app.post("/api/:buildingID/add-consumption", authenticateJWT, async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const { buildingID } = req.params;
-    const { energy_source, consumption } = req.body;
-
-
-    if (!energy_source || !consumption) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi per ogni consumo" });
+      const rows = await pool.query(
+        `SELECT DISTINCT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2 AND fuel_type <> 'Elettricità'`,
+        [user_id, buildingID],
+      );
+      res.status(200).json({ energies: rows.rows });
+    } catch (error) {
+      console.error("Error fetching energies:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    const rows = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2 AND energy_source = $3`, [user_id, buildingID, energy_source]);
+app.post(
+  "/api/:buildingID/add-consumption",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { user_id } = req.user;
+      const { buildingID } = req.params;
+      const { energy_source, consumption } = req.body;
 
-    if (rows.rowCount > 0) {
-      return res.status(400).json({ msg: "Hai già aggiunto questo consumo" });
-    }
+      if (!energy_source || !consumption) {
+        return res.status(400).json({
+          msg: "Per favore, compilare tutti i campi per ogni consumo",
+        });
+      }
 
-    if (isNaN(consumption)) {
-      return res.status(400).json({ msg: "Il consumo deve essere un valore numerico" });
-    }
+      const rows = await pool.query(
+        `SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2 AND energy_source = $3`,
+        [user_id, buildingID, energy_source],
+      );
 
-    const values = [user_id, buildingID, energy_source, consumption];
-    await pool.query(`
+      if (rows.rowCount > 0) {
+        return res.status(400).json({ msg: "Hai già aggiunto questo consumo" });
+      }
+
+      if (isNaN(consumption)) {
+        return res
+          .status(400)
+          .json({ msg: "Il consumo deve essere un valore numerico" });
+      }
+
+      const values = [user_id, buildingID, energy_source, consumption];
+      await pool.query(
+        `
         INSERT INTO user_consumptions (user_id, building_id, energy_source, consumption)
         VALUES ($1, $2, $3, $4)
-      `, values);
+      `,
+        values,
+      );
 
-
-    res.status(200).json({ msg: "Consumo aggiunto con successo" });
-
-  } catch (error) {
-    console.error('Error adding consumption:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-});
-
-app.get("/api/:buildingID/fetch-consumption-data", authenticateJWT, async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const { buildingID } = req.params;
-    //console.log('buildingID:', buildingID);
-
-    const rows = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2`, [user_id, buildingID]);
-    res.status(200).json({ consumptions: rows.rows });
-  } catch (error) {
-    console.error('Error fetching consumption data:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
-
-app.put("/api/:buildingID/modify-consumption/:consumptionId", authenticateJWT, async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const { buildingID } = req.params;
-    const { consumptionId } = req.params;
-    const { energy_source, consumption } = req.body;
-
-
-    if (!energy_source || !consumption) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi per ogni consumo" });
+      res.status(200).json({ msg: "Consumo aggiunto con successo" });
+    } catch (error) {
+      console.error("Error adding consumption:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    if (isNaN(consumption)) {
-      return res.status(400).json({ msg: "Il consumo deve essere un valore numerico" });
+app.get(
+  "/api/:buildingID/fetch-consumption-data",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { user_id } = req.user;
+      const { buildingID } = req.params;
+      //console.log('buildingID:', buildingID);
+
+      const rows = await pool.query(
+        `SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2`,
+        [user_id, buildingID],
+      );
+      res.status(200).json({ consumptions: rows.rows });
+    } catch (error) {
+      console.error("Error fetching consumption data:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    await pool.query(`UPDATE user_consumptions SET energy_source = $1, consumption = $2 WHERE id = $3 AND building_id = $4 AND user_id = $5`, [energy_source, consumption, consumptionId, buildingID, user_id]);
-    res.status(200).json({ msg: "Consumo modificato con successo" });
-  } catch (error) {
-    console.error('Error modifying consumption:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
+app.put(
+  "/api/:buildingID/modify-consumption/:consumptionId",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { user_id } = req.user;
+      const { buildingID } = req.params;
+      const { consumptionId } = req.params;
+      const { energy_source, consumption } = req.body;
 
-app.delete("/api/:buildingID/delete-consumption/:id", authenticateJWT, async (req, res) => {
-  try {
-    const { user_id } = req.user;
-    const { buildingID } = req.params;
-    const { id } = req.params;
+      if (!energy_source || !consumption) {
+        return res.status(400).json({
+          msg: "Per favore, compilare tutti i campi per ogni consumo",
+        });
+      }
 
-    //console.log('buildingID:', buildingID);
-    //console.log('consumption id:', id);
-    //console.log('user_id:', user_id);
+      if (isNaN(consumption)) {
+        return res
+          .status(400)
+          .json({ msg: "Il consumo deve essere un valore numerico" });
+      }
 
-    await pool.query(`DELETE FROM user_consumptions WHERE id = $1 AND building_id = $2 AND user_id = $3`, [id, buildingID, user_id]);
-    res.status(200).json({ msg: "Consumo eliminato con successo" });
-  } catch (error) {
-    console.error('Error deleting consumption:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-});
-
-app.post("/api/buildings/:id/upload/solar", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-    const { installedArea } = req.body;
-
-    if (!installedArea) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+      await pool.query(
+        `UPDATE user_consumptions SET energy_source = $1, consumption = $2 WHERE id = $3 AND building_id = $4 AND user_id = $5`,
+        [energy_source, consumption, consumptionId, buildingID, user_id],
+      );
+      res.status(200).json({ msg: "Consumo modificato con successo" });
+    } catch (error) {
+      console.error("Error modifying consumption:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    if (isNaN(installedArea)) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
+app.delete(
+  "/api/:buildingID/delete-consumption/:id",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { user_id } = req.user;
+      const { buildingID } = req.params;
+      const { id } = req.params;
+
+      //console.log('buildingID:', buildingID);
+      //console.log('consumption id:', id);
+      //console.log('user_id:', user_id);
+
+      await pool.query(
+        `DELETE FROM user_consumptions WHERE id = $1 AND building_id = $2 AND user_id = $3`,
+        [id, buildingID, user_id],
+      );
+      res.status(200).json({ msg: "Consumo eliminato con successo" });
+    } catch (error) {
+      console.error("Error deleting consumption:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    if (installedArea <= 0) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
-    }
+app.post(
+  "/api/buildings/:id/upload/solar",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { user_id } = req.user;
+      const { installedArea } = req.body;
 
-    const values = [id, installedArea];
+      if (!installedArea) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, compilare tutti i campi" });
+      }
 
-    await pool.query(`
+      if (isNaN(installedArea)) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, inserisci un valore numerico" });
+      }
+
+      if (installedArea <= 0) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, inserisci un valore positivo" });
+      }
+
+      const values = [id, installedArea];
+
+      await pool.query(
+        `
       INSERT INTO solars (
         building_id, installed_area
       ) VALUES (
         $1, $2
       )
-    `, values);
+    `,
+        values,
+      );
 
-    res.status(200).json({ msg: "Impianto solare aggiunto con successo" });
-  } catch (error) {
-    console.error('Error adding solar:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-
-})
-
-app.put("/api/buildings/:id/update/solar/:solarID", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-    const { installedArea } = req.body;
-    const { solarID } = req.params;
-
-    if (!installedArea) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+      res.status(200).json({ msg: "Impianto solare aggiunto con successo" });
+    } catch (error) {
+      console.error("Error adding solar:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    if (isNaN(installedArea)) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
-    }
+app.put(
+  "/api/buildings/:id/update/solar/:solarID",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { user_id } = req.user;
+      const { installedArea } = req.body;
+      const { solarID } = req.params;
 
-    if (installedArea <= 0) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
-    }
+      if (!installedArea) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, compilare tutti i campi" });
+      }
 
-    const values = [installedArea, solarID, id];
+      if (isNaN(installedArea)) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, inserisci un valore numerico" });
+      }
 
-    await pool.query(`
+      if (installedArea <= 0) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, inserisci un valore positivo" });
+      }
+
+      const values = [installedArea, solarID, id];
+
+      await pool.query(
+        `
       UPDATE solars
       SET installed_area = $1
       WHERE id = $2 AND building_id = $3
-    `, values);
+    `,
+        values,
+      );
 
-    res.status(200).json({ msg: "Impianto solare aggiornato con successo" });
-  } catch (error) {
-    console.error('Error updating solar:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
+      res.status(200).json({ msg: "Impianto solare aggiornato con successo" });
+    } catch (error) {
+      console.error("Error updating solar:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
+    }
+  },
+);
 
 app.delete("/api/delete-solar/:id", authenticateJWT, async (req, res) => {
   try {
@@ -3507,278 +3915,381 @@ app.delete("/api/delete-solar/:id", authenticateJWT, async (req, res) => {
     await pool.query("DELETE FROM solars WHERE id = $1", values);
     res.status(200).json({ msg: "Impianto solare eliminato con successo" });
   } catch (error) {
-    console.error('Error deleting solar:', error.message);
+    console.error("Error deleting solar:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
-})
+});
 
-app.get("/api/buildings/:id/fetch-solars", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
+app.get(
+  "/api/buildings/:id/fetch-solars",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { user_id } = req.user;
 
-    const rows = await pool.query(`SELECT * FROM solars WHERE building_id = $1`, [id]);
+      const rows = await pool.query(
+        `SELECT * FROM solars WHERE building_id = $1`,
+        [id],
+      );
 
-    const query2 = "SELECT COUNT(*) FROM solars WHERE building_id = $1";
-    const values2 = [id];
-    const result2 = await pool.query(query2, values2);
-    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+      const query2 = "SELECT COUNT(*) FROM solars WHERE building_id = $1";
+      const values2 = [id];
+      const result2 = await pool.query(query2, values2);
+      const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
 
-    res.status(200).json({ solars: rows.rows, count: count });
-  } catch (error) {
-    console.error('Error fetching solars:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
-
-app.post("/api/buildings/:id/upload/photovoltaic", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-    const { power } = req.body;
-
-    if (!power) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+      res.status(200).json({ solars: rows.rows, count: count });
+    } catch (error) {
+      console.error("Error fetching solars:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    if (isNaN(power)) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
-    }
+app.post(
+  "/api/buildings/:id/upload/photovoltaic",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { user_id } = req.user;
+      const { power } = req.body;
 
-    if (power <= 0) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
-    }
+      if (!power) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, compilare tutti i campi" });
+      }
 
-    const values = [id, power];
+      if (isNaN(power)) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, inserisci un valore numerico" });
+      }
 
-    await pool.query(`
+      if (power <= 0) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, inserisci un valore positivo" });
+      }
+
+      const values = [id, power];
+
+      await pool.query(
+        `
       INSERT INTO photovoltaics (
         building_id, power
       ) VALUES (
         $1, $2
       )
-    `, values);
+    `,
+        values,
+      );
 
-    res.status(200).json({ msg: "Impianto fotovoltaico aggiunto con successo" });
-  } catch (error) {
-    console.error('Error adding photovoltaic:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-
-})
-
-app.delete("/api/delete-photovoltaic/:id", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-
-    const values = [id];
-    await pool.query("DELETE FROM photovoltaics WHERE id = $1", values);
-    res.status(200).json({ msg: "Impianto fotovoltaico eliminato con successo" });
-  } catch (error) {
-    console.error('Error deleting photovoltaic:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-
-
-})
-
-app.put("/api/buildings/:id/update-photovoltaic/:photoID", authenticateJWT, async (req, res) => {
-  try {
-    const { id, photoID } = req.params;
-    const { user_id } = req.user;
-    const { power } = req.body;
-
-
-    if (!power) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
+      res
+        .status(200)
+        .json({ msg: "Impianto fotovoltaico aggiunto con successo" });
+    } catch (error) {
+      console.error("Error adding photovoltaic:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    if (isNaN(power)) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore numerico" });
+app.delete(
+  "/api/delete-photovoltaic/:id",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { user_id } = req.user;
+
+      const values = [id];
+      await pool.query("DELETE FROM photovoltaics WHERE id = $1", values);
+      res
+        .status(200)
+        .json({ msg: "Impianto fotovoltaico eliminato con successo" });
+    } catch (error) {
+      console.error("Error deleting photovoltaic:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    if (power <= 0) {
-      return res.status(400).json({ msg: "Per favore, inserisci un valore positivo" });
-    }
+app.put(
+  "/api/buildings/:id/update-photovoltaic/:photoID",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id, photoID } = req.params;
+      const { user_id } = req.user;
+      const { power } = req.body;
 
-    const values = [power, photoID, id];
-    await pool.query(`
+      if (!power) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, compilare tutti i campi" });
+      }
+
+      if (isNaN(power)) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, inserisci un valore numerico" });
+      }
+
+      if (power <= 0) {
+        return res
+          .status(400)
+          .json({ msg: "Per favore, inserisci un valore positivo" });
+      }
+
+      const values = [power, photoID, id];
+      await pool.query(
+        `
       UPDATE photovoltaics
       SET power = $1
       WHERE id = $2 AND building_id = $3
-    `, values);
-    res.status(200).json({ msg: "Impianto fotovoltaico aggiornato con successo" });
-  } catch (error) {
-    console.error('Error updating photovoltaic:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-
-})
-
-app.get("/api/buildings/:id/fetch-photovoltaics", authenticateJWT, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { user_id } = req.user;
-
-    const rows = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [id]);
-
-    const query2 = "SELECT COUNT(*) FROM photovoltaics WHERE building_id = $1";
-    const values2 = [id];
-    const result2 = await pool.query(query2, values2);
-    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
-
-    res.status(200).json({ photos: rows.rows, count: count });
-  } catch (error) {
-    console.error('Error fetching photovoltaics:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
-
-app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, res) => {
-  try {
-    const { buildingID } = req.params;
-    const { user_id } = req.user;
-
-    //fetch building data
-    const buildingData = await pool.query(`SELECT * FROM buildings WHERE id = $1`, [buildingID]);
-
-    if (buildingData.rows.length === 0) {
-      return res.status(404).json({ msg: "Edificio non trovato" });
+    `,
+        values,
+      );
+      res
+        .status(200)
+        .json({ msg: "Impianto fotovoltaico aggiornato con successo" });
+    } catch (error) {
+      console.error("Error updating photovoltaic:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    const building = buildingData.rows[0];
+app.get(
+  "/api/buildings/:id/fetch-photovoltaics",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { user_id } = req.user;
 
-    //Check if building has at least one plant
-    const hasPlants = await pool.query(`SELECT COUNT(*)::int AS count FROM plants WHERE building_id = $1 AND user_id = $2`, [buildingID, user_id]);
-    if (hasPlants.rows[0].count === 0) {
-      return res.status(400).json({ error: "Non hai inserito impianti nel tuo edificio. Almeno un impianto è richiesto" });
+      const rows = await pool.query(
+        `SELECT * FROM photovoltaics WHERE building_id = $1`,
+        [id],
+      );
+
+      const query2 =
+        "SELECT COUNT(*) FROM photovoltaics WHERE building_id = $1";
+      const values2 = [id];
+      const result2 = await pool.query(query2, values2);
+      const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+
+      res.status(200).json({ photos: rows.rows, count: count });
+    } catch (error) {
+      console.error("Error fetching photovoltaics:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
+  },
+);
 
-    // Check if user has consumption data for the building
-    const userHasConsumptionData = await pool.query(
-      "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2;",
-      [user_id, buildingID]
-    );
-    if (userHasConsumptionData.rows.length === 0) {
-      return res.status(400).json({ error: "Non hai ancora dati di consumo per questo edificio" });
+app.get(
+  "/api/:buildingID/fetch-emissions-data",
+  authenticateJWT,
+  async (req, res) => {
+    try {
+      const { buildingID } = req.params;
+      const { user_id } = req.user;
+
+      //fetch building data
+      const buildingData = await pool.query(
+        `SELECT * FROM buildings WHERE id = $1`,
+        [buildingID],
+      );
+
+      if (buildingData.rows.length === 0) {
+        return res.status(404).json({ msg: "Edificio non trovato" });
+      }
+
+      const building = buildingData.rows[0];
+
+      //Check if building has at least one plant
+      const hasPlants = await pool.query(
+        `SELECT COUNT(*)::int AS count FROM plants WHERE building_id = $1 AND user_id = $2`,
+        [buildingID, user_id],
+      );
+      if (hasPlants.rows[0].count === 0) {
+        return res.status(400).json({
+          error:
+            "Non hai inserito impianti nel tuo edificio. Almeno un impianto è richiesto",
+        });
+      }
+
+      // Check if user has consumption data for the building
+      const userHasConsumptionData = await pool.query(
+        "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2;",
+        [user_id, buildingID],
+      );
+      if (userHasConsumptionData.rows.length === 0) {
+        return res.status(400).json({
+          error: "Non hai ancora dati di consumo per questo edificio",
+        });
+      }
+
+      // Recover the quantity and price of the product
+      const plantsConsumptions = await pool.query(
+        "SELECT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2;",
+        [user_id, buildingID],
+      );
+      //console.log("consumptionCheck:", plantsConsumptions.rows);
+
+      // Recover the quantity and price of the product
+      const userConsumptions = await pool.query(
+        "SELECT energy_source FROM user_consumptions WHERE user_id = $1 AND building_id = $2;",
+        [user_id, buildingID],
+      );
+      //console.log("userConsumptions:", userConsumptions.rows);
+
+      const userRefrigerantGasesResult = await pool.query(
+        "SELECT gas_type, quantity_kg FROM refrigerant_gases WHERE user_id = $1 AND building_id = $2;",
+        [user_id, buildingID],
+      );
+
+      const userRefrigerantGases = userRefrigerantGasesResult.rows;
+
+      // Extract the fuel types from the rows
+      const plantFuelTypes = plantsConsumptions.rows.map(
+        (row) => row.fuel_type,
+      );
+      const userEnergySources = userConsumptions.rows.map(
+        (row) => row.energy_source,
+      );
+
+      if (!userEnergySources.includes("Elettricità")) {
+        return res
+          .status(400)
+          .json({ error: "Il consumo di elettricità è richiesto." });
+      }
+
+      // Check if all fuel types are present
+      const allFuelTypesMatched = plantFuelTypes.every((fuelType) =>
+        userEnergySources.includes(fuelType),
+      );
+
+      // Find missing fuel types
+      const missingConsumptions = plantFuelTypes.filter(
+        (fuelType) => !userEnergySources.includes(fuelType),
+      );
+
+      //console.log("missingEnergySources:", missingConsumptions);
+      //check if an userenergysource is not included in plantfueltypes
+      const allEnergySourcesMatched = userEnergySources
+        .filter((energySource) => energySource !== "Elettricità")
+        .every((energySource) => plantFuelTypes.includes(energySource));
+      const missingEnergySources = userEnergySources.filter(
+        (energySource) => !plantFuelTypes.includes(energySource),
+      );
+      //remove Elettricità
+      missingEnergySources.splice(
+        missingEnergySources.indexOf("Elettricità"),
+        1,
+      );
+      console.log("missingEnergySources:", missingEnergySources);
+
+      if (!allEnergySourcesMatched) {
+        return res.status(400).json({
+          error: `Il consumo ${missingEnergySources} registrato non è più presente tra gli impianti.`,
+        });
+      }
+
+      if (!allFuelTypesMatched) {
+        return res.status(400).json({
+          error: `Non ha inserito tutti i consumi. Consumi mancanti: ${missingConsumptions}`,
+        });
+      }
+
+      //Fetch solars and photovoltaics data fo user and building
+      const rows = await pool.query(
+        `SELECT * FROM photovoltaics WHERE building_id = $1`,
+        [buildingID],
+      );
+      const query2 =
+        "SELECT COUNT(*) FROM photovoltaics WHERE building_id = $1";
+      const totalPower = await pool.query(
+        `SELECT SUM(power) FROM photovoltaics WHERE building_id = $1`,
+        [buildingID],
+      );
+      ////console.log(totalPower);
+      const values2 = [buildingID];
+      const result2 = await pool.query(query2, values2);
+      const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
+
+      const rows2 = await pool.query(
+        `SELECT * FROM solars WHERE building_id = $1`,
+        [buildingID],
+      );
+      const query3 = "SELECT COUNT(*) FROM solars WHERE building_id = $1";
+      const totalIstalledArea = await pool.query(
+        `SELECT SUM(installed_area) FROM solars WHERE building_id = $1`,
+        [buildingID],
+      );
+      ////console.log(totalIstalledArea);
+      const values3 = [buildingID];
+      const result3 = await pool.query(query3, values3);
+      const count2 = parseInt(result3.rows[0].count, 10); // Convert to integer for accuracy
+
+      //fetch building plants
+      const query =
+        "SELECT * FROM plants WHERE building_id = $1 AND user_id = $2";
+      const values = [buildingID, user_id];
+      const result = await pool.query(query, values);
+      const plants = result.rows;
+
+      const solaData = {
+        solars: rows2.rows,
+        count2: count2,
+        totalIstalledArea: totalIstalledArea.rows[0].sum,
+      };
+
+      const photoData = {
+        photovoltaics: rows.rows,
+        count: count,
+        totalPower: totalPower.rows[0].sum,
+      };
+
+      //fetch user consumptions
+      const query4 =
+        "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2";
+      const values4 = [user_id, buildingID];
+      const result4 = await pool.query(query4, values4);
+      const consumptions = result4.rows;
+
+      res.status(200).json({
+        buildingData: building,
+        plants: plants,
+        solaData: solaData,
+        photoData: photoData,
+        consumptionsData: consumptions,
+        refrigerantGases: userRefrigerantGases,
+      });
+    } catch (error) {
+      console.error("Error fetching photovoltaics:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
     }
-
-
-    // Recover the quantity and price of the product
-    const plantsConsumptions = await pool.query(
-      "SELECT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2;",
-      [user_id, buildingID]
-    );
-    //console.log("consumptionCheck:", plantsConsumptions.rows);
-
-    // Recover the quantity and price of the product
-    const userConsumptions = await pool.query(
-      "SELECT energy_source FROM user_consumptions WHERE user_id = $1 AND building_id = $2;",
-      [user_id, buildingID]
-    );
-    //console.log("userConsumptions:", userConsumptions.rows);
-
-    const userRefrigerantGasesResult = await pool.query(
-      "SELECT gas_type, quantity_kg FROM refrigerant_gases WHERE user_id = $1 AND building_id = $2;",
-      [user_id, buildingID]
-    );
-
-    const userRefrigerantGases = userRefrigerantGasesResult.rows;
-
-    // Extract the fuel types from the rows
-    const plantFuelTypes = plantsConsumptions.rows.map(row => row.fuel_type);
-    const userEnergySources = userConsumptions.rows.map(row => row.energy_source);
-
-    if (!userEnergySources.includes("Elettricità")) {
-      return res.status(400).json({ error: "Il consumo di elettricità è richiesto." });
-    }
-
-    // Check if all fuel types are present
-    const allFuelTypesMatched = plantFuelTypes.every(fuelType =>
-      userEnergySources.includes(fuelType)
-    );
-
-    // Find missing fuel types
-    const missingConsumptions = plantFuelTypes.filter(fuelType =>
-      !userEnergySources.includes(fuelType)
-    );
-
-    //console.log("missingEnergySources:", missingConsumptions);
-    //check if an userenergysource is not included in plantfueltypes
-    const allEnergySourcesMatched = userEnergySources.filter(energySource => energySource !== "Elettricità").every(energySource => plantFuelTypes.includes(energySource));
-    const missingEnergySources = userEnergySources.filter(energySource => !plantFuelTypes.includes(energySource));
-    //remove Elettricità 
-    missingEnergySources.splice(missingEnergySources.indexOf("Elettricità"), 1);
-    console.log("missingEnergySources:", missingEnergySources);
-
-    if (!allEnergySourcesMatched) {
-      return res.status(400).json({ error: `Il consumo ${missingEnergySources} registrato non è più presente tra gli impianti.` });
-    }
-
-    if (!allFuelTypesMatched) {
-      return res.status(400).json({ error: `Non ha inserito tutti i consumi. Consumi mancanti: ${missingConsumptions}` });
-    }
-
-    //Fetch solars and photovoltaics data fo user and building 
-    const rows = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [buildingID]);
-    const query2 = "SELECT COUNT(*) FROM photovoltaics WHERE building_id = $1";
-    const totalPower = await pool.query(`SELECT SUM(power) FROM photovoltaics WHERE building_id = $1`, [buildingID]);
-    ////console.log(totalPower);
-    const values2 = [buildingID];
-    const result2 = await pool.query(query2, values2);
-    const count = parseInt(result2.rows[0].count, 10); // Convert to integer for accuracy
-
-    const rows2 = await pool.query(`SELECT * FROM solars WHERE building_id = $1`, [buildingID]);
-    const query3 = "SELECT COUNT(*) FROM solars WHERE building_id = $1";
-    const totalIstalledArea = await pool.query(`SELECT SUM(installed_area) FROM solars WHERE building_id = $1`, [buildingID]);
-    ////console.log(totalIstalledArea);
-    const values3 = [buildingID];
-    const result3 = await pool.query(query3, values3);
-    const count2 = parseInt(result3.rows[0].count, 10); // Convert to integer for accuracy
-
-    //fetch building plants
-    const query = "SELECT * FROM plants WHERE building_id = $1 AND user_id = $2";
-    const values = [buildingID, user_id];
-    const result = await pool.query(query, values);
-    const plants = result.rows;
-
-    const solaData = {
-      solars: rows2.rows,
-      count2: count2,
-      totalIstalledArea: totalIstalledArea.rows[0].sum
-    };
-
-    const photoData = {
-      photovoltaics: rows.rows,
-      count: count,
-      totalPower: totalPower.rows[0].sum
-    };
-
-    //fetch user consumptions
-    const query4 = "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2";
-    const values4 = [user_id, buildingID];
-    const result4 = await pool.query(query4, values4);
-    const consumptions = result4.rows;
-
-    res.status(200).json({ buildingData: building, plants: plants, solaData: solaData, photoData: photoData, consumptionsData: consumptions, refrigerantGases: userRefrigerantGases });
-
-  } catch (error) {
-    console.error('Error fetching photovoltaics:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
+  },
+);
 
 app.get("/api/fetch-report-data", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
 
     //fetch user data
-    const userData = await pool.query(`SELECT * FROM users WHERE id = $1`, [user_id]);
+    const userData = await pool.query(`SELECT * FROM users WHERE id = $1`, [
+      user_id,
+    ]);
     const user = userData.rows[0];
 
     // Fetch all buildings for the user
-    const buildingsData = await pool.query(`SELECT * FROM buildings WHERE user_id = $1`, [user_id]);
+    const buildingsData = await pool.query(
+      `SELECT * FROM buildings WHERE user_id = $1`,
+      [user_id],
+    );
 
     // Create arrays to hold the data for each building
     const buildings = [];
@@ -3787,29 +4298,47 @@ app.get("/api/fetch-report-data", authenticateJWT, async (req, res) => {
       const buildingID = building.id;
 
       // Fetch plants for the current building
-      const plantsQuery = await pool.query(`SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`, [buildingID, user_id]);
+      const plantsQuery = await pool.query(
+        `SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`,
+        [buildingID, user_id],
+      );
       const plants = plantsQuery.rows;
 
       // Fetch photovoltaics data for the current building
-      const photoQuery = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [buildingID]);
-      const totalPowerQuery = await pool.query(`SELECT SUM(power) FROM photovoltaics WHERE building_id = $1`, [buildingID]);
+      const photoQuery = await pool.query(
+        `SELECT * FROM photovoltaics WHERE building_id = $1`,
+        [buildingID],
+      );
+      const totalPowerQuery = await pool.query(
+        `SELECT SUM(power) FROM photovoltaics WHERE building_id = $1`,
+        [buildingID],
+      );
 
       const photoData = {
         photovoltaics: photoQuery.rows,
-        totalPower: totalPowerQuery.rows[0].sum || 0  // In case there's no photovoltaics data
+        totalPower: totalPowerQuery.rows[0].sum || 0, // In case there's no photovoltaics data
       };
 
       // Fetch solar data for the current building
-      const solarQuery = await pool.query(`SELECT * FROM solars WHERE building_id = $1`, [buildingID]);
-      const totalInstalledAreaQuery = await pool.query(`SELECT SUM(installed_area) FROM solars WHERE building_id = $1`, [buildingID]);
+      const solarQuery = await pool.query(
+        `SELECT * FROM solars WHERE building_id = $1`,
+        [buildingID],
+      );
+      const totalInstalledAreaQuery = await pool.query(
+        `SELECT SUM(installed_area) FROM solars WHERE building_id = $1`,
+        [buildingID],
+      );
 
       const solaData = {
         solars: solarQuery.rows,
-        totalInstalledArea: totalInstalledAreaQuery.rows[0].sum || 0  // In case there's no solar data
+        totalInstalledArea: totalInstalledAreaQuery.rows[0].sum || 0, // In case there's no solar data
       };
 
       // Fetch consumptions for the current building
-      const consumptionsQuery = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2`, [user_id, buildingID]);
+      const consumptionsQuery = await pool.query(
+        `SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2`,
+        [user_id, buildingID],
+      );
       const consumptions = consumptionsQuery.rows;
 
       // Store the data for the current building
@@ -3818,19 +4347,17 @@ app.get("/api/fetch-report-data", authenticateJWT, async (req, res) => {
         plants,
         photoData,
         solaData,
-        consumptions
+        consumptions,
       });
     }
 
     // Return all the building data with their associated details
     res.status(200).json({ user, buildings });
-
   } catch (error) {
-    console.error('Error fetching data:', error.message);
+    console.error("Error fetching data:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
-
 
 app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
   try {
@@ -3853,7 +4380,8 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
           o.user_id = $1;
     `, [user_id]);*/
 
-    const rows = await pool.query(`
+    const rows = await pool.query(
+      `
      SELECT DISTINCT ON (p.category)
         o.product_id AS product_id,
         p.category AS product_category,
@@ -3869,24 +4397,32 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
         survey_responses sr ON sr.certification_id = o.product_id
     WHERE 
         o.user_id = $1
-    `, [user_id]);
+    `,
+      [user_id],
+    );
 
     res.status(200).json({ surveyInfo: rows.rows });
   } catch (error) {
-    console.error('Error fetching orders:', error.message);
+    console.error("Error fetching orders:", error.message);
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
 
-
-app.post('/api/responses', authenticateJWT, async (req, res) => {
-  const { pageNo, certification_id, totalScore, CO2emissions, completed, surveyData } = req.body;
+app.post("/api/responses", authenticateJWT, async (req, res) => {
+  const {
+    pageNo,
+    certification_id,
+    totalScore,
+    CO2emissions,
+    completed,
+    surveyData,
+  } = req.body;
   const { user_id } = req.user;
 
   ////console.log("ALL", user_id, pageNo, surveyData, totalScore, completed);
 
   if (!surveyData) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
@@ -3902,18 +4438,25 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
         completed = EXCLUDED.completed
       RETURNING id;
     `;
-    const values = [user_id, certification_id, pageNo, surveyData, totalScore, CO2emissions, completed]; // Aggiungi totalScore
+    const values = [
+      user_id,
+      certification_id,
+      pageNo,
+      surveyData,
+      totalScore,
+      CO2emissions,
+      completed,
+    ]; // Aggiungi totalScore
 
     const result = await pool.query(query, values);
     res.status(200).json({ id: result.rows[0].id });
   } catch (err) {
     console.error("Error inserting or updating survey response:", err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-
-app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
+app.get("/api/responses-fetch", authenticateJWT, async (req, res) => {
   const { certification_id } = req.query;
   const { user_id } = req.user;
 
@@ -3929,13 +4472,13 @@ app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
     const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'No survey data found' });
+      return res.status(404).json({ error: "No survey data found" });
     }
 
     res.json(result.rows[0]);
   } catch (err) {
     console.error("Error restoring survey data:", err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -3966,21 +4509,27 @@ app.get("/api/users-generator-types", authenticateJWT, async (req, res) => {
   }
 });
 
-app.post("/api/users-assign-score", authenticateJWT, authenticateAdmin, async (req, res) => {
-  const { score, requestor_id, generatorType, plant_id } = req.body;
+app.post(
+  "/api/users-assign-score",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    const { score, requestor_id, generatorType, plant_id } = req.body;
 
-  const { role, user_id } = req.user;
-  if (role !== "administrator") {
-    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
+    const { role, user_id } = req.user;
+    if (role !== "administrator") {
+      return res
+        .status(200)
+        .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
 
-  //console.log("user_id:", requestor_id);
-  //console.log("score:", score);
-  //console.log("score type:", typeof score);
-  //console.log("generatorType:", generatorType);
+    //console.log("user_id:", requestor_id);
+    //console.log("score:", score);
+    //console.log("score type:", typeof score);
+    //console.log("generatorType:", generatorType);
 
-  try {
-    const query = `
+    try {
+      const query = `
           UPDATE plants
           SET generator_assigned_score = $1
           WHERE user_id = $2
@@ -3988,53 +4537,78 @@ app.post("/api/users-assign-score", authenticateJWT, authenticateAdmin, async (r
           AND id = $4
       `;
 
-    const result = await pool.query(query, [parseFloat(score), requestor_id, generatorType, plant_id]);
+      const result = await pool.query(query, [
+        parseFloat(score),
+        requestor_id,
+        generatorType,
+        plant_id,
+      ]);
 
-    if (result.rowCount > 0) {
-      res.status(200).json({ message: 'Punteggio aggiornato con successo', data: result.rows[0] });
-    } else {
-      res.status(404).json({ message: 'Generatore non trovato' });
+      if (result.rowCount > 0) {
+        res.status(200).json({
+          message: "Punteggio aggiornato con successo",
+          data: result.rows[0],
+        });
+      } else {
+        res.status(404).json({ message: "Generatore non trovato" });
+      }
+    } catch (error) {
+      console.error("Errore durante l'aggiornamento del punteggio:", error);
+      res.status(500).json({ message: "Errore del server" });
     }
-  } catch (error) {
-    console.error('Errore durante l\'aggiornamento del punteggio:', error);
-    res.status(500).json({ message: 'Errore del server' });
-  }
-});
+  },
+);
 
-app.post("/api/second-level-certification", authenticateJWT, async (req, res) => {
-  const { userInfo, certification_id } = req.body;
-  const { user_id } = req.user;
-  //console.log("user_id:", user_id);
-  //console.log("certification_id:", certification_id);
+app.post(
+  "/api/second-level-certification",
+  authenticateJWT,
+  async (req, res) => {
+    const { userInfo, certification_id } = req.body;
+    const { user_id } = req.user;
+    //console.log("user_id:", user_id);
+    //console.log("certification_id:", certification_id);
 
-  try {
-    const query = `
+    try {
+      const query = `
       INSERT INTO second_level_certification_requests (certification_id, user_id, created_at)
       VALUES ($1, $2, NOW())
       RETURNING id;
     `;
 
-    const values = [certification_id, user_id];
-    const result = await pool.query(query, values);
-    res.status(201).json({ id: result.rows[0].id });
-  } catch (err) {
-    if (err.code === '23505') {  // Error code for unique constraint violation
-      return res.status(201).json({ message: "La richiesta per questo utente e certificazione esiste già." });
+      const values = [certification_id, user_id];
+      const result = await pool.query(query, values);
+      res.status(201).json({ id: result.rows[0].id });
+    } catch (err) {
+      if (err.code === "23505") {
+        // Error code for unique constraint violation
+        return res.status(201).json({
+          message:
+            "La richiesta per questo utente e certificazione esiste già.",
+        });
+      }
+      console.error(
+        "Errore nell'inviare la richiesta di certificazione di secondo, livello",
+        err,
+      );
+      res.status(500).json({ error: "Errore del server" });
     }
-    console.error("Errore nell'inviare la richiesta di certificazione di secondo, livello", err);
-    res.status(500).json({ error: 'Errore del server' });
-  }
+  },
+);
 
-});
+app.get(
+  "/api/fetch-second-level-requests",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    const { role, user_id } = req.user;
+    if (role !== "administrator") {
+      return res
+        .status(200)
+        .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
 
-app.get("/api/fetch-second-level-requests", authenticateJWT, authenticateAdmin, async (req, res) => {
-  const { role, user_id } = req.user;
-  if (role !== "administrator") {
-    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
-
-  try {
-    const query = `
+    try {
+      const query = `
       SELECT users.username AS username, users.company_name AS company_name, users.phone_number, products.category AS category, users.username AS username, second_level_certification_requests.created_at AS created_at, second_level_certification_requests.id AS request_id, users.id AS user_id
       FROM second_level_certification_requests
       JOIN users ON users.id = second_level_certification_requests.user_id
@@ -4042,9 +4616,9 @@ app.get("/api/fetch-second-level-requests", authenticateJWT, authenticateAdmin, 
       WHERE approved = false
       ;
     `;
-    const result = await pool.query(query);
+      const result = await pool.query(query);
 
-    const query2 = `
+      const query2 = `
     SELECT users.username AS username, users.company_name AS company_name, users.phone_number, products.category AS category, users.username AS username, second_level_certification_requests.created_at AS created_at, second_level_certification_requests.id AS request_id, users.id AS user_id
       FROM second_level_certification_requests
       JOIN users ON users.id = second_level_certification_requests.user_id
@@ -4053,53 +4627,60 @@ app.get("/api/fetch-second-level-requests", authenticateJWT, authenticateAdmin, 
       ;
     `;
 
-    const result2 = await pool.query(query2);
-    res.status(200).json({ requests: result.rows, approved: result2.rows });
-  } catch (err) {
-    console.error("Errore nel fetch delle richieste di certificazione di secondo, livello", err);
-    res.status(500).json({ error: 'Errore del server' });
-  }
+      const result2 = await pool.query(query2);
+      res.status(200).json({ requests: result.rows, approved: result2.rows });
+    } catch (err) {
+      console.error(
+        "Errore nel fetch delle richieste di certificazione di secondo, livello",
+        err,
+      );
+      res.status(500).json({ error: "Errore del server" });
+    }
+  },
+);
 
-});
+app.post(
+  "/api/approve-second-level-request",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    const { request_id, user_requestor_id } = req.body;
+    //console.log("request_id:", request_id);
+    //console.log("user_requestor_id:", user_requestor_id);
+    const { role } = req.user;
+    if (role !== "administrator") {
+      return res
+        .status(200)
+        .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
 
-app.post("/api/approve-second-level-request", authenticateJWT, authenticateAdmin, async (req, res) => {
-  const { request_id, user_requestor_id } = req.body;
-  //console.log("request_id:", request_id);
-  //console.log("user_requestor_id:", user_requestor_id);
-  const { role } = req.user;
-  if (role !== "administrator") {
-    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
-
-  try {
-
-
-
-    const query = `
+    try {
+      const query = `
       INSERT INTO second_level_certification_approvation (request_id, user_id, created_at)
       VALUES ($1, $2, NOW())
       RETURNING id;
     `;
 
-    const values = [request_id, user_requestor_id];
-    const result = await pool.query(query, values);
+      const values = [request_id, user_requestor_id];
+      const result = await pool.query(query, values);
 
-    const query2 = `UPDATE second_level_certification_requests
+      const query2 = `UPDATE second_level_certification_requests
     SET approved = true
     WHERE id = $1 AND user_id = $2
-    `
-      ;
-    const values2 = [request_id, user_requestor_id];
-    await pool.query(query2, values2);
+    `;
+      const values2 = [request_id, user_requestor_id];
+      await pool.query(query2, values2);
 
-    res.status(200).json(result.rows[0]);
-  } catch (err) {
-    console.error("Errore nell'approvazione della richiesta di certificazione di secondo, livello", err);
-    res.status(500).json({ error: 'Errore del server' });
-  }
-
-
-})
+      res.status(200).json(result.rows[0]);
+    } catch (err) {
+      console.error(
+        "Errore nell'approvazione della richiesta di certificazione di secondo, livello",
+        err,
+      );
+      res.status(500).json({ error: "Errore del server" });
+    }
+  },
+);
 
 app.get("/api/fetch-approved-requests", authenticateJWT, async (req, res) => {
   const { user_id } = req.user;
@@ -4122,199 +4703,244 @@ app.get("/api/fetch-approved-requests", authenticateJWT, async (req, res) => {
     const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
-      return res.status(204).json({ error: 'No approved certification requests found' });
+      return res
+        .status(204)
+        .json({ error: "No approved certification requests found" });
     } else if (result.rows.length > 0) {
       return res.status(200).json(result.rows);
     }
   } catch (err) {
-    console.error("Errore nel fetch delle richieste di certificazione di secondo, livello", err);
-    res.status(500).json({ error: 'Errore del server' });
-  }
-})
-
-app.put("/api/cancel-approvation/:approvation_id", authenticateJWT, async (req, res) => {
-  const { approvation_id } = req.params;
-  const { user_id } = req.user;
-
-  try {
-
-    await pool.query(
-      `UPDATE second_level_certification_approvation
-       SET is_cancelled = TRUE
-       WHERE id = $1 AND user_id = $2`,
-      [approvation_id, user_id]
+    console.error(
+      "Errore nel fetch delle richieste di certificazione di secondo, livello",
+      err,
     );
-
-    res.status(200).json({ message: 'Approvation cancelled successfully' });
-  } catch (err) {
-    console.error("Errore nel fetch delle richieste di certificazione di secondo, livello", err);
-    res.status(500).json({ error: 'Errore del server' });
-  }
-})
-
-app.delete("/api/delete-second-level-request", authenticateJWT, authenticateAdmin, async (req, res) => {
-
-  const { request_id, user_requestor_id } = req.query;  // Cambia req.body con req.query
-  const { role } = req.user;
-  //console.log("request_id:", request_id);
-  //console.log("user_requestor_id:", user_requestor_id);
-  if (role !== "administrator") {
-    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
-
-  try {
-    const query = `
-      DELETE FROM second_level_certification_requests
-      WHERE id = $1 AND user_id = $2;
-    `;
-    const values = [request_id, user_requestor_id];
-    await pool.query(query, values);
-    res.status(200).json({ message: 'Request deleted successfully' });
-  } catch (err) {
-    console.error("Errore nel fetch delle richieste di certificazione di secondo livello", err);
-    res.status(500).json({ error: 'Errore del server' });
+    res.status(500).json({ error: "Errore del server" });
   }
 });
 
-app.get("/api/fetch-user-info-by-buildings", authenticateJWT, authenticateAdmin, async (req, res) => {
+app.put(
+  "/api/cancel-approvation/:approvation_id",
+  authenticateJWT,
+  async (req, res) => {
+    const { approvation_id } = req.params;
+    const { user_id } = req.user;
 
-  const { role } = req.user;
+    try {
+      await pool.query(
+        `UPDATE second_level_certification_approvation
+       SET is_cancelled = TRUE
+       WHERE id = $1 AND user_id = $2`,
+        [approvation_id, user_id],
+      );
 
-  if (role !== "administrator") {
-    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
-
-  try {
-
-    const query = "SELECT * FROM users WHERE id IN (SELECT DISTINCT user_id FROM buildings);";
-    const result = await pool.query(query);
-
-    if (result.rows.length === 0) {
-      return res.status(204).json({ error: 'Nessun utente trovato' });
-    } else if (result.rows.length > 0) {
-      return res.status(200).json(result.rows);
+      res.status(200).json({ message: "Approvation cancelled successfully" });
+    } catch (err) {
+      console.error(
+        "Errore nel fetch delle richieste di certificazione di secondo, livello",
+        err,
+      );
+      res.status(500).json({ error: "Errore del server" });
     }
-  } catch (err) {
-    console.error("Errore nel fetch dei dati", err);
-    res.status(500).json({ error: 'Errore del server' });
-  }
-})
+  },
+);
 
-app.get("/api/fetch-user-buildings/:id", authenticateJWT, authenticateAdmin, async (req, res) => {
-
-  const { role } = req.user;
-  const { id } = req.params;
-
-  if (role !== "administrator") {
-    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
-
-  try {
-
-    const query = "SELECT * FROM buildings WHERE user_id = $1;";
-    const values = [id];
-    const result = await pool.query(query, values);
-
-    if (result.rows.length === 0) {
-      return res.status(204).json({ error: 'Nessun edificio trovato' });
-    } else if (result.rows.length > 0) {
-      return res.status(200).json(result.rows);
+app.delete(
+  "/api/delete-second-level-request",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    const { request_id, user_requestor_id } = req.query; // Cambia req.body con req.query
+    const { role } = req.user;
+    //console.log("request_id:", request_id);
+    //console.log("user_requestor_id:", user_requestor_id);
+    if (role !== "administrator") {
+      return res
+        .status(200)
+        .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
     }
-  } catch (err) {
-    console.error("Errore nel fetch dei dati", err);
-    res.status(500).json({ error: 'Errore del server' });
-  }
 
-})
-
-app.get("/api/fetch-building-plants-solars-photos/:id/:buildingID", authenticateJWT, async (req, res) => {
-
-  const { role } = req.user;
-  const { id, buildingID } = req.params;
-  //console.log("buildingID:", buildingID);
-  //console.log("id:", id);
-
-  if (role !== "administrator") {
-    return res.status(200).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
-
-  try {
-
-    //fetch plants
-    const query = "SELECT * FROM plants WHERE user_id = $1 AND building_id = $2;";
-    const values = [id, buildingID];
-    const result = await pool.query(query, values);
-
-    //fetch solars
-    const query2 = "SELECT * FROM solars WHERE building_id = $1;";
-    const values2 = [buildingID];
-    const result2 = await pool.query(query2, values2);
-
-    //fetch photovoltaics
-    const query3 = "SELECT * FROM photovoltaics WHERE building_id = $1;";
-    const values3 = [buildingID];
-    const result3 = await pool.query(query3, values3);
-
-    //fetch user consumptions
-    const query4 = "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2;";
-    const values4 = [id, buildingID];
-    const result4 = await pool.query(query4, values4);
-
-    if (result.rows.length === 0) {
-      return res.status(204).json({ error: 'Alcuni dati non trovati' });
-    } else if (result.rows.length > 0) {
-      return res.status(200).json({ plants: result.rows, solars: result2.rows, photovoltaics: result3.rows, consumptions: result4.rows });
+    try {
+      const query = `
+      DELETE FROM second_level_certification_requests
+      WHERE id = $1 AND user_id = $2;
+    `;
+      const values = [request_id, user_requestor_id];
+      await pool.query(query, values);
+      res.status(200).json({ message: "Request deleted successfully" });
+    } catch (err) {
+      console.error(
+        "Errore nel fetch delle richieste di certificazione di secondo livello",
+        err,
+      );
+      res.status(500).json({ error: "Errore del server" });
     }
-  } catch (err) {
-    console.error("Errore nel fetch dei dati", err);
-    res.status(500).json({ error: 'Errore del server' });
-  }
-})
+  },
+);
 
-app.put("/api/insert-results/:buildingID", authenticateJWT, async (req, res) => {
+app.get(
+  "/api/fetch-user-info-by-buildings",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    const { role } = req.user;
 
-  const { user_id } = req.user;
-  const { buildingID } = req.params;
-  const { finalVote, totalCO2Emissions, areaCO2Emissions } = req.body;
-  console.log("buildingID:", buildingID);
-  console.log("user_id:", user_id);
-  console.log("finalVote:", finalVote);
-  console.log("totalCO2Emissions:", totalCO2Emissions);
+    if (role !== "administrator") {
+      return res
+        .status(200)
+        .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
 
+    try {
+      const query =
+        "SELECT * FROM users WHERE id IN (SELECT DISTINCT user_id FROM buildings);";
+      const result = await pool.query(query);
 
-  try {
-    await pool.query(`UPDATE buildings SET  emissionMark = $1, emissionCO2 = $2, areaEmissionCO2 = $3, results_visible = true WHERE id = $4 AND user_id = $5`, [finalVote, totalCO2Emissions, areaCO2Emissions, buildingID, user_id]);
-    res.status(200).json({ msg: "Risultati inseriti con successo" });
-  } catch (error) {
-    console.error('Error inserting results:', error.message);
-    res.status(500).json({ msg: "Errore interno del server" });
-  }
-})
+      if (result.rows.length === 0) {
+        return res.status(204).json({ error: "Nessun utente trovato" });
+      } else if (result.rows.length > 0) {
+        return res.status(200).json(result.rows);
+      }
+    } catch (err) {
+      console.error("Errore nel fetch dei dati", err);
+      res.status(500).json({ error: "Errore del server" });
+    }
+  },
+);
+
+app.get(
+  "/api/fetch-user-buildings/:id",
+  authenticateJWT,
+  authenticateAdmin,
+  async (req, res) => {
+    const { role } = req.user;
+    const { id } = req.params;
+
+    if (role !== "administrator") {
+      return res
+        .status(200)
+        .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
+
+    try {
+      const query = "SELECT * FROM buildings WHERE user_id = $1;";
+      const values = [id];
+      const result = await pool.query(query, values);
+
+      if (result.rows.length === 0) {
+        return res.status(204).json({ error: "Nessun edificio trovato" });
+      } else if (result.rows.length > 0) {
+        return res.status(200).json(result.rows);
+      }
+    } catch (err) {
+      console.error("Errore nel fetch dei dati", err);
+      res.status(500).json({ error: "Errore del server" });
+    }
+  },
+);
+
+app.get(
+  "/api/fetch-building-plants-solars-photos/:id/:buildingID",
+  authenticateJWT,
+  async (req, res) => {
+    const { role } = req.user;
+    const { id, buildingID } = req.params;
+    //console.log("buildingID:", buildingID);
+    //console.log("id:", id);
+
+    if (role !== "administrator") {
+      return res
+        .status(200)
+        .json({ msg: "Non hai i permessi per accedere a questa risorsa" });
+    }
+
+    try {
+      //fetch plants
+      const query =
+        "SELECT * FROM plants WHERE user_id = $1 AND building_id = $2;";
+      const values = [id, buildingID];
+      const result = await pool.query(query, values);
+
+      //fetch solars
+      const query2 = "SELECT * FROM solars WHERE building_id = $1;";
+      const values2 = [buildingID];
+      const result2 = await pool.query(query2, values2);
+
+      //fetch photovoltaics
+      const query3 = "SELECT * FROM photovoltaics WHERE building_id = $1;";
+      const values3 = [buildingID];
+      const result3 = await pool.query(query3, values3);
+
+      //fetch user consumptions
+      const query4 =
+        "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2;";
+      const values4 = [id, buildingID];
+      const result4 = await pool.query(query4, values4);
+
+      if (result.rows.length === 0) {
+        return res.status(204).json({ error: "Alcuni dati non trovati" });
+      } else if (result.rows.length > 0) {
+        return res.status(200).json({
+          plants: result.rows,
+          solars: result2.rows,
+          photovoltaics: result3.rows,
+          consumptions: result4.rows,
+        });
+      }
+    } catch (err) {
+      console.error("Errore nel fetch dei dati", err);
+      res.status(500).json({ error: "Errore del server" });
+    }
+  },
+);
+
+app.put(
+  "/api/insert-results/:buildingID",
+  authenticateJWT,
+  async (req, res) => {
+    const { user_id } = req.user;
+    const { buildingID } = req.params;
+    const { finalVote, totalCO2Emissions, areaCO2Emissions } = req.body;
+    console.log("buildingID:", buildingID);
+    console.log("user_id:", user_id);
+    console.log("finalVote:", finalVote);
+    console.log("totalCO2Emissions:", totalCO2Emissions);
+
+    try {
+      await pool.query(
+        `UPDATE buildings SET  emissionMark = $1, emissionCO2 = $2, areaEmissionCO2 = $3, results_visible = true WHERE id = $4 AND user_id = $5`,
+        [finalVote, totalCO2Emissions, areaCO2Emissions, buildingID, user_id],
+      );
+      res.status(200).json({ msg: "Risultati inseriti con successo" });
+    } catch (error) {
+      console.error("Error inserting results:", error.message);
+      res.status(500).json({ msg: "Errore interno del server" });
+    }
+  },
+);
 
 app.get("/api/fetch-results/:buildingID", authenticateJWT, async (req, res) => {
-
   const { user_id } = req.user;
   const { buildingID } = req.params;
   //console.log("buildingID:", buildingID);
   //console.log("user_id:", user_id);
 
   try {
-    const query = "SELECT emissionMark, emissionCO2, areaEmissionCO2, results_visible FROM buildings WHERE id = $1 AND user_id = $2;";
+    const query =
+      "SELECT emissionMark, emissionCO2, areaEmissionCO2, results_visible FROM buildings WHERE id = $1 AND user_id = $2;";
     const values = [buildingID, user_id];
     const result = await pool.query(query, values);
     if (result.rows.length === 0) {
-      return res.status(204).json({ emsgror: 'Alcuni dati non trovati' });
+      return res.status(204).json({ emsgror: "Alcuni dati non trovati" });
     } else if (result.rows.length > 0) {
       return res.status(200).json(result.rows);
     }
   } catch (error) {
     console.error("Errore nel fetch dei dati", error.message);
-    res.status(500).json({ msg: 'Errore del server' });
+    res.status(500).json({ msg: "Errore del server" });
   }
-})
+});
 
 app.get("/api/is-user-certificable", authenticateJWT, async (req, res) => {
-
   const { user_id } = req.user;
 
   //check if user has completed a questionnaire
@@ -4330,7 +4956,8 @@ app.get("/api/is-user-certificable", authenticateJWT, async (req, res) => {
     //check if user has at least one building with CO2 emissions calculated
     let buildingsWithResults = false;
 
-    const query2 = "SELECT COUNT(*) FROM buildings WHERE emissionMark IS NOT NULL AND emissionCO2 IS NOT NULL AND areaEmissionCO2 IS NOT NULL AND results_visible = TRUE AND user_id = $1;";
+    const query2 =
+      "SELECT COUNT(*) FROM buildings WHERE emissionMark IS NOT NULL AND emissionCO2 IS NOT NULL AND areaEmissionCO2 IS NOT NULL AND results_visible = TRUE AND user_id = $1;";
     const values2 = [user_id];
     const result2 = await pool.query(query2, values2);
     if (result2.rows[0].count > 0) {
@@ -4342,15 +4969,13 @@ app.get("/api/is-user-certificable", authenticateJWT, async (req, res) => {
     } else {
       return res.status(200).json({ isCertificable: false });
     }
-
   } catch (error) {
     console.error("Errore nel fetch dei dati", error.message);
-    res.status(500).json({ msg: 'Errore del server' });
+    res.status(500).json({ msg: "Errore del server" });
   }
-})
+});
 
 app.get("/api/fetch-all-user-quantity", authenticateJWT, async (req, res) => {
-
   const { user_id } = req.user;
 
   try {
@@ -4363,32 +4988,12 @@ app.get("/api/fetch-all-user-quantity", authenticateJWT, async (req, res) => {
     }
   } catch (error) {
     console.error("Errore nel fetch dei dati", error.message);
-    res.status(500).json({ msg: 'Errore del server' });
+    res.status(500).json({ msg: "Errore del server" });
   }
-
-})
-
-
-function emailCheck(email) {
-  const re =
-    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  return re.test(String(email).toLowerCase());
-}
-
-function passwordCheck(password) {
-  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/; // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
-  return re.test(String(password));
-}
-
-function phoneCheck(phone) {
-  // max 15 characters, digits only, no spaces, no leading zeros, no special characters, allowed +, (, ), -, ., /,
-  const re = /^[\+]?[(]?[0-9]{3,5}[)]?[-\s\.]?[0-9]{3,5}[-\s\.]?[0-9]{4,10}$/im;
-  return re.test(String(phone).toLowerCase());
-}
+});
 
 async function vatCheck(vatNumber) {
   try {
-
     if (!vatNumber || vatNumber.length < 3) {
       return false;
     }
@@ -4409,31 +5014,30 @@ async function vatCheck(vatNumber) {
       });
     });
 
-    return { valid: validationInfo.valid, companyName: validationInfo.name, address: validationInfo.address }; // true o false
+    return {
+      valid: validationInfo.valid,
+      companyName: validationInfo.name,
+      address: validationInfo.address,
+    }; // true o false
   } catch (error) {
-    console.error('Errore durante la verifica della partita IVA:', error);
+    console.error("Errore durante la verifica della partita IVA:", error);
     return false;
   }
-}
-
-function cfCheck(cf) {
-  //const cfRegex = /^[A-Z0-9]{16}$/; // Must be 16 alphanumeric characters
-  const cfRegex = /^[A-Za-z]{6}[0-9]{2}[A-Za-z]{1}[0-9]{2}[A-Za-z]{1}[0-9]{3}[A-Za-z]{1}$/
-  return cfRegex.test(cf);
 }
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Qualcosa è andato storto!" });
-})
+});
 
-
-app.listen(port, '0.0.0.0', async () => {
+app.listen(port, "0.0.0.0", async () => {
   //console.log(`Server in ascolto sulla porta ${port}`);
 
   try {
     // Check if the admin user exists
-    const res = await pool.query('SELECT * FROM users WHERE administrator = TRUE LIMIT 1');
+    const res = await pool.query(
+      "SELECT * FROM users WHERE administrator = TRUE LIMIT 1",
+    );
     if (res.rows.length === 0) {
       // If the admin user doesn't exist, create it
       console.log("PASS_ADMIN:", process.env.PASS_ADMIN);
@@ -4441,15 +5045,25 @@ app.listen(port, '0.0.0.0', async () => {
       await pool.query(
         `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest, isVerified, first_login)
          VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [process.env.USERNAME_ADMIN, "green_visa", process.env.EMAIL_ADMIN, null, null, null, null, true, hashedPassword, true, false]
+        [
+          process.env.USERNAME_ADMIN,
+          "green_visa",
+          process.env.EMAIL_ADMIN,
+          null,
+          null,
+          null,
+          null,
+          true,
+          hashedPassword,
+          true,
+          false,
+        ],
       );
-      console.log('Admin creato con successo.');
+      console.log("Admin creato con successo.");
     } else {
-      console.log('Admin già esistente.');
+      console.log("Admin già esistente.");
     }
   } catch (error) {
-    console.error('Errore durante la creazione dell\'admin:', error);
+    console.error("Errore durante la creazione dell'admin:", error);
   }
 });
-
-
