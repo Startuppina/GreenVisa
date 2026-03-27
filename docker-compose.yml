@@ -28,7 +28,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
 
   db:
-    image: postgres
+    image: postgres:16
     environment:
       POSTGRES_DB: green-visa
       POSTGRES_USER: admin
