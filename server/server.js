@@ -4422,6 +4422,10 @@ function cfCheck(cf) {
   return cfRegex.test(cf);
 }
 
+// OCR document processing routes
+const documentsRouter = require('./routes/documents');
+app.use('/api', documentsRouter);
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Qualcosa è andato storto!" });

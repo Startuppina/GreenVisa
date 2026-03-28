@@ -304,6 +304,62 @@ CREATE TABLE IF NOT EXISTS second_level_certification_approvation (
 );
 
 
+-------------------------------------------------------------------------------------------------------------------------
+
+-- OCR DOCUMENT PROCESSING PIPELINE --
+
+CREATE TABLE IF NOT EXISTS document_batches (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    building_id INTEGER REFERENCES buildings(id) ON DELETE SET NULL,
+    category VARCHAR(100),
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    file_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS documents (
+    id SERIAL PRIMARY KEY,
+    batch_id INTEGER NOT NULL REFERENCES document_batches(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    building_id INTEGER REFERENCES buildings(id) ON DELETE SET NULL,
+    original_name VARCHAR(500) NOT NULL,
+    stored_name VARCHAR(500) NOT NULL,
+    storage_path TEXT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    file_size BIGINT NOT NULL,
+    sha256 VARCHAR(64),
+    ocr_provider VARCHAR(100),
+    ocr_region VARCHAR(50),
+    ocr_status VARCHAR(50) NOT NULL DEFAULT 'uploaded',
+    ocr_error_code VARCHAR(100),
+    ocr_error_message TEXT,
+    uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    processed_at TIMESTAMPTZ,
+    confirmed_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS document_results (
+    id SERIAL PRIMARY KEY,
+    document_id INTEGER NOT NULL UNIQUE REFERENCES documents(id) ON DELETE CASCADE,
+    raw_provider_output JSONB,
+    normalized_output JSONB,
+    validation_issues JSONB,
+    confirmed_output JSONB,
+    provider_processor_id VARCHAR(500),
+    provider_processor_version VARCHAR(100),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_batches_user_id ON document_batches(user_id);
+CREATE INDEX IF NOT EXISTS idx_documents_batch_id ON documents(batch_id);
+CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_documents_ocr_status ON documents(ocr_status);
+CREATE INDEX IF NOT EXISTS idx_document_results_doc_id ON document_results(document_id);
+
+
 
 
 

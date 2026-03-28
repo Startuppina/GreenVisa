@@ -30,6 +30,7 @@ import CertificationPage from './CertificationPage.jsx';
 import ConfirmAccountPage from './confirmAccountPage.jsx';
 import VerifyAccount from './accountVerifiedPage.jsx';
 import ConfirmAccountPageNoCompanyEmail from './confirmAccountPageNoCompanyEmail.jsx';
+import OcrDevPage from './ocr/OcrDevPage';
 
 const router = createBrowserRouter([
   {
@@ -111,6 +112,11 @@ const router = createBrowserRouter([
   {
     path: "/questionario/:category",
     element: <QuestionnairePage />,
+  },
+  {
+    // DEV ONLY — OCR sandbox page (remove when integrated into real form)
+    path: "/dev/ocr",
+    element: <OcrDevPage />,
   },
   {
     // Catch-all route for unmatched paths
