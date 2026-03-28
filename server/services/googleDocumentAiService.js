@@ -4,6 +4,7 @@ const ocrConfig = require('../config/ocr');
 // The @google-cloud/documentai package is NOT required in mock mode.
 // Install it when ready for real processing:
 //   npm install @google-cloud/documentai
+// https://eu-documentai.googleapis.com/v1/projects/764213885095/locations/eu/processors/c6f33fb0291cfb57:process
 let DocumentProcessorServiceClient = null;
 
 function getClient() {

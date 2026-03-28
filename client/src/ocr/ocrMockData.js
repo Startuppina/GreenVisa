@@ -1,3 +1,5 @@
+// todo remove this file once the real ocr is implemented
+
 const PLATES = ['AB123CD', 'EF456GH', 'IJ789KL', 'MN012OP', 'QR345ST', 'UV678WX', 'YZ901AB', 'BC234DE', 'FG567HI'];
 const FUEL_TYPES = ['Benzina', 'Diesel', 'GPL', 'Metano', 'Ibrido', 'Elettrico'];
 const EURO_CLASSES = ['Euro 3', 'Euro 4', 'Euro 5', 'Euro 6', 'Euro 6d'];

@@ -17,11 +17,14 @@ cd client
 npm install
 cd ..
 
+## build docker image
+docker compose -f docker-compose.db.yml up -d --build
+
 
 # Run app
 
-## run docker compose
-docker compose -f docker-compose.db.yml up -d --build
+## run docker compose (after first time no need to rebuild)
+docker compose -f docker-compose.db.yml up -d
 
 ## run backend
 
@@ -32,4 +35,24 @@ npm run dev
 
 cd client
 npm run dev
+
+
+
+# google cloud for ocr
+
+gcloud init
+
+gcloud auth login
+gcloud auth application-default login
+gcloud auth list
+
+log in via browser. currently ocr service is linked to antonio.gassner@claror.it
+
+
+curl -X POST \
+  -H "Authorization: Bearer "$(gcloud auth application-default print-access-token) \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d $request.json \
+  "https://eu-documentai.googleapis.com/v1/projects/764213885095/locations/eu/processors/c6f33fb0291cfb57:process"
+
 
