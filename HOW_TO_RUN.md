@@ -49,10 +49,4 @@ gcloud auth list
 log in via browser. currently ocr service is linked to antonio.gassner@claror.it
 
 
-curl -X POST \
-  -H "Authorization: Bearer "$(gcloud auth application-default print-access-token) \
-  -H "Content-Type: application/json; charset=utf-8" \
-  -d $request.json \
-  "https://eu-documentai.googleapis.com/v1/projects/764213885095/locations/eu/processors/c6f33fb0291cfb57:process"
-
 

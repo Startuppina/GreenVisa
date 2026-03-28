@@ -22,8 +22,11 @@ export default function OcrReviewPanel({
   editedFields,
   onFieldEdit,
   isConfirmed,
+  isApplied,
   onConfirm,
+  onApply,
 }) {
+  const isLocked = isConfirmed || isApplied;
   const lowCount = entity.fields.filter((f) => f.confidence < LOW_CONFIDENCE_THRESHOLD).length;
 
   return (
@@ -43,7 +46,12 @@ export default function OcrReviewPanel({
               {lowCount} {lowCount === 1 ? 'campo' : 'campi'} da verificare
             </span>
           )}
-          {isConfirmed && (
+          {isApplied && (
+            <span className="bg-emerald-100 text-emerald-800 text-sm px-3 py-1 rounded-full font-medium">
+              ✓ Applicato
+            </span>
+          )}
+          {isConfirmed && !isApplied && (
             <span className="bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full font-medium">
               ✓ Confermato
             </span>
@@ -85,7 +93,7 @@ export default function OcrReviewPanel({
                 type="text"
                 value={currentValue}
                 onChange={(e) => onFieldEdit(field.key, e.target.value)}
-                disabled={isConfirmed}
+                disabled={isLocked}
                 className={`w-full p-2 rounded border text-sm outline-none transition-colors
                   focus:ring-1
                   ${
@@ -106,8 +114,8 @@ export default function OcrReviewPanel({
         })}
       </div>
 
-      {/* ── Confirm button ─────────────────────────────────── */}
-      {!isConfirmed && (
+      {/* ── Action buttons ────────────────────────────────── */}
+      {!isConfirmed && !isApplied && (
         <button
           onClick={onConfirm}
           className="mt-6 w-full p-3 bg-[#2d7044] text-white rounded-lg font-semibold text-lg
@@ -115,6 +123,16 @@ export default function OcrReviewPanel({
             ease-in-out hover:bg-white hover:text-[#2d7044]"
         >
           Conferma dati veicolo
+        </button>
+      )}
+      {isConfirmed && !isApplied && onApply && (
+        <button
+          onClick={onApply}
+          className="mt-6 w-full p-3 bg-emerald-600 text-white rounded-lg font-semibold text-lg
+            border-2 border-transparent hover:border-emerald-600 transition-colors duration-300
+            ease-in-out hover:bg-white hover:text-emerald-600"
+        >
+          Applica al questionario
         </button>
       )}
     </section>

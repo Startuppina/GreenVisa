@@ -6,6 +6,7 @@ const { validateFile } = require('../services/documentValidationService');
 const { storeFileFromBuffer } = require('../services/documentStorageService');
 const repo = require('../services/documentRepository');
 const ocrService = require('../services/ocrService');
+const pool = require('../db');
 
 const router = express.Router();
 
@@ -14,7 +15,6 @@ const docUpload = multer({
   limits: { fileSize: ocrConfig.upload.maxFileSizeBytes },
 }).array('files', ocrConfig.upload.maxFilesPerBatch);
 
-// Wraps multer so we get structured error responses instead of crashes
 function handleMulterUpload(req, res, next) {
   docUpload(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -136,6 +136,28 @@ router.post(
   },
 );
 
+// ── GET /api/documents/user ───────────────────────────────────
+router.get('/documents/user', authenticateJWT, async (req, res) => {
+  try {
+    const docs = await repo.getDocumentsByUserId(req.user.user_id);
+    res.json(
+      docs.map((d) => ({
+        documentId: d.id,
+        batchId: d.batch_id,
+        fileName: d.original_name,
+        status: d.ocr_status,
+        uploadedAt: d.uploaded_at,
+        processedAt: d.processed_at,
+        confirmedAt: d.confirmed_at,
+        appliedAt: d.applied_at,
+      })),
+    );
+  } catch (err) {
+    console.error('List user documents error:', err);
+    res.status(500).json({ msg: 'Errore nel recupero dei documenti.' });
+  }
+});
+
 // ── GET /api/document-batches/:batchId ────────────────────────
 router.get('/document-batches/:batchId', authenticateJWT, async (req, res) => {
   try {
@@ -165,6 +187,7 @@ router.get('/document-batches/:batchId', authenticateJWT, async (req, res) => {
         uploadedAt: d.uploaded_at,
         processedAt: d.processed_at,
         confirmedAt: d.confirmed_at,
+        appliedAt: d.applied_at,
         error: d.ocr_error_message,
       })),
     });
@@ -196,6 +219,7 @@ router.get('/documents/:documentId', authenticateJWT, async (req, res) => {
       uploadedAt: doc.uploaded_at,
       processedAt: doc.processed_at,
       confirmedAt: doc.confirmed_at,
+      appliedAt: doc.applied_at,
     });
   } catch (err) {
     console.error('Get document error:', err);
@@ -218,20 +242,13 @@ router.get('/documents/:documentId/result', authenticateJWT, async (req, res) =>
       return res.status(404).json({ msg: 'Risultato non ancora disponibile.' });
     }
 
-    const normalized = result.normalized_output || {};
-
     res.json({
       documentId: doc.id,
       fileName: doc.original_name,
       status: doc.ocr_status,
-      entities: [
-        {
-          entityId: `doc_${doc.id}_vehicle`,
-          entityType: 'vehicle',
-          displayName: 'Veicolo',
-          fields: normalized.fields || [],
-        },
-      ],
+      reviewPayload: result.review_payload || null,
+      normalizedOutput: result.normalized_output || null,
+      derivedOutput: result.derived_output || null,
       validationIssues: result.validation_issues || [],
       confirmedOutput: result.confirmed_output || null,
     });
@@ -256,9 +273,9 @@ router.post('/documents/:documentId/confirm', authenticateJWT, async (req, res) 
     if (!doc) return res.status(404).json({ msg: 'Documento non trovato.' });
     if (doc.user_id !== req.user.user_id) return res.status(403).json({ msg: 'Accesso negato.' });
 
-    if (!['completed', 'needs_review'].includes(doc.ocr_status)) {
+    if (doc.ocr_status !== 'needs_review') {
       return res.status(400).json({
-        msg: `Impossibile confermare un documento in stato "${doc.ocr_status}".`,
+        msg: `Impossibile confermare un documento in stato "${doc.ocr_status}". Stato atteso: "needs_review".`,
       });
     }
 
@@ -269,20 +286,72 @@ router.post('/documents/:documentId/confirm', authenticateJWT, async (req, res) 
     };
 
     await repo.updateResultConfirmed(docId, confirmedOutput);
-    await repo.updateDocumentStatus(docId, 'confirmed');
+    await repo.updateDocumentStatus(docId, 'confirmed', { confirmedBy: req.user.user_id });
     await repo.updateBatchStatus(doc.batch_id);
 
-    // TODO: In a future step, apply confirmed OCR values into survey_responses
-    // or vehicle-specific business tables for the transport questionnaire.
-
     res.json({
-      msg: 'Dati confermati con successo.',
+      msg: 'Dati confermati con successo. Usa l\'endpoint /apply per scrivere nei dati definitivi.',
       documentId: docId,
       status: 'confirmed',
     });
   } catch (err) {
     console.error('Confirm error:', err);
     res.status(500).json({ msg: 'Errore durante la conferma.' });
+  }
+});
+
+// ── POST /api/documents/:documentId/apply ─────────────────────
+router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) => {
+  try {
+    const docId = parseInt(req.params.documentId, 10);
+    if (isNaN(docId)) return res.status(400).json({ msg: 'ID documento non valido.' });
+
+    const doc = await repo.getDocumentById(docId);
+    if (!doc) return res.status(404).json({ msg: 'Documento non trovato.' });
+    if (doc.user_id !== req.user.user_id) return res.status(403).json({ msg: 'Accesso negato.' });
+
+    if (doc.ocr_status !== 'confirmed') {
+      return res.status(400).json({
+        msg: `Impossibile applicare un documento in stato "${doc.ocr_status}". Stato atteso: "confirmed".`,
+      });
+    }
+
+    const result = await repo.getResultByDocumentId(docId);
+    if (!result || !result.confirmed_output) {
+      return res.status(400).json({ msg: 'Nessun dato confermato trovato per questo documento.' });
+    }
+
+    const { certificationId } = req.body;
+    if (certificationId) {
+      const confirmedFields = result.confirmed_output.fields || [];
+      const fieldMap = Object.fromEntries(confirmedFields.map((f) => [f.key, f.value]));
+
+      const surveyData = {
+        ocrDocumentId: docId,
+        ocrAppliedAt: new Date().toISOString(),
+        ...fieldMap,
+      };
+
+      await pool.query(
+        `INSERT INTO survey_responses (user_id, certification_id, survey_data, created_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (user_id, certification_id)
+         DO UPDATE SET survey_data = survey_responses.survey_data || $3`,
+        [req.user.user_id, certificationId, JSON.stringify(surveyData)],
+      );
+    }
+
+    await repo.updateDocumentStatus(docId, 'applied');
+    await repo.updateBatchStatus(doc.batch_id);
+
+    res.json({
+      msg: 'Dati applicati con successo nelle tabelle definitive.',
+      documentId: docId,
+      status: 'applied',
+    });
+  } catch (err) {
+    console.error('Apply error:', err);
+    res.status(500).json({ msg: 'Errore durante l\'applicazione dei dati.' });
   }
 });
 

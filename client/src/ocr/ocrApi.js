@@ -1,11 +1,6 @@
 import axiosInstance from '../axiosInstance';
 import { generateMockExtraction } from './ocrMockData';
 
-// ──────────────────────────────────────────────────────────────
-// Toggle this flag to switch between mock responses and real backend.
-// When the backend endpoints are ready, set USE_MOCK to false and
-// update the endpoint paths below if they differ from the placeholders.
-// ──────────────────────────────────────────────────────────────
 const USE_MOCK = true;
 
 const MOCK_PROCESSING_DELAY_MS = 2500;
@@ -23,7 +18,6 @@ function delay(ms, signal) {
 }
 
 // ── Upload a single file ────────────────────────────────────
-// Returns { documentId, fileName }
 export async function uploadDocument(file, { signal } = {}) {
   if (USE_MOCK) {
     await delay(600 + Math.random() * 1200, signal);
@@ -33,18 +27,18 @@ export async function uploadDocument(file, { signal } = {}) {
     return { documentId, fileName: file.name };
   }
 
-  // TODO: replace with real endpoint
   const formData = new FormData();
-  formData.append('file', file);
-  const res = await axiosInstance.post('/ocr/upload', formData, {
+  formData.append('files', file);
+  const res = await axiosInstance.post('/documents/upload', formData, {
     signal,
     headers: { 'Content-Type': 'multipart/form-data' },
   });
-  return res.data;
+  const doc = res.data.documents?.[0];
+  return { documentId: doc?.documentId, fileName: doc?.fileName || file.name };
 }
 
 // ── Poll processing status ──────────────────────────────────
-// Returns { status: 'processing' | 'completed' | 'failed', progress?, error? }
+// Valid statuses from backend: uploaded, processing, needs_review, confirmed, applied, failed
 export async function getDocumentStatus(documentId) {
   if (USE_MOCK) {
     await delay(150 + Math.random() * 250);
@@ -54,16 +48,15 @@ export async function getDocumentStatus(documentId) {
     if (elapsed < MOCK_PROCESSING_DELAY_MS) {
       return { status: 'processing', progress: Math.min(95, Math.round((elapsed / MOCK_PROCESSING_DELAY_MS) * 100)) };
     }
-    return { status: 'completed' };
+    return { status: 'needs_review' };
   }
 
-  // TODO: replace with real endpoint
-  const res = await axiosInstance.get(`/ocr/status/${documentId}`);
-  return res.data;
+  const res = await axiosInstance.get(`/documents/${documentId}`);
+  return { status: res.data.status, error: res.data.error };
 }
 
-// ── Fetch extraction result ─────────────────────────────────
-// Returns full document extraction object (see ocrMockData shape)
+// ── Fetch extraction result for review ──────────────────────
+// Returns review_payload from document_results (fields + validationIssues)
 export async function getExtractionResult(documentId) {
   if (USE_MOCK) {
     await delay(100 + Math.random() * 200);
@@ -71,20 +64,49 @@ export async function getExtractionResult(documentId) {
     return generateMockExtraction(documentId, job?.fileName ?? 'unknown.pdf');
   }
 
-  // TODO: replace with real endpoint
-  const res = await axiosInstance.get(`/ocr/result/${documentId}`);
-  return res.data;
+  const res = await axiosInstance.get(`/documents/${documentId}/result`);
+  const data = res.data;
+
+  const reviewPayload = data.reviewPayload || {};
+  const fields = reviewPayload.fields || data.normalizedOutput?.fields || [];
+
+  return {
+    documentId: data.documentId,
+    fileName: data.fileName,
+    status: data.status,
+    entities: [
+      {
+        entityId: `doc_${data.documentId}_vehicle`,
+        entityType: 'vehicle',
+        displayName: 'Veicolo',
+        fields,
+      },
+    ],
+    validationIssues: data.validationIssues || [],
+    confirmedOutput: data.confirmedOutput || null,
+  };
 }
 
 // ── Confirm reviewed extraction ─────────────────────────────
-// payload: { fields: [{ key, value, originalValue, confidence }] }
-export async function confirmExtraction(documentId, entityId, payload) {
+// Transitions document from needs_review → confirmed
+export async function confirmExtraction(documentId, _entityId, payload) {
   if (USE_MOCK) {
     await delay(200 + Math.random() * 300);
-    return { success: true, documentId, entityId };
+    return { success: true, documentId, status: 'confirmed' };
   }
 
-  // TODO: replace with real endpoint
-  const res = await axiosInstance.post(`/ocr/confirm/${documentId}/${entityId}`, payload);
+  const res = await axiosInstance.post(`/documents/${documentId}/confirm`, payload);
+  return res.data;
+}
+
+// ── Apply confirmed data to business tables ─────────────────
+// Transitions document from confirmed → applied
+export async function applyDocument(documentId, { certificationId } = {}) {
+  if (USE_MOCK) {
+    await delay(200 + Math.random() * 300);
+    return { success: true, documentId, status: 'applied' };
+  }
+
+  const res = await axiosInstance.post(`/documents/${documentId}/apply`, { certificationId });
   return res.data;
 }

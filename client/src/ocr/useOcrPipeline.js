@@ -50,6 +50,8 @@ function buildEntry(file, existingEntries) {
   return { id, file, status: FILE_STATUS.READY, error: null, documentId: null, abortController: null };
 }
 
+const TERMINAL_STATUSES = new Set(['needs_review', 'confirmed', 'applied']);
+
 export function useOcrPipeline() {
   const [fileEntries, setFileEntries] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -68,11 +70,11 @@ export function useOcrPipeline() {
         try {
           const res = await getDocumentStatus(documentId);
 
-          if (res.status === 'completed') {
+          if (TERMINAL_STATUSES.has(res.status)) {
             pollingTimers.current.delete(fileId);
             const extraction = await getExtractionResult(documentId);
             setDocuments((prev) => [...prev, extraction]);
-            updateEntry(fileId, { status: FILE_STATUS.COMPLETED });
+            updateEntry(fileId, { status: FILE_STATUS.NEEDS_REVIEW });
             return;
           }
 
@@ -177,6 +179,14 @@ export function useOcrPipeline() {
     [processFile],
   );
 
+  const markFileConfirmed = useCallback((fileId) => {
+    updateEntry(fileId, { status: FILE_STATUS.CONFIRMED });
+  }, [updateEntry]);
+
+  const markFileApplied = useCallback((fileId) => {
+    updateEntry(fileId, { status: FILE_STATUS.APPLIED });
+  }, [updateEntry]);
+
   // ── Cleanup on unmount ────────────────────────────────────
   useEffect(() => {
     return () => {
@@ -193,5 +203,7 @@ export function useOcrPipeline() {
     cancelUpload,
     submitFiles,
     retryFile,
+    markFileConfirmed,
+    markFileApplied,
   };
 }

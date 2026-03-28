@@ -21,10 +21,12 @@ async function updateBatchStatus(batchId) {
   let status;
   if (docs.length === 0) {
     status = 'empty';
+  } else if (docs.every((d) => d.ocr_status === 'applied')) {
+    status = 'applied';
   } else if (docs.every((d) => d.ocr_status === 'confirmed')) {
     status = 'confirmed';
-  } else if (docs.every((d) => ['completed', 'confirmed', 'needs_review'].includes(d.ocr_status))) {
-    status = 'completed';
+  } else if (docs.every((d) => ['needs_review', 'confirmed', 'applied'].includes(d.ocr_status))) {
+    status = 'needs_review';
   } else if (docs.some((d) => d.ocr_status === 'processing')) {
     status = 'processing';
   } else if (docs.every((d) => d.ocr_status === 'failed')) {
@@ -75,16 +77,24 @@ async function createDocument({
   return rows[0];
 }
 
-async function updateDocumentStatus(docId, status, { errorCode, errorMessage } = {}) {
-  const sets = ['ocr_status = $2'];
+async function updateDocumentStatus(docId, status, { errorCode, errorMessage, confirmedBy } = {}) {
+  const sets = ['ocr_status = $2', 'updated_at = NOW()'];
   const params = [docId, status];
   let idx = 3;
 
-  if (status === 'completed' || status === 'needs_review') {
+  if (status === 'needs_review') {
     sets.push('processed_at = NOW()');
   }
   if (status === 'confirmed') {
     sets.push('confirmed_at = NOW()');
+    if (confirmedBy !== undefined) {
+      sets.push(`confirmed_by = $${idx}`);
+      params.push(confirmedBy);
+      idx++;
+    }
+  }
+  if (status === 'applied') {
+    sets.push('applied_at = NOW()');
   }
   if (errorCode !== undefined) {
     sets.push(`ocr_error_code = $${idx}`);
@@ -117,22 +127,33 @@ async function getDocumentsByBatchId(batchId) {
   return rows;
 }
 
+async function getDocumentsByUserId(userId) {
+  const { rows } = await pool.query(
+    'SELECT * FROM documents WHERE user_id = $1 AND deleted_at IS NULL ORDER BY uploaded_at DESC',
+    [userId],
+  );
+  return rows;
+}
+
 // ── Results ───────────────────────────────────────────────────
 
 async function createResult({
-  documentId, rawProviderOutput, normalizedOutput,
-  validationIssues, processorId, processorVersion,
+  documentId, rawProviderOutput, normalizedOutput, derivedOutput,
+  reviewPayload, validationIssues, processorId, processorVersion,
 }) {
   const { rows } = await pool.query(
     `INSERT INTO document_results
-       (document_id, raw_provider_output, normalized_output, validation_issues,
+       (document_id, raw_provider_output, normalized_output, derived_output,
+        review_payload, validation_issues,
         provider_processor_id, provider_processor_version)
-     VALUES ($1, $2, $3, $4, $5, $6)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING *`,
     [
       documentId,
       JSON.stringify(rawProviderOutput),
       JSON.stringify(normalizedOutput),
+      JSON.stringify(derivedOutput || null),
+      JSON.stringify(reviewPayload || null),
       JSON.stringify(validationIssues),
       processorId || null,
       processorVersion || null,
@@ -160,6 +181,17 @@ async function updateResultConfirmed(docId, confirmedOutput) {
   return rows[0] || null;
 }
 
+async function updateResultReviewPayload(docId, reviewPayload) {
+  const { rows } = await pool.query(
+    `UPDATE document_results
+     SET review_payload = $2, updated_at = NOW()
+     WHERE document_id = $1
+     RETURNING *`,
+    [docId, JSON.stringify(reviewPayload)],
+  );
+  return rows[0] || null;
+}
+
 module.exports = {
   createBatch,
   updateBatchStatus,
@@ -169,7 +201,9 @@ module.exports = {
   updateDocumentStatus,
   getDocumentById,
   getDocumentsByBatchId,
+  getDocumentsByUserId,
   createResult,
   getResultByDocumentId,
   updateResultConfirmed,
+  updateResultReviewPayload,
 };

@@ -10,7 +10,9 @@ export const FILE_STATUS = {
   UPLOADING: 'uploading',
   UPLOADED: 'uploaded',
   PROCESSING: 'processing',
-  COMPLETED: 'completed',
+  NEEDS_REVIEW: 'needs_review',
+  CONFIRMED: 'confirmed',
+  APPLIED: 'applied',
   FAILED: 'failed',
   CANCELLED: 'cancelled',
 };
@@ -22,7 +24,9 @@ export const STATUS_LABELS = {
   [FILE_STATUS.UPLOADING]: 'Caricamento…',
   [FILE_STATUS.UPLOADED]: 'Caricato',
   [FILE_STATUS.PROCESSING]: 'Elaborazione…',
-  [FILE_STATUS.COMPLETED]: 'Completato',
+  [FILE_STATUS.NEEDS_REVIEW]: 'Da verificare',
+  [FILE_STATUS.CONFIRMED]: 'Confermato',
+  [FILE_STATUS.APPLIED]: 'Applicato',
   [FILE_STATUS.FAILED]: 'Errore',
   [FILE_STATUS.CANCELLED]: 'Annullato',
 };
@@ -34,7 +38,9 @@ export const STATUS_COLORS = {
   [FILE_STATUS.UPLOADING]: 'bg-yellow-100 text-yellow-700',
   [FILE_STATUS.UPLOADED]: 'bg-yellow-100 text-yellow-700',
   [FILE_STATUS.PROCESSING]: 'bg-yellow-100 text-yellow-700',
-  [FILE_STATUS.COMPLETED]: 'bg-green-100 text-green-700',
+  [FILE_STATUS.NEEDS_REVIEW]: 'bg-orange-100 text-orange-700',
+  [FILE_STATUS.CONFIRMED]: 'bg-green-100 text-green-700',
+  [FILE_STATUS.APPLIED]: 'bg-emerald-100 text-emerald-800',
   [FILE_STATUS.FAILED]: 'bg-red-100 text-red-700',
   [FILE_STATUS.CANCELLED]: 'bg-gray-200 text-gray-500',
 };

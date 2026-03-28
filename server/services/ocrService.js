@@ -23,22 +23,28 @@ async function processDocument(documentRecord) {
 
     const validationIssues = validateNormalizedOutput(normalizedFields);
 
-    const hasLowConfidence = validationIssues.some((i) => i.type === 'low_confidence');
-    const hasMissing = validationIssues.some((i) => i.type === 'missing_required');
-    const finalStatus = hasMissing || hasLowConfidence ? 'needs_review' : 'completed';
+    const derivedOutput = buildDerivedOutput(normalizedFields);
+
+    const reviewPayload = {
+      fields: normalizedFields,
+      validationIssues,
+      derivedSummary: derivedOutput,
+    };
 
     await repo.createResult({
       documentId: docId,
       rawProviderOutput: providerResult.raw,
       normalizedOutput: { fields: normalizedFields },
+      derivedOutput,
+      reviewPayload,
       validationIssues,
       processorId: providerResult.metadata?.processorName || null,
       processorVersion: providerResult.metadata?.processorVersion || null,
     });
 
-    await repo.updateDocumentStatus(docId, finalStatus);
+    await repo.updateDocumentStatus(docId, 'needs_review');
 
-    return { status: finalStatus, fields: normalizedFields, validationIssues };
+    return { status: 'needs_review', fields: normalizedFields, validationIssues };
   } catch (err) {
     console.error(`OCR processing failed for document ${docId}:`, err.message);
 
@@ -49,6 +55,19 @@ async function processDocument(documentRecord) {
 
     return { status: 'failed', error: err.message };
   }
+}
+
+function buildDerivedOutput(normalizedFields) {
+  const fieldMap = Object.fromEntries(normalizedFields.map((f) => [f.key, f.value]));
+  return {
+    vehicleSummary: {
+      registrationYear: fieldMap.registrationYear || null,
+      euroClass: fieldMap.euroClass || null,
+      fuelType: fieldMap.fuelType || null,
+      wltpHomologation: fieldMap.wltpHomologation || null,
+      goodsVehicleOver2_5Tons: fieldMap.goodsVehicleOver2_5Tons || null,
+    },
+  };
 }
 
 module.exports = { processDocument };

@@ -4,7 +4,7 @@ import OcrVehicleList from './OcrVehicleList';
 import OcrReviewPanel from './OcrReviewPanel';
 import OcrConfirmModal from './OcrConfirmModal';
 import { useOcrPipeline } from './useOcrPipeline';
-import { confirmExtraction } from './ocrApi';
+import { confirmExtraction, applyDocument } from './ocrApi';
 import { FILE_STATUS } from './ocrConstants';
 
 export default function OcrDevPage() {
@@ -16,11 +16,14 @@ export default function OcrDevPage() {
     cancelUpload,
     submitFiles,
     retryFile,
+    markFileConfirmed,
+    markFileApplied,
   } = useOcrPipeline();
 
   const [selectedEntityId, setSelectedEntityId] = useState(null);
   const [editedFields, setEditedFields] = useState({});
   const [confirmedEntities, setConfirmedEntities] = useState(new Set());
+  const [appliedEntities, setAppliedEntities] = useState(new Set());
 
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [pendingConfirmEntityId, setPendingConfirmEntityId] = useState(null);
@@ -37,7 +40,9 @@ export default function OcrDevPage() {
   );
 
   const selectedEntity = allEntities.find((e) => e.entityId === selectedEntityId);
-  const hasCompleted = fileEntries.some((e) => e.status === FILE_STATUS.COMPLETED);
+  const hasProcessed = fileEntries.some((e) =>
+    [FILE_STATUS.NEEDS_REVIEW, FILE_STATUS.CONFIRMED, FILE_STATUS.APPLIED].includes(e.status),
+  );
 
   // ── Handlers ──────────────────────────────────────────────
   const handleFieldEdit = useCallback((entityId, fieldKey, value) => {
@@ -73,6 +78,10 @@ export default function OcrDevPage() {
     try {
       await confirmExtraction(entity.documentId, entity.entityId, payload);
       setConfirmedEntities((prev) => new Set([...prev, entity.entityId]));
+
+      const fileEntry = fileEntries.find((e) => e.documentId === entity.documentId);
+      if (fileEntry) markFileConfirmed(fileEntry.id);
+
       setConfirmModalOpen(false);
       setPendingConfirmEntityId(null);
     } catch {
@@ -80,7 +89,22 @@ export default function OcrDevPage() {
     } finally {
       setConfirmLoading(false);
     }
-  }, [pendingConfirmEntityId, allEntities, editedFields]);
+  }, [pendingConfirmEntityId, allEntities, editedFields, fileEntries, markFileConfirmed]);
+
+  const handleApply = useCallback(async (entityId) => {
+    const entity = allEntities.find((e) => e.entityId === entityId);
+    if (!entity) return;
+
+    try {
+      await applyDocument(entity.documentId);
+      setAppliedEntities((prev) => new Set([...prev, entity.entityId]));
+
+      const fileEntry = fileEntries.find((e) => e.documentId === entity.documentId);
+      if (fileEntry) markFileApplied(fileEntry.id);
+    } catch (err) {
+      console.error('Apply failed:', err);
+    }
+  }, [allEntities, fileEntries, markFileApplied]);
 
   const handleConfirmCancel = useCallback(() => {
     setConfirmModalOpen(false);
@@ -102,7 +126,7 @@ export default function OcrDevPage() {
           </div>
           <p className="text-gray-500">
             Pagina di sviluppo per testare il pipeline OCR. Carica documenti, verifica
-            l'estrazione dati e conferma i risultati.
+            l'estrazione dati, conferma e applica i risultati.
           </p>
         </header>
 
@@ -123,11 +147,12 @@ export default function OcrDevPage() {
             selectedEntityId={selectedEntityId}
             onSelectEntity={setSelectedEntityId}
             confirmedEntities={confirmedEntities}
+            appliedEntities={appliedEntities}
           />
         )}
 
         {/* ── Empty result state ───────────────────────────── */}
-        {hasCompleted && allEntities.length === 0 && (
+        {hasProcessed && allEntities.length === 0 && (
           <section className="bg-white rounded-lg shadow-md p-8 mb-6 text-center">
             <p className="text-lg text-gray-500">
               I documenti sono stati elaborati ma non sono stati trovati veicoli.
@@ -143,7 +168,9 @@ export default function OcrDevPage() {
             editedFields={editedFields[selectedEntity.entityId] || {}}
             onFieldEdit={(key, val) => handleFieldEdit(selectedEntity.entityId, key, val)}
             isConfirmed={confirmedEntities.has(selectedEntity.entityId)}
+            isApplied={appliedEntities.has(selectedEntity.entityId)}
             onConfirm={() => handleConfirmRequest(selectedEntity.entityId)}
+            onApply={() => handleApply(selectedEntity.entityId)}
           />
         ) : (
           allEntities.length > 0 && (
@@ -155,15 +182,29 @@ export default function OcrDevPage() {
           )
         )}
 
-        {/* ── Global summary when everything is confirmed ─── */}
-        {allEntities.length > 0 && confirmedEntities.size === allEntities.length && (
+        {/* ── Global summary when everything is applied ────── */}
+        {allEntities.length > 0 && appliedEntities.size === allEntities.length && (
+          <section className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-6 text-center">
+            <p className="text-emerald-800 text-lg font-semibold">
+              ✓ Tutti i veicoli sono stati confermati e applicati
+            </p>
+            <p className="text-emerald-700 text-sm mt-1">
+              {allEntities.length} {allEntities.length === 1 ? 'veicolo applicato' : 'veicoli applicati'}{' '}
+              da {documents.length} {documents.length === 1 ? 'documento' : 'documenti'}
+            </p>
+          </section>
+        )}
+
+        {/* ── Summary when everything is confirmed but not applied */}
+        {allEntities.length > 0 &&
+          confirmedEntities.size === allEntities.length &&
+          appliedEntities.size < allEntities.length && (
           <section className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6 text-center">
             <p className="text-green-800 text-lg font-semibold">
               ✓ Tutti i veicoli sono stati confermati
             </p>
             <p className="text-green-700 text-sm mt-1">
-              {allEntities.length} {allEntities.length === 1 ? 'veicolo confermato' : 'veicoli confermati'}{' '}
-              da {documents.length} {documents.length === 1 ? 'documento' : 'documenti'}
+              Seleziona ciascun veicolo e premi "Applica al questionario" per completare il processo.
             </p>
           </section>
         )}

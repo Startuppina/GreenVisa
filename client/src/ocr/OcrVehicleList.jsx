@@ -5,6 +5,7 @@ const FILTERS = [
   { value: 'all', label: 'Tutti' },
   { value: 'needs_review', label: 'Da verificare' },
   { value: 'confirmed', label: 'Confermati' },
+  { value: 'applied', label: 'Applicati' },
 ];
 
 function countLowConfidence(entity) {
@@ -16,24 +17,28 @@ export default function OcrVehicleList({
   selectedEntityId,
   onSelectEntity,
   confirmedEntities,
+  appliedEntities,
 }) {
   const [filter, setFilter] = useState('all');
 
   const stats = useMemo(() => {
     let totalWarnings = 0;
     let confirmed = 0;
+    let applied = 0;
     entities.forEach((e) => {
       totalWarnings += countLowConfidence(e);
-      if (confirmedEntities.has(e.entityId)) confirmed++;
+      if (appliedEntities?.has(e.entityId)) applied++;
+      else if (confirmedEntities.has(e.entityId)) confirmed++;
     });
-    return { totalWarnings, confirmed };
-  }, [entities, confirmedEntities]);
+    return { totalWarnings, confirmed, applied };
+  }, [entities, confirmedEntities, appliedEntities]);
 
   const visible = useMemo(() => {
-    if (filter === 'confirmed') return entities.filter((e) => confirmedEntities.has(e.entityId));
-    if (filter === 'needs_review') return entities.filter((e) => !confirmedEntities.has(e.entityId));
+    if (filter === 'applied') return entities.filter((e) => appliedEntities?.has(e.entityId));
+    if (filter === 'confirmed') return entities.filter((e) => confirmedEntities.has(e.entityId) && !appliedEntities?.has(e.entityId));
+    if (filter === 'needs_review') return entities.filter((e) => !confirmedEntities.has(e.entityId) && !appliedEntities?.has(e.entityId));
     return entities;
-  }, [entities, confirmedEntities, filter]);
+  }, [entities, confirmedEntities, appliedEntities, filter]);
 
   return (
     <section className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -43,7 +48,8 @@ export default function OcrVehicleList({
           Veicoli estratti
           <span className="ml-2 text-sm font-normal text-gray-500">
             ({entities.length} {entities.length === 1 ? 'veicolo' : 'veicoli'}, {stats.confirmed}{' '}
-            {stats.confirmed === 1 ? 'confermato' : 'confermati'})
+            {stats.confirmed === 1 ? 'confermato' : 'confermati'}, {stats.applied}{' '}
+            {stats.applied === 1 ? 'applicato' : 'applicati'})
           </span>
         </h2>
         {stats.totalWarnings > 0 && (
@@ -101,8 +107,30 @@ export default function OcrVehicleList({
             <tbody className="divide-y divide-gray-100">
               {visible.map((entity) => {
                 const warnings = countLowConfidence(entity);
+                const isApplied = appliedEntities?.has(entity.entityId);
                 const isConfirmed = confirmedEntities.has(entity.entityId);
                 const isSelected = selectedEntityId === entity.entityId;
+
+                let statusBadge;
+                if (isApplied) {
+                  statusBadge = (
+                    <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-medium">
+                      Applicato
+                    </span>
+                  );
+                } else if (isConfirmed) {
+                  statusBadge = (
+                    <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                      Confermato
+                    </span>
+                  );
+                } else {
+                  statusBadge = (
+                    <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                      Da verificare
+                    </span>
+                  );
+                }
 
                 return (
                   <tr
@@ -127,17 +155,7 @@ export default function OcrVehicleList({
                         <span className="text-green-600 text-sm font-medium">✓ OK</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      {isConfirmed ? (
-                        <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                          Confermato
-                        </span>
-                      ) : (
-                        <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                          Da confermare
-                        </span>
-                      )}
-                    </td>
+                    <td className="px-4 py-3">{statusBadge}</td>
                     <td className="px-4 py-3 text-right">
                       <span className="text-sm text-[#2d7044] font-medium">
                         {isSelected ? 'Selezionato ›' : 'Rivedi ›'}
