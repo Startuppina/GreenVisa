@@ -5,6 +5,7 @@ const {
   loadTransportV2Draft,
   saveTransportV2Draft,
 } = require('../services/transportV2DraftService');
+const { submitTransportV2 } = require('../services/transportV2SubmitService');
 
 const router = express.Router();
 
@@ -32,6 +33,19 @@ router.put('/transport-v2/:certificationId/draft', authenticateJWT, async (req, 
     return res.status(200).json({ transport_v2: transportV2 });
   } catch (error) {
     return handleTransportV2Error(res, error, 'Errore durante il salvataggio del draft transport V2.');
+  }
+});
+
+router.post('/transport-v2/:certificationId/submit', authenticateJWT, async (req, res) => {
+  try {
+    const transportV2 = await submitTransportV2({
+      userId: req.user.user_id,
+      certificationId: req.params.certificationId,
+    });
+
+    return res.status(200).json({ transport_v2: transportV2 });
+  } catch (error) {
+    return handleTransportV2Error(res, error, 'Errore durante il submit di transport V2.');
   }
 });
 

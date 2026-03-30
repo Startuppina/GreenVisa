@@ -116,9 +116,170 @@ function authCookieForUser(user, overrides = {}) {
   return [`accessToken=${token}`];
 }
 
+function buildTransportV2Meta(certificationId, overrides = {}) {
+  return {
+    version: 1,
+    certification_id: certificationId,
+    entry_mode: 'form',
+    status: 'draft',
+    started_at: '2026-03-30T10:00:00.000Z',
+    updated_at: '2026-03-30T10:05:00.000Z',
+    submitted_at: null,
+    ...overrides,
+  };
+}
+
+function buildCompleteQuestionnaireFlags(overrides = {}) {
+  return {
+    compliance_with_vehicle_regulations: true,
+    uses_navigator: true,
+    uses_class_a_tires: 'some',
+    eco_drive_training: 'all',
+    interested_in_mobility_manager_course: false,
+    interested_in_second_level_certification: true,
+    ...overrides,
+  };
+}
+
+function buildPassengerVehicle(overrides = {}) {
+  const base = {
+    vehicle_id: 'passenger-1',
+    transport_mode: 'passenger',
+    ocr_document_id: null,
+    fields: {
+      registration_year: 2020,
+      euro_class: 'EURO_6',
+      fuel_type: 'diesel',
+      wltp_homologation: true,
+      wltp_co2_g_km: 120,
+      wltp_co2_g_km_alt_fuel: null,
+      goods_vehicle_over_3_5_tons: null,
+      occupancy_profile_code: 4,
+      load_profile_code: null,
+      last_revision_date: '2025-06-01',
+      blue_sticker: true,
+      annual_km: 10000,
+    },
+    field_sources: {},
+    field_warnings: {},
+    row_notes: null,
+  };
+
+  return mergeVehicle(base, overrides);
+}
+
+function buildGoodsVehicle(overrides = {}) {
+  const base = {
+    vehicle_id: 'goods-1',
+    transport_mode: 'goods',
+    ocr_document_id: null,
+    fields: {
+      registration_year: 2019,
+      euro_class: 'EURO_5',
+      fuel_type: 'diesel',
+      wltp_homologation: true,
+      wltp_co2_g_km: 280,
+      wltp_co2_g_km_alt_fuel: null,
+      goods_vehicle_over_3_5_tons: true,
+      occupancy_profile_code: null,
+      load_profile_code: 2,
+      last_revision_date: '2024-03-15',
+      blue_sticker: false,
+      annual_km: 20000,
+    },
+    field_sources: {},
+    field_warnings: {},
+    row_notes: null,
+  };
+
+  return mergeVehicle(base, overrides);
+}
+
+function buildCompletePassengerDraft(certificationId, overrides = {}) {
+  const vehicle = overrides.vehicle || buildPassengerVehicle(overrides.vehicleOverrides || {});
+  return buildTransportV2Draft(certificationId, {
+    ...overrides,
+    vehicles: Object.prototype.hasOwnProperty.call(overrides, 'vehicles')
+      ? overrides.vehicles
+      : [vehicle],
+  });
+}
+
+function buildCompleteGoodsDraft(certificationId, overrides = {}) {
+  const vehicle = overrides.vehicle || buildGoodsVehicle(overrides.vehicleOverrides || {});
+  return buildTransportV2Draft(certificationId, {
+    ...overrides,
+    vehicles: Object.prototype.hasOwnProperty.call(overrides, 'vehicles')
+      ? overrides.vehicles
+      : [vehicle],
+  });
+}
+
+function buildCompleteMixedDraft(certificationId, overrides = {}) {
+  const vehicles =
+    overrides.vehicles ||
+    [
+      buildPassengerVehicle(overrides.passengerVehicleOverrides || {}),
+      buildGoodsVehicle(overrides.goodsVehicleOverrides || {}),
+    ];
+
+  return buildTransportV2Draft(certificationId, {
+    ...overrides,
+    vehicles,
+  });
+}
+
+function buildTransportV2Draft(certificationId, overrides = {}) {
+  const questionnaireFlags =
+    overrides.questionnaire_flags || buildCompleteQuestionnaireFlags(overrides.questionnaireFlagOverrides || {});
+  const vehicles = overrides.vehicles || [];
+
+  return {
+    meta: buildTransportV2Meta(certificationId, overrides.metaOverrides || {}),
+    draft: {
+      questionnaire_flags: questionnaireFlags,
+      vehicles,
+    },
+    derived: overrides.derived || {},
+    results: overrides.results || {},
+  };
+}
+
+function mergeVehicle(base, overrides) {
+  const merged = {
+    ...base,
+    ...overrides,
+    fields: {
+      ...base.fields,
+      ...(overrides.fields || {}),
+    },
+    field_sources: {
+      ...base.field_sources,
+      ...(overrides.field_sources || {}),
+    },
+    field_warnings: {
+      ...base.field_warnings,
+      ...(overrides.field_warnings || {}),
+    },
+  };
+
+  if (Object.prototype.hasOwnProperty.call(overrides, 'row_notes')) {
+    merged.row_notes = overrides.row_notes;
+  }
+
+  return merged;
+}
+
 module.exports = {
   TRANSPORT_CATEGORY,
   authCookieForUser,
+  buildCompleteGoodsDraft,
+  buildCompleteMixedDraft,
+  buildCompletePassengerDraft,
+  buildCompleteQuestionnaireFlags,
+  buildGoodsVehicle,
+  buildPassengerVehicle,
+  buildTransportV2Draft,
   createCertificationFixture,
   createSurveyResponseFixture,
   createUserFixture,

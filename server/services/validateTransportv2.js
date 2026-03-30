@@ -1230,8 +1230,253 @@ function normalizeBlock1Vehicle(vehicle, index, errors) {
   return normalizedVehicle;
 }
 
+function validateBlock2QuestionnaireFlags(questionnaireFlags, errors) {
+  const fieldPath = 'draft.questionnaire_flags';
+
+  if (!isPlainObject(questionnaireFlags)) {
+    addError(errors, fieldPath, 'required', 'draft.questionnaire_flags deve essere un oggetto.');
+    return;
+  }
+
+  BLOCK2_REQUIRED_QUESTIONNAIRE_FLAGS.forEach((key) => {
+    if (isNil(questionnaireFlags[key])) {
+      addError(
+        errors,
+        `${fieldPath}.${key}`,
+        'required',
+        `Il campo ${key} e obbligatorio per il submit.`,
+      );
+    }
+  });
+}
+
+function validateBlock2Vehicles(vehicles, errors) {
+  const fieldPath = 'draft.vehicles';
+
+  if (!Array.isArray(vehicles)) {
+    addError(errors, fieldPath, 'required', 'draft.vehicles deve essere un array.');
+    return;
+  }
+
+  if (vehicles.length < 1) {
+    addError(errors, fieldPath, 'required', 'Per il submit e richiesto almeno un veicolo.');
+    return;
+  }
+
+  vehicles.forEach((vehicle, index) => {
+    validateBlock2Vehicle(vehicle, index, errors);
+  });
+}
+
+function validateBlock2Vehicle(vehicle, index, errors) {
+  const fieldPath = `draft.vehicles[${index}]`;
+
+  if (!isPlainObject(vehicle)) {
+    addError(errors, fieldPath, 'invalid_type', 'Ogni veicolo deve essere un oggetto.');
+    return;
+  }
+
+  if (!isNonEmptyString(vehicle.vehicle_id)) {
+    addError(errors, `${fieldPath}.vehicle_id`, 'required', 'vehicle_id e obbligatorio.');
+  }
+
+  if (!['passenger', 'goods'].includes(vehicle.transport_mode)) {
+    addError(
+      errors,
+      `${fieldPath}.transport_mode`,
+      'invalid_enum',
+      'transport_mode deve essere passenger oppure goods.',
+    );
+  }
+
+  if (!isPlainObject(vehicle.fields)) {
+    addError(errors, `${fieldPath}.fields`, 'required', 'fields e obbligatorio.');
+    return;
+  }
+
+  const fields = vehicle.fields;
+  validateIntegerField(fields.registration_year, `${fieldPath}.fields.registration_year`, errors, {
+    required: true,
+    min: 1900,
+    max: CURRENT_YEAR,
+  });
+  validateRequiredString(fields.euro_class, `${fieldPath}.fields.euro_class`, errors);
+  validateRequiredString(fields.fuel_type, `${fieldPath}.fields.fuel_type`, errors);
+  validateBooleanField(fields.wltp_homologation, `${fieldPath}.fields.wltp_homologation`, errors, {
+    required: true,
+  });
+  validateIntegerField(fields.wltp_co2_g_km, `${fieldPath}.fields.wltp_co2_g_km`, errors, {
+    required: true,
+    min: 0,
+  });
+  validateDateOnlyField(fields.last_revision_date, `${fieldPath}.fields.last_revision_date`, errors, {
+    required: true,
+  });
+  validateBooleanField(fields.blue_sticker, `${fieldPath}.fields.blue_sticker`, errors, {
+    required: true,
+  });
+  validateIntegerField(fields.annual_km, `${fieldPath}.fields.annual_km`, errors, {
+    required: true,
+    min: 0,
+  });
+
+  const normalizedFuelType = normalizeFuelTypeForSubmit(fields.fuel_type);
+  if (normalizedFuelType === 'gpl' || normalizedFuelType === 'metano') {
+    validateIntegerField(
+      fields.wltp_co2_g_km_alt_fuel,
+      `${fieldPath}.fields.wltp_co2_g_km_alt_fuel`,
+      errors,
+      {
+        required: true,
+        min: 0,
+      },
+    );
+  } else if (!isNil(fields.wltp_co2_g_km_alt_fuel)) {
+    validateIntegerField(
+      fields.wltp_co2_g_km_alt_fuel,
+      `${fieldPath}.fields.wltp_co2_g_km_alt_fuel`,
+      errors,
+      {
+        required: false,
+        min: 0,
+      },
+    );
+  }
+
+  if (vehicle.transport_mode === 'passenger') {
+    validateIntegerField(
+      fields.occupancy_profile_code,
+      `${fieldPath}.fields.occupancy_profile_code`,
+      errors,
+      {
+        required: true,
+        min: 1,
+        max: 6,
+      },
+    );
+
+    if (!isNil(fields.load_profile_code)) {
+      addError(
+        errors,
+        `${fieldPath}.fields.load_profile_code`,
+        'forbidden_for_transport_mode',
+        'load_profile_code non e ammesso per transport_mode = passenger.',
+      );
+    }
+  }
+
+  if (vehicle.transport_mode === 'goods') {
+    validateIntegerField(
+      fields.load_profile_code,
+      `${fieldPath}.fields.load_profile_code`,
+      errors,
+      {
+        required: true,
+        min: 1,
+        max: 6,
+      },
+    );
+
+    if (!isNil(fields.occupancy_profile_code)) {
+      addError(
+        errors,
+        `${fieldPath}.fields.occupancy_profile_code`,
+        'forbidden_for_transport_mode',
+        'occupancy_profile_code non e ammesso per transport_mode = goods.',
+      );
+    }
+
+    if (
+      typeof fields.goods_vehicle_over_3_5_tons !== 'boolean' &&
+      typeof fields.goods_vehicle_over_2_5_tons !== 'boolean'
+    ) {
+      addError(
+        errors,
+        `${fieldPath}.fields.goods_vehicle_over_3_5_tons`,
+        'required',
+        'goods_vehicle_over_3_5_tons e obbligatorio per transport_mode = goods.',
+      );
+    }
+  }
+}
+
+function validateRequiredString(value, fieldPath, errors) {
+  if (!isNonEmptyString(value)) {
+    addError(errors, fieldPath, 'required', 'Campo obbligatorio.');
+  }
+}
+
+function validateBooleanField(value, fieldPath, errors, { required = false } = {}) {
+  if (isNil(value)) {
+    if (required) {
+      addError(errors, fieldPath, 'required', 'Campo obbligatorio.');
+    }
+    return;
+  }
+
+  if (typeof value !== 'boolean') {
+    addError(errors, fieldPath, 'invalid_type', 'Il campo deve essere boolean.');
+  }
+}
+
+function validateIntegerField(value, fieldPath, errors, options = {}) {
+  const { required = false, min = Number.MIN_SAFE_INTEGER, max = Number.MAX_SAFE_INTEGER } = options;
+
+  if (isNil(value)) {
+    if (required) {
+      addError(errors, fieldPath, 'required', 'Campo obbligatorio.');
+    }
+    return;
+  }
+
+  let normalizedValue = value;
+  if (typeof normalizedValue === 'string' && /^-?\d+$/.test(normalizedValue.trim())) {
+    normalizedValue = Number.parseInt(normalizedValue.trim(), 10);
+  }
+
+  if (!Number.isInteger(normalizedValue)) {
+    addError(errors, fieldPath, 'invalid_type', 'Il campo deve essere un intero.');
+    return;
+  }
+
+  if (normalizedValue < min || normalizedValue > max) {
+    addError(
+      errors,
+      fieldPath,
+      'out_of_range',
+      `Il valore deve essere compreso tra ${min} e ${max}.`,
+    );
+  }
+}
+
+function validateDateOnlyField(value, fieldPath, errors, { required = false } = {}) {
+  if (isNil(value)) {
+    if (required) {
+      addError(errors, fieldPath, 'required', 'Campo obbligatorio.');
+    }
+    return;
+  }
+
+  if (typeof value !== 'string' || !isValidISODate(value.trim())) {
+    addError(errors, fieldPath, 'invalid_date', 'La data deve essere valida e in formato YYYY-MM-DD.');
+  }
+}
+
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function normalizeFuelTypeForSubmit(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  return value.trim().toLowerCase();
+}
+
 module.exports = {
   validateTransportV2Draft,
   validateTransportV2Submit,
   validateTransportV2Block1DraftPayload,
+  validateTransportV2Block2SubmitPayload,
 };

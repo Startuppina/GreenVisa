@@ -6,6 +6,9 @@
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
+    "test:block2:unit": "vitest run tests/unit/validateTransportV2Submit.test.js tests/unit/transportV2Calculator.test.js tests/unit/transportV2DerivedBuilder.test.js",
+    "test:block2:integration": "vitest run tests/integration/transportV2.submit.test.js tests/integration/transportV2.submit.auth.test.js tests/integration/transportV2.submit.persistence.test.js tests/integration/transportV2.submit.regression.test.js tests/integration/transportV2.submit.failure.test.js",
+    "test:block2": "npm run test:block2:unit && npm run test:block2:integration",
     "test:watch": "vitest",
     "start": "node server",
     "dev": "nodemon server"
