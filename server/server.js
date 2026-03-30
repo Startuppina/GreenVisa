@@ -4424,10 +4424,10 @@ function cfCheck(cf) {
 
 // OCR document processing routes
 const documentsRouter = require('./routes/documents');
-app.use('/api', documentsRouter);
+app.use('/api-v2', documentsRouter);
 
 const transportV2Router = require('./routes/transportV2');
-app.use('/api', transportV2Router);
+app.use('/api-v2', transportV2Router);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
