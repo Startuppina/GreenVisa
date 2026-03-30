@@ -130,49 +130,12 @@ async function upsertTransportV2OcrVehicle({
     async (client, surveyResponse) => {
       const now = new Date().toISOString();
       const currentTransportV2 = getTransportV2FromSurveyData(surveyResponse.survey_data);
-      const baseTransportV2 = currentTransportV2
-        ? normalizeTransportV2(currentTransportV2, {
-            certificationId: normalizedCertificationId,
-            now,
-          })
-        : createDefaultTransportV2({
-            certificationId: normalizedCertificationId,
-            now,
-          });
-
-      const vehicles = Array.isArray(baseTransportV2.draft?.vehicles)
-        ? [...baseTransportV2.draft.vehicles]
-        : [];
-      const existingIndex = vehicles.findIndex(
-        (vehicle) => vehicle?.ocr_document_id === vehiclePrefill.ocr_document_id,
-      );
-      const mergedVehicle = mergeOcrVehiclePrefill(
-        existingIndex >= 0 ? vehicles[existingIndex] : null,
+      const canonicalTransportV2 = applyOcrVehicleToTransportV2(currentTransportV2, {
+        certificationId: normalizedCertificationId,
+        now,
+        transportMode,
         vehiclePrefill,
-        normalizeTransportMode(transportMode),
-      );
-
-      if (existingIndex >= 0) {
-        vehicles[existingIndex] = mergedVehicle;
-      } else {
-        vehicles.push(mergedVehicle);
-      }
-
-      const canonicalTransportV2 = normalizeTransportV2(
-        {
-          ...baseTransportV2,
-          draft: {
-            ...baseTransportV2.draft,
-            vehicles,
-          },
-        },
-        {
-          certificationId: normalizedCertificationId,
-          now,
-        },
-      );
-      canonicalTransportV2.meta.updated_at = now;
-      canonicalTransportV2.meta.status = 'draft';
+      });
 
       await repository.saveTransportV2(client, {
         surveyResponseId: surveyResponse.id,
@@ -190,6 +153,54 @@ async function upsertTransportV2OcrVehicle({
       };
     },
   );
+}
+
+function applyOcrVehicleToTransportV2(existingTransportV2, { certificationId, now, transportMode, vehiclePrefill }) {
+  const baseTransportV2 = existingTransportV2
+    ? normalizeTransportV2(existingTransportV2, {
+        certificationId,
+        now,
+      })
+    : createDefaultTransportV2({
+        certificationId,
+        now,
+      });
+
+  const vehicles = Array.isArray(baseTransportV2.draft?.vehicles)
+    ? [...baseTransportV2.draft.vehicles]
+    : [];
+  const existingIndex = vehicles.findIndex(
+    (vehicle) => vehicle?.ocr_document_id === vehiclePrefill.ocr_document_id,
+  );
+  const mergedVehicle = mergeOcrVehiclePrefill(
+    existingIndex >= 0 ? vehicles[existingIndex] : null,
+    vehiclePrefill,
+    normalizeTransportMode(transportMode),
+  );
+
+  if (existingIndex >= 0) {
+    vehicles[existingIndex] = mergedVehicle;
+  } else {
+    vehicles.push(mergedVehicle);
+  }
+
+  const canonicalTransportV2 = normalizeTransportV2(
+    {
+      ...baseTransportV2,
+      draft: {
+        ...baseTransportV2.draft,
+        vehicles,
+      },
+    },
+    {
+      certificationId,
+      now,
+    },
+  );
+  canonicalTransportV2.meta.updated_at = now;
+  canonicalTransportV2.meta.status = 'draft';
+
+  return canonicalTransportV2;
 }
 
 async function assertTransportCertificationAccess({ userId, certificationId }) {
@@ -232,6 +243,7 @@ module.exports = {
   saveTransportV2Draft,
   resolveTransportSurveyResponse,
   upsertTransportV2OcrVehicle,
+  applyOcrVehicleToTransportV2,
   assertTransportCertificationAccess,
   parseCertificationId,
   getTransportV2FromSurveyData,
