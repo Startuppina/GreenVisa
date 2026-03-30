@@ -61,4 +61,6 @@ log in via browser. currently ocr service is linked to antonio.gassner@claror.it
 ```bash
 cd server
 npm test
+
+npm run test:block2
 ```

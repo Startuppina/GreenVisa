@@ -184,8 +184,65 @@ async function getSurveyResponse({ userId, certificationId }) {
   return rows[0] || null;
 }
 
+async function getDocumentFixtureById(documentId) {
+  const { rows } = await query(
+    `SELECT *
+     FROM documents
+     WHERE id = $1`,
+    [documentId],
+  );
+
+  return rows[0] || null;
+}
+
+async function getDocumentResultFixtureByDocumentId(documentId) {
+  const { rows } = await query(
+    `SELECT *
+     FROM document_results
+     WHERE document_id = $1`,
+    [documentId],
+  );
+
+  return rows[0] || null;
+}
+
+async function getDocumentBatchFixtureById(batchId) {
+  const { rows } = await query(
+    `SELECT *
+     FROM document_batches
+     WHERE id = $1`,
+    [batchId],
+  );
+
+  return rows[0] || null;
+}
+
+async function countSurveyResponses({ userId, certificationId }) {
+  const { rows } = await query(
+    `SELECT COUNT(*)::int AS count
+     FROM survey_responses
+     WHERE user_id = $1 AND certification_id = $2`,
+    [userId, certificationId],
+  );
+
+  return rows[0]?.count || 0;
+}
+
 function getTransportV2FromRow(row) {
   return row?.survey_data?.transport_v2 || null;
+}
+
+function getOcrLinkedVehicle(row, ocrDocumentId) {
+  const vehicles = row?.survey_data?.transport_v2?.draft?.vehicles || [];
+  return vehicles.find((vehicle) => vehicle?.ocr_document_id === ocrDocumentId) || null;
+}
+
+function buildMinimalPdfBuffer() {
+  return Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<<>>\n%%EOF\n', 'utf8');
+}
+
+function buildInvalidTextBuffer() {
+  return Buffer.from('not-a-real-pdf', 'utf8');
 }
 
 function authCookieForUser(user, overrides = {}) {
@@ -371,6 +428,13 @@ module.exports = {
   createCertificationFixture,
   createSurveyResponseFixture,
   createUserFixture,
+  countSurveyResponses,
+  buildInvalidTextBuffer,
+  buildMinimalPdfBuffer,
+  getDocumentBatchFixtureById,
+  getDocumentFixtureById,
+  getDocumentResultFixtureByDocumentId,
+  getOcrLinkedVehicle,
   getSurveyResponse,
   getTransportV2FromRow,
   grantCertificationAccess,
