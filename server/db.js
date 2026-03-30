@@ -9,6 +9,7 @@ const pool = new Pool({
   user: process.env.DB_USER || 'admin',
   password: process.env.DB_PASSWORD || 'pass123',
   database: process.env.DB_NAME || 'green-visa',
+  options: process.env.DB_OPTIONS || undefined,
 });
 
 module.exports = pool;

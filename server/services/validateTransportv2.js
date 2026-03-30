@@ -121,6 +121,15 @@ const WARNING_CODES = new Set([
   'manual_check_required',
 ]);
 
+const BLOCK2_REQUIRED_QUESTIONNAIRE_FLAGS = [
+  'compliance_with_vehicle_regulations',
+  'uses_navigator',
+  'uses_class_a_tires',
+  'eco_drive_training',
+  'interested_in_mobility_manager_course',
+  'interested_in_second_level_certification',
+];
+
 const SORGENTE_CAMPI_ALLOWED = {
   anno_immatricolazione: new Set(['manuale', 'ocr']),
   classe_euro: new Set(['manuale', 'ocr']),
@@ -136,6 +145,140 @@ function validateTransportV2Draft(payload) {
 
 function validateTransportV2Submit(payload) {
   return runTransportV2Validation(payload, { mode: 'submit' });
+}
+
+function validateTransportV2Block1DraftPayload(payload) {
+  const errors = [];
+
+  if (!isPlainObject(payload)) {
+    return {
+      valid: false,
+      errors: [
+        {
+          field: 'body',
+          code: 'invalid_type',
+          message: 'Il body della richiesta deve essere un oggetto.',
+        },
+      ],
+      normalizedData: null,
+    };
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'meta')) {
+    addError(errors, 'meta', 'forbidden', 'Il client non puo inviare il blocco meta.');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'derived')) {
+    addError(errors, 'derived', 'forbidden', 'Il client non puo inviare il blocco derived.');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'results')) {
+    addError(errors, 'results', 'forbidden', 'Il client non puo inviare il blocco results.');
+  }
+
+  const normalizedData = {};
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'entry_mode')) {
+    const entryMode = payload.entry_mode;
+
+    if (isNil(entryMode)) {
+      normalizedData.entry_mode = null;
+    } else if (typeof entryMode === 'string') {
+      const trimmedEntryMode = entryMode.trim();
+      if (!trimmedEntryMode) {
+        normalizedData.entry_mode = null;
+      } else if (!ENTRY_MODES.has(trimmedEntryMode)) {
+        addError(
+          errors,
+          'entry_mode',
+          'invalid_enum',
+          'entry_mode deve essere uno tra form, chatbot o null.',
+        );
+      } else {
+        normalizedData.entry_mode = trimmedEntryMode;
+      }
+    } else {
+      addError(
+        errors,
+        'entry_mode',
+        'invalid_type',
+        'entry_mode deve essere una stringa oppure null.',
+      );
+    }
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(payload, 'draft')) {
+    addError(errors, 'draft', 'required', 'Il blocco draft e obbligatorio.');
+  } else if (!isPlainObject(payload.draft)) {
+    addError(errors, 'draft', 'invalid_type', 'Il blocco draft deve essere un oggetto.');
+  } else {
+    const normalizedDraft = {};
+
+    if (isNil(payload.draft.questionnaire_flags)) {
+      normalizedDraft.questionnaire_flags = {};
+    } else if (!isPlainObject(payload.draft.questionnaire_flags)) {
+      addError(
+        errors,
+        'draft.questionnaire_flags',
+        'invalid_type',
+        'draft.questionnaire_flags deve essere un oggetto.',
+      );
+    } else {
+      normalizedDraft.questionnaire_flags = deepNormalize(payload.draft.questionnaire_flags);
+    }
+
+    if (isNil(payload.draft.vehicles)) {
+      normalizedDraft.vehicles = [];
+    } else if (!Array.isArray(payload.draft.vehicles)) {
+      addError(errors, 'draft.vehicles', 'invalid_type', 'draft.vehicles deve essere un array.');
+    } else {
+      normalizedDraft.vehicles = payload.draft.vehicles.map((vehicle, index) =>
+        normalizeBlock1Vehicle(vehicle, index, errors),
+      );
+    }
+
+    normalizedData.draft = normalizedDraft;
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    normalizedData: errors.length === 0 ? normalizedData : null,
+  };
+}
+
+function validateTransportV2Block2SubmitPayload(payload) {
+  const errors = [];
+  const transportV2 = unwrapTransportV2Input(payload);
+
+  if (!isPlainObject(transportV2)) {
+    return {
+      valid: false,
+      errors: [
+        {
+          field: 'transport_v2',
+          code: 'invalid_type',
+          message: 'Il payload transport_v2 deve essere un oggetto.',
+        },
+      ],
+      normalizedData: null,
+    };
+  }
+
+  const normalizedData = deepNormalize(transportV2);
+
+  if (!isPlainObject(normalizedData.draft)) {
+    addError(errors, 'draft', 'required', 'Il blocco draft e obbligatorio.');
+  } else {
+    validateBlock2QuestionnaireFlags(normalizedData.draft.questionnaire_flags, errors);
+    validateBlock2Vehicles(normalizedData.draft.vehicles, errors);
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    normalizedData: errors.length === 0 ? normalizedData : null,
+  };
 }
 
 function runTransportV2Validation(payload, { mode }) {
@@ -1002,7 +1145,93 @@ function addError(errors, field, code, message) {
   errors.push({ field, code, message });
 }
 
+function normalizeBlock1Vehicle(vehicle, index, errors) {
+  const fieldPath = `draft.vehicles[${index}]`;
+
+  if (!isPlainObject(vehicle)) {
+    addError(errors, fieldPath, 'invalid_type', 'Ogni veicolo deve essere un oggetto.');
+    return null;
+  }
+
+  const normalizedVehicle = deepNormalize(vehicle);
+
+  if (!isNil(normalizedVehicle.transport_mode) && typeof normalizedVehicle.transport_mode === 'string') {
+    normalizedVehicle.transport_mode = normalizedVehicle.transport_mode.trim();
+  }
+
+  if (
+    !isNil(normalizedVehicle.transport_mode) &&
+    !['goods', 'passenger'].includes(normalizedVehicle.transport_mode)
+  ) {
+    addError(
+      errors,
+      `${fieldPath}.transport_mode`,
+      'invalid_enum',
+      'transport_mode deve essere goods, passenger oppure null.',
+    );
+  }
+
+  if (
+    !isNil(normalizedVehicle.ocr_document_id) &&
+    !Number.isInteger(normalizedVehicle.ocr_document_id) &&
+    !(
+      typeof normalizedVehicle.ocr_document_id === 'string' &&
+      /^\d+$/.test(normalizedVehicle.ocr_document_id.trim())
+    )
+  ) {
+    addError(
+      errors,
+      `${fieldPath}.ocr_document_id`,
+      'invalid_type',
+      'ocr_document_id deve essere un intero positivo oppure null.',
+    );
+  }
+
+  if (!isNil(normalizedVehicle.fields) && !isPlainObject(normalizedVehicle.fields)) {
+    addError(errors, `${fieldPath}.fields`, 'invalid_type', 'fields deve essere un oggetto.');
+  }
+
+  if (!isNil(normalizedVehicle.field_sources) && !isPlainObject(normalizedVehicle.field_sources)) {
+    addError(
+      errors,
+      `${fieldPath}.field_sources`,
+      'invalid_type',
+      'field_sources deve essere un oggetto.',
+    );
+  }
+
+  if (!isNil(normalizedVehicle.field_warnings) && !isPlainObject(normalizedVehicle.field_warnings)) {
+    addError(
+      errors,
+      `${fieldPath}.field_warnings`,
+      'invalid_type',
+      'field_warnings deve essere un oggetto.',
+    );
+  }
+
+  if (!isNil(normalizedVehicle.row_notes) && typeof normalizedVehicle.row_notes !== 'string') {
+    addError(
+      errors,
+      `${fieldPath}.row_notes`,
+      'invalid_type',
+      'row_notes deve essere una stringa oppure null.',
+    );
+  }
+
+  if (!isNil(normalizedVehicle.vehicle_id) && typeof normalizedVehicle.vehicle_id !== 'string') {
+    addError(
+      errors,
+      `${fieldPath}.vehicle_id`,
+      'invalid_type',
+      'vehicle_id deve essere una stringa.',
+    );
+  }
+
+  return normalizedVehicle;
+}
+
 module.exports = {
   validateTransportV2Draft,
   validateTransportV2Submit,
+  validateTransportV2Block1DraftPayload,
 };

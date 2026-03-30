@@ -4426,15 +4426,16 @@ function cfCheck(cf) {
 const documentsRouter = require('./routes/documents');
 app.use('/api', documentsRouter);
 
+const transportV2Router = require('./routes/transportV2');
+app.use('/api', transportV2Router);
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Qualcosa è andato storto!" });
 })
 
 
-app.listen(port, '0.0.0.0', async () => {
-  //console.log(`Server in ascolto sulla porta ${port}`);
-
+async function ensureAdminUser() {
   try {
     // Check if the admin user exists
     const res = await pool.query('SELECT * FROM users WHERE administrator = TRUE LIMIT 1');
@@ -4454,6 +4455,18 @@ app.listen(port, '0.0.0.0', async () => {
   } catch (error) {
     console.error('Errore durante la creazione dell\'admin:', error);
   }
-});
+}
+
+if (require.main === module) {
+  app.listen(port, '0.0.0.0', async () => {
+    //console.log(`Server in ascolto sulla porta ${port}`);
+    await ensureAdminUser();
+  });
+}
+
+module.exports = {
+  app,
+  ensureAdminUser,
+};
 
 

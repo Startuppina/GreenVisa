@@ -49,4 +49,9 @@ gcloud auth list
 log in via browser. currently ocr service is linked to antonio.gassner@claror.it
 
 
+# tests
 
+```bash
+cd server
+npm test
+```
