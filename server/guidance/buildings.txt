@@ -1,0 +1,56 @@
+GUIDA APPROVATA — QUESTIONARIO EDIFICI
+
+Questa guida contiene le informazioni approvate per aiutare l'utente a compilare il questionario edifici GreenVisa.
+
+== SEZIONE: DATI GENERALI DELL'EDIFICIO ==
+
+- "Nome edificio": inserire un nome identificativo per l'edificio (es. "Sede centrale", "Stabilimento Nord").
+- "Indirizzo": inserire l'indirizzo completo dell'edificio, comprensivo di via, numero civico, CAP, città e provincia.
+- "Superficie": inserire la superficie totale dell'edificio in metri quadrati (m²). Il dato si trova sull'atto di proprietà, sulla visura catastale o sull'attestato di prestazione energetica (APE).
+- "Anno di costruzione": inserire l'anno di costruzione dell'edificio. Il dato si trova sulla visura catastale o sulla documentazione edilizia.
+
+== SEZIONE: ATTESTATO DI PRESTAZIONE ENERGETICA (APE) ==
+
+- L'APE è un documento obbligatorio che certifica la classe energetica dell'edificio, da A4 (massima efficienza) a G (minima efficienza).
+- La classe energetica è riportata nella prima pagina dell'APE.
+- L'APE è redatto da un tecnico abilitato (ingegnere, architetto, geometra) e ha validità di 10 anni.
+- Se non si dispone di un APE valido, è necessario farne redigere uno prima di completare il questionario.
+
+== SEZIONE: CONSUMI ENERGETICI ==
+
+- "Consumo elettrico annuo": inserire il consumo totale di energia elettrica in kWh per l'anno di riferimento. Il dato si trova sulle bollette elettriche (sommare i consumi di tutte le bollette dell'anno) o sul portale del fornitore di energia.
+- "Consumo di gas naturale": inserire il consumo totale di gas naturale in Smc (Standard metro cubo) per l'anno di riferimento. Il dato si trova sulle bollette del gas.
+- "Consumo di gasolio per riscaldamento": se l'edificio utilizza gasolio per il riscaldamento, inserire il consumo annuo in litri. Il dato si ricava dalle fatture di acquisto del gasolio.
+
+== SEZIONE: IMPIANTI ==
+
+- "Tipo di impianto di riscaldamento": selezionare il tipo (caldaia a gas, caldaia a gasolio, pompa di calore, teleriscaldamento, ecc.). Il dato si trova sulla documentazione tecnica dell'impianto o sul libretto di impianto.
+- "Potenza nominale": inserire la potenza dell'impianto in kW. Il dato si trova sulla targa dell'impianto o sul libretto di impianto.
+- "Anno di installazione": inserire l'anno di installazione dell'impianto.
+
+== SEZIONE: GAS REFRIGERANTI ==
+
+- "Tipo di gas refrigerante": indicare il tipo di gas utilizzato negli impianti di climatizzazione (es. R410A, R32, R134a). Il dato si trova sull'etichetta dell'impianto o sul registro F-gas.
+- "Quantità di carica": inserire la quantità di gas refrigerante in kg. Il dato si trova sul registro F-gas o sulla documentazione dell'impianto.
+
+== SEZIONE: IMPIANTI SOLARI E FOTOVOLTAICI ==
+
+- "Pannelli solari termici": inserire la superficie dei pannelli solari termici in m² e la produzione annua stimata in kWh.
+- "Pannelli fotovoltaici": inserire la potenza di picco in kWp e la produzione annua in kWh. I dati si trovano sulla documentazione dell'impianto o sul portale GSE.
+
+== DOMANDE FREQUENTI ==
+
+D: Dove trovo i dati dei consumi energetici?
+R: I consumi si trovano sulle bollette di energia elettrica e gas. Sommare i valori di tutte le bollette dell'anno di riferimento. Molti fornitori offrono un riepilogo annuale sul loro portale online.
+
+D: Cos'è un attestato APE?
+R: L'Attestato di Prestazione Energetica è un documento che classifica l'efficienza energetica dell'edificio. È obbligatorio per legge in caso di vendita, affitto o ristrutturazione importante.
+
+D: Quali informazioni servono sugli impianti?
+R: Per ogni impianto servono: tipo, potenza nominale (kW), anno di installazione e combustibile utilizzato. Queste informazioni si trovano sul libretto di impianto o sulla targa tecnica.
+
+D: Come inserisco i dati delle bollette?
+R: Dalle bollette estrarre il consumo in kWh (elettricità) o Smc (gas). Non inserire l'importo in euro, ma solo le quantità fisiche consumate. Sommare i consumi di tutte le bollette dell'anno di riferimento.
+
+---
+NOTA: Questo file contiene contenuto segnaposto. Il team GreenVisa deve sostituirlo con la guida approvata ufficiale.

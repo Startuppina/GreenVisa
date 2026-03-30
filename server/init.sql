@@ -378,6 +378,36 @@ CREATE INDEX IF NOT EXISTS idx_documents_building_id ON documents(building_id);
 CREATE INDEX IF NOT EXISTS idx_documents_survey_response_id ON documents(survey_response_id);
 CREATE INDEX IF NOT EXISTS idx_document_batches_status ON document_batches(status);
 
+CREATE TABLE IF NOT EXISTS chat_conversations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    session_id VARCHAR(255),
+    questionnaire_type VARCHAR(50) NOT NULL,
+    certification_id INTEGER,
+    building_id INTEGER,
+    status VARCHAR(20) NOT NULL DEFAULT 'open',
+    handoff_generated BOOLEAN NOT NULL DEFAULT FALSE,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_message_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_chat_status CHECK (status IN ('open', 'handed_off', 'closed'))
+);
 
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id SERIAL PRIMARY KEY,
+    conversation_id INTEGER NOT NULL REFERENCES chat_conversations(id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL,
+    content TEXT NOT NULL,
+    faq_key VARCHAR(100),
+    model_name VARCHAR(100),
+    token_usage JSONB,
+    latency_ms INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_message_role CHECK (role IN ('user', 'assistant', 'system'))
+);
 
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_user ON chat_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_session ON chat_conversations(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation ON chat_messages(conversation_id);
 

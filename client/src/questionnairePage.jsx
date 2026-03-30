@@ -5,6 +5,7 @@ import Footer from "./components/footer";
 import { useLocation } from 'react-router-dom';
 import ScrollToTop from "./components/scrollToTop.jsx";
 import VehicleQuestionnaire from "./vehicleQuestionnaire/Questionnaire.jsx";
+import ChatWidget from "./chatbot/ChatWidget";
 
 // import TransportQuestionnaire from "./components/transportQuestionnaire.jsx";
 
@@ -16,6 +17,8 @@ function QuestionnairePage() {
     console.log("CertificationID", param1);
     const category = queryParams.get('param2');
     console.log(category);
+
+    const questionnaireType = category === "Certificazione trasporti" ? "transport" : "buildings";
 
     return (
         <>
@@ -30,6 +33,7 @@ function QuestionnairePage() {
                 {category === "Certificazione spa e resorts" && <WellnessQuestionnaire certification_id={param1} />}
             </main>
             <Footer />
+            <ChatWidget questionnaireType={questionnaireType} certificationId={param1} />
         </>
     )
 }

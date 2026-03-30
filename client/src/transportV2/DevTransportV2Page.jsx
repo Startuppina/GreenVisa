@@ -6,6 +6,7 @@ import TransportV2DevToolbar from './components/TransportV2DevToolbar';
 import TransportV2EntryModeSelector from './components/TransportV2EntryModeSelector';
 import TransportV2FormShell from './components/TransportV2FormShell';
 import useDevTransportV2Draft from './hooks/useDevTransportV2Draft';
+import ChatWidget from '../chatbot/ChatWidget';
 
 export default function DevTransportV2Page() {
   const {
@@ -127,6 +128,7 @@ export default function DevTransportV2Page() {
         </div>
       </main>
       <Footer />
+      <ChatWidget questionnaireType="transport" />
     </>
   );
 }

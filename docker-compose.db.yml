@@ -15,5 +15,20 @@ services:
       timeout: 5s
       retries: 5
 
+  pgweb:
+    image: sosedoff/pgweb
+    container_name: greenvisa-pgweb
+    environment:
+      PGW_DB_HOST: db
+      PGW_DB_PORT: 5432
+      PGW_DB_USER: admin
+      PGW_DB_PASS: pass123
+      PGW_DB_NAME: green-visa
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   greenvisa_postgres_data:

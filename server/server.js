@@ -2475,13 +2475,26 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       });
     }
 
+    // Prefer the frontend origin that initiated checkout (useful in local/dev),
+    // then fallback to CLIENT_URL from env.
+    let clientBaseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    if (req.headers.origin) {
+      try {
+        const parsedOrigin = new URL(req.headers.origin);
+        clientBaseUrl = `${parsedOrigin.protocol}//${parsedOrigin.host}`;
+      } catch (parseError) {
+        console.warn("Origin header non valido, uso CLIENT_URL:", req.headers.origin);
+      }
+    }
+    clientBaseUrl = clientBaseUrl.replace(/\/$/, '');
+
     // Create a checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: items,
       mode: 'payment',
-      success_url: `${process.env.CLIENT_URL}/PaymentSuccess`,
-      cancel_url: `${process.env.CLIENT_URL}/Cart`,
+      success_url: `${clientBaseUrl}/PaymentSuccess`,
+      cancel_url: `${clientBaseUrl}/Cart`,
       metadata: {
         user_id: user_id,
         promo_code: promoCode || '',
@@ -4428,6 +4441,9 @@ app.use('/api-v2', documentsRouter);
 
 const transportV2Router = require('./routes/transportV2');
 app.use('/api-v2', transportV2Router);
+
+const chatbotRouter = require('./routes/chatbot');
+app.use('/api-v2', chatbotRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

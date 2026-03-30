@@ -25,23 +25,42 @@ npm install
 docker compose -f docker-compose.db.yml up -d --build
 ```
 
+This starts:
+- PostgreSQL on `localhost:5432`
+- pgweb on `http://localhost:8081`
+
 # Run app
 
 ## run docker compose (after first time no need to rebuild)
 docker compose -f docker-compose.db.yml up -d
 
+For local backend development, make sure `server/.env` uses:
+
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+## open pgweb
+
+Open `http://localhost:8081` to inspect the local PostgreSQL database from the browser.
+If pgweb asks for connection details, use:
+- host: `db` if pgweb is running inside Docker Compose
+- port: `5432`
+- user: `admin`
+- password: `pass123`
+- database: `green-visa`
+
+The schema is initialized from `server/init.sql`, so this is the quickest way to browse tables and run ad hoc queries during local development.
+
 ## run backend
 ```bash
-cd server
-
-npm run dev
+cd server; npm run dev
 ```
 
 ## run frontend
 ```bash
-cd client
-
-npm run dev
+cd client; npm run dev
 ```
 
 

@@ -15,6 +15,7 @@ import { useRecoveryContext } from "./provider/provider";
 import { MutatingDots } from "react-loader-spinner";
 import MessagePopUp from "./components/messagePopUp";
 import BuildingResults from "./components/buildingResults";
+import ChatWidget from "./chatbot/ChatWidget";
 
 
 function BuildingPage() {
@@ -224,6 +225,7 @@ function BuildingPage() {
                 )
             }
             <Footer />
+            <ChatWidget questionnaireType="buildings" buildingId={buildingID} />
         </div >
     )
 }

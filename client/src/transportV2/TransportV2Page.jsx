@@ -6,6 +6,7 @@ import ScrollToTop from '../components/scrollToTop';
 import TransportV2EntryModeSelector from './components/TransportV2EntryModeSelector';
 import TransportV2FormShell from './components/TransportV2FormShell';
 import useTransportV2Draft from './hooks/useTransportV2Draft';
+import ChatWidget from '../chatbot/ChatWidget';
 
 export default function TransportV2Page() {
   const navigate = useNavigate();
@@ -109,6 +110,7 @@ export default function TransportV2Page() {
         </div>
       </main>
       <Footer />
+      <ChatWidget questionnaireType="transport" certificationId={certificationId} />
     </>
   );
 }

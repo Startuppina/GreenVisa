@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MutatingDots } from 'react-loader-spinner'
 import { useRecoveryContext } from './provider/provider';
@@ -7,23 +7,28 @@ import axios from 'axios';
 function PaySuccessPage() {
   const { setCartProducts, setQuantities, setIsEmpty } = useRecoveryContext();
   const navigate = useNavigate();
-  const [code, setCode] = useState(null);
 
   useEffect(() => {
+    const finalizePurchase = async () => {
+      const orderDataRaw = localStorage.getItem('productsIDs');
+      const codeIdRaw = localStorage.getItem('codeId');
+      const codeID = codeIdRaw ? Number(codeIdRaw) : null;
 
-    createOrder();
+      await createOrder(orderDataRaw, codeID);
+      await remove_user_cart();
 
-    remove_user_cart();
+      localStorage.removeItem('productsIDs');
+      localStorage.removeItem('codeId');
+    };
 
-    localStorage.removeItem('productsIDs');
-    localStorage.removeItem('codeId');
+    finalizePurchase();
 
     const timer = setTimeout(() => {
-      navigate('/Cart');
+      navigate('/User');
     }, 5000);
     return () => {
       clearTimeout(timer);
-    }
+    };
   }, []);
 
   const remove_user_cart = async () => {
@@ -44,27 +49,21 @@ function PaySuccessPage() {
     }
   };
 
-  const createOrder = async () => {
-
-
-    const orderData = localStorage.getItem('productsIDs');
-    const codeID = localStorage.getItem('codeId');
-    console.log("codeID:", codeID);
-
-    if (codeID) {
-      setCode(codeID);
-    } else {
-      setCode(null);
+  const createOrder = async (orderDataRaw, codeID) => {
+    const parsedOrderData = orderDataRaw ? JSON.parse(orderDataRaw) : [];
+    if (!Array.isArray(parsedOrderData) || parsedOrderData.length === 0) {
+      console.warn("Nessun prodotto trovato in productsIDs: salto creazione ordine.");
+      return;
     }
 
     try {
       //IL POST VERRA FATTO DUE VOLTE, QUINDI DUE ORDINI INVECE CHE UNO IN QUANTO IN MAIN.JS C'E'
       //REACT STRICT MODE CHE IN AMBIENTE DI PRODUZIONE E' DISABILITATO
-      const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/create-order`, { orderData: JSON.parse(orderData), codeID: code }, {
+      const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/create-order`, { orderData: parsedOrderData, codeID }, {
         withCredentials: true
       });
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         console.log(response.data);
       }
     } catch (error) {

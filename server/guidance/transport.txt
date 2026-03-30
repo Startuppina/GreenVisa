@@ -1,0 +1,43 @@
+GUIDA APPROVATA — QUESTIONARIO TRASPORTI
+
+Questa guida contiene le informazioni approvate per aiutare l'utente a compilare il questionario trasporti GreenVisa.
+
+== SEZIONE: DATI GENERALI DELLA FLOTTA ==
+
+- "Numero di veicoli": inserire il numero totale di veicoli utilizzati dall'azienda per attività di trasporto.
+- "Tipo di veicolo": selezionare la categoria (autovettura, furgone, autocarro, autobus, ecc.). Questa informazione si trova sulla carta di circolazione (CDC) alla voce J.
+- "Targa": inserire la targa del veicolo esattamente come riportata sulla carta di circolazione.
+
+== SEZIONE: CLASSE EURO E ALIMENTAZIONE ==
+
+- "Classe Euro": indica la normativa sulle emissioni a cui il veicolo è conforme. Si trova sulla carta di circolazione alla voce V.9. I valori possibili sono Euro 0, Euro 1, Euro 2, Euro 3, Euro 4, Euro 5, Euro 6. Veicoli più recenti hanno classi Euro più alte e generalmente emissioni inferiori.
+- "Tipo di carburante": selezionare il carburante principale del veicolo (benzina, diesel/gasolio, GPL, metano, ibrido, elettrico). Questa informazione si trova sulla carta di circolazione alla voce P.3.
+
+== SEZIONE: DATI DI PERCORRENZA ==
+
+- "Chilometri annui": inserire i chilometri percorsi dal veicolo nell'ultimo anno di riferimento. Il dato può essere ricavato dal contachilometri o dai registri aziendali di manutenzione/rifornimento.
+- "Consumo annuo di carburante": inserire il consumo totale di carburante in litri (o kg per il metano, o kWh per veicoli elettrici) per l'anno di riferimento. Il dato può essere ricavato dalle fatture di rifornimento o dai sistemi di gestione flotta.
+
+== SEZIONE: CARTA DI CIRCOLAZIONE (CDC) ==
+
+- La carta di circolazione è il documento principale da cui ricavare i dati del veicolo.
+- Può essere caricata tramite la funzione di scansione OCR per compilare automaticamente alcuni campi.
+- Campi principali ricavabili dalla CDC: targa (A), categoria veicolo (J), massa (F.1, F.2, F.3), potenza motore (P.2), tipo carburante (P.3), classe Euro (V.9).
+
+== SEZIONE: BOLLINO BLU ==
+
+- "Bollino blu": indica se il veicolo ha superato il controllo dei gas di scarico. Selezionare "Sì" se il veicolo è in regola con la revisione e il controllo emissioni.
+
+== DOMANDE FREQUENTI ==
+
+D: Dove trovo la classe Euro del mio veicolo?
+R: La classe Euro si trova sulla carta di circolazione alla voce V.9. Se non è indicata, potrebbe essere necessario consultare il costruttore o verificare tramite il portale dell'ACI.
+
+D: Cosa faccio se ho veicoli con carburanti diversi?
+R: Ogni veicolo va inserito singolarmente con il proprio tipo di carburante. Se un veicolo è bifuel (es. benzina/GPL), selezionare il carburante prevalente o quello indicato sulla CDC.
+
+D: Come calcolo i chilometri annui se non ho dati precisi?
+R: Utilizzare la migliore stima disponibile basata sui registri di manutenzione, fatture carburante o dati del contachilometri. Non inventare dati; se non si dispone di un dato, contattare il supporto.
+
+---
+NOTA: Questo file contiene contenuto segnaposto. Il team GreenVisa deve sostituirlo con la guida approvata ufficiale.
