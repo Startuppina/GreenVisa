@@ -31,6 +31,7 @@ import ConfirmAccountPage from './confirmAccountPage.jsx';
 import VerifyAccount from './accountVerifiedPage.jsx';
 import ConfirmAccountPageNoCompanyEmail from './confirmAccountPageNoCompanyEmail.jsx';
 import OcrDevPage from './ocr/OcrDevPage';
+import TransportV2Page from './transportV2/TransportV2Page.jsx';
 
 const router = createBrowserRouter([
   {
@@ -112,6 +113,14 @@ const router = createBrowserRouter([
   {
     path: "/questionario/:category",
     element: <QuestionnairePage />,
+  },
+  {
+    path: "/transport-v2",
+    element: <TransportV2Page />,
+  },
+  {
+    path: "/transport-v2/:certificationId",
+    element: <TransportV2Page />,
   },
   {
     // DEV ONLY — OCR sandbox page (remove when integrated into real form)
