@@ -1,0 +1,85 @@
+{
+    "transport_v2": {
+      "meta": {
+        "version": 1,
+        "certification_id": 123,
+        "entry_mode": "chatbot",
+        "status": "submitted",
+        "started_at": "2026-03-29T10:00:00.000Z",
+        "updated_at": "2026-03-29T10:18:00.000Z",
+        "submitted_at": "2026-03-29T10:20:00.000Z"
+      },
+      "draft": {
+        "questionnaire_flags": {
+          "compliance_with_vehicle_regulations": true,
+          "uses_navigator": true,
+          "uses_class_a_tires": "some",
+          "eco_drive_training": "all",
+          "interested_in_mobility_manager_course": false,
+          "interested_in_second_level_certification": true
+        },
+        "vehicles": [
+          {
+            "vehicle_id": "veh_1",
+            "transport_mode": "goods",
+            "source": "mixed",
+            "ocr_document_id": 456,
+            "review_state": "confirmed",
+            "fields": {
+              "registration_year": 2020,
+              "euro_class": "EURO_6",
+              "fuel_type": "diesel",
+              "wltp_homologation": true,
+              "wltp_co2_g_km": 212,
+              "wltp_co2_g_km_alt_fuel": null,
+              "goods_vehicle_over_2_5_tons": true,
+              "occupancy_profile_code": null,
+              "load_profile_code": 3,
+              "last_revision_date": "2025-07-01",
+              "blue_sticker": true,
+              "annual_km_band": "50001_plus"
+            },
+            "field_sources": {},
+            "field_warnings": {},
+            "row_notes": null
+          }
+        ]
+      },
+      "derived": {
+        "vehicle_counts": {
+          "total": 1,
+          "passenger": 0,
+          "goods": 1
+        },
+        "registration_year_counts": {
+          "2020": 1
+        },
+        "euro_class_counts": {
+          "EURO_6": 1
+        },
+        "fuel_type_counts": {
+          "diesel": 1
+        },
+        "revision_year_counts": {
+          "2025": 1
+        },
+        "blue_sticker_counts": {
+          "yes": 1,
+          "no": 0
+        },
+        "annual_km_total_estimated": 60000
+      },
+      "results": {
+        "calculated_at": "2026-03-29T10:20:00.000Z",
+        "calculator_version": 1,
+        "co2": {
+          "total_tons_per_year": 12.72,
+          "passenger_tons_per_year": 0,
+          "goods_tons_per_year": 12.72
+        },
+        "score": {
+          "total_score": 61.4
+        }
+      }
+    }
+  }

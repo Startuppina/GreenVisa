@@ -1,0 +1,62 @@
+{
+    "transport_v2": {
+      "meta": {
+        "version": 1,
+        "certification_id": 123,
+        "entry_mode": "chatbot",
+        "status": "draft",
+        "started_at": "2026-03-29T10:00:00.000Z",
+        "updated_at": "2026-03-29T10:18:00.000Z",
+        "submitted_at": null
+      },
+      "draft": {
+        "questionnaire_flags": {
+          "compliance_with_vehicle_regulations": true,
+          "uses_navigator": true,
+          "uses_class_a_tires": "some",
+          "eco_drive_training": "all",
+          "interested_in_mobility_manager_course": false,
+          "interested_in_second_level_certification": true
+        },
+        "vehicles": [
+          {
+            "vehicle_id": "veh_1",
+            "transport_mode": "goods",
+            "ocr_document_id": 456,
+            "fields": {
+              "registration_year": 2020,
+              "euro_class": "EURO_6",
+              "fuel_type": "diesel",
+              "wltp_homologation": null,
+              "wltp_co2_g_km": null,
+              "wltp_co2_g_km_alt_fuel": null,
+              "goods_vehicle_over_3_5_tons": false,
+              "occupancy_profile_code": null,
+              "load_profile_code": 3,
+              "last_revision_date": "2025-07-01",
+              "blue_sticker": true,
+              "annual_km": 60000
+            },
+            "field_sources": {
+              "registration_year": { "source": "ocr", "document_id": 456, "confidence": 0.9999963 },
+              "euro_class": { "source": "ocr", "document_id": 456, "confidence": 0.97818226 },
+              "fuel_type": { "source": "ocr", "document_id": 456, "confidence": 0.99999714 },
+              "goods_vehicle_over_3_5_tons": { "source": "ocr_derived", "document_id": 456, "confidence": 0.99995124 },
+              "wltp_homologation": { "source": "user" },
+              "wltp_co2_g_km": { "source": "user" },
+              "load_profile_code": { "source": "user" },
+              "last_revision_date": { "source": "user" },
+              "blue_sticker": { "source": "user" },
+              "annual_km": { "source": "user" }
+            },
+            "field_warnings": {
+              "euro_class": { "confidence": 0.97818226 }
+            },
+            "row_notes": null
+          }
+        ]
+      },
+      "derived": {},
+      "results": {}
+    }
+  }
