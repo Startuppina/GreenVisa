@@ -1,6 +1,8 @@
+import TransportV2DraftCompletenessBanner from './TransportV2DraftCompletenessBanner';
 import TransportV2QuestionnaireFlagsSection from './TransportV2QuestionnaireFlagsSection';
 import TransportV2StatusBar from './TransportV2StatusBar';
 import TransportV2VehicleList from './TransportV2VehicleList';
+import { getTransportV2DraftCompleteness } from '../transportV2DraftCompleteness';
 
 export default function TransportV2FormShell({
   transportV2,
@@ -15,6 +17,7 @@ export default function TransportV2FormShell({
 }) {
   const isSubmitted = transportV2?.meta?.status === 'submitted';
   const isChatbotMode = transportV2?.meta?.entry_mode === 'chatbot';
+  const completeness = getTransportV2DraftCompleteness(transportV2);
 
   return (
     <div className="space-y-6">
@@ -46,6 +49,8 @@ export default function TransportV2FormShell({
         </section>
       ) : null}
 
+      <TransportV2DraftCompletenessBanner completeness={completeness} />
+
       <TransportV2QuestionnaireFlagsSection
         questionnaireFlags={transportV2?.draft?.questionnaire_flags}
         disabled={isSubmitted}
@@ -54,6 +59,7 @@ export default function TransportV2FormShell({
 
       <TransportV2VehicleList
         vehicles={transportV2?.draft?.vehicles || []}
+        rowIssues={completeness?.vehicles?.rowIssues || []}
         disabled={isSubmitted}
         onAddVehicle={onAddVehicle}
         onUpdateVehicle={onUpdateVehicle}
