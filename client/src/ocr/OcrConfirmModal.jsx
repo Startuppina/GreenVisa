@@ -10,7 +10,7 @@ export default function OcrConfirmModal({ open, onAccept, onCancel, error, loadi
 
         <div className="text-gray-600 space-y-3 mb-6 leading-relaxed">
           <p>
-            Stai per confermare i dati estratti automaticamente dal documento.
+            Stai per confermare lo snapshot dei dati estratti automaticamente dal documento.
           </p>
           <p>
             Ti ricordiamo gentilmente che l'estrazione automatica è uno strumento di{' '}
@@ -22,7 +22,8 @@ export default function OcrConfirmModal({ open, onAccept, onCancel, error, loadi
             procedere. Il tuo contributo è fondamentale per garantire la qualità dei dati.
           </p>
           <p className="text-sm text-gray-500 italic">
-            La responsabilità finale dei dati confermati resta in capo all'utente.
+            La conferma mantiene la tracciabilità OCR, ma il draft Transport V2 resta la
+            superficie canonica di revisione e modifica.
           </p>
         </div>
 

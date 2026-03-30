@@ -61,16 +61,16 @@ async function getBatchWithDocuments(batchId) {
 
 async function createDocument({
   batchId, userId, buildingId, originalName, storedName,
-  storagePath, mimeType, fileSize, sha256, ocrProvider, ocrRegion, ocrStatus,
+  storagePath, mimeType, fileSize, sha256, ocrProvider, ocrRegion, ocrStatus, surveyResponseId,
 }) {
   const { rows } = await pool.query(
     `INSERT INTO documents
-       (batch_id, user_id, building_id, original_name, stored_name, storage_path,
+       (batch_id, user_id, building_id, survey_response_id, original_name, stored_name, storage_path,
         mime_type, file_size, sha256, ocr_provider, ocr_region, ocr_status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
      RETURNING *`,
     [
-      batchId, userId, buildingId || null, originalName, storedName, storagePath,
+      batchId, userId, buildingId || null, surveyResponseId || null, originalName, storedName, storagePath,
       mimeType, fileSize, sha256, ocrProvider, ocrRegion, ocrStatus,
     ],
   );
@@ -133,6 +133,18 @@ async function getDocumentsByUserId(userId) {
     [userId],
   );
   return rows;
+}
+
+async function linkDocumentToSurveyResponse(docId, surveyResponseId) {
+  const { rows } = await pool.query(
+    `UPDATE documents
+     SET survey_response_id = $2, updated_at = NOW()
+     WHERE id = $1
+     RETURNING *`,
+    [docId, surveyResponseId],
+  );
+
+  return rows[0] || null;
 }
 
 // ── Results ───────────────────────────────────────────────────
@@ -202,6 +214,7 @@ module.exports = {
   getDocumentById,
   getDocumentsByBatchId,
   getDocumentsByUserId,
+  linkDocumentToSurveyResponse,
   createResult,
   getResultByDocumentId,
   updateResultConfirmed,

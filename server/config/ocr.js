@@ -2,7 +2,7 @@ const path = require('path');
 
 const config = {
   provider: process.env.OCR_PROVIDER || 'google-document-ai',
-  mockMode: process.env.OCR_MOCK_MODE === 'false',
+  mockMode: process.env.OCR_MOCK_MODE === 'true',
 
   google: {
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',

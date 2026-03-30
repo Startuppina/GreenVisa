@@ -5,6 +5,7 @@ const {
   applyDraftWritePayload,
 } = require('./transportV2Normalizer');
 const { validateTransportV2Block1DraftPayload } = require('./validateTransportv2');
+const { mergeOcrVehiclePrefill, normalizeTransportMode } = require('./transportV2OcrPrefillService');
 
 class TransportV2HttpError extends Error {
   constructor(statusCode, message, extras = {}) {
@@ -94,6 +95,103 @@ async function saveTransportV2Draft({ userId, certificationId, payload }) {
   );
 }
 
+async function resolveTransportSurveyResponse({ userId, certificationId }) {
+  const normalizedCertificationId = parseCertificationId(certificationId);
+  await assertTransportCertificationAccess({ userId, certificationId: normalizedCertificationId });
+
+  return repository.withLockedSurveyResponse(
+    { userId, certificationId: normalizedCertificationId },
+    async (_client, surveyResponse) => ({
+      certificationId: normalizedCertificationId,
+      surveyResponseId: surveyResponse.id,
+    }),
+  );
+}
+
+async function upsertTransportV2OcrVehicle({
+  userId,
+  certificationId,
+  vehiclePrefill,
+  transportMode = null,
+}) {
+  const normalizedCertificationId = parseCertificationId(certificationId);
+  await assertTransportCertificationAccess({ userId, certificationId: normalizedCertificationId });
+
+  if (!vehiclePrefill || typeof vehiclePrefill !== 'object') {
+    throw new TransportV2HttpError(400, 'Prefill OCR non valido.');
+  }
+
+  if (!Number.isInteger(vehiclePrefill.ocr_document_id) || vehiclePrefill.ocr_document_id <= 0) {
+    throw new TransportV2HttpError(400, 'ocr_document_id mancante nel prefill OCR.');
+  }
+
+  return repository.withLockedSurveyResponse(
+    { userId, certificationId: normalizedCertificationId },
+    async (client, surveyResponse) => {
+      const now = new Date().toISOString();
+      const currentTransportV2 = getTransportV2FromSurveyData(surveyResponse.survey_data);
+      const baseTransportV2 = currentTransportV2
+        ? normalizeTransportV2(currentTransportV2, {
+            certificationId: normalizedCertificationId,
+            now,
+          })
+        : createDefaultTransportV2({
+            certificationId: normalizedCertificationId,
+            now,
+          });
+
+      const vehicles = Array.isArray(baseTransportV2.draft?.vehicles)
+        ? [...baseTransportV2.draft.vehicles]
+        : [];
+      const existingIndex = vehicles.findIndex(
+        (vehicle) => vehicle?.ocr_document_id === vehiclePrefill.ocr_document_id,
+      );
+      const mergedVehicle = mergeOcrVehiclePrefill(
+        existingIndex >= 0 ? vehicles[existingIndex] : null,
+        vehiclePrefill,
+        normalizeTransportMode(transportMode),
+      );
+
+      if (existingIndex >= 0) {
+        vehicles[existingIndex] = mergedVehicle;
+      } else {
+        vehicles.push(mergedVehicle);
+      }
+
+      const canonicalTransportV2 = normalizeTransportV2(
+        {
+          ...baseTransportV2,
+          draft: {
+            ...baseTransportV2.draft,
+            vehicles,
+          },
+        },
+        {
+          certificationId: normalizedCertificationId,
+          now,
+        },
+      );
+      canonicalTransportV2.meta.updated_at = now;
+      canonicalTransportV2.meta.status = 'draft';
+
+      await repository.saveTransportV2(client, {
+        surveyResponseId: surveyResponse.id,
+        transportV2: canonicalTransportV2,
+      });
+
+      const savedVehicle = canonicalTransportV2.draft.vehicles.find(
+        (vehicle) => vehicle.ocr_document_id === vehiclePrefill.ocr_document_id,
+      );
+
+      return {
+        surveyResponseId: surveyResponse.id,
+        transportV2: canonicalTransportV2,
+        vehicle: savedVehicle || null,
+      };
+    },
+  );
+}
+
 async function assertTransportCertificationAccess({ userId, certificationId }) {
   const certification = await repository.getTransportCertificationAccess({
     userId,
@@ -132,6 +230,8 @@ module.exports = {
   TransportV2HttpError,
   loadTransportV2Draft,
   saveTransportV2Draft,
+  resolveTransportSurveyResponse,
+  upsertTransportV2OcrVehicle,
   assertTransportCertificationAccess,
   parseCertificationId,
   getTransportV2FromSurveyData,

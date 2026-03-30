@@ -81,13 +81,79 @@ async function setupTestDb() {
         CONSTRAINT unique_user_survey UNIQUE (user_id, certification_id)
       );
     `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".document_batches (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES "${schemaName}".users(id) ON DELETE CASCADE,
+        building_id INTEGER,
+        questionnaire_type VARCHAR(100),
+        category VARCHAR(100),
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        file_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        completed_at TIMESTAMPTZ
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".documents (
+        id SERIAL PRIMARY KEY,
+        batch_id INTEGER NOT NULL REFERENCES "${schemaName}".document_batches(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES "${schemaName}".users(id) ON DELETE CASCADE,
+        building_id INTEGER,
+        survey_response_id INTEGER REFERENCES "${schemaName}".survey_responses(id) ON DELETE SET NULL,
+        questionnaire_type VARCHAR(100),
+        document_type VARCHAR(100),
+        original_name VARCHAR(500) NOT NULL,
+        stored_name VARCHAR(500) NOT NULL,
+        storage_path TEXT NOT NULL,
+        mime_type VARCHAR(100) NOT NULL,
+        file_size BIGINT NOT NULL,
+        sha256 VARCHAR(64),
+        ocr_provider VARCHAR(100),
+        ocr_region VARCHAR(50),
+        ocr_status VARCHAR(50) NOT NULL DEFAULT 'uploaded',
+        ocr_attempt_count INTEGER NOT NULL DEFAULT 0,
+        last_ocr_attempt_at TIMESTAMPTZ,
+        ocr_error_code VARCHAR(100),
+        ocr_error_message TEXT,
+        uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        processed_at TIMESTAMPTZ,
+        confirmed_at TIMESTAMPTZ,
+        confirmed_by INTEGER REFERENCES "${schemaName}".users(id) ON DELETE SET NULL,
+        applied_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        deleted_at TIMESTAMPTZ
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".document_results (
+        id SERIAL PRIMARY KEY,
+        document_id INTEGER NOT NULL UNIQUE REFERENCES "${schemaName}".documents(id) ON DELETE CASCADE,
+        raw_provider_output JSONB,
+        normalized_output JSONB,
+        derived_output JSONB,
+        review_payload JSONB,
+        validation_issues JSONB,
+        confirmed_output JSONB,
+        provider_processor_id VARCHAR(500),
+        provider_processor_version VARCHAR(100),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
   } finally {
     await client.end();
   }
 }
 
 async function resetTestDb() {
-  await getPool().query('TRUNCATE TABLE survey_responses, orders, products, users RESTART IDENTITY CASCADE');
+  await getPool().query(
+    'TRUNCATE TABLE document_results, documents, document_batches, survey_responses, orders, products, users RESTART IDENTITY CASCADE',
+  );
 }
 
 async function teardownTestDb() {

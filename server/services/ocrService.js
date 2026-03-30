@@ -3,6 +3,7 @@ const { normalizeProviderOutput } = require('./fieldMapper');
 const { validateNormalizedOutput, applyNormalizations } = require('./ocrOutputValidator');
 const repo = require('./documentRepository');
 const { readFileBytes } = require('./documentStorageService');
+const { buildTransportV2VehiclePrefill } = require('./transportV2OcrPrefillService');
 
 async function processDocument(documentRecord) {
   const docId = documentRecord.id;
@@ -23,18 +24,27 @@ async function processDocument(documentRecord) {
 
     const validationIssues = validateNormalizedOutput(normalizedFields);
 
-    const derivedOutput = buildDerivedOutput(normalizedFields);
+    const transportV2VehiclePrefill = buildTransportV2VehiclePrefill({
+      documentId: docId,
+      reviewFields: normalizedFields,
+    });
+
+    const derivedOutput = buildDerivedOutput(transportV2VehiclePrefill);
 
     const reviewPayload = {
       fields: normalizedFields,
       validationIssues,
+      transport_v2_vehicle_prefill: transportV2VehiclePrefill,
       derivedSummary: derivedOutput,
     };
 
     await repo.createResult({
       documentId: docId,
       rawProviderOutput: providerResult.raw,
-      normalizedOutput: { fields: normalizedFields },
+      normalizedOutput: {
+        fields: normalizedFields,
+        transport_v2_vehicle_prefill: transportV2VehiclePrefill,
+      },
       derivedOutput,
       reviewPayload,
       validationIssues,
@@ -57,16 +67,9 @@ async function processDocument(documentRecord) {
   }
 }
 
-function buildDerivedOutput(normalizedFields) {
-  const fieldMap = Object.fromEntries(normalizedFields.map((f) => [f.key, f.value]));
+function buildDerivedOutput(transportV2VehiclePrefill) {
   return {
-    vehicleSummary: {
-      registrationYear: fieldMap.registrationYear || null,
-      euroClass: fieldMap.euroClass || null,
-      fuelType: fieldMap.fuelType || null,
-      wltpHomologation: fieldMap.wltpHomologation || null,
-      goodsVehicleOver2_5Tons: fieldMap.goodsVehicleOver2_5Tons || null,
-    },
+    transport_v2_vehicle_prefill: transportV2VehiclePrefill,
   };
 }
 

@@ -88,6 +88,91 @@ async function createSurveyResponseFixture({
   return rows[0];
 }
 
+async function createDocumentBatchFixture({
+  userId,
+  buildingId = null,
+  category = 'transport',
+  status = 'processing',
+  fileCount = 1,
+} = {}) {
+  const { rows } = await query(
+    `INSERT INTO document_batches
+      (user_id, building_id, category, status, file_count, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+     RETURNING *`,
+    [userId, buildingId, category, status, fileCount],
+  );
+
+  return rows[0];
+}
+
+async function createDocumentFixture({
+  batchId,
+  userId,
+  surveyResponseId = null,
+  originalName = 'vehicle.pdf',
+  storedName = 'vehicle.pdf',
+  storagePath = '/tmp/vehicle.pdf',
+  mimeType = 'application/pdf',
+  fileSize = 1024,
+  sha256 = 'abc123',
+  ocrProvider = 'google-document-ai',
+  ocrRegion = 'eu',
+  ocrStatus = 'confirmed',
+} = {}) {
+  const { rows } = await query(
+    `INSERT INTO documents
+      (batch_id, user_id, survey_response_id, original_name, stored_name, storage_path, mime_type,
+       file_size, sha256, ocr_provider, ocr_region, ocr_status, uploaded_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+     RETURNING *`,
+    [
+      batchId,
+      userId,
+      surveyResponseId,
+      originalName,
+      storedName,
+      storagePath,
+      mimeType,
+      fileSize,
+      sha256,
+      ocrProvider,
+      ocrRegion,
+      ocrStatus,
+    ],
+  );
+
+  return rows[0];
+}
+
+async function createDocumentResultFixture({
+  documentId,
+  normalizedOutput = null,
+  derivedOutput = null,
+  reviewPayload = null,
+  validationIssues = [],
+  confirmedOutput = null,
+  rawProviderOutput = {},
+} = {}) {
+  const { rows } = await query(
+    `INSERT INTO document_results
+      (document_id, raw_provider_output, normalized_output, derived_output, review_payload, validation_issues, confirmed_output, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+     RETURNING *`,
+    [
+      documentId,
+      JSON.stringify(rawProviderOutput),
+      normalizedOutput == null ? null : JSON.stringify(normalizedOutput),
+      derivedOutput == null ? null : JSON.stringify(derivedOutput),
+      reviewPayload == null ? null : JSON.stringify(reviewPayload),
+      JSON.stringify(validationIssues),
+      confirmedOutput == null ? null : JSON.stringify(confirmedOutput),
+    ],
+  );
+
+  return rows[0];
+}
+
 async function getSurveyResponse({ userId, certificationId }) {
   const { rows } = await query(
     `SELECT *
@@ -280,6 +365,9 @@ module.exports = {
   buildGoodsVehicle,
   buildPassengerVehicle,
   buildTransportV2Draft,
+  createDocumentBatchFixture,
+  createDocumentFixture,
+  createDocumentResultFixture,
   createCertificationFixture,
   createSurveyResponseFixture,
   createUserFixture,

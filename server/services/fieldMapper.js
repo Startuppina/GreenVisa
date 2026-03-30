@@ -1,36 +1,40 @@
-// Maps provider-specific entity types to the stable vehicle field schema.
-// Only the five OCR-relevant transport fields are mapped.
-// Adding a new field = one entry here + validation in ocrOutputValidator.
+// Maps provider-specific entity types to the stable Transport V2 OCR review schema.
+// The review fields remain document-centric, while the prefill row is built later.
 
 const FIELD_DEFINITIONS = [
   {
-    key: 'registrationYear',
+    key: 'registration_year',
     label: 'Anno immatricolazione',
-    providerType: 'registration_year',
-    required: true,
+    providerTypes: ['registration_year'],
+    required: false,
   },
   {
-    key: 'euroClass',
+    key: 'euro_class',
     label: 'Classe Euro',
-    providerType: 'euro_class',
-    required: true,
+    providerTypes: ['euro_class'],
+    required: false,
   },
   {
-    key: 'fuelType',
+    key: 'fuel_type',
     label: 'Tipo di carburante',
-    providerType: 'fuel_type',
-    required: true,
+    providerTypes: ['fuel_type'],
+    required: false,
   },
   {
-    key: 'wltpHomologation',
+    key: 'wltp_homologation',
     label: 'Omologazione WLTP',
-    providerType: 'wltp_homologation',
-    required: true,
+    providerTypes: ['wltp_homologation'],
+    required: false,
   },
   {
-    key: 'goodsVehicleOver2_5Tons',
-    label: 'Veicolo merci oltre 2.5 tonnellate',
-    providerType: 'goods_vehicle_over_2_5_tons',
+    key: 'vehicle_mass_kg',
+    label: 'Massa veicolo (kg)',
+    providerTypes: [
+      'vehicle_mass_kg',
+      'gross_vehicle_mass_kg',
+      'gross_mass_kg',
+      'vehicle_mass',
+    ],
     required: false,
   },
 ];
@@ -38,15 +42,8 @@ const FIELD_DEFINITIONS = [
 function normalizeProviderOutput(providerResult) {
   const { entities } = providerResult;
 
-  const entityByType = new Map();
-  for (const entity of entities) {
-    if (!entityByType.has(entity.type)) {
-      entityByType.set(entity.type, entity);
-    }
-  }
-
   const fields = FIELD_DEFINITIONS.map((def) => {
-    const entity = entityByType.get(def.providerType);
+    const entity = findEntityByProviderTypes(entities, def.providerTypes);
 
     return {
       key: def.key,
@@ -61,6 +58,21 @@ function normalizeProviderOutput(providerResult) {
   });
 
   return { fields };
+}
+
+function findEntityByProviderTypes(entities, providerTypes) {
+  if (!Array.isArray(entities) || !Array.isArray(providerTypes)) {
+    return null;
+  }
+
+  for (const providerType of providerTypes) {
+    const entity = entities.find((candidate) => candidate.type === providerType);
+    if (entity) {
+      return entity;
+    }
+  }
+
+  return null;
 }
 
 module.exports = { normalizeProviderOutput, FIELD_DEFINITIONS };

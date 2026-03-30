@@ -1,7 +1,7 @@
 import axiosInstance from '../axiosInstance';
 import { generateMockExtraction } from './ocrMockData';
 
-const USE_MOCK = true;
+const USE_MOCK = import.meta.env.DEV && import.meta.env.VITE_OCR_USE_MOCK === 'true';
 
 const MOCK_PROCESSING_DELAY_MS = 2500;
 
@@ -18,7 +18,7 @@ function delay(ms, signal) {
 }
 
 // ── Upload a single file ────────────────────────────────────
-export async function uploadDocument(file, { signal } = {}) {
+export async function uploadDocument(file, { signal, certificationId } = {}) {
   if (USE_MOCK) {
     await delay(600 + Math.random() * 1200, signal);
     if (Math.random() < 0.04) throw new Error('Errore simulato durante il caricamento');
@@ -29,6 +29,9 @@ export async function uploadDocument(file, { signal } = {}) {
 
   const formData = new FormData();
   formData.append('files', file);
+  if (certificationId != null) {
+    formData.append('certificationId', String(certificationId));
+  }
   const res = await axiosInstance.post('/documents/upload', formData, {
     signal,
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -101,12 +104,15 @@ export async function confirmExtraction(documentId, _entityId, payload) {
 
 // ── Apply confirmed data to business tables ─────────────────
 // Transitions document from confirmed → applied
-export async function applyDocument(documentId, { certificationId } = {}) {
+export async function applyDocument(documentId, { certificationId, transportMode } = {}) {
   if (USE_MOCK) {
     await delay(200 + Math.random() * 300);
     return { success: true, documentId, status: 'applied' };
   }
 
-  const res = await axiosInstance.post(`/documents/${documentId}/apply`, { certificationId });
+  const res = await axiosInstance.post(`/documents/${documentId}/apply`, {
+    certificationId,
+    transportMode,
+  });
   return res.data;
 }

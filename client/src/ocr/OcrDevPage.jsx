@@ -126,7 +126,7 @@ export default function OcrDevPage() {
           </div>
           <p className="text-gray-500">
             Pagina di sviluppo per testare il pipeline OCR. Carica documenti, verifica
-            l'estrazione dati, conferma e applica i risultati.
+            l'estrazione dati, conferma lo snapshot OCR e prefilla il draft Transport V2.
           </p>
         </header>
 
@@ -204,7 +204,7 @@ export default function OcrDevPage() {
               ✓ Tutti i veicoli sono stati confermati
             </p>
             <p className="text-green-700 text-sm mt-1">
-              Seleziona ciascun veicolo e premi "Applica al questionario" per completare il processo.
+              Seleziona ciascun veicolo e premi "Prefilla nel draft Transport V2" per completare il processo.
             </p>
           </section>
         )}

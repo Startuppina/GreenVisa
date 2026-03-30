@@ -66,6 +66,7 @@ export default function OcrReviewPanel({
           const currentValue = editedFields[field.key] ?? field.value;
           const wasEdited =
             editedFields[field.key] !== undefined && editedFields[field.key] !== field.value;
+          const displayValue = currentValue == null ? '' : String(currentValue);
 
           return (
             <div
@@ -91,7 +92,7 @@ export default function OcrReviewPanel({
               {/* Input */}
               <input
                 type="text"
-                value={currentValue}
+                value={displayValue}
                 onChange={(e) => onFieldEdit(field.key, e.target.value)}
                 disabled={isLocked}
                 className={`w-full p-2 rounded border text-sm outline-none transition-colors
@@ -132,7 +133,7 @@ export default function OcrReviewPanel({
             border-2 border-transparent hover:border-emerald-600 transition-colors duration-300
             ease-in-out hover:bg-white hover:text-emerald-600"
         >
-          Applica al questionario
+          Prefilla nel draft Transport V2
         </button>
       )}
     </section>

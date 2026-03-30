@@ -127,10 +127,10 @@ function generateMockResponse() {
       boundingPoly: null,
     },
     {
-      type: 'goods_vehicle_over_2_5_tons',
-      mentionText: 'No',
+      type: 'vehicle_mass_kg',
+      mentionText: '3200 kg',
       confidence: 0.61,
-      normalizedValue: 'No',
+      normalizedValue: '3200',
       pageNumber: 1,
       boundingPoly: null,
     },
