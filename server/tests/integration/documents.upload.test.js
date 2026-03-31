@@ -1,5 +1,5 @@
 const request = require('supertest');
-const googleDocAiService = require('../../services/googleDocumentAiService');
+const googleDocAiService = require('../../services/ocr/googleDocumentAiService');
 const { getApp } = require('../helpers/app');
 const {
   authCookieForUser,

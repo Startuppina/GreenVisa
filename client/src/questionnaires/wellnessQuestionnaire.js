@@ -6,54 +6,13 @@ export const json = {
             "elements": [
                 {
                     "type": "html",
-                    "name": "question28",
+                    "name": "wellness_intro",
                     "html": "<div style=\"font-family: Arial, sans-serif; font-size: 1.25rem; padding: 2rem; line-height: 1.75; background-color: #f9fafb; border-radius: 1.5rem; border: 0.1px solid #A3A3A3;\">\n  <h1 style=\"font-size: 2rem; font-weight: bold; margin-bottom: 1rem; color: #2d7044;\">\n    Questionario spa e resorts\n  </h1>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    Regolamento per la Compilazione del Questionario\n  </h2>\n\n  <p style=\"margin-bottom: 0.25rem;\">\n    Benvenuto nel questionario su spa e resort! Ti chiediamo di leggere attentamente le seguenti istruzioni per compilare\n    correttamente tutte le sezioni. Il questionario è progettato per raccogliere informazioni più accurate possibili, quindi è\n    fondamentale seguire queste linee guida. \n    <strong style=\"font-weight: 600;\">\n      Tutte le domande sono obbligatorie (hanno un asterisco rosso \n      <span style=\"color: #f56565;\">*</span>)\n    </strong>.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    1. Compilazione Onesta e Rilevante\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Rispondi in modo sincero e accurato, fornendo informazioni che riflettano la tua situazione attuale. È obbligatorio rispondere a tutte le domande.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    2. Esattezza delle Risposte\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Assicurati che tutte le risposte fornite siano corrette e coerenti.</p>\n\n   <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    4. Rispetto dei Tempi\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Completa il questionario con calma. Una compilazione attenta e precisa è preferibile a una rapida e incompleta.\n  </p>\n\n  <h2 style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 0.25rem;\">\n    4. Assistenza\n  </h2>\n  <p style=\"margin-bottom: 0.25rem;\">\n    Se hai dubbi o difficoltà nella compilazione, contattaci per chiarimenti. È importante comprendere bene ogni\n    domanda prima di rispondere.\n  </p>\n\n  <p style=\"margin-bottom: 0.25rem;\">Grazie per la tua collaborazione!</p>\n</div>\n"
                 },
                 {
-                    "type": "radiogroup",
-                    "name": "question1",
-                    "title": "I criteri individuati mirano a limitare i principali impatti ambientali connessi alle caratteristiche fondamentali dell’attività che si svolge nella struttura pocanzi descritta. Per quest’area d’analisi le tematiche analizzate saranno quelle relative a:",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "Efficienza e risparmio energetico",
-                            "score": 4
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "Gestione e produzione di rifiuti",
-                            "score": 5
-                        },
-                        {
-                            "value": "Item 3",
-                            "text": "Comunicazione ed educazione ambientale rivolta a clienti e dipendenti",
-                            "score": 4
-                        },
-                        {
-                            "value": "Item 4",
-                            "text": "Utilizzo di abbigliamento e prodotti di consumo green"
-                        },
-                        {
-                            "value": "Item 5",
-                            "text": "Vendita di prodotti certificati bio",
-                            "score": 4
-                        },
-                        {
-                            "value": "Item 6",
-                            "text": "Programmi Fitness green",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 7",
-                            "text": "Programmi Beauty green",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 8",
-                            "text": "Programmi Relax green",
-                            "score": 3
-                        }
-                    ]
+                    "type": "html",
+                    "name": "wellness_scope",
+                    "html": "<div style=\"font-family: Arial, sans-serif; font-size: 1rem; padding: 1rem 0 0.5rem 0; line-height: 1.6; color: #374151;\">\n  <h3 style=\"font-size: 1.2rem; font-weight: 700; margin-bottom: 0.25rem; color: #2d7044;\">\n    Ambito del questionario\n  </h3>\n  <p style=\"margin: 0;\">\n    I criteri del questionario analizzano: efficienza energetica, gestione dei rifiuti,\n    comunicazione ambientale, prodotti e consumi green, programmi fitness/beauty/relax,\n    e pratiche sostenibili per la struttura.\n  </p>\n</div>\n"
                 },
                 {
                     "type": "radiogroup",
@@ -210,8 +169,69 @@ export const json = {
                 },
                 {
                     "type": "radiogroup",
+                    "name": "wellness_has_food_service",
+                    "title": "Nella struttura sono presenti Bar e/o attività di Ristorazione?",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI"
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "wellness_has_dishwasher",
+                    "title": "La struttura utilizza almeno una lavastoviglie?",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI"
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "wellness_has_washing_machine",
+                    "title": "La struttura utilizza almeno una lavatrice?",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI"
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "wellness_has_cabins",
+                    "title": "La struttura dispone di cabine (trattamenti/sala cabine)?",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI"
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO"
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
                     "name": "question11",
                     "title": "Nel caso siano presenti Bar e/o attività di Ristorazione, vengono proposti agli ospiti prodotti alimentari di provenienza locale, di stagione, biologici e a Km zero (per le verdure fresche e la frutta) ?\n",
+                    "visibleIf": "{wellness_has_food_service} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",
@@ -416,6 +436,7 @@ export const json = {
                     "type": "radiogroup",
                     "name": "question22",
                     "title": "La lavastoviglie è dotata di un dosatore automatico per il detersivo?\n",
+                    "visibleIf": "{wellness_has_dishwasher} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",
@@ -450,6 +471,7 @@ export const json = {
                     "type": "radiogroup",
                     "name": "question24",
                     "title": "La cabine sono attrezzate con dispenser per rotoli di carta, asciugamani ecc.?\n",
+                    "visibleIf": "{wellness_has_cabins} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",
@@ -500,7 +522,7 @@ export const json = {
                 {
                     "type": "radiogroup",
                     "name": "question27",
-                    "title": "Gli elettrodomestici di cui è dotata la sua attività hanno un’efficienza di classe A ai sensi della direttiva 94/2/CE?\n",
+                    "title": "Gli elettrodomestici di cui è dotata la sua attività, esclusi lavastoviglie e lavatrici, hanno un’efficienza di classe A ai sensi della direttiva 94/2/CE?\n",
                     "choices": [
                         {
                             "value": "Item 1",
@@ -518,6 +540,7 @@ export const json = {
                     "type": "radiogroup",
                     "name": "question28",
                     "title": "Le lavastoviglie presentano un’efficienza energetica di classe A ai sensi della direttiva 97/17/CE?\n",
+                    "visibleIf": "{wellness_has_dishwasher} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",
@@ -535,6 +558,7 @@ export const json = {
                     "type": "radiogroup",
                     "name": "question29",
                     "title": "Le lavatrici presentano un’efficienza energetica di classe A ai sensi della direttiva 95/12/CE?\n",
+                    "visibleIf": "{wellness_has_washing_machine} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",
@@ -608,6 +632,7 @@ export const json = {
                     "type": "radiogroup",
                     "name": "question33",
                     "title": "La vostra raccolta differenziata viene ulteriormente frazionata ( alluminio, sughero, tappi, ecc)?\n",
+                    "visibleIf": "{question3} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",
@@ -625,6 +650,7 @@ export const json = {
                     "type": "radiogroup",
                     "name": "question34",
                     "title": "Il compostaggio degli scarti alimentari (riferimento: scarti alimentari provenienti dai servizi di ristorazione) avviene all’interno del proprio giardino o nelle aree verdi di pertinenza della struttura ? \n",
+                    "visibleIf": "{wellness_has_food_service} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",

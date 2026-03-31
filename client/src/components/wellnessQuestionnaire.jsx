@@ -9,6 +9,63 @@ import { fetchInfo, restoreSurveyData, submitSurveyData } from "./questionnaires
 import { json } from "../questionnaires/wellnessQuestionnaire";
 import MessagePopUp from "./messagePopUp";
 
+const YES_VALUE = "Item 1";
+const NO_VALUE = "Item 2";
+
+function applyWellnessDerivedRules(rawData) {
+  const normalizedData = { ...(rawData || {}) };
+
+  // Q1 ora e una sezione informativa e non deve essere persistita/scorata.
+  delete normalizedData.question1;
+
+  if (normalizedData.question3 === NO_VALUE) {
+    delete normalizedData.question33;
+  }
+
+  const hasFoodService = normalizedData.wellness_has_food_service;
+  if (hasFoodService === NO_VALUE) {
+    delete normalizedData.question11;
+    delete normalizedData.question34;
+  }
+
+  const hasDishwasher = normalizedData.wellness_has_dishwasher;
+  if (hasDishwasher === NO_VALUE) {
+    delete normalizedData.question22;
+    delete normalizedData.question28;
+  }
+
+  const hasWashingMachine = normalizedData.wellness_has_washing_machine;
+  if (hasWashingMachine === NO_VALUE) {
+    delete normalizedData.question29;
+  }
+
+  const hasCabins = normalizedData.wellness_has_cabins;
+  if (hasCabins === NO_VALUE) {
+    delete normalizedData.question24;
+  }
+
+  return normalizedData;
+}
+
+function isApplicableQuestion(elementName, formData) {
+  switch (elementName) {
+    case "question33":
+      return formData.question3 === YES_VALUE || (formData.question3 == null && formData.question33 != null);
+    case "question11":
+    case "question34":
+      return formData.wellness_has_food_service === YES_VALUE || (formData.wellness_has_food_service == null && formData[elementName] != null);
+    case "question22":
+    case "question28":
+      return formData.wellness_has_dishwasher === YES_VALUE || (formData.wellness_has_dishwasher == null && formData[elementName] != null);
+    case "question29":
+      return formData.wellness_has_washing_machine === YES_VALUE || (formData.wellness_has_washing_machine == null && formData.question29 != null);
+    case "question24":
+      return formData.wellness_has_cabins === YES_VALUE || (formData.wellness_has_cabins == null && formData.question24 != null);
+    default:
+      return true;
+  }
+}
+
 
 function WellnessQuestionnaire({ certification_id }) {
   const [userInfo, setUserInfo] = useState();
@@ -54,9 +111,10 @@ function WellnessQuestionnaire({ certification_id }) {
   useEffect(() => {
 
     if (initialData) {
-      survey.data = initialData.surveyData;
+      survey.data = applyWellnessDerivedRules(initialData.surveyData);
       survey.currentPageNo = initialData.pageNo;
     }
+    survey.clearInvisibleValues = "onHidden";
     survey.applyTheme(themeJson);
 
   }, [initialData]);
@@ -86,7 +144,9 @@ function WellnessQuestionnaire({ certification_id }) {
 
 
   function handleSurveyComplete() {
-    let totalScore = calcolaPunteggio(survey.data);
+    const normalizedData = applyWellnessDerivedRules(survey.data);
+    survey.data = normalizedData;
+    let totalScore = calcolaPunteggio(normalizedData);
     console.log("totalScore:", totalScore);
     setMark(totalScore);
     saveSurveyDataComplete(survey, totalScore);
@@ -97,12 +157,13 @@ function WellnessQuestionnaire({ certification_id }) {
   }
 
   async function saveSurveyData(survey) {
+    const normalizedData = applyWellnessDerivedRules(survey.data);
     const data = {
       surveyId: userInfo,
       certification_id,
       totalScore: initialData.completed ? initialData.previousScore : 0,
       pageNo: survey.currentPageNo,
-      surveyData: survey.data,
+      surveyData: normalizedData,
       completed: initialData.completed ? true : false
     };
     const actionSubmit = await submitSurveyData(data);
@@ -119,12 +180,13 @@ function WellnessQuestionnaire({ certification_id }) {
   }
 
   async function saveSurveyDataComplete(survey, totalScore) {
+    const normalizedData = applyWellnessDerivedRules(survey.data);
     const data = {
       surveyId: userInfo,
       certification_id,
       totalScore,
       pageNo: survey.currentPageNo,
-      surveyData: survey.data,
+      surveyData: normalizedData,
       completed: true
     };
     const actionSubmit = await submitSurveyData(data);
@@ -141,27 +203,36 @@ function WellnessQuestionnaire({ certification_id }) {
 
   // Funzione per calcolare il punteggio totale
   function calcolaPunteggio(formData) {
+    const normalizedData = applyWellnessDerivedRules(formData);
     let punteggioTotale = 0;
+    let punteggioMassimoApplicabile = 0;
 
-    // Itera attraverso le pagine
     json.pages.forEach(page => {
       page.elements.forEach(element => {
-        // Controlla il tipo di elemento e calcola il punteggio
-        console.log(`Elemento: ${element.name}, tipo: ${element.type}`);
-        switch (element.type) {
-          case 'radiogroup':
-            const punteggioRadiogroup = calcolaPunteggioRadiogroup(formData[element.name], element);
-            punteggioTotale += punteggioRadiogroup;
-            console.log(`Domanda: ${element.title}, Risposta: ${formData[element.name]}, Punteggio: ${punteggioRadiogroup}`);
-            break;
-          default:
-            console.warn(`Tipo di domanda non gestito: ${element.type}`);
+        if (element.type !== "radiogroup" || !element.name) {
+          return;
         }
+
+        if (!isApplicableQuestion(element.name, normalizedData)) {
+          return;
+        }
+
+        const maxScore = getMaxChoiceScore(element);
+        if (maxScore <= 0) {
+          return;
+        }
+
+        const punteggioRadiogroup = calcolaPunteggioRadiogroup(normalizedData[element.name], element);
+        punteggioTotale += punteggioRadiogroup;
+        punteggioMassimoApplicabile += maxScore;
       });
     });
 
-    const punteggioMassimo = 323; //punteggio massimo possibile
-    return Math.round((punteggioTotale / punteggioMassimo) * 10);
+    if (punteggioMassimoApplicabile <= 0) {
+      return 0;
+    }
+
+    return Math.round((punteggioTotale / punteggioMassimoApplicabile) * 10);
   }
 
   // Funzione per calcolare il punteggio per le domande di tipo radiogroup
@@ -176,6 +247,17 @@ function WellnessQuestionnaire({ certification_id }) {
       }
     }
     return punteggio;
+  }
+
+  function getMaxChoiceScore(element) {
+    if (!element?.choices || !Array.isArray(element.choices)) {
+      return 0;
+    }
+
+    return element.choices.reduce((max, choice) => {
+      const score = typeof choice.score === "number" ? choice.score : 0;
+      return score > max ? score : max;
+    }, 0);
   }
 
   return (

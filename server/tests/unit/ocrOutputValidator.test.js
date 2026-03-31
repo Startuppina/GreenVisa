@@ -1,7 +1,7 @@
 const {
   applyNormalizations,
   validateNormalizedOutput,
-} = require('../../services/ocrOutputValidator');
+} = require('../../services/ocr/ocrOutputValidator');
 
 describe('ocrOutputValidator', () => {
   it('normalizes euro and fuel values to Block 2 canonical enums', () => {

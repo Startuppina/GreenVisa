@@ -1,4 +1,4 @@
-const { normalizeProviderOutput } = require('../../services/fieldMapper');
+const { normalizeProviderOutput } = require('../../services/ocr/fieldMapper');
 
 describe('normalizeProviderOutput', () => {
   it('maps provider entities to Transport V2-oriented OCR review keys', () => {

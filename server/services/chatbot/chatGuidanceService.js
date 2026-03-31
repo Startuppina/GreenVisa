@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const guidanceDir = path.join(__dirname, '..', 'guidance');
+const guidanceDir = path.join(__dirname, '..', '..', 'guidance');
 
 const cache = {};
 

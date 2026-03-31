@@ -1,4 +1,4 @@
-const ocrConfig = require('../config/ocr');
+const ocrConfig = require('../../config/ocr');
 
 // ── Lazy-loaded Google client ─────────────────────────────────
 // Install it when ready for real processing:

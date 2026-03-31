@@ -33,9 +33,19 @@ export async function restoreSurveyData(certification_id) {
           ? JSON.parse(response.data.survey_data)
           : response.data.survey_data;
 
-        return { success: true, surveyData, pageNo: response.data.pageNo, completed: response.data.completed, previousCO2emissions: response.data.co2emissions, previousScore: response.data.total_score };
+        return { success: true, surveyData, pageNo: response.data.pageNo, completed: response.data.completed, co2emissions: response.data.co2emissions, total_score: response.data.total_score };
       }
     } catch (error) {
+      if (error?.response?.status === 404 && error?.response?.data?.error === 'No survey data found') {
+        return {
+          success: true,
+          surveyData: {},
+          pageNo: 0,
+          completed: false,
+          co2emissions: 0,
+          total_score: 0
+        };
+      }
       return { success: false, error: error };
     }
 };

@@ -1,4 +1,4 @@
-const { applyNormalizations, validateNormalizedOutput } = require('../../services/ocrOutputValidator');
+const { applyNormalizations, validateNormalizedOutput } = require('../../services/ocr/ocrOutputValidator');
 const {
   buildTransportV2VehiclePrefill,
   mergeOcrVehiclePrefill,

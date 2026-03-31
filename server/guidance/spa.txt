@@ -1,0 +1,23 @@
+Linee guida operative per la compilazione del questionario SPA e Resorts.
+
+1) Logica delle domande condizionali
+- Le domande su Bar/Ristorazione sono applicabili solo se la struttura ha effettivamente questi servizi.
+- Le domande su lavastoviglie sono applicabili solo se in struttura e presente almeno una lavastoviglie.
+- Le domande su lavatrici sono applicabili solo se in struttura e presente almeno una lavatrice.
+- La domanda sulle cabine e applicabile solo se la struttura dispone di cabine.
+- La domanda sulla raccolta ulteriormente frazionata e applicabile solo se la raccolta differenziata viene svolta regolarmente.
+
+2) Raccolta differenziata
+- Se la struttura non effettua regolarmente la raccolta differenziata, la domanda sul frazionamento aggiuntivo non va compilata.
+- Se la raccolta differenziata e attiva, indicare se esiste ulteriore separazione per materiali specifici (es. alluminio, sughero, tappi).
+
+3) Elettrodomestici ed efficienza
+- La domanda generale sugli elettrodomestici riguarda le dotazioni diverse da lavastoviglie e lavatrici.
+- Le domande su lavastoviglie e lavatrici verificano in dettaglio la classe energetica di quelle categorie specifiche.
+
+4) Coerenza delle risposte
+- Rispondere solo alle domande effettivamente applicabili alla struttura.
+- Evitare risposte in contraddizione con i prerequisiti dichiarati nelle domande filtro.
+
+5) Assistenza
+- In caso di dubbio sulla disponibilita di un servizio o di un impianto, verificare con il responsabile operativo prima di rispondere.

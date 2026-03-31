@@ -20,6 +20,7 @@ const { disconnect } = require("process");
 const { v4: uuidv4 } = require('uuid');
 const { user } = require("pg/lib/defaults");
 const validate = require('validate-vat');
+const { isSpaCategory, sanitizeWellnessSurveyData } = require('./services/wellnessSurveyService');
 
 const port = 8080;
 
@@ -3903,6 +3904,15 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
   }
 
   try {
+    const categoryResult = await pool.query(
+      'SELECT category FROM products WHERE id = $1 LIMIT 1',
+      [certification_id]
+    );
+    const category = categoryResult.rows[0]?.category || null;
+    const normalizedSurveyData = isSpaCategory(category)
+      ? sanitizeWellnessSurveyData(surveyData)
+      : surveyData;
+
     const query = `
       INSERT INTO survey_responses (user_id, certification_id, page_no, survey_data, total_score, co2emissions, completed, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
@@ -3915,7 +3925,7 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
         completed = EXCLUDED.completed
       RETURNING id;
     `;
-    const values = [user_id, certification_id, pageNo, surveyData, totalScore, CO2emissions, completed]; // Aggiungi totalScore
+    const values = [user_id, certification_id, pageNo, normalizedSurveyData, totalScore, CO2emissions, completed];
 
     const result = await pool.query(query, values);
     res.status(200).json({ id: result.rows[0].id });
@@ -3933,6 +3943,12 @@ app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
   //console.log("ALL", user_id, certification_id);
 
   try {
+    const categoryResult = await pool.query(
+      'SELECT category FROM products WHERE id = $1 LIMIT 1',
+      [certification_id]
+    );
+    const category = categoryResult.rows[0]?.category || null;
+
     const query = `
       SELECT page_no, survey_data, total_score, co2emissions, completed FROM survey_responses
       WHERE user_id = $1 AND certification_id = $2;
@@ -3945,7 +3961,12 @@ app.get('/api/responses-fetch', authenticateJWT, async (req, res) => {
       return res.status(404).json({ error: 'No survey data found' });
     }
 
-    res.json(result.rows[0]);
+    const responsePayload = { ...result.rows[0] };
+    if (isSpaCategory(category)) {
+      responsePayload.survey_data = sanitizeWellnessSurveyData(responsePayload.survey_data);
+    }
+
+    res.json(responsePayload);
   } catch (err) {
     console.error("Error restoring survey data:", err);
     res.status(500).json({ error: 'Internal server error' });

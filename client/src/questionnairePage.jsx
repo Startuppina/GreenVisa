@@ -18,7 +18,11 @@ function QuestionnairePage() {
     const category = queryParams.get('param2');
     console.log(category);
 
-    const questionnaireType = category === "Certificazione trasporti" ? "transport" : "buildings";
+    const questionnaireType = category === "Certificazione trasporti"
+        ? "transport"
+        : category === "Certificazione spa e resorts"
+            ? "spa"
+            : null;
 
     return (
         <>
@@ -33,7 +37,7 @@ function QuestionnairePage() {
                 {category === "Certificazione spa e resorts" && <WellnessQuestionnaire certification_id={param1} />}
             </main>
             <Footer />
-            <ChatWidget questionnaireType={questionnaireType} certificationId={param1} />
+            {questionnaireType && <ChatWidget questionnaireType={questionnaireType} certificationId={param1} />}
         </>
     )
 }

@@ -2,11 +2,11 @@ const express = require('express');
 const multer = require('multer');
 const { authenticateJWT } = require('../middleware/auth');
 const ocrConfig = require('../config/ocr');
-const { validateFile } = require('../services/documentValidationService');
-const { storeFileFromBuffer } = require('../services/documentStorageService');
-const repo = require('../services/documentRepository');
-const ocrService = require('../services/ocrService');
-const { applyNormalizations, validateNormalizedOutput } = require('../services/ocrOutputValidator');
+const { validateFile } = require('../services/documents/documentValidationService');
+const { storeFileFromBuffer } = require('../services/documents/documentStorageService');
+const repo = require('../services/documents/documentRepository');
+const ocrService = require('../services/ocr/ocrService');
+const { applyNormalizations, validateNormalizedOutput } = require('../services/ocr/ocrOutputValidator');
 const { buildTransportV2VehiclePrefill, normalizeTransportMode } = require('../services/transportV2OcrPrefillService');
 const {
   TransportV2HttpError,

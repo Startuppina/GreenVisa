@@ -13,6 +13,12 @@ const FAQ_MAP = {
     { key: 'impianti', label: 'Quali informazioni servono sugli impianti?' },
     { key: 'bollette', label: 'Come inserisco i dati delle bollette?' },
   ],
+  spa: [
+    { key: 'raccolta_diff', label: 'Come gestisco le domande sulla raccolta differenziata?' },
+    { key: 'elettrodomestici', label: 'Come compilo le domande su lavastoviglie e lavatrici?' },
+    { key: 'ristorazione', label: 'Quando devo compilare le domande su bar e ristorazione?' },
+    { key: 'dispenser', label: 'Quando la domanda sulle cabine e sui dispenser e applicabile?' },
+  ],
 };
 
 export default function FAQChips({ questionnaireType, onSelect, disabled }) {

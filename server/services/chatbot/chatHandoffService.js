@@ -30,7 +30,9 @@ async function generateEmailDraft(conversation, messages) {
 
   const questionnaireLabel = conversation.questionnaire_type === 'transport'
     ? 'Trasporti'
-    : 'Edifici';
+    : conversation.questionnaire_type === 'spa'
+      ? 'Spa e Resorts'
+      : 'Edifici';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
