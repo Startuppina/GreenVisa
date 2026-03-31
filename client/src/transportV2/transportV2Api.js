@@ -16,6 +16,14 @@ export async function saveTransportV2Draft(certificationId, payload, { signal } 
   return response.data.transport_v2;
 }
 
+export async function submitTransportV2(certificationId, { signal } = {}) {
+  const response = await axiosInstance.post(`/transport-v2/${certificationId}/submit`, null, {
+    signal,
+  });
+
+  return response.data.transport_v2;
+}
+
 export function getApiErrorMessage(error, fallbackMessage) {
   return error?.response?.data?.msg || error?.message || fallbackMessage;
 }

@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { axiosGetMock, axiosPutMock } = vi.hoisted(() => ({
+const { axiosGetMock, axiosPutMock, axiosPostMock } = vi.hoisted(() => ({
   axiosGetMock: vi.fn(),
   axiosPutMock: vi.fn(),
+  axiosPostMock: vi.fn(),
 }));
 
 vi.mock('../../../src/axiosInstance.js', () => ({
   default: {
     get: axiosGetMock,
     put: axiosPutMock,
+    post: axiosPostMock,
   },
 }));
 
@@ -16,12 +18,14 @@ import {
   getApiErrorMessage,
   getTransportV2Draft,
   saveTransportV2Draft,
+  submitTransportV2,
 } from '../../../src/transportV2/transportV2Api.js';
 
 describe('transportV2Api', () => {
   beforeEach(() => {
     axiosGetMock.mockReset();
     axiosPutMock.mockReset();
+    axiosPostMock.mockReset();
   });
 
   it('getTransportV2Draft calls the correct GET endpoint and returns canonical transport_v2', async () => {
@@ -96,6 +100,28 @@ describe('transportV2Api', () => {
         },
       }),
     ).rejects.toThrow('network exploded');
+  });
+
+  it('submitTransportV2 calls the correct POST endpoint and returns backend transport_v2', async () => {
+    const signal = new AbortController().signal;
+    axiosPostMock.mockResolvedValue({
+      data: {
+        transport_v2: {
+          meta: {
+            status: 'submitted',
+          },
+        },
+      },
+    });
+
+    const result = await submitTransportV2(321, { signal });
+
+    expect(axiosPostMock).toHaveBeenCalledWith('/transport-v2/321/submit', null, { signal });
+    expect(result).toEqual({
+      meta: {
+        status: 'submitted',
+      },
+    });
   });
 
   it('extracts nested backend error messages when available', () => {

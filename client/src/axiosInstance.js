@@ -5,6 +5,7 @@ console.log(import.meta.env.VITE_REACT_SERVER_ADDRESS);
 
 const axiosInstance = axios.create({
   baseURL: `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api`,
+  withCredentials: true,
 });
 
 // Interceptor per aggiungere token

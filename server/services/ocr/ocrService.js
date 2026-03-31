@@ -4,6 +4,7 @@ const { validateNormalizedOutput, applyNormalizations } = require('./ocrOutputVa
 const repo = require('../documents/documentRepository');
 const { readFileBytes } = require('../documents/documentStorageService');
 const { buildTransportV2VehiclePrefill } = require('../transportV2OcrPrefillService');
+const logger = require('../../logger');
 
 async function processDocument(documentRecord) {
   const docId = documentRecord.id;
@@ -56,7 +57,14 @@ async function processDocument(documentRecord) {
 
     return { status: 'needs_review', fields: normalizedFields, validationIssues };
   } catch (err) {
-    console.error(`OCR processing failed for document ${docId}:`, err.message);
+    logger.error(
+      {
+        event: 'ocr_processing_failed',
+        document_id: docId,
+        err: { message: err.message, code: err.code },
+      },
+      'OCR provider or pipeline failed',
+    );
 
     await repo.updateDocumentStatus(docId, 'failed', {
       errorCode: err.code || 'PROCESSING_ERROR',

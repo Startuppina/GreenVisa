@@ -78,8 +78,14 @@ log in via browser. currently ocr service is linked to antonio.gassner@claror.it
 # tests
 
 ```bash
-cd server
-npm test
+cd server; npm test
 
 npm run test:block2
+```
+
+# seeding database per sviluppo questionario 
+
+```bash
+$env:TRANSPORT_V2_DEV_SEED='1'
+node .\scripts\seedTransportV2Access.js
 ```

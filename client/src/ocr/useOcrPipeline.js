@@ -52,7 +52,7 @@ function buildEntry(file, existingEntries) {
 
 const TERMINAL_STATUSES = new Set(['needs_review', 'confirmed', 'applied']);
 
-export function useOcrPipeline() {
+export function useOcrPipeline(certificationId = null) {
   const [fileEntries, setFileEntries] = useState([]);
   const [documents, setDocuments] = useState([]);
 
@@ -108,7 +108,10 @@ export function useOcrPipeline() {
       updateEntry(entry.id, { status: FILE_STATUS.UPLOADING, error: null, abortController });
 
       try {
-        const { documentId } = await uploadDocument(entry.file, { signal: abortController.signal });
+        const { documentId } = await uploadDocument(entry.file, {
+          signal: abortController.signal,
+          certificationId,
+        });
         updateEntry(entry.id, { status: FILE_STATUS.PROCESSING, documentId, abortController: null });
         pollForResult(entry.id, documentId);
       } catch (err) {
@@ -121,7 +124,7 @@ export function useOcrPipeline() {
         activeUploads.current.delete(entry.id);
       }
     },
-    [updateEntry, pollForResult],
+    [certificationId, updateEntry, pollForResult],
   );
 
   // ── Public actions ────────────────────────────────────────

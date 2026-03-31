@@ -4,14 +4,16 @@ import useTransportV2Draft from '../../../src/transportV2/hooks/useTransportV2Dr
 import { makeFormModeDraftFixture } from '../../helpers/transportV2Fixtures.js';
 import { advanceAutosaveTimers, flushPromises } from '../../helpers/testUtils.js';
 
-const { getTransportV2DraftMock, saveTransportV2DraftMock } = vi.hoisted(() => ({
+const { getTransportV2DraftMock, saveTransportV2DraftMock, submitTransportV2Mock } = vi.hoisted(() => ({
   getTransportV2DraftMock: vi.fn(),
   saveTransportV2DraftMock: vi.fn(),
+  submitTransportV2Mock: vi.fn(),
 }));
 
 vi.mock('../../../src/transportV2/transportV2Api.js', () => ({
   getTransportV2Draft: getTransportV2DraftMock,
   saveTransportV2Draft: saveTransportV2DraftMock,
+  submitTransportV2: submitTransportV2Mock,
   getApiErrorMessage: (error, fallbackMessage) =>
     error?.response?.data?.msg || error?.message || fallbackMessage,
 }));
@@ -20,6 +22,7 @@ describe('TransportV2 autosave orchestration', () => {
   beforeEach(() => {
     getTransportV2DraftMock.mockReset();
     saveTransportV2DraftMock.mockReset();
+    submitTransportV2Mock.mockReset();
     vi.useRealTimers();
   });
 

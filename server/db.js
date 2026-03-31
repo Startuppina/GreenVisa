@@ -2,6 +2,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { Pool } = require('pg');
+const { instrumentPgPool } = require('./lib/pgPoolInstrument');
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'db',
@@ -11,5 +12,7 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'green-visa',
   options: process.env.DB_OPTIONS || undefined,
 });
+
+instrumentPgPool(pool);
 
 module.exports = pool;

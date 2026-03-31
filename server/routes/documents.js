@@ -14,6 +14,7 @@ const {
   resolveTransportSurveyResponse,
   upsertTransportV2OcrVehicle,
 } = require('../services/transportV2DraftService');
+const { logDocumentEvent, logUnexpectedError } = require('../lib/businessEvents');
 
 const router = express.Router();
 
@@ -53,6 +54,7 @@ router.post(
       let surveyResponseId = null;
 
       if (!files || files.length === 0) {
+        logDocumentEvent(req, 'validation_failed', { flow: 'document_upload', reason: 'no_files' }, 'warn');
         return res.status(400).json({ msg: 'Nessun file fornito.' });
       }
 
@@ -78,6 +80,18 @@ router.post(
         const validation = validateFile(file, existingHashes);
 
         if (!validation.valid) {
+          const dup = validation.issues?.some((i) => /duplicate|duplicat/i.test(i.message || ''));
+          logDocumentEvent(
+            req,
+            'document_upload_rejected',
+            {
+              user_id: userId,
+              batch_id: batch.id,
+              reason: dup ? 'duplicate_upload' : 'validation_failed',
+              file_name: file.originalname,
+            },
+            'warn',
+          );
           const doc = await repo.createDocument({
             batchId: batch.id,
             userId,
@@ -128,7 +142,39 @@ router.post(
           surveyResponseId,
         });
 
+        logDocumentEvent(req, 'document_upload_accepted', {
+          user_id: userId,
+          batch_id: batch.id,
+          document_id: doc.id,
+          category,
+        });
+        logDocumentEvent(req, 'ocr_processing_started', { document_id: doc.id, batch_id: batch.id });
+
         const result = await ocrService.processDocument(doc);
+
+        if (result.status === 'failed') {
+          logDocumentEvent(
+            req,
+            'ocr_processing_failed',
+            { document_id: doc.id, error_code: 'PROCESSING_ERROR' },
+            'error',
+          );
+        } else if (result.status === 'needs_review') {
+          const issueCount = (result.validationIssues && result.validationIssues.length) || 0;
+          logDocumentEvent(req, 'ocr_processing_completed', {
+            document_id: doc.id,
+            status: result.status,
+            validation_issue_count: issueCount,
+          });
+          if (issueCount > 0 && req.log) {
+            req.log.warn({
+              event: 'ocr_processing_completed',
+              document_id: doc.id,
+              warning: 'partial_or_low_confidence_extraction',
+              validation_issue_count: issueCount,
+            });
+          }
+        }
 
         documentSummaries.push({
           documentId: doc.id,
@@ -150,9 +196,12 @@ router.post(
       });
     } catch (err) {
       if (err instanceof TransportV2HttpError) {
+        if (req.log) {
+          req.log.warn({ event: 'validation_failed', flow: 'document_upload', status_code: err.statusCode });
+        }
         return res.status(err.statusCode).json({ msg: err.message });
       }
-      console.error('Document upload error:', err);
+      logUnexpectedError(req, err, { flow: 'document_upload' });
       res.status(500).json({ msg: 'Errore durante il caricamento dei documenti.' });
     }
   },
@@ -175,7 +224,7 @@ router.get('/documents/user', authenticateJWT, async (req, res) => {
       })),
     );
   } catch (err) {
-    console.error('List user documents error:', err);
+    logUnexpectedError(req, err, { flow: 'documents_list_user' });
     res.status(500).json({ msg: 'Errore nel recupero dei documenti.' });
   }
 });
@@ -188,7 +237,10 @@ router.get('/document-batches/:batchId', authenticateJWT, async (req, res) => {
 
     const batch = await repo.getBatchWithDocuments(batchId);
     if (!batch) return res.status(404).json({ msg: 'Batch non trovato.' });
-    if (batch.user_id !== req.user.user_id) return res.status(403).json({ msg: 'Accesso negato.' });
+    if (batch.user_id !== req.user.user_id) {
+      if (req.log) req.log.warn({ event: 'auth_forbidden', reason: 'batch_ownership', batch_id: batchId });
+      return res.status(403).json({ msg: 'Accesso negato.' });
+    }
 
     const statusCounts = {};
     for (const doc of batch.documents) {
@@ -214,7 +266,7 @@ router.get('/document-batches/:batchId', authenticateJWT, async (req, res) => {
       })),
     });
   } catch (err) {
-    console.error('Get batch error:', err);
+    logUnexpectedError(req, err, { flow: 'documents_get_batch' });
     res.status(500).json({ msg: 'Errore nel recupero del batch.' });
   }
 });
@@ -227,7 +279,10 @@ router.get('/documents/:documentId', authenticateJWT, async (req, res) => {
 
     const doc = await repo.getDocumentById(docId);
     if (!doc) return res.status(404).json({ msg: 'Documento non trovato.' });
-    if (doc.user_id !== req.user.user_id) return res.status(403).json({ msg: 'Accesso negato.' });
+    if (doc.user_id !== req.user.user_id) {
+      if (req.log) req.log.warn({ event: 'auth_forbidden', reason: 'document_ownership', document_id: docId });
+      return res.status(403).json({ msg: 'Accesso negato.' });
+    }
 
     res.json({
       documentId: doc.id,
@@ -244,7 +299,7 @@ router.get('/documents/:documentId', authenticateJWT, async (req, res) => {
       appliedAt: doc.applied_at,
     });
   } catch (err) {
-    console.error('Get document error:', err);
+    logUnexpectedError(req, err, { flow: 'documents_get' });
     res.status(500).json({ msg: 'Errore nel recupero del documento.' });
   }
 });
@@ -257,7 +312,10 @@ router.get('/documents/:documentId/result', authenticateJWT, async (req, res) =>
 
     const doc = await repo.getDocumentById(docId);
     if (!doc) return res.status(404).json({ msg: 'Documento non trovato.' });
-    if (doc.user_id !== req.user.user_id) return res.status(403).json({ msg: 'Accesso negato.' });
+    if (doc.user_id !== req.user.user_id) {
+      if (req.log) req.log.warn({ event: 'auth_forbidden', reason: 'document_ownership', document_id: docId });
+      return res.status(403).json({ msg: 'Accesso negato.' });
+    }
 
     const result = await repo.getResultByDocumentId(docId);
     if (!result) {
@@ -279,7 +337,7 @@ router.get('/documents/:documentId/result', authenticateJWT, async (req, res) =>
       confirmedOutput: result.confirmed_output || null,
     });
   } catch (err) {
-    console.error('Get result error:', err);
+    logUnexpectedError(req, err, { flow: 'documents_get_result' });
     res.status(500).json({ msg: 'Errore nel recupero del risultato.' });
   }
 });
@@ -297,7 +355,10 @@ router.post('/documents/:documentId/confirm', authenticateJWT, async (req, res) 
 
     const doc = await repo.getDocumentById(docId);
     if (!doc) return res.status(404).json({ msg: 'Documento non trovato.' });
-    if (doc.user_id !== req.user.user_id) return res.status(403).json({ msg: 'Accesso negato.' });
+    if (doc.user_id !== req.user.user_id) {
+      if (req.log) req.log.warn({ event: 'auth_forbidden', reason: 'document_ownership', document_id: docId });
+      return res.status(403).json({ msg: 'Accesso negato.' });
+    }
 
     if (doc.ocr_status !== 'needs_review') {
       return res.status(400).json({
@@ -331,7 +392,7 @@ router.post('/documents/:documentId/confirm', authenticateJWT, async (req, res) 
       confirmedOutput,
     });
   } catch (err) {
-    console.error('Confirm error:', err);
+    logUnexpectedError(req, err, { flow: 'documents_confirm' });
     res.status(500).json({ msg: 'Errore durante la conferma.' });
   }
 });
@@ -344,7 +405,10 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
 
     const doc = await repo.getDocumentById(docId);
     if (!doc) return res.status(404).json({ msg: 'Documento non trovato.' });
-    if (doc.user_id !== req.user.user_id) return res.status(403).json({ msg: 'Accesso negato.' });
+    if (doc.user_id !== req.user.user_id) {
+      if (req.log) req.log.warn({ event: 'auth_forbidden', reason: 'document_ownership', document_id: docId });
+      return res.status(403).json({ msg: 'Accesso negato.' });
+    }
 
     if (!['needs_review', 'confirmed', 'applied'].includes(doc.ocr_status)) {
       return res.status(400).json({
@@ -406,7 +470,7 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
     if (err instanceof TransportV2HttpError) {
       return res.status(err.statusCode).json({ msg: err.message, ...(err.extras.errors ? { errors: err.extras.errors } : {}) });
     }
-    console.error('Apply error:', err);
+    logUnexpectedError(req, err, { flow: 'documents_apply' });
     res.status(500).json({ msg: 'Errore durante l\'applicazione dei dati.' });
   }
 });
@@ -419,7 +483,10 @@ router.post('/documents/:documentId/retry', authenticateJWT, async (req, res) =>
 
     const doc = await repo.getDocumentById(docId);
     if (!doc) return res.status(404).json({ msg: 'Documento non trovato.' });
-    if (doc.user_id !== req.user.user_id) return res.status(403).json({ msg: 'Accesso negato.' });
+    if (doc.user_id !== req.user.user_id) {
+      if (req.log) req.log.warn({ event: 'auth_forbidden', reason: 'document_ownership', document_id: docId });
+      return res.status(403).json({ msg: 'Accesso negato.' });
+    }
 
     if (doc.ocr_status !== 'failed') {
       return res.status(400).json({ msg: 'Solo documenti in stato "failed" possono essere riprovati.' });
@@ -442,7 +509,7 @@ router.post('/documents/:documentId/retry', authenticateJWT, async (req, res) =>
       error: result.error || null,
     });
   } catch (err) {
-    console.error('Retry error:', err);
+    logUnexpectedError(req, err, { flow: 'documents_retry' });
     res.status(500).json({ msg: 'Errore durante il retry.' });
   }
 });

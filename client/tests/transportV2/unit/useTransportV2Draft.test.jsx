@@ -7,14 +7,16 @@ import {
 } from '../../helpers/transportV2Fixtures.js';
 import { advanceAutosaveTimers, flushPromises } from '../../helpers/testUtils.js';
 
-const { getTransportV2DraftMock, saveTransportV2DraftMock } = vi.hoisted(() => ({
+const { getTransportV2DraftMock, saveTransportV2DraftMock, submitTransportV2Mock } = vi.hoisted(() => ({
   getTransportV2DraftMock: vi.fn(),
   saveTransportV2DraftMock: vi.fn(),
+  submitTransportV2Mock: vi.fn(),
 }));
 
 vi.mock('../../../src/transportV2/transportV2Api.js', () => ({
   getTransportV2Draft: getTransportV2DraftMock,
   saveTransportV2Draft: saveTransportV2DraftMock,
+  submitTransportV2: submitTransportV2Mock,
   getApiErrorMessage: (error, fallbackMessage) =>
     error?.response?.data?.msg || error?.message || fallbackMessage,
 }));
@@ -25,6 +27,7 @@ describe('useTransportV2Draft', () => {
   beforeEach(() => {
     getTransportV2DraftMock.mockReset();
     saveTransportV2DraftMock.mockReset();
+    submitTransportV2Mock.mockReset();
     vi.useRealTimers();
   });
 
@@ -272,6 +275,68 @@ describe('useTransportV2Draft', () => {
     expect(saveTransportV2DraftMock).toHaveBeenCalledTimes(2);
     expect(result.current.saveError).toBe(null);
     expect(result.current.transportV2.meta.updated_at).toBe('2026-03-30T15:00:00.000Z');
+  });
+
+  it('saveNow flushes the current snapshot immediately', async () => {
+    getTransportV2DraftMock.mockResolvedValue(makeFormModeDraftFixture());
+    saveTransportV2DraftMock.mockResolvedValue(
+      makeFormModeDraftFixture({
+        meta: { updated_at: '2026-03-30T17:00:00.000Z' },
+      }),
+    );
+
+    const { result } = renderHook(() => useTransportV2Draft('123'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.setQuestionnaireFlag('uses_navigator', true);
+    });
+
+    await act(async () => {
+      await result.current.saveNow();
+      await flushPromises();
+    });
+
+    expect(saveTransportV2DraftMock).toHaveBeenCalledTimes(1);
+    expect(result.current.transportV2.meta.updated_at).toBe('2026-03-30T17:00:00.000Z');
+    expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it('submitDraft saves pending edits first and then posts to the submit endpoint', async () => {
+    getTransportV2DraftMock.mockResolvedValue(makeFormModeDraftFixture());
+    saveTransportV2DraftMock.mockResolvedValue(
+      makeFormModeDraftFixture({
+        meta: { updated_at: '2026-03-30T18:00:00.000Z' },
+        draft: {
+          questionnaire_flags: {
+            compliance_with_vehicle_regulations: true,
+            uses_navigator: true,
+            uses_class_a_tires: true,
+            eco_drive_training: true,
+            interested_in_mobility_manager_course: false,
+            interested_in_second_level_certification: true,
+          },
+        },
+      }),
+    );
+    submitTransportV2Mock.mockResolvedValue(makeSubmittedDraftFixture());
+
+    const { result } = renderHook(() => useTransportV2Draft('123'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.setQuestionnaireFlag('uses_navigator', true);
+    });
+
+    await act(async () => {
+      await result.current.submitDraft();
+      await flushPromises();
+    });
+
+    expect(saveTransportV2DraftMock).toHaveBeenCalledTimes(1);
+    expect(submitTransportV2Mock).toHaveBeenCalledWith('123', expect.any(Object));
+    expect(result.current.transportV2.meta.status).toBe('submitted');
+    expect(result.current.submitError).toBe(null);
   });
 
   it('merges server meta when a save completes after newer local edits', async () => {

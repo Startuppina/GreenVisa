@@ -4,12 +4,26 @@ const cookieParser = require('cookie-parser');
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const pool = require("./db"); // Your database connection pool
+const rootLogger = require("./logger");
+const { createRequestLoggingMiddleware } = require("./middleware/httpLogger");
+const { authenticateJWT, authenticateAdmin } = require("./middleware/auth");
+const {
+  logAuthEvent,
+  logQuestionnaireEvent,
+  logPaymentEvent,
+  logAdminEvent,
+  logBuildingEvent,
+  logCronEvent,
+  logUnexpectedError,
+} = require("./lib/businessEvents");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const multer = require("multer");
 const fs = require('fs');
 const path = require("path");
 require("dotenv").config();
+
+const requestLoggingMiddleware = createRequestLoggingMiddleware();
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 const cron = require('node-cron');
 const pricingFunctions = require('./priceCalculator');
@@ -85,61 +99,33 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware to verify JWT token
-const authenticateJWT = (req, res, next) => {
-  const token = req.cookies.accessToken || req.cookies.recoveryToken || null; // Prendi il token presente dal cookie
-  if (token) {
-    jwt.verify(token, secretKey, (err, user) => {
-      if (err) {
-        console.error("Errore di verifica del token:", err);
-
-        if (err.name === "TokenExpiredError") {
-          res.clearCookie('accessToken', {
-            httpOnly: false,
-            secure: false,  // Impostalo su true se stai usando HTTPS
-            sameSite: 'Lax'
-          });
-          return res.status(401).json({ msg: "Sessione scaduta, rieffettua il login per continuare" });
-        }
-
-        return res.sendStatus(403); // Token non valido
-      }
-
-      req.user = user;
-      next();
-    });
-  } else {
-    console.error("Nessun token fornito");
-    res.sendStatus(401); // Unauthorized
-  }
-};
-
-
-//only for admin
-function authenticateAdmin(req, res, next) {
-  if (req.user && req.user.role === "administrator") {
-    next();
-  } else {
-    res.status(403).json({ msg: "Non hai i permessi per accedere a questa risorsa" });
-  }
-}
+app.use(requestLoggingMiddleware);
 
 const cleanUpCart = async () => {
+  const job = "cart_session_cleanup";
+  logCronEvent("cron_started", { job_name: job });
   try {
     await pool.query(`
       DELETE FROM cart
       WHERE session_id IS NOT NULL
       AND user_id IS NULL
     `);
-    //console.log('Pulizia del carrello completata.');
+    logCronEvent("cron_completed", { job_name: job });
   } catch (error) {
-    console.error('Errore nella pulizia del carrello:', error);
+    logCronEvent(
+      "cron_failed",
+      { job_name: job, err: { message: error.message, code: error.code } },
+      "error",
+    );
+    rootLogger.error({ event: "unexpected_error", err: error.message }, "cart cleanup failed");
   }
 };
 
 cron.schedule('0 0 */3 * *', cleanUpCart);
 
 async function deleteExpiredPromoCodes() {
+  const job = "promo_codes_expiry";
+  logCronEvent("cron_started", { job_name: job });
   try {
     const currentDate = new Date();
     const isoDateString = currentDate.toISOString();
@@ -149,14 +135,17 @@ async function deleteExpiredPromoCodes() {
           WHERE expiration <= NOW()
       `;
 
-    const values = [isoDateString];
     const result = await pool.query(query);
-
-    //console.log(`Deleted ${result.rowCount} expired promo codes`);
+    logCronEvent("cron_completed", { job_name: job, rows_affected: result.rowCount });
   } catch (error) {
-    console.error('Error deleting expired promo codes:', error);
+    logCronEvent(
+      "cron_failed",
+      { job_name: job, err: { message: error.message, code: error.code } },
+      "error",
+    );
+    rootLogger.error({ event: "unexpected_error", err: error.message }, "promo expiry job failed");
   }
-};
+}
 
 // Cancel all expired promo codes every 1 hour
 cron.schedule('0 * * * *', () => {
@@ -194,34 +183,41 @@ app.post("/api/signup", async (req, res) => {
 
   // Check if all fields are filled
   if (!email || !confirmEmail || !company_name || !password || !username || !phone || !company_website || !pec || !vat || !legal_headquarter) {
+    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "missing_fields" }, "warn");
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
   }
   if (!passwordCheck(password)) { //implement password check defined below
+    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "weak_password" }, "warn");
     return res
       .status(400)
       .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" });
   }
   if (!emailCheck(email)) {
+    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "invalid_email" }, "warn");
     return res.status(400).json({ msg: "Email non valida" });
   }
   if (!emailCheck(confirmEmail)) {
+    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "invalid_confirm_email" }, "warn");
     return res.status(400).json({ msg: "Email non valida" });
   }
   if (email !== confirmEmail) {
+    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "email_mismatch" }, "warn");
     return res.status(400).json({ msg: "Le email non corrispondono" });
   }
   if (!emailCheck(pec)) {
+    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "invalid_pec" }, "warn");
     return res.status(400).json({ msg: "PEC non valida" });
   }
   if (!phoneCheck(phone)) {
+    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "invalid_phone" }, "warn");
     return res.status(400).json({ msg: "Numero di telefono non valido" });
   }
 
   const emailDomain = email.split("@")[1];
   const websiteDomain = company_website.split("www.")[1];
 
-  console.log("noCompanyEmail:", noCompanyEmail);
   if (emailDomain !== websiteDomain && !noCompanyEmail) {
+    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "email_domain_mismatch" }, "warn");
     return res.status(400).json({ msg: "il dominio della email non corrisponde al dominio del sito aziendale fornito" });
   }
 
@@ -233,6 +229,7 @@ app.post("/api/signup", async (req, res) => {
     );
 
     if (result.rows.length > 0) {
+      logAuthEvent(req, "auth_signup_failed", { reason: "duplicate_email" }, "warn");
       return res.status(400).json({ msg: "Email già in uso" });
     }
 
@@ -247,6 +244,10 @@ app.post("/api/signup", async (req, res) => {
     );
 
     if (noCompanyEmail) {
+      logAuthEvent(req, "auth_signup_success", {
+        user_id: result2.rows[0].id,
+        pending_company_email_domain: true,
+      });
       return res.status(200).json({ notCompanyEmail: true });
     }
 
@@ -267,11 +268,12 @@ app.post("/api/signup", async (req, res) => {
           token: userToken,
         });
       }
+      logAuthEvent(req, "auth_signup_success", { user_id: userID });
     }
 
     return res.status(200).json({ msg: "Utente registrato" });
   } catch (error) {
-    console.error("Errore durante la registrazione dell'utente:", error);
+    logUnexpectedError(req, error, { flow: "signup" });
     return res
       .status(500)
       .json({ msg: "Errore durante la registrazione dell'utente" });
@@ -303,6 +305,7 @@ app.get('/api/verify', async (req, res) => {
   const { token } = req.query;
 
   if (!token) {
+    logAuthEvent(req, "validation_failed", { flow: "email_verify", reason: "missing_token" }, "warn");
     return res.status(400).json({ success: false, message: 'Token mancante' });
   }
 
@@ -314,6 +317,7 @@ app.get('/api/verify', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      logAuthEvent(req, "validation_failed", { flow: "email_verify", reason: "invalid_token" }, "warn");
       // Nessun utente trovato con quel token
       return res.status(404).json({ success: false, message: 'Token non valido o scaduto' });
     }
@@ -334,11 +338,12 @@ app.get('/api/verify', async (req, res) => {
         recipient_name: username,
       });
 
+      logAuthEvent(req, "auth_email_verified", { user_id: userId });
       return res.status(200).json({ success: true, message: 'Account verificato' });
     }
 
   } catch (error) {
-    console.error('Errore durante la verifica del token:', error);
+    logUnexpectedError(req, error, { flow: "email_verify" });
     return res.status(500).json({ success: false, message: 'Errore interno del server' });
   }
 });
@@ -352,6 +357,7 @@ app.post("/api/send-verify-email", authenticateJWT, authenticateAdmin, async (re
       [userID]
     );
     if (result.rows.length === 0) {
+      logAuthEvent(req, "validation_failed", { flow: "send_verify_email", reason: "user_not_found" }, "warn");
       return res.status(400).json({ msg: "Non esiste un utente con questo id" });
     }
 
@@ -368,10 +374,11 @@ app.post("/api/send-verify-email", authenticateJWT, authenticateAdmin, async (re
         recipient_name: result.rows[0].username,
         token: userToken,
       });
+      logAuthEvent(req, "auth_verify_email_sent", { target_user_id: Number(userID) });
       return res.status(200).json({ msg: "Email di verifica inviata correttamente" });
     }
   } catch (error) {
-    console.error("Errore durante l'invio dell'email di verifica:", error);
+    logUnexpectedError(req, error, { flow: "send_verify_email" });
     return res.status(500).json({ msg: "Errore durante l'invio dell'email di verifica" });
   }
 })
@@ -379,9 +386,9 @@ app.post("/api/send-verify-email", authenticateJWT, authenticateAdmin, async (re
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   const sessionID = req.cookies.sessionId;
-  console.log("sessionID:", sessionID);
 
   if (!email || !password) {
+    logAuthEvent(req, "validation_failed", { flow: "login", reason: "missing_fields" }, "warn");
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
   }
 
@@ -391,6 +398,7 @@ app.post("/api/login", async (req, res) => {
     ]);
 
     if (result.rows.length === 0) {
+      logAuthEvent(req, "auth_login_failed", { reason: "unknown_user" }, "warn");
       return res.status(400).json({ msg: "Email non valida" });
     }
 
@@ -398,11 +406,12 @@ app.post("/api/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_digest);
 
     if (!isMatch) {
+      logAuthEvent(req, "auth_login_failed", { reason: "bad_password", user_id: user.id }, "warn");
       return res.status(400).json({ msg: "Password errata" });
     }
 
-    console.log("isVerified:", user.isverified);
     if (!user.isverified) {
+      logAuthEvent(req, "auth_login_failed", { reason: "unverified_account", user_id: user.id }, "warn");
       return res.status(400).json({ msg: "Account non verificato" });
     }
 
@@ -416,7 +425,6 @@ app.post("/api/login", async (req, res) => {
 
     const user_id = user.id;
     const first_login = user.first_login;
-    console.log("first_login:", first_login);
     if (first_login) {
       await pool.query("UPDATE users SET first_login = false WHERE id = $1", [user_id]);
     }
@@ -440,11 +448,16 @@ app.post("/api/login", async (req, res) => {
     });
 
 
+    logAuthEvent(req, "auth_login_success", {
+      user_id,
+      is_admin: !!user.administrator,
+    });
+
     return res
       .status(200)
       .json({ msg: "Login effettuato con successo!", token, first_login });
   } catch (error) {
-    console.error("Errore durante il login:", error);
+    logUnexpectedError(req, error, { flow: "login" });
     return res
       .status(500)
       .json({ msg: "Errore durante il login. Riprova" });
@@ -452,6 +465,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.post("/api/logout", authenticateJWT, (req, res) => {
+  logAuthEvent(req, "auth_logout", { user_id: req.user?.user_id });
   res.clearCookie('accessToken', {
     httpOnly: false,
     secure: false, // Impostalo su true se stai usando HTTPS
@@ -1421,10 +1435,16 @@ app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
   const { email, OTP } = req.body;
   sendEmail({ recipient_email: email, OTP })
     .then((response) => {
+      logAuthEvent(req, "auth_password_recovery_requested", {
+        recovery_email_domain: email && typeof email === "string" ? email.split("@")[1] : undefined,
+      });
       res.status(200).json(response);
     })
     .catch((error) => {
-      console.error("Errore nell'invio dell'email:", error);
+      rootLogger.error(
+        { event: "unexpected_error", flow: "password_recovery_email", err: { message: error?.message } },
+        "recovery email send failed",
+      );
       res.status(500).json(error);
     });
 });
@@ -1743,9 +1763,10 @@ app.post("/api/upload-product", authenticateJWT, authenticateAdmin, upload.singl
     const values = [user_id, name, parsedPrice, image.filename, info, cod, category, tag, null];
 
     await pool.query(query, values);
+    logAdminEvent(req, "admin_product_updated", { action: "created", product_cod: cod, category });
     res.status(200).json({ msg: "Certificazione caricata con successo" });
   } catch (error) {
-    console.error("Errore durante il caricamento della certificazione:", error);
+    logUnexpectedError(req, error, { flow: "upload_product" });
     res.status(500).json({ msg: "Errore durante il caricamento della certificazione" });
   }
 });
@@ -1824,6 +1845,7 @@ app.delete("/api/delete-product/:id", authenticateJWT, authenticateAdmin, async 
     //delete article
     const query2 = "DELETE FROM products WHERE id = $1";
     await pool.query(query2, values);
+    logAdminEvent(req, "admin_product_updated", { action: "deleted", product_id: Number(id) });
     res.status(200).json({ msg: "Certificazione eliminata con successo" });
   } catch (error) {
     console.error("Errore nel cancellamento", error);
@@ -2191,9 +2213,10 @@ app.put("/api/edit-product/:id", authenticateJWT, authenticateAdmin, upload.sing
     const query = "UPDATE products SET (name, price, image, info, cod, category, tag) = ($1, $2, $3, $4, $5, $6, $7) WHERE id = $8 AND user_id = $9";
     const values = [name, price, image?.filename, info, cod, category, tag, id, user_id];
     const result = await pool.query(query, values);
+    logAdminEvent(req, "admin_product_updated", { action: "updated", product_id: Number(id) });
     res.status(200).json({ msg: "Certificazione aggiornata con successo", tuple: result.rows });
   } catch (error) {
-    console.error("Errore nell'aggiornare le certificazioni:", error);
+    logUnexpectedError(req, error, { flow: "edit_product" });
     res.status(500).json({ msg: "Errore nell'aggiornare le certificazioni" });
   }
 })
@@ -2340,36 +2363,39 @@ app.post("/api/apply-promo-code", authenticateJWT, async (req, res) => {
     const { user_id } = req.user;
 
     if (!code) {
+      logPaymentEvent(req, "validation_failed", { flow: "promo_apply", reason: "missing_code" }, "warn");
       return res.status(400).json({ msg: "Nessun codice inserito" });
     }
     const query = "SELECT * FROM promocodes_publishment JOIN promocodes ON promocodes_publishment.promocode_id = promocodes.id WHERE code = $1";
     const values = [code];
     const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      logPaymentEvent(req, "promo_code_rejected", { reason: "not_found", user_id }, "warn");
+      return res.status(400).json({ msg: "Codice non esistente" });
+    }
+
     const used_by = result.rows[0].used_by;
     const discount = result.rows[0].discount;
     const code_id = result.rows[0].id;
 
-    if (result.rows.length > 0) {
-
-      if (used_by === "Tutti") {
-        return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
-      }
-
-      const queryCheck = await pool.query("SELECT category FROM cart JOIN products on cart.product_id = products.id WHERE cart.user_id = $1", [user_id]);
-      const cartCategories = queryCheck.rows.map(row => row.category); // fetch the category of each product in the cart
-      if (cartCategories.includes(used_by)) {
-        return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
-      } else {
-        return res.status(400).json({ msg: "Codice non valido per le certificazioni inserite nel carrello" });
-
-      }
-
-    } else {
-      return res.status(400).json({ msg: "Codice non esistente" });
+    if (used_by === "Tutti") {
+      logPaymentEvent(req, "promo_code_applied", { user_id, code_id, scope: "all" });
+      return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
     }
 
+    const queryCheck = await pool.query("SELECT category FROM cart JOIN products on cart.product_id = products.id WHERE cart.user_id = $1", [user_id]);
+    const cartCategories = queryCheck.rows.map(row => row.category);
+    if (cartCategories.includes(used_by)) {
+      logPaymentEvent(req, "promo_code_applied", { user_id, code_id, scope: "category" });
+      return res.status(200).json({ msg: "Codice valido, lo sconto verra applicato sui prodotti relativi", discount: result.rows[0].discount, used_by: used_by, discount: discount, code_id: code_id });
+    }
+
+    logPaymentEvent(req, "promo_code_rejected", { reason: "cart_category_mismatch", user_id, code_id }, "warn");
+    return res.status(400).json({ msg: "Codice non valido per le certificazioni inserite nel carrello" });
+
   } catch (error) {
-    console.error("Errore nell'inserimento del codice:", error);
+    logUnexpectedError(req, error, { flow: "promo_apply" });
     res.status(500).json({ msg: "Errore" });
   }
 
@@ -2426,6 +2452,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       if (promoResult.rows.length > 0) {
         promo = promoResult.rows[0];
       } else {
+        logPaymentEvent(req, "promo_code_rejected", { reason: "invalid_or_expired_checkout", user_id }, "warn");
         return res.status(400).json({ msg: "Codice promozionale non valido" });
       }
     }
@@ -2484,7 +2511,7 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
         const parsedOrigin = new URL(req.headers.origin);
         clientBaseUrl = `${parsedOrigin.protocol}//${parsedOrigin.host}`;
       } catch (parseError) {
-        console.warn("Origin header non valido, uso CLIENT_URL:", req.headers.origin);
+        req.log?.warn({ event: "validation_failed", reason: "invalid_origin_header" });
       }
     }
     clientBaseUrl = clientBaseUrl.replace(/\/$/, '');
@@ -2502,9 +2529,22 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       },
     });
 
+    logPaymentEvent(req, "payment_checkout_session_created", {
+      user_id,
+      stripe_session_id: session.id,
+      line_item_count: items.length,
+      has_promo: !!promoCode,
+    });
     res.status(200).json({ url: session.url });
   } catch (error) {
-    console.error("Errore durante la creazione della sessione di checkout:", error);
+    rootLogger.error(
+      {
+        event: "unexpected_error",
+        flow: "stripe_checkout",
+        err: { message: error.message, type: error.type, code: error.code },
+      },
+      "stripe checkout session failed",
+    );
     res.status(500).json({ msg: "Errore durante la creazione della sessione di checkout" });
   }
 });
@@ -2515,18 +2555,11 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
     const { orderData, codeID } = req.body;
     const { user_id } = req.user;
 
-    console.log("Dati dell'ordine:", orderData);
-    console.log("Codice ID:", codeID);
-    console.log("User ID:", user_id);
-
-
     for (const id of orderData) {
       // Recover the quantity and price of the product
       const query = "SELECT quantity, price FROM cart WHERE user_id = $1 AND product_id = $2";
       const values = [user_id, id];
       const result = await pool.query(query, values);
-
-      console.log("Risultato query:", result.rows);
 
       // Check if the product is in the cart
       if (result.rows.length === 0) {
@@ -2548,14 +2581,17 @@ app.post("/api/create-order", authenticateJWT, async (req, res) => {
       const query2 = "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)";
       const values2 = [quantity, price, user_id, id, codeID, order_date];
       await pool.query(query2, values2);
-
-      console.log(`Ordine creato per certificazione ID ${id}`);
     }
 
+    logPaymentEvent(req, "order_created", {
+      user_id,
+      product_id_count: Array.isArray(orderData) ? orderData.length : 0,
+      promo_code_id: codeID ?? null,
+    });
     res.status(201).json({ msg: "Ordine creato con successo." });
 
   } catch (error) {
-    console.error("Errore durante la creazione dell'ordine:", error);
+    logUnexpectedError(req, error, { flow: "create_order" });
     res.status(500).json({ msg: "Errore durante la creazione dell'ordine" });
   }
 });
@@ -2743,27 +2779,28 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       //buildingScore
     } = req.body;
 
-    //console.log(req.body);
-
-    console.log("Dati dell'ordine:", req.body);
-
     if (!name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "missing_fields" }, "warn");
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
     if (isNaN(area)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_area" }, "warn");
       return res.status(400).json({ msg: "Il campo 'area' deve essere un numero." });
     }
 
     if (isNaN(lighting)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_lighting" }, "warn");
       return res.status(400).json({ msg: "Il campo 'illuminazione' deve essere un numero." });
     }
 
     if (isNaN(led)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_led" }, "warn");
       return res.status(400).json({ msg: "Il campo 'LED' deve essere un numero." });
     }
 
     if (isNaN(gasLamp)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_gas_lamp" }, "warn");
       return res.status(400).json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
     }
 
@@ -2832,13 +2869,16 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
     ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
     )
+    RETURNING id
   `;
 
-    await pool.query(query, values);
+    const insertResult = await pool.query(query, values);
+    const buildingId = insertResult.rows[0]?.id;
+    logBuildingEvent(req, "building_created", { user_id: userId, building_id: buildingId });
 
     res.status(200).json({ msg: "Edificio caricato con successo" });
   } catch (error) {
-    console.error('Error inserting building:', error.message);
+    logUnexpectedError(req, error, { flow: "building_create" });
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
@@ -2879,22 +2919,27 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
     //console.log(req.body);
 
     if (!id || !name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "missing_fields" }, "warn");
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
 
     if (isNaN(area)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_area" }, "warn");
       return res.status(400).json({ msg: "Il campo 'area' deve essere un numero." });
     }
 
     if (isNaN(lighting)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_lighting" }, "warn");
       return res.status(400).json({ msg: "Il campo 'illuminazione' deve essere un numero." });
     }
 
     if (isNaN(led)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_led" }, "warn");
       return res.status(400).json({ msg: "Il campo 'LED' deve essere un numero." });
     }
 
     if (isNaN(gasLamp)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_gas_lamp" }, "warn");
       return res.status(400).json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
     }
 
@@ -2964,9 +3009,10 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       WHERE id = $26
   `, values);
 
+    logBuildingEvent(req, "building_updated", { user_id: userId, building_id: Number(id) });
     res.status(200).json({ msg: "Edificio aggiornato con successo" });
   } catch (error) {
-    console.error('Error updating building:', error.message);
+    logUnexpectedError(req, error, { flow: "building_update" });
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
@@ -2976,14 +3022,14 @@ app.delete("/api/delete-building/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
-    //console.log('ID dai parametri della richiesta:', id);
     const query = "DELETE FROM buildings WHERE user_id = $1 AND id = $2";
     const values = [user_id, id];
     await pool.query(query, values);
+    logBuildingEvent(req, "building_deleted", { user_id, building_id: Number(id) });
     res.status(200).json({ msg: "Edificio rimosso con successo" });
 
   } catch (error) {
-    console.error('Error deleting building:', error.message);
+    logUnexpectedError(req, error, { flow: "building_delete" });
     res.status(500).json({ msg: "Errore interno del server" });
   }
 });
@@ -3900,6 +3946,7 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
   ////console.log("ALL", user_id, pageNo, surveyData, totalScore, completed);
 
   if (!surveyData) {
+    logQuestionnaireEvent(req, "validation_failed", { flow: "questionnaire_save", reason: "missing_survey_data" }, "warn");
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -3928,9 +3975,24 @@ app.post('/api/responses', authenticateJWT, async (req, res) => {
     const values = [user_id, certification_id, pageNo, normalizedSurveyData, totalScore, CO2emissions, completed];
 
     const result = await pool.query(query, values);
-    res.status(200).json({ id: result.rows[0].id });
+    const surveyRowId = result.rows[0].id;
+    if (completed === true) {
+      logQuestionnaireEvent(req, "questionnaire_submitted", {
+        user_id,
+        certification_id,
+        survey_response_id: surveyRowId,
+      });
+    } else {
+      logQuestionnaireEvent(req, "questionnaire_draft_saved", {
+        user_id,
+        certification_id,
+        page_no: pageNo,
+        survey_response_id: surveyRowId,
+      });
+    }
+    res.status(200).json({ id: surveyRowId });
   } catch (err) {
-    console.error("Error inserting or updating survey response:", err);
+    logUnexpectedError(req, err, { flow: "questionnaire_save" });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -4456,20 +4518,26 @@ function cfCheck(cf) {
   return cfRegex.test(cf);
 }
 
-// OCR document processing routes
+// OCR document processing routes (also mounted under /api for the Vite client axiosInstance baseURL)
 const documentsRouter = require('./routes/documents');
 app.use('/api-v2', documentsRouter);
+app.use('/api', documentsRouter);
 
 const transportV2Router = require('./routes/transportV2');
 app.use('/api-v2', transportV2Router);
+app.use('/api', transportV2Router);
 
 const chatbotRouter = require('./routes/chatbot');
 app.use('/api-v2', chatbotRouter);
+app.use('/api', chatbotRouter);
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logUnexpectedError(req, err, { source: "express_error_handler" });
+  if (res.headersSent) {
+    return next(err);
+  }
   res.status(500).json({ error: "Qualcosa è andato storto!" });
-})
+});
 
 
 async function ensureAdminUser() {
@@ -4477,20 +4545,21 @@ async function ensureAdminUser() {
     // Check if the admin user exists
     const res = await pool.query('SELECT * FROM users WHERE administrator = TRUE LIMIT 1');
     if (res.rows.length === 0) {
-      // If the admin user doesn't exist, create it
-      console.log("PASS_ADMIN:", process.env.PASS_ADMIN);
       const hashedPassword = await bcrypt.hash(process.env.PASS_ADMIN, 10); // Hash the passwords
       await pool.query(
         `INSERT INTO users(username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, administrator, password_digest, isVerified, first_login)
          VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [process.env.USERNAME_ADMIN, "green_visa", process.env.EMAIL_ADMIN, null, null, null, null, true, hashedPassword, true, false]
       );
-      console.log('Admin creato con successo.');
+      rootLogger.info({ event: "admin_bootstrap", outcome: "admin_user_created" });
     } else {
-      console.log('Admin già esistente.');
+      rootLogger.debug({ event: "admin_bootstrap", outcome: "admin_user_exists" });
     }
   } catch (error) {
-    console.error('Errore durante la creazione dell\'admin:', error);
+    rootLogger.error(
+      { event: "unexpected_error", err: { message: error.message, code: error.code } },
+      "ensureAdminUser failed",
+    );
   }
 }
 
