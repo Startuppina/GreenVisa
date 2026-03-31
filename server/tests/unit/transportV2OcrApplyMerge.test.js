@@ -44,7 +44,6 @@ describe('applyOcrVehicleToTransportV2', () => {
         meta: {
           version: 1,
           certification_id: certificationId,
-          entry_mode: 'form',
           status: 'draft',
           started_at: now,
           updated_at: now,
@@ -93,7 +92,6 @@ describe('applyOcrVehicleToTransportV2', () => {
         meta: {
           version: 1,
           certification_id: certificationId,
-          entry_mode: null,
           status: 'draft',
           started_at: now,
           updated_at: now,

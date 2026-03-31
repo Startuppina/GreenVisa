@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 
 const CURRENT_TRANSPORT_V2_VERSION = 1;
-const ALLOWED_ENTRY_MODES = new Set(['form', 'chatbot']);
 const ALLOWED_TRANSPORT_MODES = new Set(['goods', 'passenger']);
 
 function createDefaultTransportV2({ certificationId, now }) {
@@ -9,7 +8,6 @@ function createDefaultTransportV2({ certificationId, now }) {
     meta: {
       version: CURRENT_TRANSPORT_V2_VERSION,
       certification_id: certificationId,
-      entry_mode: null,
       status: 'draft',
       started_at: now,
       updated_at: now,
@@ -36,7 +34,6 @@ function normalizeTransportV2(rawTransportV2, { certificationId, now }) {
     meta: {
       version: CURRENT_TRANSPORT_V2_VERSION,
       certification_id: certificationId,
-      entry_mode: normalizeEntryMode(meta.entry_mode),
       status: 'draft',
       started_at: normalizeIsoTimestamp(meta.started_at) || now,
       updated_at: normalizeIsoTimestamp(meta.updated_at) || now,
@@ -53,10 +50,6 @@ function normalizeTransportV2(rawTransportV2, { certificationId, now }) {
 
 function applyDraftWritePayload(existingTransportV2, payload, { certificationId, now }) {
   const nextTransportV2 = normalizeTransportV2(existingTransportV2, { certificationId, now });
-
-  if (Object.prototype.hasOwnProperty.call(payload, 'entry_mode') && nextTransportV2.meta.entry_mode == null) {
-    nextTransportV2.meta.entry_mode = normalizeEntryMode(payload.entry_mode);
-  }
 
   nextTransportV2.draft = {
     questionnaire_flags: normalizeObject(payload.draft.questionnaire_flags),
@@ -101,19 +94,6 @@ function normalizeTransportMode(value) {
 
   const normalized = value.trim();
   return ALLOWED_TRANSPORT_MODES.has(normalized) ? normalized : null;
-}
-
-function normalizeEntryMode(value) {
-  if (value == null) {
-    return null;
-  }
-
-  if (typeof value !== 'string') {
-    return null;
-  }
-
-  const normalized = value.trim();
-  return ALLOWED_ENTRY_MODES.has(normalized) ? normalized : null;
 }
 
 function normalizeObject(value) {

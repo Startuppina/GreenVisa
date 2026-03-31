@@ -20,7 +20,6 @@ describe('validateTransportV2Block1DraftPayload', () => {
 
   it('accepts a partial draft payload', () => {
     const result = validateTransportV2Block1DraftPayload({
-      entry_mode: 'form',
       draft: {
         questionnaire_flags: {
           uses_navigator: true,
@@ -30,16 +29,13 @@ describe('validateTransportV2Block1DraftPayload', () => {
     });
 
     expect(result.valid).toBe(true);
-    expect(result.normalizedData.entry_mode).toBe('form');
     expect(result.normalizedData.draft.questionnaire_flags).toEqual({
       uses_navigator: true,
     });
   });
 
   it('rejects a payload without draft', () => {
-    const result = validateTransportV2Block1DraftPayload({
-      entry_mode: 'form',
-    });
+    const result = validateTransportV2Block1DraftPayload({});
 
     expect(result.valid).toBe(false);
     expect(result.errors).toEqual(
@@ -49,9 +45,9 @@ describe('validateTransportV2Block1DraftPayload', () => {
     );
   });
 
-  it('rejects an invalid entry_mode', () => {
+  it('rejects entry_mode on the draft payload', () => {
     const result = validateTransportV2Block1DraftPayload({
-      entry_mode: 'voicebot',
+      entry_mode: 'form',
       draft: {
         questionnaire_flags: {},
         vehicles: [],
@@ -61,7 +57,7 @@ describe('validateTransportV2Block1DraftPayload', () => {
     expect(result.valid).toBe(false);
     expect(result.errors).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ field: 'entry_mode', code: 'invalid_enum' }),
+        expect.objectContaining({ field: 'entry_mode', code: 'forbidden' }),
       ]),
     );
   });

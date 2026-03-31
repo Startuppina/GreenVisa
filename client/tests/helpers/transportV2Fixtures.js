@@ -23,7 +23,6 @@ export function makeTransportV2Fixture(overrides = {}) {
     meta: {
       version: 1,
       certification_id: 123,
-      entry_mode: null,
       status: 'draft',
       started_at: '2026-03-30T10:00:00.000Z',
       updated_at: '2026-03-30T10:00:00.000Z',
@@ -164,7 +163,6 @@ export function makeOcrVehicleRow(overrides = {}) {
 export function makeFormModeDraftFixture(overrides = {}) {
   return makeTransportV2Fixture({
     meta: {
-      entry_mode: 'form',
       updated_at: '2026-03-30T10:05:00.000Z',
     },
     draft: {
@@ -185,7 +183,6 @@ export function makeFormModeDraftFixture(overrides = {}) {
 export function makeOcrPrefilledDraftFixture(overrides = {}) {
   return makeTransportV2Fixture({
     meta: {
-      entry_mode: 'form',
       updated_at: '2026-03-30T10:06:00.000Z',
     },
     draft: {
@@ -205,7 +202,6 @@ export function makeOcrPrefilledDraftFixture(overrides = {}) {
 export function makeCompleteDraftFixture(overrides = {}) {
   return makeTransportV2Fixture({
     meta: {
-      entry_mode: 'form',
       updated_at: '2026-03-30T11:00:00.000Z',
     },
     draft: {
@@ -226,7 +222,6 @@ export function makeCompleteDraftFixture(overrides = {}) {
 export function makeSubmittedDraftFixture(overrides = {}) {
   return makeTransportV2Fixture({
     meta: {
-      entry_mode: 'form',
       status: 'submitted',
       updated_at: '2026-03-30T10:12:00.000Z',
       submitted_at: '2026-03-30T10:12:00.000Z',

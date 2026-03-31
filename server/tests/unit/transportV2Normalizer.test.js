@@ -88,7 +88,6 @@ describe('transportV2Normalizer', () => {
           started_at: '2026-03-30T10:00:00.000Z',
           updated_at: 'invalid',
           submitted_at: 'invalid',
-          entry_mode: 'chatbot',
           status: 'submitted',
         },
         draft: {},
@@ -102,7 +101,6 @@ describe('transportV2Normalizer', () => {
     expect(result.meta).toEqual({
       version: 1,
       certification_id: 456,
-      entry_mode: 'chatbot',
       status: 'draft',
       started_at: '2026-03-30T10:00:00.000Z',
       updated_at: '2026-03-30T10:05:00.000Z',
@@ -116,12 +114,11 @@ describe('transportV2Normalizer', () => {
     expect(result.results).toEqual({});
   });
 
-  it('preserves existing non-null entry_mode on subsequent saves', () => {
+  it('applies draft writes without entry_mode', () => {
     const existing = normalizeTransportV2(
       {
         meta: {
           certification_id: 789,
-          entry_mode: 'form',
           started_at: '2026-03-30T10:00:00.000Z',
           updated_at: '2026-03-30T10:00:00.000Z',
         },
@@ -139,7 +136,6 @@ describe('transportV2Normalizer', () => {
     const result = applyDraftWritePayload(
       existing,
       {
-        entry_mode: 'chatbot',
         draft: {
           questionnaire_flags: {
             uses_navigator: true,
@@ -153,6 +149,7 @@ describe('transportV2Normalizer', () => {
       },
     );
 
-    expect(result.meta.entry_mode).toBe('form');
+    expect(result.meta).not.toHaveProperty('entry_mode');
+    expect(result.draft.questionnaire_flags.uses_navigator).toBe(true);
   });
 });

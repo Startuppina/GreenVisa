@@ -116,7 +116,6 @@ describe('Block 3 Transport V2 compatibility', () => {
       .put(`/api/transport-v2/${certification.id}/draft`)
       .set('Cookie', authCookieForUser(user))
       .send({
-        entry_mode: 'form',
         draft: {
           questionnaire_flags: buildCompleteQuestionnaireFlags(),
           vehicles: [completedVehicle],
