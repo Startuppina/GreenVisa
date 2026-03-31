@@ -51,23 +51,25 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
   const loadAbortControllerRef = useRef(null);
   const saveAbortControllerRef = useRef(null);
   const submitAbortControllerRef = useRef(null);
+  const onUnauthorizedRef = useRef(onUnauthorized);
+
+  useEffect(() => {
+    onUnauthorizedRef.current = onUnauthorized;
+  }, [onUnauthorized]);
 
   const replaceTransportV2 = useCallback((nextTransportV2) => {
     transportV2Ref.current = nextTransportV2;
     setTransportV2(nextTransportV2);
   }, []);
 
-  const handleUnauthorized = useCallback(
-    (error) => {
-      if (error?.response?.status === 401 && typeof onUnauthorized === 'function') {
-        onUnauthorized();
-        return true;
-      }
+  const handleUnauthorized = useCallback((error) => {
+    if (error?.response?.status === 401 && typeof onUnauthorizedRef.current === 'function') {
+      onUnauthorizedRef.current();
+      return true;
+    }
 
-      return false;
-    },
-    [onUnauthorized],
-  );
+    return false;
+  }, []);
 
   const saveSnapshot = useCallback(
     async (snapshot, snapshotVersion) => {
