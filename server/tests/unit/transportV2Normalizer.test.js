@@ -1,10 +1,18 @@
 const {
   applyDraftWritePayload,
   createDefaultTransportV2,
-  normalizeTransportV2,
+  isTransportV2Submitted,
+  sanitizeDraftTransportV2,
 } = require('../../services/transportV2Normalizer');
 
 describe('transportV2Normalizer', () => {
+  it('isTransportV2Submitted is true only when meta.status is submitted', () => {
+    expect(isTransportV2Submitted(null)).toBe(false);
+    expect(isTransportV2Submitted({})).toBe(false);
+    expect(isTransportV2Submitted({ meta: { status: 'draft' } })).toBe(false);
+    expect(isTransportV2Submitted({ meta: { status: 'submitted' } })).toBe(true);
+  });
+
   it('normalizes missing optional row containers', () => {
     const base = createDefaultTransportV2({
       certificationId: 123,
@@ -81,8 +89,8 @@ describe('transportV2Normalizer', () => {
     });
   });
 
-  it('normalizes metadata with backend-owned defaults', () => {
-    const result = normalizeTransportV2(
+  it('sanitizeDraftTransportV2 forces draft shape and clears submit outputs (draft pipeline only)', () => {
+    const result = sanitizeDraftTransportV2(
       {
         meta: {
           started_at: '2026-03-30T10:00:00.000Z',
@@ -91,6 +99,8 @@ describe('transportV2Normalizer', () => {
           status: 'submitted',
         },
         draft: {},
+        derived: { keep: false },
+        results: { keep: false },
       },
       {
         certificationId: 456,
@@ -115,7 +125,7 @@ describe('transportV2Normalizer', () => {
   });
 
   it('applies draft writes without entry_mode', () => {
-    const existing = normalizeTransportV2(
+    const existing = sanitizeDraftTransportV2(
       {
         meta: {
           certification_id: 789,

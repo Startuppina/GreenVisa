@@ -1,6 +1,9 @@
 const request = require('supertest');
 const { getApp } = require('../helpers/app');
 const {
+  TRANSPORT_V2_ALREADY_SUBMITTED_MSG,
+} = require('../../services/transportV2DraftService');
+const {
   authCookieForUser,
   createCertificationFixture,
   createSurveyResponseFixture,
@@ -208,5 +211,99 @@ describe('GET /api/transport-v2/:certificationId', () => {
     expect(response.body.transport_v2.meta.submitted_at).toBeNull();
     expect(response.body.transport_v2.derived).toEqual({});
     expect(response.body.transport_v2.results).toEqual({});
+  });
+
+  it('returns submitted questionnaires without downgrading or clearing derived/results', async () => {
+    const user = await createUserFixture({ suffix: 'get-submitted-user' });
+    const certification = await createCertificationFixture({ suffix: 'get-submitted-cert' });
+    await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
+
+    const submittedTransportV2 = {
+      meta: {
+        version: 1,
+        certification_id: certification.id,
+        status: 'submitted',
+        started_at: '2026-03-30T10:00:00.000Z',
+        updated_at: '2026-03-30T11:00:00.000Z',
+        submitted_at: '2026-03-30T11:00:00.000Z',
+      },
+      draft: {
+        questionnaire_flags: { uses_navigator: true },
+        vehicles: [],
+      },
+      derived: {
+        vehicle_counts: { total: 0, passenger: 0, goods: 0 },
+      },
+      results: {
+        calculator_version: 'transport_v2_v1',
+        score: { total_score: 5 },
+      },
+    };
+
+    const inserted = await createSurveyResponseFixture({
+      userId: user.id,
+      certificationId: certification.id,
+      surveyData: { transport_v2: submittedTransportV2 },
+      completed: true,
+    });
+
+    const beforeSnapshot = JSON.stringify(inserted.survey_data.transport_v2);
+
+    const response = await request(app)
+      .get(`/api/transport-v2/${certification.id}`)
+      .set('Cookie', authCookieForUser(user));
+
+    expect(response.status).toBe(200);
+    expect(response.body.transport_v2).toEqual(submittedTransportV2);
+    expect(response.body.transport_v2.meta.status).toBe('submitted');
+    expect(response.body.transport_v2.meta.submitted_at).toBe('2026-03-30T11:00:00.000Z');
+
+    const afterRow = await getSurveyResponse({ userId: user.id, certificationId: certification.id });
+    expect(JSON.stringify(afterRow.survey_data.transport_v2)).toBe(beforeSnapshot);
+  });
+
+  it('does not allow draft save after reading a submitted questionnaire', async () => {
+    const user = await createUserFixture({ suffix: 'get-then-put-user' });
+    const certification = await createCertificationFixture({ suffix: 'get-then-put-cert' });
+    await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
+
+    await createSurveyResponseFixture({
+      userId: user.id,
+      certificationId: certification.id,
+      surveyData: {
+        transport_v2: {
+          meta: {
+            version: 1,
+            certification_id: certification.id,
+            status: 'submitted',
+            started_at: '2026-03-30T10:00:00.000Z',
+            updated_at: '2026-03-30T11:00:00.000Z',
+            submitted_at: '2026-03-30T11:00:00.000Z',
+          },
+          draft: { questionnaire_flags: {}, vehicles: [] },
+          derived: { x: 1 },
+          results: { y: 2 },
+        },
+      },
+      completed: true,
+    });
+
+    await request(app)
+      .get(`/api/transport-v2/${certification.id}`)
+      .set('Cookie', authCookieForUser(user))
+      .expect(200);
+
+    const putResponse = await request(app)
+      .put(`/api/transport-v2/${certification.id}/draft`)
+      .set('Cookie', authCookieForUser(user))
+      .send({
+        draft: {
+          questionnaire_flags: { hack: true },
+          vehicles: [],
+        },
+      });
+
+    expect(putResponse.status).toBe(409);
+    expect(putResponse.body.msg).toBe(TRANSPORT_V2_ALREADY_SUBMITTED_MSG);
   });
 });

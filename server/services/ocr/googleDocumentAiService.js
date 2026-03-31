@@ -1,4 +1,6 @@
 const ocrConfig = require('../../config/ocr');
+const { withTimeout } = require('../../utils/withTimeout');
+const { OcrProviderTimeoutError } = require('./ocrProviderErrors');
 
 // ── Lazy-loaded Google client ─────────────────────────────────
 // Install it when ready for real processing:
@@ -30,6 +32,53 @@ function buildProcessorName() {
   return processorVersion ? `${base}/processorVersions/${processorVersion}` : base;
 }
 
+const PROCESSOR_VERSION_SEGMENT = '/processorVersions/';
+
+/**
+ * Processor version id actually used for this request, from the ProcessDocument response only.
+ * Document AI exposes this on Document.revision[].processor (full resource name). If absent, null.
+ */
+function extractProcessorVersionFromProcessResponse(apiResult) {
+  if (!apiResult || typeof apiResult !== 'object') return null;
+
+  const topLevel =
+    apiResult.processorVersion ?? apiResult.processor_version;
+  if (typeof topLevel === 'string') {
+    const fromTop = normalizeProcessorVersionString(topLevel);
+    if (fromTop) return fromTop;
+  }
+
+  const doc = apiResult.document;
+  if (!doc || typeof doc !== 'object') return null;
+
+  const revisions = doc.revisions;
+  if (!Array.isArray(revisions) || revisions.length === 0) return null;
+
+  for (let i = revisions.length - 1; i >= 0; i -= 1) {
+    const rev = revisions[i];
+    if (!rev || typeof rev !== 'object') continue;
+    const proc = rev.processor;
+    if (typeof proc !== 'string' || !proc) continue;
+    const id = normalizeProcessorVersionString(proc);
+    if (id) return id;
+  }
+
+  return null;
+}
+
+function normalizeProcessorVersionString(value) {
+  const t = value.trim();
+  if (!t) return null;
+  const idx = t.indexOf(PROCESSOR_VERSION_SEGMENT);
+  if (idx !== -1) {
+    const rest = t.slice(idx + PROCESSOR_VERSION_SEGMENT.length);
+    const id = rest.split('/')[0];
+    return id || null;
+  }
+  if (!t.includes('/')) return t;
+  return null;
+}
+
 // ── Public entry point ────────────────────────────────────────
 
 async function processDocument(fileBytes, mimeType) {
@@ -53,14 +102,19 @@ async function processDocument(fileBytes, mimeType) {
     },
   };
 
-  const [result] = await client.processDocument(request);
+  const rpcPromise = client.processDocument(request);
+  const [result] = await withTimeout(
+    rpcPromise,
+    ocrConfig.providerTimeoutMs,
+    () => new OcrProviderTimeoutError(),
+  );
 
   return {
     rawProviderOutput: buildRawProviderOutputForPersistence(result),
     entities: extractEntitiesFromResponse(result),
     metadata: {
       processorName: name,
-      processorVersion: ocrConfig.google.processorVersion || null,
+      processorVersion: extractProcessorVersionFromProcessResponse(result),
     },
   };
 }
@@ -97,4 +151,8 @@ function extractEntitiesFromResponse(result) {
   }));
 }
 
-module.exports = { processDocument, buildRawProviderOutputForPersistence };
+module.exports = {
+  processDocument,
+  buildRawProviderOutputForPersistence,
+  extractProcessorVersionFromProcessResponse,
+};

@@ -1,6 +1,9 @@
 const request = require('supertest');
 const { getApp } = require('../helpers/app');
 const {
+  TRANSPORT_V2_ALREADY_SUBMITTED_MSG,
+} = require('../../services/transportV2DraftService');
+const {
   authCookieForUser,
   createCertificationFixture,
   createSurveyResponseFixture,
@@ -159,7 +162,7 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
     );
   });
 
-  it('keeps meta.status forced to draft and blocks client-owned derived/results/meta writes', async () => {
+  it('rejects payloads that try to set meta, derived, or results on draft save', async () => {
     const user = await createUserFixture({ suffix: 'put-owned-user' });
     const certification = await createCertificationFixture({ suffix: 'put-owned-cert' });
     await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
@@ -184,32 +187,43 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
       });
 
     expect(rejectedResponse.status).toBe(400);
+  });
+
+  it('rejects draft save when the questionnaire is already submitted and leaves storage unchanged', async () => {
+    const user = await createUserFixture({ suffix: 'put-submitted-user' });
+    const certification = await createCertificationFixture({ suffix: 'put-submitted-cert' });
+    await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
+
+    const storedTransportV2 = {
+      meta: {
+        version: 1,
+        certification_id: certification.id,
+        status: 'submitted',
+        started_at: '2026-03-30T10:00:00.000Z',
+        updated_at: '2026-03-30T10:00:00.000Z',
+        submitted_at: '2026-03-30T10:01:00.000Z',
+      },
+      draft: {
+        questionnaire_flags: { original: true },
+        vehicles: [],
+      },
+      derived: {
+        vehicle_counts: { total: 0, passenger: 0, goods: 0 },
+      },
+      results: {
+        score: { total_score: 1 },
+      },
+    };
 
     await createSurveyResponseFixture({
       userId: user.id,
       certificationId: certification.id,
       surveyData: {
-        transport_v2: {
-          meta: {
-            version: 1,
-            certification_id: certification.id,
-            status: 'submitted',
-            started_at: '2026-03-30T10:00:00.000Z',
-            updated_at: '2026-03-30T10:00:00.000Z',
-            submitted_at: '2026-03-30T10:01:00.000Z',
-          },
-          draft: {
-            questionnaire_flags: {},
-            vehicles: [],
-          },
-          derived: {
-            should_be_reset: true,
-          },
-          results: {
-            should_be_reset: true,
-          },
-        },
+        transport_v2: storedTransportV2,
       },
+      totalScore: 1,
+      co2emissions: 0.5,
+      completed: true,
     });
 
     const validResponse = await request(app)
@@ -224,10 +238,13 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
         },
       });
 
-    expect(validResponse.status).toBe(200);
-    expect(validResponse.body.transport_v2.meta.status).toBe('draft');
-    expect(validResponse.body.transport_v2.derived).toEqual({});
-    expect(validResponse.body.transport_v2.results).toEqual({});
+    expect(validResponse.status).toBe(409);
+    expect(validResponse.body.msg).toBe(TRANSPORT_V2_ALREADY_SUBMITTED_MSG);
+
+    const row = await getSurveyResponse({ userId: user.id, certificationId: certification.id });
+    expect(row.survey_data.transport_v2).toEqual(storedTransportV2);
+    expect(Number(row.total_score)).toBe(1);
+    expect(row.completed).toBe(true);
   });
 
   it('preserves unrelated survey_data keys during save', async () => {

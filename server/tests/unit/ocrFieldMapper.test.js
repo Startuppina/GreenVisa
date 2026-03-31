@@ -2,7 +2,11 @@ const {
   normalizeProviderOutput,
   deriveTransportModeFromVehicleUseText,
 } = require('../../services/ocr/fieldMapper');
-const { applyNormalizations, validateNormalizedOutput } = require('../../services/ocr/ocrOutputValidator');
+const {
+  applyNormalizations,
+  validateNormalizedOutput,
+  injectDerivedGoodsVehicleReviewField,
+} = require('../../services/ocr/ocrOutputValidator');
 const { buildTransportV2VehiclePrefill } = require('../../services/transportV2OcrPrefillService');
 
 describe('normalizeProviderOutput', () => {
@@ -45,7 +49,7 @@ describe('normalizeProviderOutput', () => {
       'euro_class',
       'fuel_type',
       'max_vehicle_mass_kg',
-      'wltp_co2_g_km',
+      'co2_emissions_g_km',
       'vehicle_use_text',
     ]);
     expect(result.fields.find((field) => field.key === 'max_vehicle_mass_kg')).toEqual(
@@ -57,7 +61,7 @@ describe('normalizeProviderOutput', () => {
       }),
     );
     expect(result.fields.some((field) => field.key === 'registrationYear')).toBe(false);
-    expect(result.fields.some((field) => field.key === 'goodsVehicleOver2_5Tons')).toBe(false);
+    expect(result.fields.some((field) => field.key === 'goodsVehicleOver3_5Tons')).toBe(false);
   });
 
   it('ignores unmapped Document AI entities such as emission_regulation_text', () => {
@@ -93,7 +97,7 @@ describe('normalizeProviderOutput', () => {
       'euro_class',
       'fuel_type',
       'max_vehicle_mass_kg',
-      'wltp_co2_g_km',
+      'co2_emissions_g_km',
       'vehicle_use_text',
     ]);
 
@@ -188,9 +192,10 @@ describe('normalizeProviderOutput', () => {
       ],
     });
 
-    const normalized = applyNormalizations(fields);
+    const normalized = injectDerivedGoodsVehicleReviewField(applyNormalizations(fields));
     const prefill = buildTransportV2VehiclePrefill({ documentId: 1, reviewFields: normalized });
 
+    expect(normalized.some((f) => f.key === 'goods_vehicle_over_3_5_tons')).toBe(true);
     expect(prefill.fields.goods_vehicle_over_3_5_tons).toBe(false);
     expect(prefill.field_sources.goods_vehicle_over_3_5_tons).toMatchObject({
       source: 'ocr_derived',
@@ -213,9 +218,10 @@ describe('normalizeProviderOutput', () => {
       ],
     });
 
-    const normalized = applyNormalizations(fields);
+    const normalized = injectDerivedGoodsVehicleReviewField(applyNormalizations(fields));
     const prefill = buildTransportV2VehiclePrefill({ documentId: 99, reviewFields: normalized });
 
+    expect(normalized.some((f) => f.key === 'goods_vehicle_over_3_5_tons')).toBe(true);
     expect(prefill.fields.goods_vehicle_over_3_5_tons).toBe(true);
     expect(prefill.field_sources.goods_vehicle_over_3_5_tons).toMatchObject({
       source: 'ocr_derived',
@@ -270,7 +276,7 @@ describe('normalizeProviderOutput', () => {
     expect(prefill.transport_mode).toBe('goods');
   });
 
-  it('maps Google co2_emissions_g_km through normalization into prefill fields.wltp_co2_g_km', () => {
+  it('maps Google co2_emissions_g_km through normalization into prefill fields.co2_emissions_g_km', () => {
     const { fields } = normalizeProviderOutput({
       entities: [
         {
@@ -286,13 +292,13 @@ describe('normalizeProviderOutput', () => {
     const normalized = applyNormalizations(fields);
     const prefill = buildTransportV2VehiclePrefill({ documentId: 55, reviewFields: normalized });
 
-    expect(prefill.fields.wltp_co2_g_km).toBe(143);
-    expect(prefill.field_sources.wltp_co2_g_km).toMatchObject({
+    expect(prefill.fields.co2_emissions_g_km).toBe(143);
+    expect(prefill.field_sources.co2_emissions_g_km).toMatchObject({
       source: 'ocr',
       document_id: 55,
       confidence: 0.97,
     });
-    expect(validateNormalizedOutput(normalized).filter((i) => i.fieldKey === 'wltp_co2_g_km')).toEqual([]);
+    expect(validateNormalizedOutput(normalized).filter((i) => i.fieldKey === 'co2_emissions_g_km')).toEqual([]);
   });
 
   it('maps numeric co2_emissions_g_km provider value into prefill', () => {
@@ -311,7 +317,7 @@ describe('normalizeProviderOutput', () => {
     const normalized = applyNormalizations(fields);
     const prefill = buildTransportV2VehiclePrefill({ documentId: 3, reviewFields: normalized });
 
-    expect(prefill.fields.wltp_co2_g_km).toBe(128);
+    expect(prefill.fields.co2_emissions_g_km).toBe(128);
   });
 
   it('deriveTransportModeFromVehicleUseText is case-insensitive and returns null when keywords are absent', () => {
@@ -362,13 +368,14 @@ describe('normalizeProviderOutput', () => {
       ],
     });
 
-    const normalized = applyNormalizations(fields);
+    const normalized = injectDerivedGoodsVehicleReviewField(applyNormalizations(fields));
     const prefill = buildTransportV2VehiclePrefill({ documentId: 10, reviewFields: normalized });
 
     expect(prefill.fields.registration_year).toBe(2019);
     expect(prefill.fields.euro_class).toBe('EURO_5');
     expect(prefill.fields.fuel_type).toBe('diesel');
     expect(prefill.fields.goods_vehicle_over_3_5_tons).toBe(false);
+    expect(normalized.some((f) => f.key === 'goods_vehicle_over_3_5_tons')).toBe(true);
     expect(prefill.transport_mode).toBe('passenger');
   });
 });

@@ -1,19 +1,10 @@
+import { buildOcrUploadPreviewLines } from '../utils/ocrResultPreview.js';
 import { TRANSPORT_MODE_OPTIONS } from '../utils/validation.js';
 
 function getPreviewLines(upload) {
-  const prefill = upload.result?.transportV2VehiclePrefill;
-  if (!prefill) {
-    return [];
-  }
-
-  const fields = prefill.fields || {};
-
-  return [
-    ['Registration year', fields.registration_year],
-    ['Euro class', fields.euro_class],
-    ['Fuel type', fields.fuel_type],
-    ['Transport mode', prefill.transport_mode],
-  ].filter(([, value]) => value != null && value !== '');
+  return buildOcrUploadPreviewLines(upload.result).filter(
+    ([, value]) => value != null && value !== '',
+  );
 }
 
 export default function OcrUploadItem({ upload, onTransportModeChange, onApply, onRefresh }) {

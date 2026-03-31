@@ -18,7 +18,7 @@ describe('transportV2Calculator', () => {
         fields: {
           fuel_type: 'diesel',
           annual_km: 10000,
-          wltp_co2_g_km: 150,
+          co2_emissions_g_km: 150,
           occupancy_profile_code: 6,
         },
       }),
@@ -32,7 +32,7 @@ describe('transportV2Calculator', () => {
   it('uses the average of the two WLTP values for GPL vehicles', () => {
     const result = getEffectiveEmissionsGKm({
       fuel_type: 'gpl',
-      wltp_co2_g_km: 100,
+      co2_emissions_g_km: 100,
       wltp_co2_g_km_alt_fuel: 140,
     });
 
@@ -42,7 +42,7 @@ describe('transportV2Calculator', () => {
   it('uses the average of the two WLTP values for Metano vehicles', () => {
     const result = getEffectiveEmissionsGKm({
       fuel_type: 'metano',
-      wltp_co2_g_km: 90,
+      co2_emissions_g_km: 90,
       wltp_co2_g_km_alt_fuel: 150,
     });
 
@@ -52,7 +52,7 @@ describe('transportV2Calculator', () => {
   it('preserves decimal precision for averaged alternate-fuel emissions', () => {
     const result = getEffectiveEmissionsGKm({
       fuel_type: 'gpl',
-      wltp_co2_g_km: 101,
+      co2_emissions_g_km: 101,
       wltp_co2_g_km_alt_fuel: 100,
     });
 
@@ -96,7 +96,7 @@ describe('transportV2Calculator', () => {
       buildPassengerVehicle({
         fields: {
           fuel_type: 'diesel',
-          wltp_co2_g_km: 120,
+          co2_emissions_g_km: 120,
           annual_km: 10000,
           occupancy_profile_code: 4,
         },
@@ -118,7 +118,7 @@ describe('transportV2Calculator', () => {
         buildPassengerVehicle({
           vehicle_id: 'p1',
           fields: {
-            wltp_co2_g_km: 120,
+            co2_emissions_g_km: 120,
             occupancy_profile_code: 4,
             annual_km: 10000,
           },
@@ -126,7 +126,7 @@ describe('transportV2Calculator', () => {
         buildPassengerVehicle({
           vehicle_id: 'p2',
           fields: {
-            wltp_co2_g_km: 90,
+            co2_emissions_g_km: 90,
             occupancy_profile_code: 4,
             annual_km: 10000,
           },
@@ -144,7 +144,7 @@ describe('transportV2Calculator', () => {
         buildPassengerVehicle({
           fields: {
             annual_km: 10000,
-            wltp_co2_g_km: 150,
+            co2_emissions_g_km: 150,
             occupancy_profile_code: 6,
           },
         }),
@@ -152,7 +152,7 @@ describe('transportV2Calculator', () => {
           vehicle_id: 'p2',
           fields: {
             annual_km: 13000,
-            wltp_co2_g_km: 150,
+            co2_emissions_g_km: 150,
             occupancy_profile_code: 6,
           },
         }),
@@ -191,7 +191,7 @@ describe('transportV2Calculator', () => {
             fields: {
               fuel_type: 'diesel',
               annual_km: 10000,
-              wltp_co2_g_km: 100,
+              co2_emissions_g_km: 100,
               occupancy_profile_code: 4,
             },
           }),
@@ -199,7 +199,7 @@ describe('transportV2Calculator', () => {
             fields: {
               fuel_type: 'gpl',
               annual_km: 20000,
-              wltp_co2_g_km: 100,
+              co2_emissions_g_km: 100,
               wltp_co2_g_km_alt_fuel: 140,
               load_profile_code: 3,
             },
@@ -246,7 +246,7 @@ describe('transportV2Calculator', () => {
             fields: {
               annual_km: 10000,
               fuel_type: 'diesel',
-              wltp_co2_g_km: 120,
+              co2_emissions_g_km: 120,
               occupancy_profile_code: 4,
             },
           }),
@@ -269,7 +269,7 @@ describe('transportV2Calculator', () => {
             fields: {
               annual_km: 20000,
               fuel_type: 'diesel',
-              wltp_co2_g_km: 280,
+              co2_emissions_g_km: 280,
               load_profile_code: 2,
             },
           }),
@@ -291,7 +291,7 @@ describe('transportV2Calculator', () => {
             fields: {
               annual_km: 10000,
               fuel_type: 'gpl',
-              wltp_co2_g_km: 100,
+              co2_emissions_g_km: 100,
               wltp_co2_g_km_alt_fuel: 140,
               occupancy_profile_code: 6,
             },
@@ -314,7 +314,7 @@ describe('transportV2Calculator', () => {
             vehicle_id: 'p1',
             fields: {
               annual_km: 10000,
-              wltp_co2_g_km: 120,
+              co2_emissions_g_km: 120,
               occupancy_profile_code: 4,
             },
           }),
@@ -322,7 +322,7 @@ describe('transportV2Calculator', () => {
             vehicle_id: 'p2',
             fields: {
               annual_km: 10000,
-              wltp_co2_g_km: 120,
+              co2_emissions_g_km: 120,
               occupancy_profile_code: 6,
             },
           }),
@@ -341,7 +341,7 @@ describe('transportV2Calculator', () => {
         fields: {
           annual_km: 10000,
           fuel_type: 'diesel',
-          wltp_co2_g_km: 50,
+          co2_emissions_g_km: 50,
           load_profile_code: 6,
         },
       }),

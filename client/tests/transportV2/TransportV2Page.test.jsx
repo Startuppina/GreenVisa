@@ -87,6 +87,7 @@ describe('TransportV2Page', () => {
               registration_year: 2018,
               euro_class: 'EURO_5',
               fuel_type: 'diesel',
+              co2_emissions_g_km: 143,
             },
           },
           validationIssues: [],
@@ -116,6 +117,7 @@ describe('TransportV2Page', () => {
     await user.upload(fileInput, new File(['test-pdf'], 'vehicle.pdf', { type: 'application/pdf' }));
 
     await screen.findByText('vehicle.pdf');
+    await screen.findByText('143');
     await screen.findByRole('button', { name: /create vehicle/i });
     await user.click(screen.getByRole('button', { name: /create vehicle/i }));
 
@@ -124,6 +126,11 @@ describe('TransportV2Page', () => {
         certificationId: 123,
         transportMode: 'goods',
       });
+    });
+
+    await waitFor(() => {
+      const co2Input = screen.getByRole('spinbutton', { name: /CO₂ emissions \(g\/km\)/i });
+      expect(co2Input).toHaveValue(143);
     });
   });
 });

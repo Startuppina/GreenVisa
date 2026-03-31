@@ -30,8 +30,8 @@ const FIELD_DEFINITIONS = [
     required: false,
   },
   {
-    key: 'wltp_co2_g_km',
-    label: 'Emissioni CO2 WLTP (g/km)',
+    key: 'co2_emissions_g_km',
+    label: 'Emissioni CO2 (g/km)',
     providerTypes: ['co2_emissions_g_km'],
     required: false,
   },

@@ -108,7 +108,7 @@ describe('applyOcrVehicleToTransportV2', () => {
                 registration_year: 2018,
                 euro_class: 'EURO_5',
                 fuel_type: 'diesel',
-                wltp_co2_g_km: null,
+                co2_emissions_g_km: null,
                 wltp_co2_g_km_alt_fuel: null,
                 goods_vehicle_over_3_5_tons: false,
                 occupancy_profile_code: null,

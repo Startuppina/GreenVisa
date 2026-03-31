@@ -12,10 +12,13 @@ export function getVehicleTitle(vehicle, index) {
 }
 
 export function getVehicleSubtitle(vehicle) {
-  const year = vehicle?.fields?.registration_year || 'year n/a';
-  const fuel = vehicle?.fields?.fuel_type || 'fuel n/a';
-  const euroClass = vehicle?.fields?.euro_class || 'euro n/a';
-  return `${year} • ${fuel} • ${euroClass}`;
+  const year = vehicle?.fields?.registration_year ?? 'year n/a';
+  const fuel = vehicle?.fields?.fuel_type ?? 'fuel n/a';
+  const euroClass = vehicle?.fields?.euro_class ?? 'euro n/a';
+  const co2 = vehicle?.fields?.co2_emissions_g_km;
+  const co2Segment =
+    co2 !== undefined && co2 !== null && co2 !== '' ? `CO₂ ${co2} g/km` : null;
+  return [year, fuel, euroClass, co2Segment].filter(Boolean).join(' • ');
 }
 
 export function getVehicleBadges(vehicle, index) {

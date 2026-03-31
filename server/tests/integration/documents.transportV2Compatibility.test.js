@@ -8,11 +8,13 @@ const {
   createUserFixture,
   grantCertificationAccess,
 } = require('../helpers/fixtures');
+const { useDocAiSuccessByDefault } = require('../helpers/docAiTestStub');
 const { registerIntegrationHooks } = require('../helpers/integrationHooks');
 
 const app = getApp();
 
 registerIntegrationHooks();
+useDocAiSuccessByDefault();
 
 async function uploadConfirmAndApply({ user, certificationId, transportMode = null }) {
   const uploadResponse = await request(app)
@@ -103,7 +105,7 @@ describe('Block 3 Transport V2 compatibility', () => {
         ...draftResponse.body.transport_v2.draft.vehicles.find(
           (vehicle) => vehicle.ocr_document_id === documentId,
         ).fields,
-        wltp_co2_g_km: 180,
+        co2_emissions_g_km: 180,
         load_profile_code: 2,
         last_revision_date: '2025-03-01',
         blue_sticker: true,

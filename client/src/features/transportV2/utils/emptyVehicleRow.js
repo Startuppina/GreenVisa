@@ -17,7 +17,7 @@ export default function createEmptyVehicleRow(overrides = {}) {
       registration_year: null,
       euro_class: null,
       fuel_type: null,
-      wltp_co2_g_km: null,
+      co2_emissions_g_km: null,
       wltp_co2_g_km_alt_fuel: null,
       goods_vehicle_over_3_5_tons: null,
       occupancy_profile_code: null,

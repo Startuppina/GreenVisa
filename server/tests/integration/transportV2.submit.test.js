@@ -1,6 +1,9 @@
 const request = require('supertest');
 const { getApp } = require('../helpers/app');
 const {
+  TRANSPORT_V2_ALREADY_SUBMITTED_MSG,
+} = require('../../services/transportV2DraftService');
+const {
   authCookieForUser,
   createCertificationFixture,
   createSurveyResponseFixture,
@@ -42,7 +45,7 @@ function createSubmitReadyTransportV2Draft(certificationId) {
             registration_year: 2020,
             euro_class: 'EURO_6',
             fuel_type: 'diesel',
-            wltp_co2_g_km: 100,
+            co2_emissions_g_km: 100,
             wltp_co2_g_km_alt_fuel: null,
             goods_vehicle_over_3_5_tons: null,
             occupancy_profile_code: 4,
@@ -63,7 +66,7 @@ function createSubmitReadyTransportV2Draft(certificationId) {
             registration_year: 2019,
             euro_class: 'EURO_5',
             fuel_type: 'gpl',
-            wltp_co2_g_km: 100,
+            co2_emissions_g_km: 100,
             wltp_co2_g_km_alt_fuel: 140,
             goods_vehicle_over_3_5_tons: true,
             occupancy_profile_code: null,
@@ -236,7 +239,7 @@ describe('POST /api/transport-v2/:certificationId/submit', () => {
     expect(row.completed).toBe(true);
   });
 
-  it('supports deterministic resubmission from the current stored draft', async () => {
+  it('rejects submit and draft edits after the questionnaire is already submitted', async () => {
     const user = await createUserFixture({ suffix: 'submit-repeat-user' });
     const certification = await createCertificationFixture({ suffix: 'submit-repeat-cert' });
     await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
@@ -250,10 +253,12 @@ describe('POST /api/transport-v2/:certificationId/submit', () => {
       },
     });
 
-    await request(app)
+    const firstSubmit = await request(app)
       .post(`/api/transport-v2/${certification.id}/submit`)
       .set('Cookie', authCookieForUser(user))
       .expect(200);
+
+    const rowAfterFirst = await getSurveyResponse({ userId: user.id, certificationId: certification.id });
 
     transportV2.draft.vehicles[1].fields.annual_km = 10000;
     const updateResponse = await request(app)
@@ -263,14 +268,18 @@ describe('POST /api/transport-v2/:certificationId/submit', () => {
         draft: transportV2.draft,
       });
 
-    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.status).toBe(409);
+    expect(updateResponse.body.msg).toBe(TRANSPORT_V2_ALREADY_SUBMITTED_MSG);
 
     const secondSubmit = await request(app)
       .post(`/api/transport-v2/${certification.id}/submit`)
-      .set('Cookie', authCookieForUser(user))
-      .expect(200);
+      .set('Cookie', authCookieForUser(user));
 
-    expect(secondSubmit.body.transport_v2.results.co2.total_tons_per_year).toBe(2.2);
-    expect(secondSubmit.body.transport_v2.results.score.total_score).toBe(6.55);
+    expect(secondSubmit.status).toBe(409);
+    expect(secondSubmit.body.msg).toBe(TRANSPORT_V2_ALREADY_SUBMITTED_MSG);
+
+    const rowAfter = await getSurveyResponse({ userId: user.id, certificationId: certification.id });
+    expect(rowAfter.survey_data.transport_v2).toEqual(rowAfterFirst.survey_data.transport_v2);
+    expect(firstSubmit.body.transport_v2.results.co2.total_tons_per_year).toBe(3.4);
   });
 });

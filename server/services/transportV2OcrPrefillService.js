@@ -4,7 +4,7 @@ const OCR_MANAGED_FIELD_KEYS = [
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_co2_g_km',
+  'co2_emissions_g_km',
   'goods_vehicle_over_3_5_tons',
 ];
 
@@ -12,7 +12,7 @@ const TRANSPORT_V2_FIELD_KEYS = [
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_co2_g_km',
+  'co2_emissions_g_km',
   'wltp_co2_g_km_alt_fuel',
   'goods_vehicle_over_3_5_tons',
   'occupancy_profile_code',
@@ -26,9 +26,35 @@ const DIRECT_FIELD_KEYS = new Set([
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_co2_g_km',
+  'co2_emissions_g_km',
   'goods_vehicle_over_3_5_tons',
 ]);
+
+function pickMassKgFromReviewFields(reviewFields) {
+  if (!Array.isArray(reviewFields)) {
+    return null;
+  }
+
+  const massField = reviewFields.find((f) => f && f.key === 'max_vehicle_mass_kg');
+  if (!massField) {
+    return null;
+  }
+
+  return normalizePositiveInteger(massField.normalizedValue);
+}
+
+function hasExplicitGoodsVehicleBooleanInReview(reviewFields) {
+  if (!Array.isArray(reviewFields)) {
+    return false;
+  }
+
+  return reviewFields.some(
+    (f) =>
+      f &&
+      f.key === 'goods_vehicle_over_3_5_tons' &&
+      typeof f.normalizedValue === 'boolean',
+  );
+}
 
 function buildTransportV2VehiclePrefill({
   documentId,
@@ -38,6 +64,8 @@ function buildTransportV2VehiclePrefill({
 }) {
   const normalizedDocumentId = normalizePositiveInteger(documentId);
   const ocrTransportMode = transportModeFromVehicleUseReviewFields(reviewFields);
+  const massKgFromReview = pickMassKgFromReviewFields(reviewFields);
+  const skipMassDerivedGoodsBool = hasExplicitGoodsVehicleBooleanInReview(reviewFields);
 
   const row = {
     vehicle_id: normalizeVehicleId(vehicleId, normalizedDocumentId),
@@ -62,12 +90,12 @@ function buildTransportV2VehiclePrefill({
     const { key } = field;
 
     if (DIRECT_FIELD_KEYS.has(key)) {
-      applyDirectField(row, field);
+      applyDirectField(row, field, { massKgFromReview });
       return;
     }
 
     if (key === 'max_vehicle_mass_kg') {
-      applyMaxVehicleMassDerivedField(row, field);
+      applyMaxVehicleMassDerivedField(row, field, skipMassDerivedGoodsBool);
     }
   });
 
@@ -126,7 +154,7 @@ function mergeOcrVehiclePrefill(existingVehicle, prefillVehicle, overrideTranspo
   OCR_MANAGED_FIELD_KEYS.forEach((fieldKey) => {
     const prefillValue = prefillVehicle.fields[fieldKey];
     if (
-      fieldKey === 'wltp_co2_g_km' &&
+      fieldKey === 'co2_emissions_g_km' &&
       (prefillValue === null || prefillValue === undefined)
     ) {
       nextVehicle.fields[fieldKey] = existingVehicle.fields[fieldKey];
@@ -168,7 +196,7 @@ function createEmptyFields() {
   }, {});
 }
 
-function applyDirectField(row, field) {
+function applyDirectField(row, field, ctx = {}) {
   if (!Object.prototype.hasOwnProperty.call(row.fields, field.key)) {
     return;
   }
@@ -176,10 +204,26 @@ function applyDirectField(row, field) {
   row.fields[field.key] = normalizeFieldValue(field.normalizedValue);
 
   if (row.fields[field.key] !== null) {
+    let source = 'ocr';
+    if (field.key === 'goods_vehicle_over_3_5_tons') {
+      const massKg = ctx.massKgFromReview;
+      const suggested = massKg !== null && massKg !== undefined ? massKg >= 3500 : null;
+      if (field.sourceMethod === 'DERIVED_FROM_MASS') {
+        source = 'ocr_derived';
+      }
+      if (
+        suggested !== null &&
+        typeof row.fields[field.key] === 'boolean' &&
+        row.fields[field.key] !== suggested
+      ) {
+        source = 'user';
+      }
+    }
+
     row.field_sources[field.key] = buildFieldSource({
       documentId: row.ocr_document_id,
       confidence: field.confidence,
-      source: 'ocr',
+      source,
     });
   }
 
@@ -189,13 +233,17 @@ function applyDirectField(row, field) {
   }
 }
 
-function applyMaxVehicleMassDerivedField(row, field) {
+function applyMaxVehicleMassDerivedField(row, field, skipBoolDerivation) {
   const massKg = normalizePositiveInteger(field.normalizedValue);
   if (massKg === null) {
     const warnings = buildWarnings(field);
-    if (warnings.length > 0) {
+    if (warnings.length > 0 && !skipBoolDerivation) {
       row.field_warnings.goods_vehicle_over_3_5_tons = warnings;
     }
+    return;
+  }
+
+  if (skipBoolDerivation) {
     return;
   }
 

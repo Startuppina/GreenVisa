@@ -1,6 +1,7 @@
 const {
   applyNormalizations,
   validateNormalizedOutput,
+  injectDerivedGoodsVehicleReviewField,
 } = require('../../services/ocr/ocrOutputValidator');
 
 describe('ocrOutputValidator', () => {
@@ -67,22 +68,22 @@ describe('ocrOutputValidator', () => {
     expect(validateNormalizedOutput(fields)).toEqual([]);
   });
 
-  it('normalizes wltp_co2_g_km from strings with units or decimals to a non-negative integer', () => {
+  it('normalizes co2_emissions_g_km from strings with units or decimals to a non-negative integer', () => {
     const samples = applyNormalizations([
       {
-        key: 'wltp_co2_g_km',
+        key: 'co2_emissions_g_km',
         label: 'Emissioni CO2 WLTP (g/km)',
         value: '143 g/km',
         confidence: 0.99,
       },
       {
-        key: 'wltp_co2_g_km',
+        key: 'co2_emissions_g_km',
         label: 'Emissioni CO2 WLTP (g/km)',
         value: '  120,4  ',
         confidence: 0.99,
       },
       {
-        key: 'wltp_co2_g_km',
+        key: 'co2_emissions_g_km',
         label: 'Emissioni CO2 WLTP (g/km)',
         value: '0 g/km',
         confidence: 0.99,
@@ -135,5 +136,47 @@ describe('ocrOutputValidator', () => {
         type: 'low_confidence',
       }),
     ]);
+  });
+
+  it('injectDerivedGoodsVehicleReviewField appends goods_vehicle_over_3_5_tons from valid mass', () => {
+    const base = applyNormalizations([
+      {
+        key: 'max_vehicle_mass_kg',
+        label: 'Massa massima veicolo (kg)',
+        value: '3650',
+        confidence: 0.91,
+      },
+    ]);
+    const withGoods = injectDerivedGoodsVehicleReviewField(base);
+    const goods = withGoods.find((f) => f.key === 'goods_vehicle_over_3_5_tons');
+    expect(goods).toMatchObject({
+      key: 'goods_vehicle_over_3_5_tons',
+      normalizedValue: true,
+      sourceMethod: 'DERIVED_FROM_MASS',
+      confidence: 0.91,
+    });
+    expect(validateNormalizedOutput(withGoods).filter((i) => i.fieldKey === 'goods_vehicle_over_3_5_tons')).toEqual(
+      [],
+    );
+  });
+
+  it('injectDerivedGoodsVehicleReviewField does nothing when goods is already present', () => {
+    const base = applyNormalizations([
+      {
+        key: 'max_vehicle_mass_kg',
+        label: 'Massa massima veicolo (kg)',
+        value: '3650',
+        confidence: 0.91,
+      },
+      {
+        key: 'goods_vehicle_over_3_5_tons',
+        label: 'Veicolo merci oltre 3,5 t',
+        value: 'No',
+        confidence: 0.9,
+      },
+    ]);
+    const withGoods = injectDerivedGoodsVehicleReviewField(base);
+    expect(withGoods).toBe(base);
+    expect(withGoods.filter((f) => f.key === 'goods_vehicle_over_3_5_tons')).toHaveLength(1);
   });
 });

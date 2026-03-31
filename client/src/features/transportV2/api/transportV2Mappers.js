@@ -10,11 +10,41 @@ function normalizeNullableInteger(value) {
     return value;
   }
 
-  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
-    return Number.parseInt(value.trim(), 10);
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (/^\d+$/.test(trimmed)) {
+      return Number.parseInt(trimmed, 10);
+    }
   }
 
   return null;
+}
+
+const VEHICLE_INTEGER_FIELD_KEYS = [
+  'registration_year',
+  'co2_emissions_g_km',
+  'wltp_co2_g_km_alt_fuel',
+  'annual_km',
+  'occupancy_profile_code',
+  'load_profile_code',
+];
+
+function coerceTransportVehicleIntegerFields(fields) {
+  if (!isPlainObject(fields)) {
+    return fields;
+  }
+
+  const next = { ...fields };
+  VEHICLE_INTEGER_FIELD_KEYS.forEach((key) => {
+    if (!Object.prototype.hasOwnProperty.call(next, key)) {
+      return;
+    }
+
+    const coerced = normalizeNullableInteger(next[key]);
+    next[key] = coerced;
+  });
+
+  return next;
 }
 
 function normalizeVehicleRow(vehicle, index) {
@@ -34,10 +64,10 @@ function normalizeVehicleRow(vehicle, index) {
       ? vehicle.transport_mode
       : null,
     ocr_document_id: normalizeNullableInteger(vehicle?.ocr_document_id),
-    fields: {
+    fields: coerceTransportVehicleIntegerFields({
       ...defaults.fields,
       ...(isPlainObject(vehicle?.fields) ? vehicle.fields : {}),
-    },
+    }),
     field_sources: isPlainObject(vehicle?.field_sources) ? vehicle.field_sources : {},
     field_warnings: isPlainObject(vehicle?.field_warnings) ? vehicle.field_warnings : {},
     row_notes: typeof vehicle?.row_notes === 'string' ? vehicle.row_notes : null,

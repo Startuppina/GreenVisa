@@ -90,7 +90,7 @@ function normalizeVehicleForCalculation(vehicle, fallbackTransportMode) {
     transport_mode: vehicle.transport_mode || fallbackTransportMode,
     fuel_type: normalizeFuelType(fields.fuel_type),
     annual_km: parseLegacyInteger(fields.annual_km),
-    wltp_co2_g_km: parseLegacyInteger(fields.wltp_co2_g_km),
+    co2_emissions_g_km: parseLegacyInteger(fields.co2_emissions_g_km),
     wltp_co2_g_km_alt_fuel: parseLegacyInteger(fields.wltp_co2_g_km_alt_fuel),
     occupancy_profile_code: parseLegacyInteger(fields.occupancy_profile_code),
     load_profile_code: parseLegacyInteger(fields.load_profile_code),
@@ -99,10 +99,10 @@ function normalizeVehicleForCalculation(vehicle, fallbackTransportMode) {
 
 function getEffectiveEmissionsGKm(vehicle) {
   if (usesAlternateFuelAverage(vehicle.fuel_type)) {
-    return (vehicle.wltp_co2_g_km + vehicle.wltp_co2_g_km_alt_fuel) / 2;
+    return (vehicle.co2_emissions_g_km + vehicle.wltp_co2_g_km_alt_fuel) / 2;
   }
 
-  return vehicle.wltp_co2_g_km;
+  return vehicle.co2_emissions_g_km;
 }
 
 function getEmissionClass(transportMode, effectiveEmissionsGKm) {

@@ -1,11 +1,15 @@
 const repository = require('../repositories/surveyResponsesRepository');
 const {
   createDefaultTransportV2,
-  normalizeTransportV2,
+  isTransportV2Submitted,
+  sanitizeDraftTransportV2,
   applyDraftWritePayload,
 } = require('./transportV2Normalizer');
 const { validateTransportV2Block1DraftPayload } = require('./validateTransportv2');
 const { mergeOcrVehiclePrefill, normalizeTransportMode } = require('./transportV2OcrPrefillService');
+
+const TRANSPORT_V2_ALREADY_SUBMITTED_MSG =
+  'Transport V2 questionnaire has already been submitted and is no longer editable.';
 
 class TransportV2HttpError extends Error {
   constructor(statusCode, message, extras = {}) {
@@ -14,6 +18,16 @@ class TransportV2HttpError extends Error {
     this.statusCode = statusCode;
     this.extras = extras;
   }
+}
+
+function assertTransportV2Editable(transportV2) {
+  if (isTransportV2Submitted(transportV2)) {
+    throw new TransportV2HttpError(409, TRANSPORT_V2_ALREADY_SUBMITTED_MSG);
+  }
+}
+
+function cloneTransportV2ReadModel(transportV2) {
+  return JSON.parse(JSON.stringify(transportV2));
 }
 
 async function loadTransportV2Draft({ userId, certificationId }) {
@@ -27,9 +41,13 @@ async function loadTransportV2Draft({ userId, certificationId }) {
       const currentTransportV2 = getTransportV2FromSurveyData(surveyResponse.survey_data);
       const needsInitialization = currentTransportV2 === null;
 
+      if (currentTransportV2 !== null && isTransportV2Submitted(currentTransportV2)) {
+        return cloneTransportV2ReadModel(currentTransportV2);
+      }
+
       const canonicalTransportV2 = needsInitialization
         ? createDefaultTransportV2({ certificationId: normalizedCertificationId, now })
-        : normalizeTransportV2(currentTransportV2, {
+        : sanitizeDraftTransportV2(currentTransportV2, {
             certificationId: normalizedCertificationId,
             now,
           });
@@ -66,8 +84,10 @@ async function saveTransportV2Draft({ userId, certificationId, payload }) {
     async (client, surveyResponse) => {
       const now = new Date().toISOString();
       const currentTransportV2 = getTransportV2FromSurveyData(surveyResponse.survey_data);
+      assertTransportV2Editable(currentTransportV2);
+
       const baseTransportV2 = currentTransportV2
-        ? normalizeTransportV2(currentTransportV2, {
+        ? sanitizeDraftTransportV2(currentTransportV2, {
             certificationId: normalizedCertificationId,
             now,
           })
@@ -130,6 +150,8 @@ async function upsertTransportV2OcrVehicle({
     async (client, surveyResponse) => {
       const now = new Date().toISOString();
       const currentTransportV2 = getTransportV2FromSurveyData(surveyResponse.survey_data);
+      assertTransportV2Editable(currentTransportV2);
+
       const canonicalTransportV2 = applyOcrVehicleToTransportV2(currentTransportV2, {
         certificationId: normalizedCertificationId,
         now,
@@ -157,7 +179,7 @@ async function upsertTransportV2OcrVehicle({
 
 function applyOcrVehicleToTransportV2(existingTransportV2, { certificationId, now, transportMode, vehiclePrefill }) {
   const baseTransportV2 = existingTransportV2
-    ? normalizeTransportV2(existingTransportV2, {
+    ? sanitizeDraftTransportV2(existingTransportV2, {
         certificationId,
         now,
       })
@@ -184,7 +206,7 @@ function applyOcrVehicleToTransportV2(existingTransportV2, { certificationId, no
     vehicles.push(mergedVehicle);
   }
 
-  const canonicalTransportV2 = normalizeTransportV2(
+  const canonicalTransportV2 = sanitizeDraftTransportV2(
     {
       ...baseTransportV2,
       draft: {
@@ -239,6 +261,8 @@ function getTransportV2FromSurveyData(surveyData) {
 
 module.exports = {
   TransportV2HttpError,
+  TRANSPORT_V2_ALREADY_SUBMITTED_MSG,
+  assertTransportV2Editable,
   loadTransportV2Draft,
   saveTransportV2Draft,
   resolveTransportSurveyResponse,

@@ -28,7 +28,7 @@ function buildConfirmedOutput(documentId, overrides = {}) {
       registration_year: 2020,
       euro_class: 'EURO_6',
       fuel_type: 'diesel',
-      wltp_co2_g_km: null,
+      co2_emissions_g_km: null,
       wltp_co2_g_km_alt_fuel: null,
       goods_vehicle_over_3_5_tons: true,
       occupancy_profile_code: null,
@@ -215,7 +215,7 @@ describe('POST /api/documents/:documentId/apply', () => {
         registration_year: 2020,
         euro_class: 'EURO_6',
         fuel_type: 'diesel',
-        wltp_co2_g_km: null,
+        co2_emissions_g_km: null,
         wltp_co2_g_km_alt_fuel: null,
         goods_vehicle_over_3_5_tons: true,
         occupancy_profile_code: null,
@@ -270,8 +270,56 @@ describe('POST /api/documents/:documentId/apply', () => {
     expect(Number(row.total_score)).toBe(42);
     expect(Number(row.co2emissions)).toBe(10.5);
     expect(row.completed).toBe(false);
-    expect(row.survey_data.transport_v2.draft.vehicles[0].fields.goods_vehicle_over_2_5_tons).toBeUndefined();
-    expect(row.survey_data.transport_v2.draft.vehicles[0].fields.goodsVehicleOver2_5Tons).toBeUndefined();
+    expect(row.survey_data.transport_v2.draft.vehicles[0].fields.goods_vehicle_over_3_5_tons).toBe(true);
+    expect(row.survey_data.transport_v2.draft.vehicles[0].fields.goodsVehicleOver3_5Tons).toBeUndefined();
+  });
+
+  it('applies user-confirmed goods_vehicle_over_3_5_tons without recomputing from stored mass', async () => {
+    const user = await createUserFixture({ suffix: 'docs-apply-goods-user' });
+    const certification = await createCertificationFixture({ suffix: 'docs-apply-goods-cert' });
+    await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
+    const surveyResponse = await createSurveyResponseFixture({
+      userId: user.id,
+      certificationId: certification.id,
+      surveyData: null,
+      totalScore: 42,
+      co2emissions: 10.5,
+      completed: false,
+    });
+    const batch = await createDocumentBatchFixture({ userId: user.id });
+    const doc = await createDocumentFixture({
+      batchId: batch.id,
+      userId: user.id,
+      surveyResponseId: surveyResponse.id,
+      ocrStatus: 'confirmed',
+    });
+    const confirmed = buildConfirmedOutput(doc.id);
+    confirmed.transport_v2_vehicle_prefill.fields.goods_vehicle_over_3_5_tons = false;
+    confirmed.transport_v2_vehicle_prefill.field_sources.goods_vehicle_over_3_5_tons = {
+      source: 'user',
+      document_id: doc.id,
+      confidence: 0.92,
+    };
+    await createDocumentResultFixture({
+      documentId: doc.id,
+      normalizedOutput: {
+        transport_v2_vehicle_prefill: confirmed.transport_v2_vehicle_prefill,
+      },
+      confirmedOutput: confirmed,
+    });
+
+    const response = await request(app)
+      .post(`/api/documents/${doc.id}/apply`)
+      .set('Cookie', authCookieForUser(user))
+      .send({
+        certificationId: certification.id,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.vehicle.fields.goods_vehicle_over_3_5_tons).toBe(false);
+    expect(response.body.vehicle.field_sources.goods_vehicle_over_3_5_tons).toEqual(
+      expect.objectContaining({ source: 'user' }),
+    );
   });
 
   it('stores transport_mode when provided and otherwise allows null transport_mode', async () => {
@@ -392,7 +440,7 @@ describe('POST /api/documents/:documentId/apply', () => {
                   registration_year: 2018,
                   euro_class: 'EURO_5',
                   fuel_type: 'diesel',
-                  wltp_co2_g_km: null,
+                  co2_emissions_g_km: null,
                   wltp_co2_g_km_alt_fuel: null,
                   goods_vehicle_over_3_5_tons: false,
                   occupancy_profile_code: null,

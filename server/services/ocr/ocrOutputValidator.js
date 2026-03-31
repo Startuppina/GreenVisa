@@ -99,13 +99,28 @@ function validateFieldValue(field) {
       break;
     }
 
-    case 'wltp_co2_g_km': {
+    case 'co2_emissions_g_km': {
       const co2 = field.normalizedValue;
       if (co2 === null || !Number.isInteger(co2) || co2 < 0) {
         issues.push({
           fieldKey: field.key,
           type: 'invalid_format',
           message: `Emissioni CO2 "${field.value}" non riconosciute come valore g/km.`,
+        });
+      }
+      break;
+    }
+
+    case 'goods_vehicle_over_3_5_tons': {
+      if (
+        field.value !== null &&
+        field.value !== '' &&
+        typeof field.normalizedValue !== 'boolean'
+      ) {
+        issues.push({
+          fieldKey: field.key,
+          type: 'invalid_format',
+          message: `Valore "${field.value}" non riconosciuto come sì/no per veicolo merci oltre 3,5 t.`,
         });
       }
       break;
@@ -160,7 +175,7 @@ function normalizeFieldValue(fieldKey, value) {
       return normalizeYesNo(value);
     case 'max_vehicle_mass_kg':
       return normalizeMassKg(value);
-    case 'wltp_co2_g_km':
+    case 'co2_emissions_g_km':
       return normalizeCo2GKm(value);
     default:
       return normalizeDisplayValue(value);
@@ -373,10 +388,60 @@ function normalizeDisplayValue(value) {
   return normalized || null;
 }
 
+const GOODS_VEHICLE_OVER_REVIEW_LABEL = 'Veicolo merci oltre 3,5 t';
+
+/**
+ * Appends a reviewable `goods_vehicle_over_3_5_tons` field derived from `max_vehicle_mass_kg`
+ * when that boolean is not already present. OCR review/confirm payloads then expose the flag
+ * like other first-class fields; prefill still treats mass as suggestion only when the user
+ * supplies an explicit boolean (see transportV2OcrPrefillService).
+ *
+ * @param {Array<object>|undefined|null} fields
+ * @returns {Array<object>}
+ */
+function injectDerivedGoodsVehicleReviewField(fields) {
+  if (!Array.isArray(fields)) {
+    return [];
+  }
+
+  if (fields.some((f) => f && f.key === 'goods_vehicle_over_3_5_tons')) {
+    return fields;
+  }
+
+  const massField = fields.find((f) => f && f.key === 'max_vehicle_mass_kg');
+  if (!massField) {
+    return fields;
+  }
+
+  const massKg = massField.normalizedValue;
+  if (typeof massKg !== 'number' || !Number.isInteger(massKg) || massKg <= 0) {
+    return fields;
+  }
+
+  const over = massKg >= 3500;
+  const synthetic = {
+    key: 'goods_vehicle_over_3_5_tons',
+    label: GOODS_VEHICLE_OVER_REVIEW_LABEL,
+    value: over ? 'Sì' : 'No',
+    normalizedValue: over,
+    confidence: typeof massField.confidence === 'number' ? massField.confidence : 0,
+    required: false,
+    sourceMethod: 'DERIVED_FROM_MASS',
+    sourcePage: massField.sourcePage ?? null,
+    boundingPoly: null,
+  };
+
+  synthetic.warnings = buildFieldWarnings(synthetic);
+
+  return [...fields, synthetic];
+}
+
 module.exports = {
   applyNormalizations,
   normalizeFieldValue,
   normalizeFuelType,
   normalizeYesNo,
   validateNormalizedOutput,
+  injectDerivedGoodsVehicleReviewField,
+  buildFieldWarnings,
 };
