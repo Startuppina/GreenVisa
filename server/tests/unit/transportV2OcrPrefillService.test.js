@@ -103,6 +103,70 @@ describe('transportV2OcrPrefillService', () => {
     });
   });
 
+  it('fills wltp_co2_g_km from OCR review fields and records field_sources', () => {
+    const reviewFields = applyNormalizations([
+      {
+        key: 'wltp_co2_g_km',
+        label: 'Emissioni CO2 WLTP (g/km)',
+        value: '99 g/km',
+        confidence: 0.95,
+      },
+    ]);
+
+    const vehiclePrefill = buildTransportV2VehiclePrefill({
+      documentId: 100,
+      reviewFields,
+    });
+
+    expect(vehiclePrefill.fields.wltp_co2_g_km).toBe(99);
+    expect(vehiclePrefill.field_sources.wltp_co2_g_km).toEqual({
+      source: 'ocr',
+      document_id: 100,
+      confidence: 0.95,
+    });
+    expect(validateNormalizedOutput(reviewFields)).toEqual([]);
+  });
+
+  it('mergeOcrVehiclePrefill applies OCR wltp_co2_g_km when prefill has a value', () => {
+    const existingVehicle = {
+      vehicle_id: 'ocr-doc-1',
+      transport_mode: 'passenger',
+      ocr_document_id: 1,
+      fields: {
+        registration_year: 2020,
+        euro_class: 'EURO_6',
+        fuel_type: 'diesel',
+        wltp_co2_g_km: null,
+        wltp_co2_g_km_alt_fuel: null,
+        goods_vehicle_over_3_5_tons: false,
+        occupancy_profile_code: null,
+        load_profile_code: null,
+        last_revision_date: null,
+        blue_sticker: null,
+        annual_km: null,
+      },
+      field_sources: {},
+      field_warnings: {},
+      row_notes: null,
+    };
+
+    const prefill = buildTransportV2VehiclePrefill({
+      documentId: 1,
+      reviewFields: applyNormalizations([
+        {
+          key: 'wltp_co2_g_km',
+          label: 'Emissioni CO2 WLTP (g/km)',
+          value: '200 g/km',
+          confidence: 0.9,
+        },
+      ]),
+    });
+
+    const merged = mergeOcrVehiclePrefill(existingVehicle, prefill);
+    expect(merged.fields.wltp_co2_g_km).toBe(200);
+    expect(merged.field_sources.wltp_co2_g_km).toMatchObject({ source: 'ocr', document_id: 1 });
+  });
+
   it('keeps user-only fields when reapplying the same OCR-linked row', () => {
     const existingVehicle = {
       vehicle_id: 'ocr-doc-456',
@@ -175,5 +239,24 @@ describe('transportV2OcrPrefillService', () => {
     expect(nextVehicle.fields.annual_km).toBe(18000);
     expect(nextVehicle.fields.wltp_co2_g_km).toBe(220);
     expect(nextVehicle.field_sources.annual_km).toEqual({ source: 'user' });
+  });
+
+  it('prefers explicit transportMode over OCR-derived value from vehicle_use_text', () => {
+    const reviewFields = applyNormalizations([
+      {
+        key: 'vehicle_use_text',
+        label: 'Destinazione / uso veicolo (testo)',
+        value: 'AUTOVETTURA PER TRASPORTO DI PERSONE USO PROPRIO',
+        confidence: 0.9,
+      },
+    ]);
+
+    const vehiclePrefill = buildTransportV2VehiclePrefill({
+      documentId: 1,
+      reviewFields,
+      transportMode: 'goods',
+    });
+
+    expect(vehiclePrefill.transport_mode).toBe('goods');
   });
 });

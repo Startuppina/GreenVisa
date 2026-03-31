@@ -98,6 +98,18 @@ function validateFieldValue(field) {
       }
       break;
     }
+
+    case 'wltp_co2_g_km': {
+      const co2 = field.normalizedValue;
+      if (co2 === null || !Number.isInteger(co2) || co2 < 0) {
+        issues.push({
+          fieldKey: field.key,
+          type: 'invalid_format',
+          message: `Emissioni CO2 "${field.value}" non riconosciute come valore g/km.`,
+        });
+      }
+      break;
+    }
   }
 
   return issues;
@@ -148,6 +160,8 @@ function normalizeFieldValue(fieldKey, value) {
       return normalizeYesNo(value);
     case 'max_vehicle_mass_kg':
       return normalizeMassKg(value);
+    case 'wltp_co2_g_km':
+      return normalizeCo2GKm(value);
     default:
       return normalizeDisplayValue(value);
   }
@@ -284,6 +298,45 @@ function normalizeMassKg(value) {
 
   const parsed = Number.parseInt(digits, 10);
   return parsed > 0 ? parsed : null;
+}
+
+function normalizeCo2GKm(value) {
+  if (value == null) {
+    return null;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const rounded = Math.round(value);
+    return rounded >= 0 ? rounded : null;
+  }
+
+  const raw = String(value).trim();
+  if (!raw) {
+    return null;
+  }
+
+  const withoutUnits = raw
+    .replace(/\s*g\s*\/\s*km\s*/gi, ' ')
+    .replace(/\s*g\s*\(\s*km\s*\)\s*/gi, ' ')
+    .replace(/\s*g\s*km\s*/gi, ' ')
+    .trim();
+
+  const decimalMatch = withoutUnits.match(/(\d+)[.,](\d{1,2})(?!\d)/);
+  if (decimalMatch) {
+    const parsed = Number.parseFloat(`${decimalMatch[1]}.${decimalMatch[2]}`);
+    if (Number.isFinite(parsed)) {
+      const rounded = Math.round(parsed);
+      return rounded >= 0 ? rounded : null;
+    }
+  }
+
+  const intMatch = withoutUnits.match(/\d+/);
+  if (!intMatch) {
+    return null;
+  }
+
+  const parsedInt = Number.parseInt(intMatch[0], 10);
+  return parsedInt >= 0 ? parsedInt : null;
 }
 
 function normalizeYesNo(value) {

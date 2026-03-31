@@ -1,5 +1,5 @@
 const request = require('supertest');
-const googleDocAiService = require('../../services/googleDocumentAiService');
+const googleDocAiService = require('../../services/ocr/googleDocumentAiService');
 const { getApp } = require('../helpers/app');
 const {
   authCookieForUser,
@@ -94,7 +94,20 @@ describe('POST /api/documents/upload', () => {
         ocr_status: 'needs_review',
       }),
     );
-    expect(result.raw_provider_output).toBeTruthy();
+    const rawOut =
+      typeof result.raw_provider_output === 'string'
+        ? JSON.parse(result.raw_provider_output)
+        : result.raw_provider_output;
+    expect(rawOut).toEqual(
+      expect.objectContaining({
+        document: expect.objectContaining({
+          text: expect.any(String),
+          entities: expect.any(Array),
+        }),
+      }),
+    );
+    expect(Object.keys(rawOut)).toEqual(['document']);
+    expect(Object.keys(rawOut.document).sort()).toEqual(['entities', 'text']);
     expect(result.normalized_output).toEqual(
       expect.objectContaining({
         fields: expect.any(Array),
@@ -204,6 +217,19 @@ describe('POST /api/documents/upload', () => {
 
     expect(document.ocr_status).toBe('needs_review');
     expect(result).not.toBeNull();
-    expect(result.raw_provider_output).toBeTruthy();
+    const rawOut =
+      typeof result.raw_provider_output === 'string'
+        ? JSON.parse(result.raw_provider_output)
+        : result.raw_provider_output;
+    expect(rawOut).toEqual(
+      expect.objectContaining({
+        document: expect.objectContaining({
+          text: expect.any(String),
+          entities: expect.any(Array),
+        }),
+      }),
+    );
+    expect(Object.keys(rawOut)).toEqual(['document']);
+    expect(Object.keys(rawOut.document).sort()).toEqual(['entities', 'text']);
   });
 });

@@ -2,7 +2,7 @@ const googleDocAi = require('./googleDocumentAiService');
 const { normalizeProviderOutput } = require('./fieldMapper');
 const { validateNormalizedOutput, applyNormalizations } = require('./ocrOutputValidator');
 const repo = require('../documents/documentRepository');
-const { readFileBytes } = require('../documents/documentStorageService');
+const documentStorageService = require('../documents/documentStorageService');
 const { buildTransportV2VehiclePrefill } = require('../transportV2OcrPrefillService');
 const logger = require('../../logger');
 
@@ -12,7 +12,7 @@ async function processDocument(documentRecord) {
   try {
     await repo.updateDocumentStatus(docId, 'processing');
 
-    const fileBytes = readFileBytes(documentRecord.storage_path);
+    const fileBytes = documentStorageService.readFileBytes(documentRecord.storage_path);
 
     const providerResult = await googleDocAi.processDocument(
       fileBytes,
@@ -41,7 +41,7 @@ async function processDocument(documentRecord) {
 
     await repo.createResult({
       documentId: docId,
-      rawProviderOutput: providerResult.raw,
+      rawProviderOutput: providerResult.rawProviderOutput,
       normalizedOutput: {
         fields: normalizedFields,
         transport_v2_vehicle_prefill: transportV2VehiclePrefill,

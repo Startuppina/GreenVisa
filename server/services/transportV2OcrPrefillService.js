@@ -1,7 +1,10 @@
+const { deriveTransportModeFromVehicleUseText } = require('./ocr/fieldMapper');
+
 const OCR_MANAGED_FIELD_KEYS = [
   'registration_year',
   'euro_class',
   'fuel_type',
+  'wltp_co2_g_km',
   'goods_vehicle_over_3_5_tons',
 ];
 
@@ -23,6 +26,7 @@ const DIRECT_FIELD_KEYS = new Set([
   'registration_year',
   'euro_class',
   'fuel_type',
+  'wltp_co2_g_km',
   'goods_vehicle_over_3_5_tons',
 ]);
 
@@ -33,9 +37,12 @@ function buildTransportV2VehiclePrefill({
   vehicleId = null,
 }) {
   const normalizedDocumentId = normalizePositiveInteger(documentId);
+  const ocrTransportMode = transportModeFromVehicleUseReviewFields(reviewFields);
+
   const row = {
     vehicle_id: normalizeVehicleId(vehicleId, normalizedDocumentId),
-    transport_mode: normalizeTransportMode(transportMode),
+    transport_mode:
+      normalizeTransportMode(transportMode) ?? ocrTransportMode ?? null,
     ocr_document_id: normalizedDocumentId,
     fields: createEmptyFields(),
     field_sources: {},
@@ -65,6 +72,24 @@ function buildTransportV2VehiclePrefill({
   });
 
   return row;
+}
+
+function transportModeFromVehicleUseReviewFields(reviewFields) {
+  if (!Array.isArray(reviewFields)) {
+    return null;
+  }
+
+  const field = reviewFields.find((f) => f && f.key === 'vehicle_use_text');
+  if (!field) {
+    return null;
+  }
+
+  const raw =
+    field.normalizedValue !== undefined && field.normalizedValue !== null
+      ? field.normalizedValue
+      : field.value;
+
+  return deriveTransportModeFromVehicleUseText(raw);
 }
 
 function mergeOcrVehiclePrefill(existingVehicle, prefillVehicle, overrideTransportMode = null) {
@@ -99,7 +124,26 @@ function mergeOcrVehiclePrefill(existingVehicle, prefillVehicle, overrideTranspo
   };
 
   OCR_MANAGED_FIELD_KEYS.forEach((fieldKey) => {
-    nextVehicle.fields[fieldKey] = prefillVehicle.fields[fieldKey];
+    const prefillValue = prefillVehicle.fields[fieldKey];
+    if (
+      fieldKey === 'wltp_co2_g_km' &&
+      (prefillValue === null || prefillValue === undefined)
+    ) {
+      nextVehicle.fields[fieldKey] = existingVehicle.fields[fieldKey];
+      if (Object.prototype.hasOwnProperty.call(existingVehicle.field_sources, fieldKey)) {
+        nextVehicle.field_sources[fieldKey] = existingVehicle.field_sources[fieldKey];
+      } else {
+        delete nextVehicle.field_sources[fieldKey];
+      }
+      if (Object.prototype.hasOwnProperty.call(existingVehicle.field_warnings, fieldKey)) {
+        nextVehicle.field_warnings[fieldKey] = existingVehicle.field_warnings[fieldKey];
+      } else {
+        delete nextVehicle.field_warnings[fieldKey];
+      }
+      return;
+    }
+
+    nextVehicle.fields[fieldKey] = prefillValue;
 
     if (Object.prototype.hasOwnProperty.call(prefillVehicle.field_sources, fieldKey)) {
       nextVehicle.field_sources[fieldKey] = prefillVehicle.field_sources[fieldKey];

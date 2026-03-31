@@ -1,6 +1,8 @@
 // Maps provider-specific entity types to the stable Transport V2 OCR review schema.
 // The review fields remain document-centric, while the prefill row is built later.
 // Provider-specific names (e.g. Google Document AI `type` values) stay in this file.
+// Entity types returned by Document AI that are not listed in FIELD_DEFINITIONS are ignored
+// for normalized/review output (they may still appear in raw_provider_output.document.entities).
 
 const FIELD_DEFINITIONS = [
   {
@@ -24,13 +26,19 @@ const FIELD_DEFINITIONS = [
   {
     key: 'max_vehicle_mass_kg',
     label: 'Massa massima veicolo (kg)',
-    providerTypes: [
-      'max_vehicle_mass_kg',
-      'vehicle_mass_kg',
-      'gross_vehicle_mass_kg',
-      'gross_mass_kg',
-      'vehicle_mass',
-    ],
+    providerTypes: ['max_vehicle_mass_kg', 'gross_vehicle_mass_kg', 'vehicle_mass'],
+    required: false,
+  },
+  {
+    key: 'wltp_co2_g_km',
+    label: 'Emissioni CO2 WLTP (g/km)',
+    providerTypes: ['co2_emissions_g_km'],
+    required: false,
+  },
+  {
+    key: 'vehicle_use_text',
+    label: 'Destinazione / uso veicolo (testo)',
+    providerTypes: ['vehicle_use_text'],
     required: false,
   },
 ];
@@ -125,4 +133,28 @@ function findEntityByProviderTypes(entities, providerTypes) {
   return null;
 }
 
-module.exports = { normalizeProviderOutput, FIELD_DEFINITIONS };
+/**
+ * Maps Google / provider "uso veicolo" free text (J.1) to internal Transport V2 transport_mode.
+ * Conservative: only substring checks for Italian keywords; no value if neither matches.
+ */
+function deriveTransportModeFromVehicleUseText(raw) {
+  if (raw == null) {
+    return null;
+  }
+
+  const lower = String(raw).toLowerCase();
+  if (lower.includes('persone')) {
+    return 'passenger';
+  }
+  if (lower.includes('cose')) {
+    return 'goods';
+  }
+
+  return null;
+}
+
+module.exports = {
+  normalizeProviderOutput,
+  FIELD_DEFINITIONS,
+  deriveTransportModeFromVehicleUseText,
+};

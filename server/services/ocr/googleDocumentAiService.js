@@ -56,13 +56,27 @@ async function processDocument(fileBytes, mimeType) {
   const [result] = await client.processDocument(request);
 
   return {
-    raw: result,
+    rawProviderOutput: buildRawProviderOutputForPersistence(result),
     entities: extractEntitiesFromResponse(result),
     metadata: {
       processorName: name,
       processorVersion: ocrConfig.google.processorVersion || null,
     },
   };
+}
+
+/**
+ * JSON persisted on document_results.raw_provider_output.
+ * Keeps only full OCR text and entity payloads; drops pages/layout/tokens etc.
+ */
+function buildRawProviderOutputForPersistence(apiResult) {
+  const doc = apiResult && apiResult.document;
+  if (!doc) {
+    return { document: { text: '', entities: [] } };
+  }
+  const text = typeof doc.text === 'string' ? doc.text : doc.text != null ? String(doc.text) : '';
+  const entities = Array.isArray(doc.entities) ? doc.entities : [];
+  return { document: { text, entities } };
 }
 
 // ── Parse Google response into uniform entity list ────────────
@@ -83,4 +97,4 @@ function extractEntitiesFromResponse(result) {
   }));
 }
 
-module.exports = { processDocument };
+module.exports = { processDocument, buildRawProviderOutputForPersistence };

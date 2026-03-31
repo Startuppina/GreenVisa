@@ -1,4 +1,7 @@
-const { normalizeProviderOutput } = require('../../services/ocr/fieldMapper');
+const {
+  normalizeProviderOutput,
+  deriveTransportModeFromVehicleUseText,
+} = require('../../services/ocr/fieldMapper');
 const { applyNormalizations, validateNormalizedOutput } = require('../../services/ocr/ocrOutputValidator');
 const { buildTransportV2VehiclePrefill } = require('../../services/transportV2OcrPrefillService');
 
@@ -42,6 +45,8 @@ describe('normalizeProviderOutput', () => {
       'euro_class',
       'fuel_type',
       'max_vehicle_mass_kg',
+      'wltp_co2_g_km',
+      'vehicle_use_text',
     ]);
     expect(result.fields.find((field) => field.key === 'max_vehicle_mass_kg')).toEqual(
       expect.objectContaining({
@@ -53,6 +58,49 @@ describe('normalizeProviderOutput', () => {
     );
     expect(result.fields.some((field) => field.key === 'registrationYear')).toBe(false);
     expect(result.fields.some((field) => field.key === 'goodsVehicleOver2_5Tons')).toBe(false);
+  });
+
+  it('ignores unmapped Document AI entities such as emission_regulation_text', () => {
+    const { fields } = normalizeProviderOutput({
+      entities: [
+        {
+          type: 'emission_regulation_text',
+          normalizedValue: '195/2013',
+          mentionText: '195/2013',
+          confidence: 0.77,
+          pageNumber: 1,
+        },
+        {
+          type: 'fuel_type',
+          normalizedValue: 'Diesel',
+          mentionText: 'Diesel',
+          confidence: 0.96,
+          pageNumber: 1,
+        },
+        {
+          type: 'euro_class',
+          normalizedValue: 'EURO6B',
+          mentionText: 'EURO6B',
+          confidence: 0.98,
+          pageNumber: 1,
+        },
+      ],
+    });
+
+    expect(fields.some((f) => f.key === 'emission_regulation_text')).toBe(false);
+    expect(fields.map((f) => f.key)).toEqual([
+      'registration_year',
+      'euro_class',
+      'fuel_type',
+      'max_vehicle_mass_kg',
+      'wltp_co2_g_km',
+      'vehicle_use_text',
+    ]);
+
+    const normalized = applyNormalizations(fields);
+    const prefill = buildTransportV2VehiclePrefill({ documentId: 42, reviewFields: normalized });
+    expect(prefill.fields.fuel_type).toBe('diesel');
+    expect(prefill.fields.euro_class).toBe('EURO_6b');
   });
 
   it('supports alternate provider aliases for vehicle mass extraction', () => {
@@ -174,5 +222,153 @@ describe('normalizeProviderOutput', () => {
       document_id: 99,
       confidence: 0.97,
     });
+  });
+
+  it('maps Google vehicle_use_text entity into OCR review and prefill transport_mode (Persone -> passenger)', () => {
+    const { fields } = normalizeProviderOutput({
+      entities: [
+        {
+          type: 'vehicle_use_text',
+          normalizedValue: 'AUTOVETTURA PER TRASPORTO DI PERSONE USO PROPRIO',
+          mentionText: 'AUTOVETTURA PER TRASPORTO DI PERSONE USO PROPRIO',
+          confidence: 0.95,
+          pageNumber: 1,
+        },
+      ],
+    });
+
+    const normalized = applyNormalizations(fields);
+    const prefill = buildTransportV2VehiclePrefill({ documentId: 7, reviewFields: normalized });
+
+    expect(fields.find((f) => f.key === 'vehicle_use_text')).toEqual(
+      expect.objectContaining({
+        key: 'vehicle_use_text',
+        value: 'AUTOVETTURA PER TRASPORTO DI PERSONE USO PROPRIO',
+        sourceMethod: 'EXTRACT',
+      }),
+    );
+    expect(prefill.transport_mode).toBe('passenger');
+    expect(prefill.fields).not.toHaveProperty('vehicle_use_text');
+  });
+
+  it('maps Google vehicle_use_text to transport_mode goods when text contains Cose', () => {
+    const { fields } = normalizeProviderOutput({
+      entities: [
+        {
+          type: 'vehicle_use_text',
+          normalizedValue: '',
+          mentionText: 'AUTOCARRO PER TRASPORTO DI COSE - USO PROPRIO',
+          confidence: 0.93,
+          pageNumber: 1,
+        },
+      ],
+    });
+
+    const normalized = applyNormalizations(fields);
+    const prefill = buildTransportV2VehiclePrefill({ documentId: 8, reviewFields: normalized });
+
+    expect(prefill.transport_mode).toBe('goods');
+  });
+
+  it('maps Google co2_emissions_g_km through normalization into prefill fields.wltp_co2_g_km', () => {
+    const { fields } = normalizeProviderOutput({
+      entities: [
+        {
+          type: 'co2_emissions_g_km',
+          normalizedValue: '143 g/km',
+          mentionText: '143 g/km',
+          confidence: 0.97,
+          pageNumber: 1,
+        },
+      ],
+    });
+
+    const normalized = applyNormalizations(fields);
+    const prefill = buildTransportV2VehiclePrefill({ documentId: 55, reviewFields: normalized });
+
+    expect(prefill.fields.wltp_co2_g_km).toBe(143);
+    expect(prefill.field_sources.wltp_co2_g_km).toMatchObject({
+      source: 'ocr',
+      document_id: 55,
+      confidence: 0.97,
+    });
+    expect(validateNormalizedOutput(normalized).filter((i) => i.fieldKey === 'wltp_co2_g_km')).toEqual([]);
+  });
+
+  it('maps numeric co2_emissions_g_km provider value into prefill', () => {
+    const { fields } = normalizeProviderOutput({
+      entities: [
+        {
+          type: 'co2_emissions_g_km',
+          normalizedValue: 128,
+          mentionText: '128',
+          confidence: 0.99,
+          pageNumber: 2,
+        },
+      ],
+    });
+
+    const normalized = applyNormalizations(fields);
+    const prefill = buildTransportV2VehiclePrefill({ documentId: 3, reviewFields: normalized });
+
+    expect(prefill.fields.wltp_co2_g_km).toBe(128);
+  });
+
+  it('deriveTransportModeFromVehicleUseText is case-insensitive and returns null when keywords are absent', () => {
+    expect(deriveTransportModeFromVehicleUseText('trasporto di persone')).toBe('passenger');
+    expect(deriveTransportModeFromVehicleUseText('TRASPORTO DI COSE')).toBe('goods');
+    expect(deriveTransportModeFromVehicleUseText('USO PROPRIO')).toBe(null);
+    expect(deriveTransportModeFromVehicleUseText(null)).toBe(null);
+  });
+
+  it('does not change euro_class, fuel_type, or mass-derived mappings when vehicle_use_text is present', () => {
+    const { fields } = normalizeProviderOutput({
+      entities: [
+        {
+          type: 'registration_year',
+          normalizedValue: '2019',
+          mentionText: '2019',
+          confidence: 0.99,
+          pageNumber: 1,
+        },
+        {
+          type: 'euro_class',
+          normalizedValue: 'Euro 5',
+          mentionText: 'Euro 5',
+          confidence: 0.9,
+          pageNumber: 1,
+        },
+        {
+          type: 'fuel_type',
+          normalizedValue: 'Diesel',
+          mentionText: 'Diesel',
+          confidence: 0.96,
+          pageNumber: 1,
+        },
+        {
+          type: 'max_vehicle_mass_kg',
+          normalizedValue: '2000',
+          mentionText: '2000',
+          confidence: 0.91,
+          pageNumber: 1,
+        },
+        {
+          type: 'vehicle_use_text',
+          normalizedValue: 'AUTOVETTURA PER TRASPORTO DI PERSONE USO PROPRIO',
+          mentionText: 'AUTOVETTURA PER TRASPORTO DI PERSONE USO PROPRIO',
+          confidence: 0.88,
+          pageNumber: 1,
+        },
+      ],
+    });
+
+    const normalized = applyNormalizations(fields);
+    const prefill = buildTransportV2VehiclePrefill({ documentId: 10, reviewFields: normalized });
+
+    expect(prefill.fields.registration_year).toBe(2019);
+    expect(prefill.fields.euro_class).toBe('EURO_5');
+    expect(prefill.fields.fuel_type).toBe('diesel');
+    expect(prefill.fields.goods_vehicle_over_3_5_tons).toBe(false);
+    expect(prefill.transport_mode).toBe('passenger');
   });
 });

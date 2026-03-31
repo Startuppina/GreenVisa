@@ -67,6 +67,34 @@ describe('ocrOutputValidator', () => {
     expect(validateNormalizedOutput(fields)).toEqual([]);
   });
 
+  it('normalizes wltp_co2_g_km from strings with units or decimals to a non-negative integer', () => {
+    const samples = applyNormalizations([
+      {
+        key: 'wltp_co2_g_km',
+        label: 'Emissioni CO2 WLTP (g/km)',
+        value: '143 g/km',
+        confidence: 0.99,
+      },
+      {
+        key: 'wltp_co2_g_km',
+        label: 'Emissioni CO2 WLTP (g/km)',
+        value: '  120,4  ',
+        confidence: 0.99,
+      },
+      {
+        key: 'wltp_co2_g_km',
+        label: 'Emissioni CO2 WLTP (g/km)',
+        value: '0 g/km',
+        confidence: 0.99,
+      },
+    ]);
+
+    expect(samples[0].normalizedValue).toBe(143);
+    expect(samples[1].normalizedValue).toBe(120);
+    expect(samples[2].normalizedValue).toBe(0);
+    expect(validateNormalizedOutput(samples)).toEqual([]);
+  });
+
   it('does not treat missing user-only fields as OCR failure', () => {
     const fields = applyNormalizations([
       {
