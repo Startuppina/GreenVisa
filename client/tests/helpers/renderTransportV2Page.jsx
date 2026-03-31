@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi } from 'vitest';
 import { RecoveryContextProvider } from '../../src/provider/provider.jsx';
 
@@ -21,19 +21,33 @@ vi.mock('../../src/components/scrollToTop.jsx', () => ({
   },
 }));
 
-import TransportV2Page from '../../src/transportV2/TransportV2Page.jsx';
+vi.mock('../../src/chatbot/ChatWidget.jsx', () => ({
+  default: function MockChatWidget() {
+    return <div data-testid="chat-widget" />;
+  },
+}));
+
+import TransportV2Page from '../../src/pages/TransportV2Page.jsx';
 
 export function renderTransportV2Page({
   route = '/transport-v2/123',
   path = '/transport-v2/:certificationId',
 } = {}) {
+  const router = createMemoryRouter(
+    [
+      {
+        path,
+        element: <TransportV2Page />,
+      },
+    ],
+    {
+      initialEntries: [route],
+    },
+  );
+
   return render(
     <RecoveryContextProvider>
-      <MemoryRouter initialEntries={[route]}>
-        <Routes>
-          <Route path={path} element={<TransportV2Page />} />
-        </Routes>
-      </MemoryRouter>
+      <RouterProvider router={router} />
     </RecoveryContextProvider>,
   );
 }

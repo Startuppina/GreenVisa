@@ -3,16 +3,34 @@ const { randomUUID } = require('crypto');
 const logger = require('../logger');
 const { run } = require('../lib/requestContext');
 
+function authSummary(req) {
+  const u = req.user;
+  if (!u) return {};
+  const isAdmin = u.role === 'administrator';
+  return {
+    user_id: u.user_id ?? u.id,
+    is_admin: isAdmin,
+  };
+}
+
 /**
- * pino-http logs one line per request on response finish; customProps add domain fields.
- * ALS is entered so pool.query instrumentation can attach request_id to db_query_* logs.
+ * pino-http: one line per request on response finish.
+ * quietResLogger: true + quietReqLogger: false makes the completion line use the root logger (no request_id binding).
+ * We assign req.log = logger so route logs stay flat (no serialized req on every line).
+ * customSuccessObject/customErrorObject keep completion payloads compact.
+ * ALS carries the root logger for DB instrumentation (no request_id in log output).
  */
 function createRequestLoggingMiddleware() {
   const httpLogger = pinoHttp({
     logger,
+    quietReqLogger: false,
+    quietResLogger: true,
     genReqId: (req) => {
       if (!req.requestId) req.requestId = randomUUID();
       return req.requestId;
+    },
+    customAttributeKeys: {
+      responseTime: 'duration_ms',
     },
     customLogLevel(req, res, err) {
       if (err) return 'error';
@@ -26,45 +44,36 @@ function createRequestLoggingMiddleware() {
     customErrorMessage() {
       return 'http_request_completed';
     },
-    customAttributeKeys: {
-      req: 'http_req',
-      res: 'http_res',
-      responseTime: 'duration_ms',
-    },
-    serializers: {
-      req(req) {
-        return {
-          method: req.method,
-          path: req.originalUrl || req.url,
-          user_agent: req.headers['user-agent'],
-          ip: req.ip || req.socket?.remoteAddress,
-        };
-      },
-      res(res) {
-        return { status_code: res.statusCode };
-      },
-    },
-    customProps(req, res) {
-      const u = req.user;
-      const isAdmin = u?.role === 'administrator' ? true : u ? false : undefined;
+    customSuccessObject(req, res, val) {
       return {
         event: 'http_request_completed',
-        request_id: req.id,
         method: req.method,
         path: req.originalUrl || req.url,
         status_code: res.statusCode,
-        user_id: u?.user_id ?? u?.id,
-        is_admin: isAdmin,
-        session_id: req.cookies?.sessionId,
-        ip: req.ip || req.socket?.remoteAddress,
-        user_agent: req.headers['user-agent'],
+        duration_ms: val.duration_ms,
+        ...authSummary(req),
       };
+    },
+    customErrorObject(req, res, error, val) {
+      const msg = error?.message != null ? error.message : String(error);
+      const out = {
+        event: 'http_request_completed',
+        method: req.method,
+        path: req.originalUrl || req.url,
+        status_code: res.statusCode,
+        duration_ms: val.duration_ms,
+        ...authSummary(req),
+        error: msg,
+      };
+      if (error?.stack) out.stack = error.stack;
+      return out;
     },
   });
 
   return function requestLogging(req, res, next) {
     httpLogger(req, res, () => {
-      run({ requestId: req.id, log: req.log }, () => next());
+      req.log = logger;
+      run({ log: logger }, () => next());
     });
   };
 }

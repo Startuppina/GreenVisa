@@ -35,9 +35,8 @@ function instrumentPgPool(pool) {
       if (durationMs >= SLOW_MS) {
         log.warn({
           event: 'db_query_slow',
-          query_summary: label,
+          query: label,
           duration_ms: durationMs,
-          request_id: ctx?.requestId,
         });
       }
     };
@@ -49,10 +48,10 @@ function instrumentPgPool(pool) {
           log.error(
             {
               event: 'db_query_failed',
-              query_summary: label,
+              query: label,
               duration_ms: durationMs,
-              request_id: ctx?.requestId,
-              err: { message: err.message, code: err.code },
+              error: err.message,
+              ...(err.code ? { db_code: err.code } : {}),
             },
             'db query failed',
           );
@@ -75,10 +74,10 @@ function instrumentPgPool(pool) {
           log.error(
             {
               event: 'db_query_failed',
-              query_summary: label,
+              query: label,
               duration_ms: durationMs,
-              request_id: ctx?.requestId,
-              err: { message: err.message, code: err.code },
+              error: err.message,
+              ...(err.code ? { db_code: err.code } : {}),
             },
             'db query failed',
           );
