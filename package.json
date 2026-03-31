@@ -11,6 +11,7 @@
   "author": "Chionne Daniel",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/documentai": "^9.6.0",
     "buffer-equal-constant-time": "^1.0.1",
     "jwa": "^2.0.1"
   }

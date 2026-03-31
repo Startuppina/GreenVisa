@@ -1,9 +1,9 @@
-const googleDocAi = require('./googleDocumentAiService');
+const googleDocAi = require('../googleDocumentAiService');
 const { normalizeProviderOutput } = require('./fieldMapper');
 const { validateNormalizedOutput, applyNormalizations } = require('./ocrOutputValidator');
-const repo = require('./documentRepository');
-const { readFileBytes } = require('./documentStorageService');
-const { buildTransportV2VehiclePrefill } = require('./transportV2OcrPrefillService');
+const repo = require('../documentRepository');
+const { readFileBytes } = require('../documentStorageService');
+const { buildTransportV2VehiclePrefill } = require('../transportV2OcrPrefillService');
 
 async function processDocument(documentRecord) {
   const docId = documentRecord.id;

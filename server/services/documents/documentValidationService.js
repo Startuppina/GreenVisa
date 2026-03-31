@@ -1,7 +1,7 @@
 const path = require('path');
-const ocrConfig = require('../config/ocr');
-const { validateMagicBytes } = require('../utils/fileSignature');
-const { computeSha256FromBuffer } = require('./hashService');
+const ocrConfig = require('../../config/ocr');
+const { validateMagicBytes } = require('../../utils/fileSignature');
+const { computeSha256FromBuffer } = require('../hashService');
 
 function validateFile(file, existingHashes = new Set()) {
   const issues = [];

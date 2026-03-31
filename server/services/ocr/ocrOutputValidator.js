@@ -1,4 +1,4 @@
-const ocrConfig = require('../config/ocr');
+const ocrConfig = require('../../config/ocr');
 
 const CANONICAL_EURO_CLASSES = new Set([
   'EURO_1',

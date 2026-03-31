@@ -1,4 +1,4 @@
-const pool = require('../db');
+const pool = require('../../db');
 
 async function createConversation({ userId, sessionId, questionnaireType, certificationId, buildingId }) {
   const result = await pool.query(

@@ -1,30 +1,5 @@
 'use strict';
 
-/**
- * transportV2Validator.js
- *
- * Accetta in input:
- * - l'oggetto puro transport_v2
- *   oppure
- * - un wrapper { transport_v2: { ... } }
- *
- * Restituisce:
- * {
- *   valid: boolean,
- *   errors: Array<{ field, code, message }>,
- *   normalizedData: Object
- * }
- *
- * Uso:
- * const {
- *   validateTransportV2Draft,
- *   validateTransportV2Submit,
- * } = require('./transportV2Validator');
- *
- * const draftResult = validateTransportV2Draft(req.body.transport_v2 || req.body);
- * const submitResult = validateTransportV2Submit(req.body.transport_v2 || req.body);
- */
-
 const CURRENT_YEAR = new Date().getFullYear();
 
 const ENTRY_MODES = new Set(['form', 'chatbot']);
