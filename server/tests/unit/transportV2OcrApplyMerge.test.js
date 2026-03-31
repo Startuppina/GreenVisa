@@ -24,7 +24,7 @@ function buildVehiclePrefill(documentId, overrides = {}) {
         warnings: [],
       },
       {
-        key: 'vehicle_mass_kg',
+        key: 'max_vehicle_mass_kg',
         normalizedValue: 3500,
         confidence: 0.92,
         warnings: [],
@@ -108,7 +108,6 @@ describe('applyOcrVehicleToTransportV2', () => {
                 registration_year: 2018,
                 euro_class: 'EURO_5',
                 fuel_type: 'diesel',
-                wltp_homologation: null,
                 wltp_co2_g_km: null,
                 wltp_co2_g_km_alt_fuel: null,
                 goods_vehicle_over_3_5_tons: false,

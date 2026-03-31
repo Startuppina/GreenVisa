@@ -28,7 +28,6 @@
               "registration_year": 2020,
               "euro_class": "EURO_6",
               "fuel_type": "diesel",
-              "wltp_homologation": true,
               "wltp_co2_g_km": 212,
               "wltp_co2_g_km_alt_fuel": null,
               "goods_vehicle_over_2_5_tons": true,

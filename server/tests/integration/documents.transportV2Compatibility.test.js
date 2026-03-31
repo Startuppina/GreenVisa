@@ -103,7 +103,6 @@ describe('Block 3 Transport V2 compatibility', () => {
         ...draftResponse.body.transport_v2.draft.vehicles.find(
           (vehicle) => vehicle.ocr_document_id === documentId,
         ).fields,
-        wltp_homologation: true,
         wltp_co2_g_km: 180,
         load_profile_code: 2,
         last_revision_date: '2025-03-01',

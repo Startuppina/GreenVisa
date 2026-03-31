@@ -1251,9 +1251,6 @@ function validateBlock2Vehicle(vehicle, index, errors) {
   });
   validateRequiredString(fields.euro_class, `${fieldPath}.fields.euro_class`, errors);
   validateRequiredString(fields.fuel_type, `${fieldPath}.fields.fuel_type`, errors);
-  validateBooleanField(fields.wltp_homologation, `${fieldPath}.fields.wltp_homologation`, errors, {
-    required: true,
-  });
   validateIntegerField(fields.wltp_co2_g_km, `${fieldPath}.fields.wltp_co2_g_km`, errors, {
     required: true,
     min: 0,

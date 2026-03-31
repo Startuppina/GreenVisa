@@ -1,7 +1,7 @@
 const {
   applyNormalizations,
   validateNormalizedOutput,
-} = require('../../services/ocrOutputValidator');
+} = require('../../services/ocr/ocrOutputValidator');
 
 describe('ocrOutputValidator', () => {
   it('normalizes euro and fuel values to Block 2 canonical enums', () => {
@@ -36,6 +36,35 @@ describe('ocrOutputValidator', () => {
     expect(fields[1].normalizedValue).toBe('diesel');
     expect(fields[2].normalizedValue).toBe('gpl');
     expect(fields[3].normalizedValue).toBe('metano');
+  });
+
+  it('maps Italian circulation fuel abbreviation BENZ to benzina', () => {
+    const fields = applyNormalizations([
+      {
+        key: 'fuel_type',
+        label: 'Tipo carburante',
+        value: 'BENZ',
+        confidence: 1,
+      },
+    ]);
+
+    expect(fields[0].normalizedValue).toBe('benzina');
+    expect(fields[0].warnings).toEqual([]);
+    expect(validateNormalizedOutput(fields)).toEqual([]);
+  });
+
+  it('normalizes max_vehicle_mass_kg to a positive integer', () => {
+    const fields = applyNormalizations([
+      {
+        key: 'max_vehicle_mass_kg',
+        label: 'Massa massima veicolo (kg)',
+        value: '1.500 kg',
+        confidence: 0.99,
+      },
+    ]);
+
+    expect(fields[0].normalizedValue).toBe(1500);
+    expect(validateNormalizedOutput(fields)).toEqual([]);
   });
 
   it('does not treat missing user-only fields as OCR failure', () => {

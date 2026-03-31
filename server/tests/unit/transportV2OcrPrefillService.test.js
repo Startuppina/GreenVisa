@@ -1,10 +1,29 @@
-const { applyNormalizations, validateNormalizedOutput } = require('../../services/ocrOutputValidator');
+const { applyNormalizations, validateNormalizedOutput } = require('../../services/ocr/ocrOutputValidator');
 const {
   buildTransportV2VehiclePrefill,
+  createEmptyFields,
   mergeOcrVehiclePrefill,
 } = require('../../services/transportV2OcrPrefillService');
 
 describe('transportV2OcrPrefillService', () => {
+  it('exposes empty vehicle fields aligned with Transport V2 draft emissions inputs', () => {
+    expect(Object.keys(createEmptyFields()).sort()).toEqual(
+      [
+        'annual_km',
+        'blue_sticker',
+        'euro_class',
+        'fuel_type',
+        'goods_vehicle_over_3_5_tons',
+        'last_revision_date',
+        'load_profile_code',
+        'occupancy_profile_code',
+        'registration_year',
+        'wltp_co2_g_km',
+        'wltp_co2_g_km_alt_fuel',
+      ].sort(),
+    );
+  });
+
   it('normalizes OCR values into Block 1/2 canonical enums and derives the 3.5 ton flag from mass', () => {
     const reviewFields = applyNormalizations([
       {
@@ -26,8 +45,8 @@ describe('transportV2OcrPrefillService', () => {
         confidence: 0.96,
       },
       {
-        key: 'vehicle_mass_kg',
-        label: 'Massa veicolo (kg)',
+        key: 'max_vehicle_mass_kg',
+        label: 'Massa massima veicolo (kg)',
         value: '3.650 kg',
         confidence: 0.92,
       },
@@ -48,7 +67,6 @@ describe('transportV2OcrPrefillService', () => {
         registration_year: 2020,
         euro_class: 'EURO_6d_temp',
         fuel_type: 'diesel',
-        wltp_homologation: null,
         wltp_co2_g_km: null,
         wltp_co2_g_km_alt_fuel: null,
         goods_vehicle_over_3_5_tons: true,
@@ -94,7 +112,6 @@ describe('transportV2OcrPrefillService', () => {
         registration_year: 2018,
         euro_class: 'EURO_5',
         fuel_type: 'diesel',
-        wltp_homologation: null,
         wltp_co2_g_km: 220,
         wltp_co2_g_km_alt_fuel: null,
         goods_vehicle_over_3_5_tons: false,
@@ -121,7 +138,6 @@ describe('transportV2OcrPrefillService', () => {
         registration_year: 2020,
         euro_class: 'EURO_6',
         fuel_type: 'diesel',
-        wltp_homologation: true,
         wltp_co2_g_km: null,
         wltp_co2_g_km_alt_fuel: null,
         goods_vehicle_over_3_5_tons: true,
@@ -141,10 +157,6 @@ describe('transportV2OcrPrefillService', () => {
           document_id: 456,
         },
         fuel_type: {
-          source: 'ocr',
-          document_id: 456,
-        },
-        wltp_homologation: {
           source: 'ocr',
           document_id: 456,
         },

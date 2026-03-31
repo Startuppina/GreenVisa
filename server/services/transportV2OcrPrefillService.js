@@ -2,7 +2,6 @@ const OCR_MANAGED_FIELD_KEYS = [
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_homologation',
   'goods_vehicle_over_3_5_tons',
 ];
 
@@ -10,7 +9,6 @@ const TRANSPORT_V2_FIELD_KEYS = [
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_homologation',
   'wltp_co2_g_km',
   'wltp_co2_g_km_alt_fuel',
   'goods_vehicle_over_3_5_tons',
@@ -25,7 +23,6 @@ const DIRECT_FIELD_KEYS = new Set([
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_homologation',
   'goods_vehicle_over_3_5_tons',
 ]);
 
@@ -62,8 +59,8 @@ function buildTransportV2VehiclePrefill({
       return;
     }
 
-    if (key === 'vehicle_mass_kg') {
-      applyVehicleMassDerivedField(row, field);
+    if (key === 'max_vehicle_mass_kg') {
+      applyMaxVehicleMassDerivedField(row, field);
     }
   });
 
@@ -148,7 +145,7 @@ function applyDirectField(row, field) {
   }
 }
 
-function applyVehicleMassDerivedField(row, field) {
+function applyMaxVehicleMassDerivedField(row, field) {
   const massKg = normalizePositiveInteger(field.normalizedValue);
   if (massKg === null) {
     const warnings = buildWarnings(field);

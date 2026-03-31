@@ -124,28 +124,6 @@ export default function VehicleFieldsForm({
         </InputField>
 
         <InputField
-          label="WLTP homologation"
-          hint="Required by the live backend validation."
-          error={getFirstFieldError(fieldErrors, fieldPath('wltp_homologation'))}
-        >
-          <BaseSelect
-            value={
-              vehicle.fields.wltp_homologation == null
-                ? ''
-                : String(vehicle.fields.wltp_homologation)
-            }
-            onChange={(event) => onFieldChange('wltp_homologation', toBoolean(event.target.value))}
-          >
-            <option value="">Select value</option>
-            {YES_NO_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </BaseSelect>
-        </InputField>
-
-        <InputField
           label="WLTP CO2 g/km"
           error={getFirstFieldError(fieldErrors, fieldPath('wltp_co2_g_km'))}
         >

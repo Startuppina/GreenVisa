@@ -29,7 +29,6 @@ function buildConfirmedOutput(documentId) {
         registration_year: 2020,
         euro_class: 'EURO_6',
         fuel_type: 'diesel',
-        wltp_homologation: null,
         wltp_co2_g_km: null,
         wltp_co2_g_km_alt_fuel: null,
         goods_vehicle_over_3_5_tons: true,

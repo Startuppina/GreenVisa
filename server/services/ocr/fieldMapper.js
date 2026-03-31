@@ -1,11 +1,12 @@
 // Maps provider-specific entity types to the stable Transport V2 OCR review schema.
 // The review fields remain document-centric, while the prefill row is built later.
+// Provider-specific names (e.g. Google Document AI `type` values) stay in this file.
 
 const FIELD_DEFINITIONS = [
   {
     key: 'registration_year',
     label: 'Anno immatricolazione',
-    providerTypes: ['registration_year'],
+    providerTypes: ['registration_year', 'first_registration_date'],
     required: false,
   },
   {
@@ -21,15 +22,10 @@ const FIELD_DEFINITIONS = [
     required: false,
   },
   {
-    key: 'wltp_homologation',
-    label: 'Omologazione WLTP',
-    providerTypes: ['wltp_homologation'],
-    required: false,
-  },
-  {
-    key: 'vehicle_mass_kg',
-    label: 'Massa veicolo (kg)',
+    key: 'max_vehicle_mass_kg',
+    label: 'Massa massima veicolo (kg)',
     providerTypes: [
+      'max_vehicle_mass_kg',
       'vehicle_mass_kg',
       'gross_vehicle_mass_kg',
       'gross_mass_kg',
@@ -38,6 +34,60 @@ const FIELD_DEFINITIONS = [
     required: false,
   },
 ];
+
+/**
+ * Derives a calendar year integer from provider registration text (ISO date, d.m.y, or bare year).
+ */
+function extractRegistrationYearFromProviderText(raw) {
+  if (raw == null) {
+    return null;
+  }
+
+  const str = String(raw).trim();
+  if (!str) {
+    return null;
+  }
+
+  const isoYear = str.match(/^(\d{4})-\d{2}-\d{2}/);
+  if (isoYear) {
+    return Number.parseInt(isoYear[1], 10);
+  }
+
+  const dmy = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (dmy) {
+    return Number.parseInt(dmy[3], 10);
+  }
+
+  const embedded = str.match(/\b(19\d{2}|20\d{2})\b/);
+  return embedded ? Number.parseInt(embedded[1], 10) : null;
+}
+
+function pickProviderRawText(entity) {
+  const normalized = entity.normalizedValue;
+  const mention = entity.mentionText;
+  if (normalized != null && String(normalized).trim() !== '') {
+    return normalized;
+  }
+  if (mention != null && String(mention).trim() !== '') {
+    return mention;
+  }
+  return null;
+}
+
+function mapReviewValue(def, entity) {
+  if (!entity) {
+    return null;
+  }
+
+  const raw = pickProviderRawText(entity);
+
+  if (def.key === 'registration_year') {
+    const year = extractRegistrationYearFromProviderText(raw);
+    return year !== null ? year : raw;
+  }
+
+  return raw ?? null;
+}
 
 function normalizeProviderOutput(providerResult) {
   const { entities } = providerResult;
@@ -48,7 +98,7 @@ function normalizeProviderOutput(providerResult) {
     return {
       key: def.key,
       label: def.label,
-      value: entity?.normalizedValue ?? entity?.mentionText ?? null,
+      value: mapReviewValue(def, entity),
       confidence: entity ? +(entity.confidence).toFixed(4) : 0,
       required: def.required,
       sourceMethod: entity ? 'EXTRACT' : 'NOT_FOUND',

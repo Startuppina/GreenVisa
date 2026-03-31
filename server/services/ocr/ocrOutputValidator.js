@@ -88,23 +88,12 @@ function validateFieldValue(field) {
       break;
     }
 
-    case 'wltp_homologation': {
-      if (typeof field.normalizedValue !== 'boolean') {
-        issues.push({
-          fieldKey: field.key,
-          type: 'unrecognized_value',
-          message: `Valore WLTP "${field.value}" non riconosciuto (atteso: si/no).`,
-        });
-      }
-      break;
-    }
-
-    case 'vehicle_mass_kg': {
+    case 'max_vehicle_mass_kg': {
       if (field.normalizedValue === null || field.normalizedValue <= 0) {
         issues.push({
           fieldKey: field.key,
           type: 'invalid_format',
-          message: `Massa veicolo "${field.value}" non riconosciuta come peso in kg.`,
+          message: `Massa massima veicolo "${field.value}" non riconosciuta come peso in kg.`,
         });
       }
       break;
@@ -155,10 +144,9 @@ function normalizeFieldValue(fieldKey, value) {
       return normalizeEuroClass(value);
     case 'fuel_type':
       return normalizeFuelType(value);
-    case 'wltp_homologation':
     case 'goods_vehicle_over_3_5_tons':
       return normalizeYesNo(value);
-    case 'vehicle_mass_kg':
+    case 'max_vehicle_mass_kg':
       return normalizeMassKg(value);
     default:
       return normalizeDisplayValue(value);
@@ -263,11 +251,17 @@ function normalizeFuelType(value) {
     return 'gpl';
   }
 
-  if (compact === 'diesel' || compact === 'gasolio') {
+  if (compact === 'diesel' || compact === 'gasolio' || compact === 'die' || compact === 'dsl') {
     return 'diesel';
   }
 
-  if (compact === 'benzina' || compact === 'gasoline' || compact === 'petrol') {
+  const firstToken = compact.split(/\s+/)[0] || '';
+  if (
+    compact === 'benzina' ||
+    compact === 'gasoline' ||
+    compact === 'petrol' ||
+    firstToken === 'benz'
+  ) {
     return 'benzina';
   }
 
