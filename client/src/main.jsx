@@ -29,9 +29,7 @@ import CertificationPage from './CertificationPage.jsx';
 import ConfirmAccountPage from './confirmAccountPage.jsx';
 import VerifyAccount from './accountVerifiedPage.jsx';
 import ConfirmAccountPageNoCompanyEmail from './confirmAccountPageNoCompanyEmail.jsx';
-import OcrDevPage from './ocr/OcrDevPage';
-import DevTransportV2Page from './transportV2/DevTransportV2Page.jsx';
-import TransportV2Page from './transportV2/TransportV2Page.jsx';
+import TransportV2Page from './pages/TransportV2Page.jsx';
 
 const router = createBrowserRouter([
   {
@@ -115,22 +113,8 @@ const router = createBrowserRouter([
     element: <QuestionnairePage />,
   },
   {
-    path: "/transport-v2",
-    element: <TransportV2Page />,
-  },
-  {
     path: "/transport-v2/:certificationId",
     element: <TransportV2Page />,
-  },
-  {
-    // DEV ONLY — OCR sandbox page (remove when integrated into real form)
-    path: "/dev/ocr",
-    element: <OcrDevPage />,
-  },
-  {
-    // DEV ONLY — Transport V2 local sandbox page
-    path: "/dev/transport-v2",
-    element: <DevTransportV2Page />,
   },
   {
     // Catch-all route for unmatched paths

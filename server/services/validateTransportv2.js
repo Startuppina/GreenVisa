@@ -2,7 +2,6 @@
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-const ENTRY_MODES = new Set(['form', 'chatbot']);
 const QUESTIONNAIRE_STATUS = new Set(['draft', 'submitted']);
 const ORIGINE_RIGA = new Set(['manuale', 'ocr', 'chatbot', 'mista']);
 const STATO_REVISIONE = new Set(['needs_review', 'reviewed', 'confirmed']);
@@ -154,32 +153,7 @@ function validateTransportV2Block1DraftPayload(payload) {
   const normalizedData = {};
 
   if (Object.prototype.hasOwnProperty.call(payload, 'entry_mode')) {
-    const entryMode = payload.entry_mode;
-
-    if (isNil(entryMode)) {
-      normalizedData.entry_mode = null;
-    } else if (typeof entryMode === 'string') {
-      const trimmedEntryMode = entryMode.trim();
-      if (!trimmedEntryMode) {
-        normalizedData.entry_mode = null;
-      } else if (!ENTRY_MODES.has(trimmedEntryMode)) {
-        addError(
-          errors,
-          'entry_mode',
-          'invalid_enum',
-          'entry_mode deve essere uno tra form, chatbot o null.',
-        );
-      } else {
-        normalizedData.entry_mode = trimmedEntryMode;
-      }
-    } else {
-      addError(
-        errors,
-        'entry_mode',
-        'invalid_type',
-        'entry_mode deve essere una stringa oppure null.',
-      );
-    }
+    addError(errors, 'entry_mode', 'forbidden', 'Il campo entry_mode non e piu supportato.');
   }
 
   if (!Object.prototype.hasOwnProperty.call(payload, 'draft')) {
@@ -326,9 +300,9 @@ function validateMeta(data, errors, mode) {
     min: 1,
   });
 
-  coerceEnum(meta, 'entry_mode', `${field}.entry_mode`, errors, ENTRY_MODES, {
-    required: true,
-  });
+  if (Object.prototype.hasOwnProperty.call(meta, 'entry_mode')) {
+    delete meta.entry_mode;
+  }
 
   if (mode === 'draft' && isNil(meta.stato_questionario)) {
     meta.stato_questionario = 'draft';

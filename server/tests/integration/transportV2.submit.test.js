@@ -19,7 +19,6 @@ function createSubmitReadyTransportV2Draft(certificationId) {
     meta: {
       version: 1,
       certification_id: certificationId,
-      entry_mode: 'form',
       status: 'draft',
       started_at: '2026-03-30T10:00:00.000Z',
       updated_at: '2026-03-30T10:05:00.000Z',
@@ -118,7 +117,6 @@ describe('POST /api/transport-v2/:certificationId/submit', () => {
           meta: {
             version: 1,
             certification_id: certification.id,
-            entry_mode: 'form',
             status: 'draft',
             started_at: '2026-03-30T10:00:00.000Z',
             updated_at: '2026-03-30T10:05:00.000Z',

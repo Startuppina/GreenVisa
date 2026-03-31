@@ -28,7 +28,6 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
       .put(`/api/transport-v2/${certification.id}/draft`)
       .set('Cookie', authCookieForUser(user))
       .send({
-        entry_mode: 'form',
         draft: {
           questionnaire_flags: {
             uses_navigator: true,
@@ -38,7 +37,7 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
       });
 
     expect(response.status).toBe(200);
-    expect(response.body.transport_v2.meta.entry_mode).toBe('form');
+    expect(response.body.transport_v2.meta).not.toHaveProperty('entry_mode');
     expect(response.body.transport_v2.meta.status).toBe('draft');
     expect(response.body.transport_v2.draft.questionnaire_flags).toEqual({
       uses_navigator: true,
@@ -46,7 +45,7 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
 
     const row = await getSurveyResponse({ userId: user.id, certificationId: certification.id });
     expect(row).not.toBeNull();
-    expect(row.survey_data.transport_v2.meta.entry_mode).toBe('form');
+    expect(row.survey_data.transport_v2.meta).not.toHaveProperty('entry_mode');
     expect(row.survey_data.transport_v2.draft.questionnaire_flags.uses_navigator).toBe(true);
   });
 
@@ -58,9 +57,7 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
     const response = await request(app)
       .put(`/api/transport-v2/${certification.id}/draft`)
       .set('Cookie', authCookieForUser(user))
-      .send({
-        entry_mode: 'form',
-      });
+      .send({});
 
     expect(response.status).toBe(400);
     expect(response.body.errors).toEqual(
@@ -133,7 +130,6 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
       .put(`/api/transport-v2/${certification.id}/draft`)
       .set('Cookie', authCookieForUser(user))
       .send({
-        entry_mode: 'form',
         draft: {
           questionnaire_flags: {},
           vehicles: [],
@@ -146,7 +142,6 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
       .put(`/api/transport-v2/${certification.id}/draft`)
       .set('Cookie', authCookieForUser(user))
       .send({
-        entry_mode: 'chatbot',
         draft: {
           questionnaire_flags: {
             chatbot_started: true,
@@ -198,7 +193,6 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
           meta: {
             version: 1,
             certification_id: certification.id,
-            entry_mode: null,
             status: 'submitted',
             started_at: '2026-03-30T10:00:00.000Z',
             updated_at: '2026-03-30T10:00:00.000Z',
@@ -268,41 +262,26 @@ describe('PUT /api/transport-v2/:certificationId/draft', () => {
     expect(row.survey_data.transport_v2).toEqual(response.body.transport_v2);
   });
 
-  it('accepts chatbot entry_mode and preserves the first non-null entry_mode on later saves', async () => {
+  it('rejects entry_mode on draft save', async () => {
     const user = await createUserFixture({ suffix: 'put-entry-user' });
     const certification = await createCertificationFixture({ suffix: 'put-entry-cert' });
     await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
 
-    const firstResponse = await request(app)
-      .put(`/api/transport-v2/${certification.id}/draft`)
-      .set('Cookie', authCookieForUser(user))
-      .send({
-        entry_mode: 'chatbot',
-        draft: {
-          questionnaire_flags: {
-            started_from_chatbot: true,
-          },
-          vehicles: [],
-        },
-      });
-
-    const secondResponse = await request(app)
+    const response = await request(app)
       .put(`/api/transport-v2/${certification.id}/draft`)
       .set('Cookie', authCookieForUser(user))
       .send({
         entry_mode: 'form',
         draft: {
-          questionnaire_flags: {
-            started_from_form: true,
-          },
+          questionnaire_flags: {},
           vehicles: [],
         },
       });
 
-    expect(firstResponse.status).toBe(200);
-    expect(firstResponse.body.transport_v2.meta.entry_mode).toBe('chatbot');
-    expect(secondResponse.status).toBe(200);
-    expect(secondResponse.body.transport_v2.meta.entry_mode).toBe('chatbot');
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: 'entry_mode', code: 'forbidden' })]),
+    );
   });
 
   it('accepts sparse future-facing OCR and form style partial rows', async () => {

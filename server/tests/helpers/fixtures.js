@@ -262,7 +262,6 @@ function buildTransportV2Meta(certificationId, overrides = {}) {
   return {
     version: 1,
     certification_id: certificationId,
-    entry_mode: 'form',
     status: 'draft',
     started_at: '2026-03-30T10:00:00.000Z',
     updated_at: '2026-03-30T10:05:00.000Z',

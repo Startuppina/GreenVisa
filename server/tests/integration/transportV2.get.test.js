@@ -27,7 +27,7 @@ describe('GET /api/transport-v2/:certificationId', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.transport_v2.meta.certification_id).toBe(certification.id);
-    expect(response.body.transport_v2.meta.entry_mode).toBeNull();
+    expect(response.body.transport_v2.meta).not.toHaveProperty('entry_mode');
     expect(response.body.transport_v2.meta.status).toBe('draft');
     expect(response.body.transport_v2.meta.submitted_at).toBeNull();
     expect(response.body.transport_v2.draft).toEqual({
@@ -94,7 +94,6 @@ describe('GET /api/transport-v2/:certificationId', () => {
       meta: {
         version: 1,
         certification_id: certification.id,
-        entry_mode: 'form',
         status: 'draft',
         started_at: '2026-03-30T10:00:00.000Z',
         updated_at: '2026-03-30T10:00:00.000Z',
@@ -151,7 +150,6 @@ describe('GET /api/transport-v2/:certificationId', () => {
           meta: {
             certification_id: certification.id,
             started_at: '2026-03-30T10:00:00.000Z',
-            entry_mode: 'chatbot',
           },
           draft: {
             vehicles: [
