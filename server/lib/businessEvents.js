@@ -46,14 +46,15 @@ function logCronEvent(event, fields = {}, level = 'info') {
 
 function logUnexpectedError(req, err, context = {}) {
   const log = getLog(req);
+  const message = err?.message != null ? err.message : String(err);
   log.error(
     {
       event: 'unexpected_error',
-      request_id: req?.id || req?.requestId,
-      err: err && { message: err.message, name: err.name, stack: err.stack },
+      error: message,
+      ...(err?.stack ? { stack: err.stack } : {}),
       ...context,
     },
-    err?.message || 'unexpected error',
+    message,
   );
 }
 
