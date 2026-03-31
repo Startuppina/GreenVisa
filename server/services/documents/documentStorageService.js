@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const ocrConfig = require('../config/ocr');
+const ocrConfig = require('../../config/ocr');
 
 function ensureStorageDir() {
   if (!fs.existsSync(ocrConfig.upload.storageDir)) {

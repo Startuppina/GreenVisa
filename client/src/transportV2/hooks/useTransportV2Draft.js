@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getApiErrorMessage, getTransportV2Draft, saveTransportV2Draft } from '../transportV2Api';
+import {
+  getApiErrorMessage,
+  getTransportV2Draft,
+  saveTransportV2Draft,
+  submitTransportV2,
+} from '../transportV2Api';
 import { createEmptyVehicleRow } from '../transportV2Model';
 
 const AUTOSAVE_DELAY_MS = 800;
@@ -34,14 +39,18 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
   const [loadError, setLoadError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const transportV2Ref = useRef(null);
   const currentVersionRef = useRef(0);
   const isSavingRef = useRef(false);
+  const activeSavePromiseRef = useRef(null);
   const debounceTimerRef = useRef(null);
   const loadAbortControllerRef = useRef(null);
   const saveAbortControllerRef = useRef(null);
+  const submitAbortControllerRef = useRef(null);
 
   const replaceTransportV2 = useCallback((nextTransportV2) => {
     transportV2Ref.current = nextTransportV2;
@@ -62,8 +71,12 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
 
   const saveSnapshot = useCallback(
     async (snapshot, snapshotVersion) => {
-      if (!certificationId || !snapshot || isSavingRef.current) {
-        return;
+      if (!certificationId || !snapshot) {
+        return null;
+      }
+
+      if (isSavingRef.current && activeSavePromiseRef.current) {
+        return activeSavePromiseRef.current;
       }
 
       if (saveAbortControllerRef.current) {
@@ -76,40 +89,54 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
       setIsSaving(true);
       setSaveError(null);
 
-      try {
-        const savedTransportV2 = await saveTransportV2Draft(
-          certificationId,
-          buildSavePayload(snapshot),
-          { signal: abortController.signal },
-        );
+      const savePromise = (async () => {
+        try {
+          const savedTransportV2 = await saveTransportV2Draft(
+            certificationId,
+            buildSavePayload(snapshot),
+            { signal: abortController.signal },
+          );
 
-        if (snapshotVersion === currentVersionRef.current) {
-          replaceTransportV2(savedTransportV2);
-          setHasUnsavedChanges(false);
-          setSaveError(null);
-        } else {
-          replaceTransportV2(mergeSavedMeta(transportV2Ref.current, savedTransportV2));
+          if (snapshotVersion === currentVersionRef.current) {
+            replaceTransportV2(savedTransportV2);
+            setHasUnsavedChanges(false);
+            setSaveError(null);
+          } else {
+            replaceTransportV2(mergeSavedMeta(transportV2Ref.current, savedTransportV2));
+            setHasUnsavedChanges(true);
+          }
+
+          return savedTransportV2;
+        } catch (error) {
+          if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
+            return null;
+          }
+
+          if (handleUnauthorized(error)) {
+            return null;
+          }
+
+          setSaveError(
+            getApiErrorMessage(error, 'Errore durante il salvataggio del draft Transport V2.'),
+          );
           setHasUnsavedChanges(true);
-        }
-      } catch (error) {
-        if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
-          return;
-        }
+          throw error;
+        } finally {
+          if (saveAbortControllerRef.current === abortController) {
+            saveAbortControllerRef.current = null;
+          }
 
-        if (handleUnauthorized(error)) {
-          return;
-        }
+          if (activeSavePromiseRef.current === savePromise) {
+            activeSavePromiseRef.current = null;
+          }
 
-        setSaveError(getApiErrorMessage(error, 'Errore durante il salvataggio del draft Transport V2.'));
-        setHasUnsavedChanges(true);
-      } finally {
-        if (saveAbortControllerRef.current === abortController) {
-          saveAbortControllerRef.current = null;
+          isSavingRef.current = false;
+          setIsSaving(false);
         }
+      })();
 
-        isSavingRef.current = false;
-        setIsSaving(false);
-      }
+      activeSavePromiseRef.current = savePromise;
+      return savePromise;
     },
     [certificationId, handleUnauthorized, replaceTransportV2],
   );
@@ -132,6 +159,7 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
     setIsLoading(true);
     setLoadError(null);
     setSaveError(null);
+    setSubmitError(null);
     setHasUnsavedChanges(false);
 
     try {
@@ -176,6 +204,10 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
       if (saveAbortControllerRef.current) {
         saveAbortControllerRef.current.abort();
       }
+
+      if (submitAbortControllerRef.current) {
+        submitAbortControllerRef.current.abort();
+      }
     };
   }, [loadDraft]);
 
@@ -207,7 +239,7 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
           clearTimeout(debounceTimerRef.current);
         }
 
-        saveSnapshot(nextTransportV2, nextVersion);
+        void saveSnapshot(nextTransportV2, nextVersion).catch(() => {});
       }
     },
     [replaceTransportV2, saveSnapshot],
@@ -223,7 +255,7 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      saveSnapshot(transportV2Ref.current, currentVersionRef.current);
+      void saveSnapshot(transportV2Ref.current, currentVersionRef.current).catch(() => {});
     }, AUTOSAVE_DELAY_MS);
 
     return () => {
@@ -266,13 +298,17 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
   );
 
   const addVehicleRow = useCallback(() => {
+    const nextVehicle = createEmptyVehicleRow();
+
     applyChange((currentTransportV2) => ({
       ...currentTransportV2,
       draft: {
         ...currentTransportV2.draft,
-        vehicles: [...(currentTransportV2.draft?.vehicles || []), createEmptyVehicleRow()],
+        vehicles: [...(currentTransportV2.draft?.vehicles || []), nextVehicle],
       },
     }));
+
+    return nextVehicle.vehicle_id;
   }, [applyChange]);
 
   const updateVehicleRow = useCallback(
@@ -314,8 +350,95 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
       return;
     }
 
-    saveSnapshot(transportV2Ref.current, currentVersionRef.current);
+    void saveSnapshot(transportV2Ref.current, currentVersionRef.current).catch(() => {});
   }, [saveSnapshot]);
+
+  const saveNow = useCallback(async () => {
+    if (!transportV2Ref.current) {
+      return null;
+    }
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    try {
+      return await saveSnapshot(transportV2Ref.current, currentVersionRef.current);
+    } catch {
+      return null;
+    }
+  }, [saveSnapshot]);
+
+  const submitDraft = useCallback(async () => {
+    if (!certificationId || !transportV2Ref.current) {
+      return null;
+    }
+
+    if (transportV2Ref.current.meta?.status === 'submitted') {
+      return transportV2Ref.current;
+    }
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    if (submitAbortControllerRef.current) {
+      submitAbortControllerRef.current.abort();
+    }
+
+    const abortController = new AbortController();
+    submitAbortControllerRef.current = abortController;
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      if (hasUnsavedChanges || saveError) {
+        const savedDraft = await saveSnapshot(transportV2Ref.current, currentVersionRef.current);
+        if (savedDraft) {
+          replaceTransportV2(savedDraft);
+        }
+      }
+
+      const submittedTransportV2 = await submitTransportV2(certificationId, {
+        signal: abortController.signal,
+      });
+
+      replaceTransportV2(submittedTransportV2);
+      setHasUnsavedChanges(false);
+      setSaveError(null);
+      setSubmitError(null);
+
+      return submittedTransportV2;
+    } catch (error) {
+      if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
+        return null;
+      }
+
+      if (handleUnauthorized(error)) {
+        return null;
+      }
+
+      setSubmitError(
+        getApiErrorMessage(error, 'Errore durante l\'invio del questionario Transport V2.'),
+      );
+      return null;
+    } finally {
+      if (submitAbortControllerRef.current === abortController) {
+        submitAbortControllerRef.current = null;
+      }
+
+      setIsSubmitting(false);
+    }
+  }, [
+    certificationId,
+    handleUnauthorized,
+    hasUnsavedChanges,
+    replaceTransportV2,
+    saveError,
+    saveSnapshot,
+  ]);
 
   return {
     transportV2,
@@ -323,9 +446,13 @@ export default function useTransportV2Draft(certificationId, { onUnauthorized } 
     loadError,
     isSaving,
     saveError,
+    isSubmitting,
+    submitError,
     hasUnsavedChanges,
     reload: loadDraft,
     retrySave,
+    saveNow,
+    submitDraft,
     setEntryMode,
     setQuestionnaireFlag,
     addVehicleRow,

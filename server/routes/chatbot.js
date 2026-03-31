@@ -1,8 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { handleMessage } = require('../services/chatService');
-const storage = require('../services/chatStorageService');
-const { generateEmailDraft } = require('../services/chatHandoffService');
+const { handleMessage } = require('../services/chatbot/chatService');
+const storage = require('../services/chatbot/chatStorageService');
+const { generateEmailDraft } = require('../services/chatbot/chatHandoffService');
 
 const router = express.Router();
 
