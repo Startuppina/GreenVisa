@@ -82,3 +82,10 @@ cd server; npm test
 
 npm run test:block2
 ```
+
+# seeding database per sviluppo questionario 
+
+```bash
+$env:TRANSPORT_V2_DEV_SEED='1'
+node .\scripts\seedTransportV2Access.js
+```
