@@ -124,41 +124,19 @@ export default function VehicleFieldsForm({
         </InputField>
 
         <InputField
-          label="WLTP homologation"
-          hint="Required by the live backend validation."
-          error={getFirstFieldError(fieldErrors, fieldPath('wltp_homologation'))}
-        >
-          <BaseSelect
-            value={
-              vehicle.fields.wltp_homologation == null
-                ? ''
-                : String(vehicle.fields.wltp_homologation)
-            }
-            onChange={(event) => onFieldChange('wltp_homologation', toBoolean(event.target.value))}
-          >
-            <option value="">Select value</option>
-            {YES_NO_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </BaseSelect>
-        </InputField>
-
-        <InputField
-          label="WLTP CO2 g/km"
-          error={getFirstFieldError(fieldErrors, fieldPath('wltp_co2_g_km'))}
+          label="CO₂ emissions (g/km)"
+          error={getFirstFieldError(fieldErrors, fieldPath('co2_emissions_g_km'))}
         >
           <BaseInput
             type="number"
-            value={vehicle.fields.wltp_co2_g_km ?? ''}
-            onChange={(event) => onFieldChange('wltp_co2_g_km', parseIntegerOrNull(event.target.value))}
+            value={vehicle.fields.co2_emissions_g_km ?? ''}
+            onChange={(event) => onFieldChange('co2_emissions_g_km', parseIntegerOrNull(event.target.value))}
           />
         </InputField>
 
         {showAltFuelField ? (
           <InputField
-            label="WLTP CO2 g/km alternate fuel"
+            label="CO₂ emissions — alternate fuel (g/km)"
             error={getFirstFieldError(fieldErrors, fieldPath('wltp_co2_g_km_alt_fuel'))}
           >
             <BaseInput

@@ -135,12 +135,8 @@ export function getVehicleValidationErrors(vehicle, vehicleIndex) {
     addError(errors, `${basePath}.fields.fuel_type`, 'Fuel type is required.');
   }
 
-  if (fields.wltp_homologation == null) {
-    addError(errors, `${basePath}.fields.wltp_homologation`, 'WLTP homologation is required.');
-  }
-
-  if (fields.wltp_co2_g_km == null) {
-    addError(errors, `${basePath}.fields.wltp_co2_g_km`, 'WLTP CO2 is required.');
+  if (fields.co2_emissions_g_km == null) {
+    addError(errors, `${basePath}.fields.co2_emissions_g_km`, 'CO₂ emissions (g/km) is required.');
   }
 
   if (!fields.last_revision_date) {
@@ -159,7 +155,7 @@ export function getVehicleValidationErrors(vehicle, vehicleIndex) {
     addError(
       errors,
       `${basePath}.fields.wltp_co2_g_km_alt_fuel`,
-      'Second WLTP CO2 value is required for GPL or methane vehicles.',
+      'Second CO₂ emissions value (g/km) is required for GPL or methane vehicles.',
     );
   }
 

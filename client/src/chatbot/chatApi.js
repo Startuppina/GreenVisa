@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const chatAxios = axios.create({
-  baseURL: `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api-v2`,
+  baseURL: `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api`,
   withCredentials: true,
 });
 

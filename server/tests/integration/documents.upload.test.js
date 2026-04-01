@@ -1,5 +1,6 @@
 const request = require('supertest');
 const googleDocAiService = require('../../services/ocr/googleDocumentAiService');
+const { OcrProviderTimeoutError } = require('../../services/ocr/ocrProviderErrors');
 const { getApp } = require('../helpers/app');
 const {
   authCookieForUser,
@@ -13,15 +14,13 @@ const {
   getSurveyResponse,
   grantCertificationAccess,
 } = require('../helpers/fixtures');
+const { useDocAiSuccessByDefault } = require('../helpers/docAiTestStub');
 const { registerIntegrationHooks } = require('../helpers/integrationHooks');
 
 const app = getApp();
 
 registerIntegrationHooks();
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+useDocAiSuccessByDefault();
 
 async function uploadTransportDocument({ user, certificationId, buffer, filename, contentType }) {
   return request(app)
@@ -94,7 +93,20 @@ describe('POST /api/documents/upload', () => {
         ocr_status: 'needs_review',
       }),
     );
-    expect(result.raw_provider_output).toBeTruthy();
+    const rawOut =
+      typeof result.raw_provider_output === 'string'
+        ? JSON.parse(result.raw_provider_output)
+        : result.raw_provider_output;
+    expect(rawOut).toEqual(
+      expect.objectContaining({
+        document: expect.objectContaining({
+          text: expect.any(String),
+          entities: expect.any(Array),
+        }),
+      }),
+    );
+    expect(Object.keys(rawOut)).toEqual(['document']);
+    expect(Object.keys(rawOut.document).sort()).toEqual(['entities', 'text']);
     expect(result.normalized_output).toEqual(
       expect.objectContaining({
         fields: expect.any(Array),
@@ -174,6 +186,41 @@ describe('POST /api/documents/upload', () => {
     expect(surveyResponse.survey_data.transport_v2).toBeUndefined();
   });
 
+  it('stores OCR_PROVIDER_TIMEOUT on timeout failure and clears OCR error fields after successful retry', async () => {
+    const user = await createUserFixture({ suffix: 'docs-upload-timeout-retry-user' });
+    const certification = await createCertificationFixture({ suffix: 'docs-upload-timeout-retry-cert' });
+    await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
+    vi.spyOn(googleDocAiService, 'processDocument').mockRejectedValueOnce(new OcrProviderTimeoutError());
+
+    const uploadResponse = await uploadTransportDocument({
+      user,
+      certificationId: certification.id,
+      buffer: buildMinimalPdfBuffer(),
+      filename: 'vehicle.pdf',
+      contentType: 'application/pdf',
+    });
+
+    expect(uploadResponse.status).toBe(200);
+    expect(uploadResponse.body.documents[0].status).toBe('failed');
+
+    const failedDoc = await getDocumentFixtureById(uploadResponse.body.documents[0].documentId);
+    expect(failedDoc.ocr_status).toBe('failed');
+    expect(failedDoc.ocr_error_code).toBe('OCR_PROVIDER_TIMEOUT');
+    expect(failedDoc.ocr_error_message).toContain('timed out');
+
+    const retryResponse = await request(app)
+      .post(`/api/documents/${uploadResponse.body.documents[0].documentId}/retry`)
+      .set('Cookie', authCookieForUser(user));
+
+    expect(retryResponse.status).toBe(200);
+    expect(retryResponse.body.status).toBe('needs_review');
+
+    const document = await getDocumentFixtureById(uploadResponse.body.documents[0].documentId);
+    expect(document.ocr_status).toBe('needs_review');
+    expect(document.ocr_error_code).toBeNull();
+    expect(document.ocr_error_message).toBeNull();
+  });
+
   it('can retry a failed document and later move it back into the normal OCR flow', async () => {
     const user = await createUserFixture({ suffix: 'docs-upload-retry-user' });
     const certification = await createCertificationFixture({ suffix: 'docs-upload-retry-cert' });
@@ -190,8 +237,6 @@ describe('POST /api/documents/upload', () => {
 
     expect(uploadResponse.body.documents[0].status).toBe('failed');
 
-    vi.restoreAllMocks();
-
     const retryResponse = await request(app)
       .post(`/api/documents/${uploadResponse.body.documents[0].documentId}/retry`)
       .set('Cookie', authCookieForUser(user));
@@ -204,6 +249,19 @@ describe('POST /api/documents/upload', () => {
 
     expect(document.ocr_status).toBe('needs_review');
     expect(result).not.toBeNull();
-    expect(result.raw_provider_output).toBeTruthy();
+    const rawOut =
+      typeof result.raw_provider_output === 'string'
+        ? JSON.parse(result.raw_provider_output)
+        : result.raw_provider_output;
+    expect(rawOut).toEqual(
+      expect.objectContaining({
+        document: expect.objectContaining({
+          text: expect.any(String),
+          entities: expect.any(Array),
+        }),
+      }),
+    );
+    expect(Object.keys(rawOut)).toEqual(['document']);
+    expect(Object.keys(rawOut.document).sort()).toEqual(['entities', 'text']);
   });
 });

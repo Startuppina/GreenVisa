@@ -338,8 +338,6 @@ CREATE TABLE IF NOT EXISTS documents (
     ocr_provider VARCHAR(100),
     ocr_region VARCHAR(50),
     ocr_status VARCHAR(50) NOT NULL DEFAULT 'uploaded',
-    ocr_attempt_count INTEGER NOT NULL DEFAULT 0,
-    last_ocr_attempt_at TIMESTAMPTZ,
     ocr_error_code VARCHAR(100),
     ocr_error_message TEXT,
     uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -348,7 +346,6 @@ CREATE TABLE IF NOT EXISTS documents (
     confirmed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     applied_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_documents_status
       CHECK (ocr_status IN ('uploaded','processing','needs_review','confirmed','applied','failed'))
 );
@@ -363,7 +360,6 @@ CREATE TABLE IF NOT EXISTS document_results (
     validation_issues JSONB,
     confirmed_output JSONB,
     provider_processor_id VARCHAR(500),
-    provider_processor_version VARCHAR(100),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -1,6 +1,9 @@
 const request = require('supertest');
 const { getApp } = require('../helpers/app');
 const {
+  TRANSPORT_V2_ALREADY_SUBMITTED_MSG,
+} = require('../../services/transportV2DraftService');
+const {
   authCookieForUser,
   buildCompleteGoodsDraft,
   buildCompleteMixedDraft,
@@ -45,7 +48,7 @@ describe('Transport V2 submit regression cases', () => {
         fields: {
           annual_km: 10000,
           fuel_type: 'diesel',
-          wltp_co2_g_km: 120,
+          co2_emissions_g_km: 120,
           occupancy_profile_code: 4,
         },
       }),
@@ -70,7 +73,7 @@ describe('Transport V2 submit regression cases', () => {
         fields: {
           annual_km: 20000,
           fuel_type: 'diesel',
-          wltp_co2_g_km: 280,
+          co2_emissions_g_km: 280,
           load_profile_code: 2,
         },
       }),
@@ -94,7 +97,7 @@ describe('Transport V2 submit regression cases', () => {
         fields: {
           annual_km: 10000,
           fuel_type: 'gpl',
-          wltp_co2_g_km: 100,
+          co2_emissions_g_km: 100,
           wltp_co2_g_km_alt_fuel: 140,
           occupancy_profile_code: 6,
         },
@@ -119,7 +122,7 @@ describe('Transport V2 submit regression cases', () => {
         fields: {
           annual_km: 10000,
           fuel_type: 'diesel',
-          wltp_co2_g_km: 100,
+          co2_emissions_g_km: 100,
           occupancy_profile_code: 4,
         },
       },
@@ -127,7 +130,7 @@ describe('Transport V2 submit regression cases', () => {
         fields: {
           annual_km: 20000,
           fuel_type: 'gpl',
-          wltp_co2_g_km: 100,
+          co2_emissions_g_km: 100,
           wltp_co2_g_km_alt_fuel: 140,
           load_profile_code: 3,
         },
@@ -161,7 +164,7 @@ describe('Transport V2 submit regression cases', () => {
         fields: {
           annual_km: 10000,
           fuel_type: 'diesel',
-          wltp_co2_g_km: 50,
+          co2_emissions_g_km: 50,
           load_profile_code: 6,
         },
       }),
@@ -204,7 +207,7 @@ describe('Transport V2 submit regression cases', () => {
     expect(row.completed).toBe(true);
   });
 
-  it('is deterministic for repeated submits on an unchanged draft', async () => {
+  it('rejects a second submit after the questionnaire is already submitted', async () => {
     const user = await createUserFixture({ suffix: 'submit-reg-repeat-user' });
     const certification = await createCertificationFixture({ suffix: 'submit-reg-repeat-cert' });
     await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
@@ -226,12 +229,15 @@ describe('Transport V2 submit regression cases', () => {
       .set('Cookie', authCookieForUser(user));
 
     expect(first.status).toBe(200);
-    expect(second.status).toBe(200);
-    expect(first.body.transport_v2.results.co2).toEqual(second.body.transport_v2.results.co2);
-    expect(first.body.transport_v2.results.score).toEqual(second.body.transport_v2.results.score);
+    expect(second.status).toBe(409);
+    expect(second.body.msg).toBe(TRANSPORT_V2_ALREADY_SUBMITTED_MSG);
+
+    const row = await getSurveyResponse({ userId: user.id, certificationId: certification.id });
+    expect(row.survey_data.transport_v2.meta.status).toBe('submitted');
+    expect(row.survey_data.transport_v2.results.co2).toEqual(first.body.transport_v2.results.co2);
   });
 
-  it('recomputes values after the stored draft changes', async () => {
+  it('does not allow draft changes or a second submit after the first successful submit', async () => {
     const user = await createUserFixture({ suffix: 'submit-reg-recompute-user' });
     const certification = await createCertificationFixture({ suffix: 'submit-reg-recompute-cert' });
     await grantCertificationAccess({ userId: user.id, certificationId: certification.id });
@@ -266,15 +272,19 @@ describe('Transport V2 submit regression cases', () => {
         },
       });
 
-    expect(updateResponse.status).toBe(200);
+    expect(first.status).toBe(200);
+    expect(updateResponse.status).toBe(409);
+    expect(updateResponse.body.msg).toBe(TRANSPORT_V2_ALREADY_SUBMITTED_MSG);
 
     const second = await request(app)
       .post(`/api/transport-v2/${certification.id}/submit`)
       .set('Cookie', authCookieForUser(user));
 
-    expect(first.status).toBe(200);
-    expect(second.status).toBe(200);
-    expect(second.body.transport_v2.results.co2.total_tons_per_year).toBeGreaterThan(
+    expect(second.status).toBe(409);
+    expect(second.body.msg).toBe(TRANSPORT_V2_ALREADY_SUBMITTED_MSG);
+
+    const row = await getSurveyResponse({ userId: user.id, certificationId: certification.id });
+    expect(row.survey_data.transport_v2.results.co2.total_tons_per_year).toBe(
       first.body.transport_v2.results.co2.total_tons_per_year,
     );
   });

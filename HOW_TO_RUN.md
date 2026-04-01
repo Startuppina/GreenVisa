@@ -65,15 +65,20 @@ cd client; npm run dev
 
 
 # google cloud for ocr
+
+1. download google cloud cli
+
+2.
 ```bash
 gcloud init
 
 gcloud auth login
 gcloud auth application-default login
 gcloud auth list
-
-log in via browser. currently ocr service is linked to antonio.gassner@claror.it
 ```
+log in via browser. currently ocr service is linked to antonio.gassner@claror.it
+
+
 
 # tests
 

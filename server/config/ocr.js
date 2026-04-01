@@ -1,7 +1,22 @@
 const path = require('path');
 
+function readProviderTimeoutMs() {
+  const raw = process.env.OCR_PROVIDER_TIMEOUT_MS;
+  if (raw === undefined || raw === '') {
+    return 45000;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) {
+    return 45000;
+  }
+  return Math.trunc(n);
+}
+
 const config = {
   provider: process.env.OCR_PROVIDER || 'google-document-ai',
+
+  /** Wall-clock cap for the synchronous Document AI RPC. Set to 0 to disable (not recommended in production). */
+  providerTimeoutMs: readProviderTimeoutMs(),
 
   google: {
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',

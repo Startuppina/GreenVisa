@@ -1,3 +1,7 @@
+# docai-test
+
+Sample requests/responses for Google Document AI. In production, `document_results.raw_provider_output` persists only `{ document: { text, entities } }` (not `pages`, layout, or other heavy API fields). Raw `document.entities` may include types the GreenVisa backend does not map (for example regulation text near V.9); only types defined in `server/services/ocr/fieldMapper.js` → `FIELD_DEFINITIONS` become normalized OCR review fields and feed Transport V2 prefill (`registration_year` / `first_registration_date`, `euro_class`, `fuel_type`, `max_vehicle_mass_kg`, `co2_emissions_g_km` (provider entity type and internal review/prefill field key), `vehicle_use_text` → `transport_mode`). Unmapped types are ignored in `normalizeProviderOutput` and are not duplicated into review payloads; they can still appear inside persisted `raw_provider_output.document.entities`.
+
 # Google cloud
 ```bash
 gcloud init

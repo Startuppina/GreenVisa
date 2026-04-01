@@ -11,9 +11,9 @@ The **backend** implements a coherent Transport V2 surface: **GET** loads or ini
 
 **OCR** is implemented as **synchronous** processing in the upload request: Google Document AI (when configured), Multer memory upload, files on disk under `server/uploaded_documents`, rows in **`document_batches`**, **`documents`**, **`document_results`**. Review uses **`needs_review`** → optional **confirm** → **apply** merges a vehicle row into `transport_v2.draft.vehicles`.
 
-**Weight threshold for goods** in OCR-derived prefill is **3.5 t (3500 kg)** (`goods_vehicle_over_3_5_tons`). Submit validation primarily requires **`goods_vehicle_over_3_5_tons`** but **still accepts the legacy boolean `goods_vehicle_over_2_5_tons`** as an alternative (error text references 3.5).
+**Weight threshold for goods** in OCR-derived prefill is **3.5 t (3500 kg)** (`goods_vehicle_over_3_5_tons`). Submit validation requires **`goods_vehicle_over_3_5_tons`** as a boolean; the legacy **`goods_vehicle_over_2_5_tons`** name is not accepted as a substitute.
 
-**`wltp_homologation`** is still **first-class** in validation, OCR field mapping, prefill keys, and tests. **Manual CO₂** for calculations is **`wltp_co2_g_km`** (integer, required on submit except special cases in the large legacy validator; Block2 path requires it). **`wltp_co2_g_km_alt_fuel`** is required when fuel is **gpl** or **metano**.
+**Manual CO₂** for calculations is **`co2_emissions_g_km`** (integer, required on submit on the Block2 path). **`wltp_co2_g_km_alt_fuel`** is required when fuel is **gpl** or **metano**.
 
 **Frontend:** The **Transport V2 page and OCR dev modules were removed** from `client/src` (no `transportV2/` or `ocr/` trees), but **`client/src/main.jsx` still imports** `TransportV2Page` and `OcrDevPage` and registers routes for them — the **client does not build as-is**.
 
@@ -25,12 +25,7 @@ The **backend** implements a coherent Transport V2 surface: **GET** loads or ini
 
 ## 2. Verified backend API inventory
 
-**Mounting:** `server/server.js` mounts:
-
-- `app.use('/api-v2', transportV2Router);` and `app.use('/api', transportV2Router);`
-- Same for `documentsRouter` and `chatbotRouter`.
-
-So each route below exists at **`/api/...`** and **`/api-v2/...`**.
+**Mounting:** `server/server.js` mounts `transportV2Router`, `documentsRouter`, and `chatbotRouter` under **`/api`** only.
 
 **Auth:** Transport V2 and document routes (except where noted) use **`authenticateJWT`** (`server/middleware/auth.js`): JWT from **`accessToken`** or **`recoveryToken` cookie** (`jsonwebtoken` + `process.env.SECRET_KEY`). **Bearer `Authorization` is not read** by this middleware — the SPA must send cookies (`withCredentials: true`) for these endpoints, consistent with login setting `accessToken` cookie in `server.js`.
 
@@ -145,30 +140,21 @@ So each route below exists at **`/api/...`** and **`/api-v2/...`**.
 | `registration_year` | integer, 1900–current year |
 | `euro_class` | non-empty string (calculator/tests use `EURO_*` style) |
 | `fuel_type` | non-empty string; **gpl/metano** trigger second fuel CO₂ rules |
-| **`wltp_homologation`** | **boolean, required** |
-| **`wltp_co2_g_km`** | **integer ≥ 0, required** |
+| **`co2_emissions_g_km`** | **integer ≥ 0, required** |
 | **`wltp_co2_g_km_alt_fuel`** | required integer if gpl/metano; otherwise optional / must validate if present |
 | `last_revision_date` | **YYYY-MM-DD** |
 | `blue_sticker` | boolean, required |
 | `annual_km` | integer ≥ 0, required |
 | **Passenger** | `occupancy_profile_code` 1–6; `load_profile_code` must not be set |
 | **Goods** | `load_profile_code` 1–6; `occupancy_profile_code` must not be set |
-| **Goods weight flag** | **`goods_vehicle_over_3_5_tons` boolean required** *unless* legacy **`goods_vehicle_over_2_5_tons`** is a boolean (both checked in one condition) |
+| **Goods weight flag** | **`goods_vehicle_over_3_5_tons` boolean required** |
 
-**Manual CO₂:** field name **`wltp_co2_g_km`** (integer). Calculator uses **`wltp_co2_g_km`** and **`wltp_co2_g_km_alt_fuel`** only — **not** `wltp_homologation` for numeric emissions.
+**Manual CO₂:** field name **`co2_emissions_g_km`** (integer). Calculator uses **`co2_emissions_g_km`** and **`wltp_co2_g_km_alt_fuel`** only.
 
-### `wltp_homologation` — verified present
-
-- **Submit validation:** `validateBooleanField(..., { required: true })` on `fields.wltp_homologation`.
-- **OCR:** `fieldMapper.js` maps provider type `wltp_homologation`; `ocrOutputValidator.js` handles key `wltp_homologation`; `transportV2OcrPrefillService.js` lists it in `OCR_MANAGED_FIELD_KEYS` and `TRANSPORT_V2_FIELD_KEYS`.
-- **Docs:** `docs/transport_v2.json`, `docs/transport_v2_draft.json` include the field.
-
-**Removing it from the frontend only** would **fail submit** until the backend relaxes validation.
-
-### 2.5 t vs 3.5 t
+### Goods weight threshold (3.5 t)
 
 - **OCR mass derivation:** `massKg >= 3500` → `goods_vehicle_over_3_5_tons` (`transportV2OcrPrefillService.js`).
-- **Submit:** accepts **`goods_vehicle_over_2_5_tons`** as alternate boolean; message still says **`goods_vehicle_over_3_5_tons`**. **No field named `*_2_5_*`** in OCR prefill builder.
+- **Submit:** requires **`goods_vehicle_over_3_5_tons`** as a boolean. **No field named `*_2_5_*`** in OCR prefill builder or supported as an alternate submit key.
 - **Unused Italian enum** `PESO_MERCI_CLASSI` in `validateTransportv2.js` includes `sotto_3_5_tonnellate` / `uguale_o_superiore_3_5_tonnellate` under the **legacy** `runTransportV2Validation` path (not used by HTTP).
 
 ### Dead / parallel validation (documented but not HTTP)
@@ -187,7 +173,7 @@ So each route below exists at **`/api/...`** and **`/api-v2/...`**.
 6. **Review payload:** Stored in `document_results.review_payload` (fields + validation issues + `transport_v2_vehicle_prefill` + derived summary).
 7. **Confirm:** User sends `fields` array; server recomputes prefill, writes **`confirmed_output`**, doc status **`confirmed`**.
 8. **Apply:** **`upsertTransportV2OcrVehicle`** merges by **`ocr_document_id`**; links `documents.survey_response_id` if needed; doc status **`applied`**.
-9. **Transport-specific:** Prefill and merge are **Transport V2–specific**; field map is **custom processor entity types** (registration_year, euro_class, fuel_type, wltp_homologation, vehicle_mass_kg, …).
+9. **Transport-specific:** Prefill and merge are **Transport V2–specific**; field map is **custom processor entity types** (registration_year, euro_class, fuel_type, max_vehicle_mass_kg, …).
 
 **OCR does not compute certification scores** — only row prefill. **Submit** recomputes from draft.
 
@@ -196,7 +182,7 @@ So each route below exists at **`/api/...`** and **`/api-v2/...`**.
 ## 6. Calculation and submission
 
 - **Calculator:** `server/services/transportV2Calculator.js` — **`calculateTransportV2Results(draft, { calculatedAt })`**.
-- **Inputs:** `draft.vehicles` with `transport_mode`, `fields.annual_km`, `fields.wltp_co2_g_km`, `fields.wltp_co2_g_km_alt_fuel`, `fields.fuel_type`, and profile codes. **`wltp_homologation` is not used** in calculator code.
+- **Inputs:** `draft.vehicles` with `transport_mode`, `fields.annual_km`, `fields.co2_emissions_g_km`, `fields.wltp_co2_g_km_alt_fuel`, `fields.fuel_type`, and profile codes.
 - **Client must not send** `derived`/`results` on PUT (rejected). Submit **ignores request body** for calculation — **aligned** with “server is source of truth.”
 - **OCR** feeds draft only via apply; **aligned** with not using OCR output directly for final certification math.
 
@@ -212,7 +198,7 @@ So each route below exists at **`/api/...`** and **`/api-v2/...`**.
 ### What remains useful
 
 - **`client/src/axiosInstance.js`:** `baseURL` → `VITE_REACT_SERVER_ADDRESS/api`, **`withCredentials: true`** — **correct pattern for cookie JWT** (though it also attaches `Authorization` from `localStorage` token, which **Transport V2 routes do not use**).
-- **`client/src/chatbot/chatApi.js`:** uses **`/api-v2`** for chatbot — can be embedded as widget with same origin/credentials.
+- **`client/src/chatbot/chatApi.js`:** **`/api`** base URL for chatbot — can be embedded as widget with same origin/credentials.
 - **Legacy transport UI:** `client/src/components/transportQuestionnaire.jsx`, `client/src/questionnaires/transportQuestionnaire.js` — **old flow**, not the Transport V2 JSON API.
 - **Tests:** `client/tests/helpers/transportV2Fixtures.js`, `renderTransportV2Page.jsx`, `transportV2Msw.js` — **fixtures/MSW** for a removed page; useful as **contract hints** only.
 
@@ -262,8 +248,6 @@ So each route below exists at **`/api/...`** and **`/api-v2/...`**.
 |----------|--------|----------|
 | **P0** | **Client bundle broken** — missing `TransportV2Page` / `OcrDevPage` | Imports in `main.jsx`, absent directories |
 | **P0** | **GET draft may clobber submitted `transport_v2`** | `normalizeTransportV2` forces `draft` + clears `derived`/`results`; `loadTransportV2Draft` persists on diff |
-| **P1** | **Desired frontend omits `wltp_homologation`** but **backend requires** it on submit | `validateBlock2Vehicle` |
-| **P1** | **Legacy `goods_vehicle_over_2_5_tons`** still accepted | Submit validation condition; confusing vs 3.5 t product rule |
 | **P1** | **`@google-cloud/documentai` not in package.json** | `googleDocumentAiService.js` try/require; OCR fails until installed |
 | **P2** | **Italian `runTransportV2Validation` block** is large and **unused by HTTP** | No require references from routes/services |
 | **P2** | **axiosInstance** adds Bearer token; **JWT middleware uses cookies only** | Possible confusion if dev relies on header alone |
@@ -273,7 +257,7 @@ So each route below exists at **`/api/...`** and **`/api-v2/...`**.
 
 ## 10. Minimum backend contract for a first clean frontend
 
-**Base URL:** `{VITE_REACT_SERVER_ADDRESS}/api` (or `/api-v2` — equivalent).
+**Base URL:** `{VITE_REACT_SERVER_ADDRESS}/api`.
 
 1. **GET** `/transport-v2/:certificationId`  
    - **Response:** `{ transport_v2: { meta, draft, derived, results } }`  
@@ -316,7 +300,7 @@ So each route below exists at **`/api/...`** and **`/api-v2/...`**.
 | OCR upload | Multipart `/documents/upload` | High | Use `FormData`, pass `certificationId` | Wire file input |
 | OCR result review | GET `/documents/:id/result` + confirm | High | Review UI for `fields` array | Optional confirm step |
 | OCR apply | POST apply merges row | High | After review, call apply; refresh GET | Pass `transportMode` when known |
-| Vehicle row schema | English keys + OCR metadata | High | Form + table must include **all submit-required** fields | **Include `wltp_homologation` until backend changes** |
+| Vehicle row schema | English keys + OCR metadata | High | Form + table must include **all submit-required** fields | Align with `TRANSPORT_V2_FIELD_KEYS` + Block2 rules |
 | Questionnaire flags | Six keys required on submit | High | Collect all six | Mirror test fixtures’ value types |
 | Calculations | Server-only in `transportV2Calculator` | High | Display `transport_v2.results` after submit | Do not compute score client-side |
 | Auth/context | Cookie JWT for API | High | Login first; `withCredentials` | Do not rely on Bearer for these routes |

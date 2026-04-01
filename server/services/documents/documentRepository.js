@@ -77,6 +77,24 @@ async function createDocument({
   return rows[0];
 }
 
+/**
+ * Update document OCR / workflow status.
+ *
+ * OCR error columns (`ocr_error_code`, `ocr_error_message`):
+ * - For status `processing` or `needs_review`, both columns are always set to NULL (healthy OCR path).
+ *   `errorCode` / `errorMessage` in options are ignored for those statuses (callers may still pass null for clarity).
+ * - For any other status, each column is updated only if the corresponding option is not `undefined`:
+ *   - `null` → stored as SQL NULL
+ *   - string → stored as that value
+ *   (Uses `!== undefined`, not truthiness, so empty string still updates.)
+ *
+ * @param {number|string} docId
+ * @param {string} status
+ * @param {object} [options]
+ * @param {string|null|undefined} [options.errorCode]
+ * @param {string|null|undefined} [options.errorMessage]
+ * @param {number|string|undefined} [options.confirmedBy]
+ */
 async function updateDocumentStatus(docId, status, { errorCode, errorMessage, confirmedBy } = {}) {
   const sets = ['ocr_status = $2', 'updated_at = NOW()'];
   const params = [docId, status];
@@ -96,15 +114,21 @@ async function updateDocumentStatus(docId, status, { errorCode, errorMessage, co
   if (status === 'applied') {
     sets.push('applied_at = NOW()');
   }
-  if (errorCode !== undefined) {
-    sets.push(`ocr_error_code = $${idx}`);
-    params.push(errorCode);
-    idx++;
-  }
-  if (errorMessage !== undefined) {
-    sets.push(`ocr_error_message = $${idx}`);
-    params.push(errorMessage);
-    idx++;
+
+  const clearOcrErrorsForStatus = status === 'processing' || status === 'needs_review';
+  if (clearOcrErrorsForStatus) {
+    sets.push('ocr_error_code = NULL', 'ocr_error_message = NULL');
+  } else {
+    if (errorCode !== undefined) {
+      sets.push(`ocr_error_code = $${idx}`);
+      params.push(errorCode);
+      idx++;
+    }
+    if (errorMessage !== undefined) {
+      sets.push(`ocr_error_message = $${idx}`);
+      params.push(errorMessage);
+      idx++;
+    }
   }
 
   const { rows } = await pool.query(
@@ -148,6 +172,10 @@ async function linkDocumentToSurveyResponse(docId, surveyResponseId) {
 }
 
 // ── Results ───────────────────────────────────────────────────
+
+async function deleteResultByDocumentId(documentId) {
+  await pool.query('DELETE FROM document_results WHERE document_id = $1', [documentId]);
+}
 
 async function createResult({
   documentId, rawProviderOutput, normalizedOutput, derivedOutput,
@@ -215,6 +243,7 @@ module.exports = {
   getDocumentsByBatchId,
   getDocumentsByUserId,
   linkDocumentToSurveyResponse,
+  deleteResultByDocumentId,
   createResult,
   getResultByDocumentId,
   updateResultConfirmed,

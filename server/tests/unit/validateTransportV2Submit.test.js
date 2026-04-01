@@ -87,10 +87,10 @@ describe('validateTransportV2Block2SubmitPayload', () => {
     );
   });
 
-  it('rejects a row with missing wltp_co2_g_km', () => {
+  it('rejects a row with missing co2_emissions_g_km', () => {
     const draft = buildCompletePassengerDraft(certificationId, {
       vehicle: buildPassengerVehicle({
-        fields: { wltp_co2_g_km: null },
+        fields: { co2_emissions_g_km: null },
       }),
     });
 
@@ -100,7 +100,7 @@ describe('validateTransportV2Block2SubmitPayload', () => {
     expect(result.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          field: 'draft.vehicles[0].fields.wltp_co2_g_km',
+          field: 'draft.vehicles[0].fields.co2_emissions_g_km',
           code: 'required',
         }),
       ]),
@@ -172,7 +172,29 @@ describe('validateTransportV2Block2SubmitPayload', () => {
       vehicle: buildGoodsVehicle({
         fields: {
           goods_vehicle_over_3_5_tons: null,
-          goods_vehicle_over_2_5_tons: null,
+        },
+      }),
+    });
+
+    const result = validateTransportV2Block2SubmitPayload(draft);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: 'draft.vehicles[0].fields.goods_vehicle_over_3_5_tons',
+          code: 'required',
+        }),
+      ]),
+    );
+  });
+
+  it('rejects a goods row when only legacy goods_vehicle_over_2_5_tons is a boolean', () => {
+    const draft = buildCompleteGoodsDraft(certificationId, {
+      vehicle: buildGoodsVehicle({
+        fields: {
+          goods_vehicle_over_3_5_tons: null,
+          goods_vehicle_over_2_5_tons: true,
         },
       }),
     });
@@ -275,10 +297,10 @@ describe('validateTransportV2Block2SubmitPayload', () => {
     expect(result.valid).toBe(false);
   });
 
-  it('rejects negative wltp_co2_g_km', () => {
+  it('rejects negative co2_emissions_g_km', () => {
     const draft = buildCompletePassengerDraft(certificationId, {
       vehicle: buildPassengerVehicle({
-        fields: { wltp_co2_g_km: -1 },
+        fields: { co2_emissions_g_km: -1 },
       }),
     });
 
@@ -287,12 +309,12 @@ describe('validateTransportV2Block2SubmitPayload', () => {
     expect(result.valid).toBe(false);
   });
 
-  it('rejects negative wltp_co2_g_km_alt_fuel', () => {
+  it('rejects negative alternate-fuel CO2 (wltp_co2_g_km_alt_fuel) for dual-fuel vehicles', () => {
     const draft = buildCompleteGoodsDraft(certificationId, {
       vehicle: buildGoodsVehicle({
         fields: {
           fuel_type: 'gpl',
-          wltp_co2_g_km: 100,
+          co2_emissions_g_km: 100,
           wltp_co2_g_km_alt_fuel: -1,
         },
       }),

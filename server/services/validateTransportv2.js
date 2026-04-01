@@ -1251,10 +1251,7 @@ function validateBlock2Vehicle(vehicle, index, errors) {
   });
   validateRequiredString(fields.euro_class, `${fieldPath}.fields.euro_class`, errors);
   validateRequiredString(fields.fuel_type, `${fieldPath}.fields.fuel_type`, errors);
-  validateBooleanField(fields.wltp_homologation, `${fieldPath}.fields.wltp_homologation`, errors, {
-    required: true,
-  });
-  validateIntegerField(fields.wltp_co2_g_km, `${fieldPath}.fields.wltp_co2_g_km`, errors, {
+  validateIntegerField(fields.co2_emissions_g_km, `${fieldPath}.fields.co2_emissions_g_km`, errors, {
     required: true,
     min: 0,
   });
@@ -1335,10 +1332,7 @@ function validateBlock2Vehicle(vehicle, index, errors) {
       );
     }
 
-    if (
-      typeof fields.goods_vehicle_over_3_5_tons !== 'boolean' &&
-      typeof fields.goods_vehicle_over_2_5_tons !== 'boolean'
-    ) {
+    if (typeof fields.goods_vehicle_over_3_5_tons !== 'boolean') {
       addError(
         errors,
         `${fieldPath}.fields.goods_vehicle_over_3_5_tons`,

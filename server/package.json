@@ -6,7 +6,7 @@
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
-    "test:block3:unit": "vitest run tests/unit/ocrFieldMapper.test.js tests/unit/ocrOutputValidator.test.js tests/unit/transportV2OcrPrefillService.test.js tests/unit/transportV2OcrApplyMerge.test.js",
+    "test:block3:unit": "vitest run tests/unit/ocrFieldMapper.test.js tests/unit/ocrOutputValidator.test.js tests/unit/transportV2OcrPrefillService.test.js tests/unit/transportV2OcrApplyMerge.test.js tests/unit/withTimeout.test.js tests/unit/googleDocumentAiService.test.js tests/unit/ocrService.test.js tests/unit/documentRepository.test.js tests/unit/googleDocumentAiService.timeout.test.js",
     "test:block3:integration": "vitest run tests/integration/documents.upload.test.js tests/integration/documents.result.test.js tests/integration/documents.confirm.test.js tests/integration/documents.auth.test.js tests/integration/documents.apply.transportV2.test.js tests/integration/documents.apply.persistence.test.js tests/integration/documents.transportV2Compatibility.test.js",
     "test:block3": "npm run test:block3:unit && npm run test:block3:integration",
     "test:block2:unit": "vitest run tests/unit/validateTransportV2Submit.test.js tests/unit/transportV2Calculator.test.js tests/unit/transportV2DerivedBuilder.test.js",

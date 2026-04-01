@@ -88,23 +88,39 @@ function validateFieldValue(field) {
       break;
     }
 
-    case 'wltp_homologation': {
-      if (typeof field.normalizedValue !== 'boolean') {
+    case 'max_vehicle_mass_kg': {
+      if (field.normalizedValue === null || field.normalizedValue <= 0) {
         issues.push({
           fieldKey: field.key,
-          type: 'unrecognized_value',
-          message: `Valore WLTP "${field.value}" non riconosciuto (atteso: si/no).`,
+          type: 'invalid_format',
+          message: `Massa massima veicolo "${field.value}" non riconosciuta come peso in kg.`,
         });
       }
       break;
     }
 
-    case 'vehicle_mass_kg': {
-      if (field.normalizedValue === null || field.normalizedValue <= 0) {
+    case 'co2_emissions_g_km': {
+      const co2 = field.normalizedValue;
+      if (co2 === null || !Number.isInteger(co2) || co2 < 0) {
         issues.push({
           fieldKey: field.key,
           type: 'invalid_format',
-          message: `Massa veicolo "${field.value}" non riconosciuta come peso in kg.`,
+          message: `Emissioni CO2 "${field.value}" non riconosciute come valore g/km.`,
+        });
+      }
+      break;
+    }
+
+    case 'goods_vehicle_over_3_5_tons': {
+      if (
+        field.value !== null &&
+        field.value !== '' &&
+        typeof field.normalizedValue !== 'boolean'
+      ) {
+        issues.push({
+          fieldKey: field.key,
+          type: 'invalid_format',
+          message: `Valore "${field.value}" non riconosciuto come sì/no per veicolo merci oltre 3,5 t.`,
         });
       }
       break;
@@ -155,11 +171,12 @@ function normalizeFieldValue(fieldKey, value) {
       return normalizeEuroClass(value);
     case 'fuel_type':
       return normalizeFuelType(value);
-    case 'wltp_homologation':
     case 'goods_vehicle_over_3_5_tons':
       return normalizeYesNo(value);
-    case 'vehicle_mass_kg':
+    case 'max_vehicle_mass_kg':
       return normalizeMassKg(value);
+    case 'co2_emissions_g_km':
+      return normalizeCo2GKm(value);
     default:
       return normalizeDisplayValue(value);
   }
@@ -263,11 +280,17 @@ function normalizeFuelType(value) {
     return 'gpl';
   }
 
-  if (compact === 'diesel' || compact === 'gasolio') {
+  if (compact === 'diesel' || compact === 'gasolio' || compact === 'die' || compact === 'dsl') {
     return 'diesel';
   }
 
-  if (compact === 'benzina' || compact === 'gasoline' || compact === 'petrol') {
+  const firstToken = compact.split(/\s+/)[0] || '';
+  if (
+    compact === 'benzina' ||
+    compact === 'gasoline' ||
+    compact === 'petrol' ||
+    firstToken === 'benz'
+  ) {
     return 'benzina';
   }
 
@@ -290,6 +313,45 @@ function normalizeMassKg(value) {
 
   const parsed = Number.parseInt(digits, 10);
   return parsed > 0 ? parsed : null;
+}
+
+function normalizeCo2GKm(value) {
+  if (value == null) {
+    return null;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const rounded = Math.round(value);
+    return rounded >= 0 ? rounded : null;
+  }
+
+  const raw = String(value).trim();
+  if (!raw) {
+    return null;
+  }
+
+  const withoutUnits = raw
+    .replace(/\s*g\s*\/\s*km\s*/gi, ' ')
+    .replace(/\s*g\s*\(\s*km\s*\)\s*/gi, ' ')
+    .replace(/\s*g\s*km\s*/gi, ' ')
+    .trim();
+
+  const decimalMatch = withoutUnits.match(/(\d+)[.,](\d{1,2})(?!\d)/);
+  if (decimalMatch) {
+    const parsed = Number.parseFloat(`${decimalMatch[1]}.${decimalMatch[2]}`);
+    if (Number.isFinite(parsed)) {
+      const rounded = Math.round(parsed);
+      return rounded >= 0 ? rounded : null;
+    }
+  }
+
+  const intMatch = withoutUnits.match(/\d+/);
+  if (!intMatch) {
+    return null;
+  }
+
+  const parsedInt = Number.parseInt(intMatch[0], 10);
+  return parsedInt >= 0 ? parsedInt : null;
 }
 
 function normalizeYesNo(value) {
@@ -326,10 +388,60 @@ function normalizeDisplayValue(value) {
   return normalized || null;
 }
 
+const GOODS_VEHICLE_OVER_REVIEW_LABEL = 'Veicolo merci oltre 3,5 t';
+
+/**
+ * Appends a reviewable `goods_vehicle_over_3_5_tons` field derived from `max_vehicle_mass_kg`
+ * when that boolean is not already present. OCR review/confirm payloads then expose the flag
+ * like other first-class fields; prefill still treats mass as suggestion only when the user
+ * supplies an explicit boolean (see transportV2OcrPrefillService).
+ *
+ * @param {Array<object>|undefined|null} fields
+ * @returns {Array<object>}
+ */
+function injectDerivedGoodsVehicleReviewField(fields) {
+  if (!Array.isArray(fields)) {
+    return [];
+  }
+
+  if (fields.some((f) => f && f.key === 'goods_vehicle_over_3_5_tons')) {
+    return fields;
+  }
+
+  const massField = fields.find((f) => f && f.key === 'max_vehicle_mass_kg');
+  if (!massField) {
+    return fields;
+  }
+
+  const massKg = massField.normalizedValue;
+  if (typeof massKg !== 'number' || !Number.isInteger(massKg) || massKg <= 0) {
+    return fields;
+  }
+
+  const over = massKg >= 3500;
+  const synthetic = {
+    key: 'goods_vehicle_over_3_5_tons',
+    label: GOODS_VEHICLE_OVER_REVIEW_LABEL,
+    value: over ? 'Sì' : 'No',
+    normalizedValue: over,
+    confidence: typeof massField.confidence === 'number' ? massField.confidence : 0,
+    required: false,
+    sourceMethod: 'DERIVED_FROM_MASS',
+    sourcePage: massField.sourcePage ?? null,
+    boundingPoly: null,
+  };
+
+  synthetic.warnings = buildFieldWarnings(synthetic);
+
+  return [...fields, synthetic];
+}
+
 module.exports = {
   applyNormalizations,
   normalizeFieldValue,
   normalizeFuelType,
   normalizeYesNo,
   validateNormalizedOutput,
+  injectDerivedGoodsVehicleReviewField,
+  buildFieldWarnings,
 };

@@ -1,11 +1,12 @@
 const repository = require('../repositories/surveyResponsesRepository');
 const { buildTransportV2Derived } = require('./transportV2DerivedBuilder');
 const { calculateTransportV2Results } = require('./transportV2Calculator');
-const { normalizeTransportV2 } = require('./transportV2Normalizer');
+const { sanitizeDraftTransportV2 } = require('./transportV2Normalizer');
 const { validateTransportV2Block2SubmitPayload } = require('./validateTransportv2');
 const {
   TransportV2HttpError,
   assertTransportCertificationAccess,
+  assertTransportV2Editable,
   getTransportV2FromSurveyData,
   parseCertificationId,
 } = require('./transportV2DraftService');
@@ -22,7 +23,9 @@ async function submitTransportV2({ userId, certificationId }) {
     async (client, surveyResponse) => {
       const now = new Date().toISOString();
       const currentTransportV2 = getTransportV2FromSurveyData(surveyResponse.survey_data);
-      const normalizedTransportV2 = normalizeTransportV2(currentTransportV2, {
+      assertTransportV2Editable(currentTransportV2);
+
+      const normalizedTransportV2 = sanitizeDraftTransportV2(currentTransportV2, {
         certificationId: normalizedCertificationId,
         now,
       });

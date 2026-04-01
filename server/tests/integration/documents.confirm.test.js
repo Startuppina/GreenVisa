@@ -10,11 +10,13 @@ const {
   getSurveyResponse,
   grantCertificationAccess,
 } = require('../helpers/fixtures');
+const { useDocAiSuccessByDefault } = require('../helpers/docAiTestStub');
 const { registerIntegrationHooks } = require('../helpers/integrationHooks');
 
 const app = getApp();
 
 registerIntegrationHooks();
+useDocAiSuccessByDefault();
 
 async function uploadAndFetchResult({ user, certificationId }) {
   const uploadResponse = await request(app)

@@ -22,7 +22,19 @@ function createDefaultTransportV2({ certificationId, now }) {
   };
 }
 
-function normalizeTransportV2(rawTransportV2, { certificationId, now }) {
+function isTransportV2Submitted(rawTransportV2) {
+  if (!isPlainObject(rawTransportV2) || !isPlainObject(rawTransportV2.meta)) {
+    return false;
+  }
+  return rawTransportV2.meta.status === 'submitted';
+}
+
+/**
+ * Draft-write sanitization only: coerces shape for editable drafts and clears
+ * backend-owned submit outputs. Do not use on submitted questionnaires (use the
+ * stored JSON as the read model).
+ */
+function sanitizeDraftTransportV2(rawTransportV2, { certificationId, now }) {
   const base = isPlainObject(rawTransportV2)
     ? rawTransportV2
     : createDefaultTransportV2({ certificationId, now });
@@ -48,8 +60,11 @@ function normalizeTransportV2(rawTransportV2, { certificationId, now }) {
   };
 }
 
+/** @deprecated Prefer `sanitizeDraftTransportV2` — same function, clearer intent. */
+const normalizeTransportV2 = sanitizeDraftTransportV2;
+
 function applyDraftWritePayload(existingTransportV2, payload, { certificationId, now }) {
-  const nextTransportV2 = normalizeTransportV2(existingTransportV2, { certificationId, now });
+  const nextTransportV2 = sanitizeDraftTransportV2(existingTransportV2, { certificationId, now });
 
   nextTransportV2.draft = {
     questionnaire_flags: normalizeObject(payload.draft.questionnaire_flags),
@@ -147,6 +162,8 @@ function isPlainObject(value) {
 module.exports = {
   CURRENT_TRANSPORT_V2_VERSION,
   createDefaultTransportV2,
+  isTransportV2Submitted,
+  sanitizeDraftTransportV2,
   normalizeTransportV2,
   applyDraftWritePayload,
 };

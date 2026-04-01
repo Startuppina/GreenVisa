@@ -1,8 +1,10 @@
+const { deriveTransportModeFromVehicleUseText } = require('./ocr/fieldMapper');
+
 const OCR_MANAGED_FIELD_KEYS = [
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_homologation',
+  'co2_emissions_g_km',
   'goods_vehicle_over_3_5_tons',
 ];
 
@@ -10,8 +12,7 @@ const TRANSPORT_V2_FIELD_KEYS = [
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_homologation',
-  'wltp_co2_g_km',
+  'co2_emissions_g_km',
   'wltp_co2_g_km_alt_fuel',
   'goods_vehicle_over_3_5_tons',
   'occupancy_profile_code',
@@ -25,9 +26,35 @@ const DIRECT_FIELD_KEYS = new Set([
   'registration_year',
   'euro_class',
   'fuel_type',
-  'wltp_homologation',
+  'co2_emissions_g_km',
   'goods_vehicle_over_3_5_tons',
 ]);
+
+function pickMassKgFromReviewFields(reviewFields) {
+  if (!Array.isArray(reviewFields)) {
+    return null;
+  }
+
+  const massField = reviewFields.find((f) => f && f.key === 'max_vehicle_mass_kg');
+  if (!massField) {
+    return null;
+  }
+
+  return normalizePositiveInteger(massField.normalizedValue);
+}
+
+function hasExplicitGoodsVehicleBooleanInReview(reviewFields) {
+  if (!Array.isArray(reviewFields)) {
+    return false;
+  }
+
+  return reviewFields.some(
+    (f) =>
+      f &&
+      f.key === 'goods_vehicle_over_3_5_tons' &&
+      typeof f.normalizedValue === 'boolean',
+  );
+}
 
 function buildTransportV2VehiclePrefill({
   documentId,
@@ -36,9 +63,14 @@ function buildTransportV2VehiclePrefill({
   vehicleId = null,
 }) {
   const normalizedDocumentId = normalizePositiveInteger(documentId);
+  const ocrTransportMode = transportModeFromVehicleUseReviewFields(reviewFields);
+  const massKgFromReview = pickMassKgFromReviewFields(reviewFields);
+  const skipMassDerivedGoodsBool = hasExplicitGoodsVehicleBooleanInReview(reviewFields);
+
   const row = {
     vehicle_id: normalizeVehicleId(vehicleId, normalizedDocumentId),
-    transport_mode: normalizeTransportMode(transportMode),
+    transport_mode:
+      normalizeTransportMode(transportMode) ?? ocrTransportMode ?? null,
     ocr_document_id: normalizedDocumentId,
     fields: createEmptyFields(),
     field_sources: {},
@@ -58,16 +90,34 @@ function buildTransportV2VehiclePrefill({
     const { key } = field;
 
     if (DIRECT_FIELD_KEYS.has(key)) {
-      applyDirectField(row, field);
+      applyDirectField(row, field, { massKgFromReview });
       return;
     }
 
-    if (key === 'vehicle_mass_kg') {
-      applyVehicleMassDerivedField(row, field);
+    if (key === 'max_vehicle_mass_kg') {
+      applyMaxVehicleMassDerivedField(row, field, skipMassDerivedGoodsBool);
     }
   });
 
   return row;
+}
+
+function transportModeFromVehicleUseReviewFields(reviewFields) {
+  if (!Array.isArray(reviewFields)) {
+    return null;
+  }
+
+  const field = reviewFields.find((f) => f && f.key === 'vehicle_use_text');
+  if (!field) {
+    return null;
+  }
+
+  const raw =
+    field.normalizedValue !== undefined && field.normalizedValue !== null
+      ? field.normalizedValue
+      : field.value;
+
+  return deriveTransportModeFromVehicleUseText(raw);
 }
 
 function mergeOcrVehiclePrefill(existingVehicle, prefillVehicle, overrideTransportMode = null) {
@@ -102,7 +152,26 @@ function mergeOcrVehiclePrefill(existingVehicle, prefillVehicle, overrideTranspo
   };
 
   OCR_MANAGED_FIELD_KEYS.forEach((fieldKey) => {
-    nextVehicle.fields[fieldKey] = prefillVehicle.fields[fieldKey];
+    const prefillValue = prefillVehicle.fields[fieldKey];
+    if (
+      fieldKey === 'co2_emissions_g_km' &&
+      (prefillValue === null || prefillValue === undefined)
+    ) {
+      nextVehicle.fields[fieldKey] = existingVehicle.fields[fieldKey];
+      if (Object.prototype.hasOwnProperty.call(existingVehicle.field_sources, fieldKey)) {
+        nextVehicle.field_sources[fieldKey] = existingVehicle.field_sources[fieldKey];
+      } else {
+        delete nextVehicle.field_sources[fieldKey];
+      }
+      if (Object.prototype.hasOwnProperty.call(existingVehicle.field_warnings, fieldKey)) {
+        nextVehicle.field_warnings[fieldKey] = existingVehicle.field_warnings[fieldKey];
+      } else {
+        delete nextVehicle.field_warnings[fieldKey];
+      }
+      return;
+    }
+
+    nextVehicle.fields[fieldKey] = prefillValue;
 
     if (Object.prototype.hasOwnProperty.call(prefillVehicle.field_sources, fieldKey)) {
       nextVehicle.field_sources[fieldKey] = prefillVehicle.field_sources[fieldKey];
@@ -127,7 +196,7 @@ function createEmptyFields() {
   }, {});
 }
 
-function applyDirectField(row, field) {
+function applyDirectField(row, field, ctx = {}) {
   if (!Object.prototype.hasOwnProperty.call(row.fields, field.key)) {
     return;
   }
@@ -135,10 +204,26 @@ function applyDirectField(row, field) {
   row.fields[field.key] = normalizeFieldValue(field.normalizedValue);
 
   if (row.fields[field.key] !== null) {
+    let source = 'ocr';
+    if (field.key === 'goods_vehicle_over_3_5_tons') {
+      const massKg = ctx.massKgFromReview;
+      const suggested = massKg !== null && massKg !== undefined ? massKg >= 3500 : null;
+      if (field.sourceMethod === 'DERIVED_FROM_MASS') {
+        source = 'ocr_derived';
+      }
+      if (
+        suggested !== null &&
+        typeof row.fields[field.key] === 'boolean' &&
+        row.fields[field.key] !== suggested
+      ) {
+        source = 'user';
+      }
+    }
+
     row.field_sources[field.key] = buildFieldSource({
       documentId: row.ocr_document_id,
       confidence: field.confidence,
-      source: 'ocr',
+      source,
     });
   }
 
@@ -148,13 +233,17 @@ function applyDirectField(row, field) {
   }
 }
 
-function applyVehicleMassDerivedField(row, field) {
+function applyMaxVehicleMassDerivedField(row, field, skipBoolDerivation) {
   const massKg = normalizePositiveInteger(field.normalizedValue);
   if (massKg === null) {
     const warnings = buildWarnings(field);
-    if (warnings.length > 0) {
+    if (warnings.length > 0 && !skipBoolDerivation) {
       row.field_warnings.goods_vehicle_over_3_5_tons = warnings;
     }
+    return;
+  }
+
+  if (skipBoolDerivation) {
     return;
   }
 

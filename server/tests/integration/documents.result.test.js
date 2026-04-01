@@ -7,11 +7,13 @@ const {
   createUserFixture,
   grantCertificationAccess,
 } = require('../helpers/fixtures');
+const { useDocAiSuccessByDefault } = require('../helpers/docAiTestStub');
 const { registerIntegrationHooks } = require('../helpers/integrationHooks');
 
 const app = getApp();
 
 registerIntegrationHooks();
+useDocAiSuccessByDefault();
 
 async function uploadTransportDocument({ user, certificationId }) {
   const response = await request(app)
