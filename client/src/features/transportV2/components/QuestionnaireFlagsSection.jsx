@@ -57,7 +57,7 @@ function CoverageField({ field, value, onChange, error, disabled }) {
         disabled={disabled}
         onChange={(event) => onChange(event.target.value || null)}
       >
-        <option value="">Select an option</option>
+        <option value="">Seleziona un&apos;opzione</option>
         {COVERAGE_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -73,7 +73,7 @@ export default function QuestionnaireFlagsSection({ questionnaireFlags, fieldErr
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5">
-        <h2 className="text-xl font-semibold text-slate-900">Questionnaire flags</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Domande del questionario</h2>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

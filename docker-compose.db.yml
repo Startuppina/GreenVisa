@@ -19,11 +19,8 @@ services:
     image: sosedoff/pgweb
     container_name: greenvisa-pgweb
     environment:
-      PGW_DB_HOST: db
-      PGW_DB_PORT: 5432
-      PGW_DB_USER: admin
-      PGW_DB_PASS: pass123
-      PGW_DB_NAME: green-visa
+      # pgweb legge DATABASE_URL (non PGW_*); così apre subito il DB senza form di connessione
+      DATABASE_URL: postgres://admin:pass123@db:5432/green-visa?sslmode=disable
     ports:
       - "8081:8081"
     depends_on:

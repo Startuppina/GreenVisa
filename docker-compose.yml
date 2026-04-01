@@ -47,10 +47,7 @@ services:
   pgweb:
     image: sosedoff/pgweb
     environment:
-      PGW_DB_HOST: db
-      PGW_DB_USER: admin
-      PGW_DB_PASS: pass123
-      PGW_DB_NAME: green-visa
+      DATABASE_URL: postgres://admin:pass123@db:5432/green-visa?sslmode=disable
     ports:
       - "8081:8081"
     depends_on:

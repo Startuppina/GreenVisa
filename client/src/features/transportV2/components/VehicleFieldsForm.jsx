@@ -65,12 +65,12 @@ export default function VehicleFieldsForm({
   return (
     <fieldset disabled={readOnly} className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
-        <InputField label="Transport mode" error={getFirstFieldError(fieldErrors, vehiclePath('transport_mode'))}>
+        <InputField label="Modalità di trasporto" error={getFirstFieldError(fieldErrors, vehiclePath('transport_mode'))}>
           <BaseSelect
             value={vehicle.transport_mode ?? ''}
             onChange={(event) => onTransportModeChange(event.target.value || null)}
           >
-            <option value="">Select transport mode</option>
+            <option value="">Seleziona modalità</option>
             {TRANSPORT_MODE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -79,14 +79,14 @@ export default function VehicleFieldsForm({
           </BaseSelect>
         </InputField>
 
-        <InputField label="OCR document id">
-          <BaseInput disabled value={vehicle.ocr_document_id ?? 'Manual vehicle'} />
+        <InputField label="ID documento OCR">
+          <BaseInput disabled value={vehicle.ocr_document_id ?? 'Veicolo manuale'} />
         </InputField>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <InputField
-          label="Registration year"
+          label="Anno di immatricolazione"
           error={getFirstFieldError(fieldErrors, fieldPath('registration_year'))}
         >
           <BaseInput
@@ -96,12 +96,12 @@ export default function VehicleFieldsForm({
           />
         </InputField>
 
-        <InputField label="Euro class" error={getFirstFieldError(fieldErrors, fieldPath('euro_class'))}>
+        <InputField label="Classe Euro" error={getFirstFieldError(fieldErrors, fieldPath('euro_class'))}>
           <BaseSelect
             value={vehicle.fields.euro_class ?? ''}
             onChange={(event) => onFieldChange('euro_class', event.target.value || null)}
           >
-            <option value="">Select euro class</option>
+            <option value="">Seleziona classe Euro</option>
             {EURO_CLASS_OPTIONS.map((value) => (
               <option key={value} value={value}>
                 {value}
@@ -110,22 +110,22 @@ export default function VehicleFieldsForm({
           </BaseSelect>
         </InputField>
 
-        <InputField label="Fuel type" error={getFirstFieldError(fieldErrors, fieldPath('fuel_type'))}>
+        <InputField label="Tipo di carburante" error={getFirstFieldError(fieldErrors, fieldPath('fuel_type'))}>
           <BaseSelect
             value={vehicle.fields.fuel_type ?? ''}
             onChange={(event) => onFieldChange('fuel_type', event.target.value || null)}
           >
-            <option value="">Select fuel type</option>
-            {FUEL_TYPE_OPTIONS.map((value) => (
-              <option key={value} value={value}>
-                {value}
+            <option value="">Seleziona carburante</option>
+            {FUEL_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </BaseSelect>
         </InputField>
 
         <InputField
-          label="CO₂ emissions (g/km)"
+          label="Emissioni CO₂ (g/km)"
           error={getFirstFieldError(fieldErrors, fieldPath('co2_emissions_g_km'))}
         >
           <BaseInput
@@ -137,7 +137,7 @@ export default function VehicleFieldsForm({
 
         {showAltFuelField ? (
           <InputField
-            label="CO₂ emissions — alternate fuel (g/km)"
+            label="Emissioni CO₂ — carburante alternativo (g/km)"
             error={getFirstFieldError(fieldErrors, fieldPath('wltp_co2_g_km_alt_fuel'))}
           >
             <BaseInput
@@ -151,7 +151,7 @@ export default function VehicleFieldsForm({
         ) : null}
 
         <InputField
-          label="Last revision date"
+          label="Data ultima revisione"
           error={getFirstFieldError(fieldErrors, fieldPath('last_revision_date'))}
         >
           <BaseInput
@@ -162,14 +162,14 @@ export default function VehicleFieldsForm({
         </InputField>
 
         <InputField
-          label="Blue sticker"
+          label="Adesivo blu"
           error={getFirstFieldError(fieldErrors, fieldPath('blue_sticker'))}
         >
           <BaseSelect
             value={vehicle.fields.blue_sticker == null ? '' : String(vehicle.fields.blue_sticker)}
             onChange={(event) => onFieldChange('blue_sticker', toBoolean(event.target.value))}
           >
-            <option value="">Select value</option>
+            <option value="">Seleziona valore</option>
             {YES_NO_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -178,7 +178,7 @@ export default function VehicleFieldsForm({
           </BaseSelect>
         </InputField>
 
-        <InputField label="Annual km" error={getFirstFieldError(fieldErrors, fieldPath('annual_km'))}>
+        <InputField label="Km annuali" error={getFirstFieldError(fieldErrors, fieldPath('annual_km'))}>
           <BaseInput
             type="number"
             value={vehicle.fields.annual_km ?? ''}
@@ -190,7 +190,7 @@ export default function VehicleFieldsForm({
       {isPassenger ? (
         <div className="grid gap-4 md:grid-cols-2">
           <InputField
-            label="Occupancy profile code"
+            label="Codice profilo occupazione"
             error={getFirstFieldError(fieldErrors, fieldPath('occupancy_profile_code'))}
           >
             <BaseSelect
@@ -199,7 +199,7 @@ export default function VehicleFieldsForm({
                 onFieldChange('occupancy_profile_code', parseIntegerOrNull(event.target.value))
               }
             >
-              <option value="">Select profile</option>
+              <option value="">Seleziona profilo</option>
               {PROFILE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -208,8 +208,8 @@ export default function VehicleFieldsForm({
             </BaseSelect>
           </InputField>
 
-          <InputField label="Load profile code">
-            <BaseInput disabled value="Not used for passenger vehicles" />
+          <InputField label="Codice profilo di carico">
+            <BaseInput disabled value="Non usato per veicoli passeggeri" />
           </InputField>
         </div>
       ) : null}
@@ -217,7 +217,7 @@ export default function VehicleFieldsForm({
       {isGoods ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <InputField
-            label="Goods vehicle over 3.5 tons"
+            label="Veicolo merci oltre 3,5 t"
             error={getFirstFieldError(fieldErrors, fieldPath('goods_vehicle_over_3_5_tons'))}
           >
             <BaseSelect
@@ -228,7 +228,7 @@ export default function VehicleFieldsForm({
               }
               onChange={(event) => onFieldChange('goods_vehicle_over_3_5_tons', toBoolean(event.target.value))}
             >
-              <option value="">Select value</option>
+              <option value="">Seleziona valore</option>
               {YES_NO_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -238,14 +238,14 @@ export default function VehicleFieldsForm({
           </InputField>
 
           <InputField
-            label="Load profile code"
+            label="Codice profilo di carico"
             error={getFirstFieldError(fieldErrors, fieldPath('load_profile_code'))}
           >
             <BaseSelect
               value={vehicle.fields.load_profile_code ?? ''}
               onChange={(event) => onFieldChange('load_profile_code', parseIntegerOrNull(event.target.value))}
             >
-              <option value="">Select profile</option>
+              <option value="">Seleziona profilo</option>
               {PROFILE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -254,30 +254,30 @@ export default function VehicleFieldsForm({
             </BaseSelect>
           </InputField>
 
-          <InputField label="Occupancy profile code">
-            <BaseInput disabled value="Not used for goods vehicles" />
+          <InputField label="Codice profilo occupazione">
+            <BaseInput disabled value="Non usato per veicoli merci" />
           </InputField>
         </div>
       ) : null}
 
       {!isPassenger && !isGoods ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-          Select a transport mode to unlock the mode-specific fields.
+          Seleziona una modalità di trasporto per mostrare i campi specifici.
         </div>
       ) : null}
 
-      <InputField label="Row notes">
+      <InputField label="Note sulla riga">
         <textarea
           className="min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500"
           value={vehicle.row_notes ?? ''}
           onChange={(event) => onNotesChange(event.target.value)}
-          placeholder="Optional internal notes for this row"
+          placeholder="Note facoltative per questa riga"
         />
       </InputField>
 
       {Object.keys(vehicle.field_sources || {}).length ? (
         <div className="rounded-xl bg-slate-50 p-4">
-          <div className="text-sm font-medium text-slate-900">Field sources</div>
+          <div className="text-sm font-medium text-slate-900">Origine dei campi</div>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
             {JSON.stringify(vehicle.field_sources, null, 2)}
           </pre>
@@ -286,7 +286,7 @@ export default function VehicleFieldsForm({
 
       {Object.keys(vehicle.field_warnings || {}).length ? (
         <div className="rounded-xl bg-amber-50 p-4">
-          <div className="text-sm font-medium text-amber-900">Field warnings</div>
+          <div className="text-sm font-medium text-amber-900">Avvisi sui campi</div>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-xs text-amber-800">
             {JSON.stringify(vehicle.field_warnings, null, 2)}
           </pre>

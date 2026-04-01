@@ -5,6 +5,7 @@ Install npm 20
 ## install root deps
 ```bash
 npm install
+```
 
 ## install backend deps
 ```bash
@@ -34,19 +35,13 @@ This starts:
 ## run docker compose (after first time no need to rebuild)
 docker compose -f docker-compose.db.yml up -d
 
-## stop and wipe the local database
+## reset database
 
-Removes containers and the Postgres volume so the next `up` reapplies `server/init.sql` from scratch.
+`down -v` removes the Postgres volume; next `up` reapplies `server/init.sql`. Run from repo root (where `docker-compose.db.yml` lives).
 
-```bash
-docker compose -f docker-compose.db.yml down -v
-```
 
-For local backend development, make sure `server/.env` uses:
-
-```bash
-DB_HOST=localhost
-DB_PORT=5432
+```powershell
+docker compose -f docker-compose.db.yml down -v; docker compose -f docker-compose.db.yml up -d
 ```
 
 ## open pgweb

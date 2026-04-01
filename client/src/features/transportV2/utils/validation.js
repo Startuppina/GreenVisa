@@ -1,17 +1,17 @@
 export const TRANSPORT_MODE_OPTIONS = [
-  { value: 'passenger', label: 'Passenger' },
-  { value: 'goods', label: 'Goods' },
+  { value: 'passenger', label: 'Passeggeri' },
+  { value: 'goods', label: 'Merci' },
 ];
 
 export const YES_NO_OPTIONS = [
-  { value: 'true', label: 'Yes' },
+  { value: 'true', label: 'Sì' },
   { value: 'false', label: 'No' },
 ];
 
 export const COVERAGE_OPTIONS = [
-  { value: 'all', label: 'All' },
-  { value: 'some', label: 'Some' },
-  { value: 'none', label: 'None' },
+  { value: 'all', label: 'Tutti' },
+  { value: 'some', label: 'Alcuni' },
+  { value: 'none', label: 'Nessuno' },
 ];
 
 export const EURO_CLASS_OPTIONS = [
@@ -29,15 +29,15 @@ export const EURO_CLASS_OPTIONS = [
 ];
 
 export const FUEL_TYPE_OPTIONS = [
-  'diesel',
-  'benzina',
-  'gpl',
-  'metano',
-  'metano_monovalente',
-  'mild_hybrid',
-  'full_hybrid',
-  'plug_in_hybrid',
-  'elettrico',
+  { value: 'diesel', label: 'Diesel' },
+  { value: 'benzina', label: 'Benzina' },
+  { value: 'gpl', label: 'GPL' },
+  { value: 'metano', label: 'Metano' },
+  { value: 'metano_monovalente', label: 'Metano monovalente' },
+  { value: 'mild_hybrid', label: 'Mild hybrid' },
+  { value: 'full_hybrid', label: 'Full hybrid' },
+  { value: 'plug_in_hybrid', label: 'Plug-in hybrid' },
+  { value: 'elettrico', label: 'Elettrico' },
 ];
 
 export const PROFILE_OPTIONS = [
@@ -52,32 +52,32 @@ export const PROFILE_OPTIONS = [
 export const QUESTIONNAIRE_FLAG_FIELDS = [
   {
     key: 'compliance_with_vehicle_regulations',
-    label: 'Vehicles comply with regulations',
+    label: 'I veicoli rispettano la normativa',
     type: 'boolean',
   },
   {
     key: 'uses_navigator',
-    label: 'Uses navigator systems',
+    label: 'Utilizzo di sistemi di navigazione',
     type: 'boolean',
   },
   {
     key: 'uses_class_a_tires',
-    label: 'Class A tire adoption',
+    label: 'Adozione di pneumatici di classe A',
     type: 'coverage',
   },
   {
     key: 'eco_drive_training',
-    label: 'Eco-drive training coverage',
+    label: 'Copertura formazione eco-guida',
     type: 'coverage',
   },
   {
     key: 'interested_in_mobility_manager_course',
-    label: 'Interested in mobility manager course',
+    label: 'Interesse a un corso per mobility manager',
     type: 'boolean',
   },
   {
     key: 'interested_in_second_level_certification',
-    label: 'Interested in second level certification',
+    label: 'Interesse alla certificazione di secondo livello',
     type: 'boolean',
   },
 ];
@@ -116,46 +116,46 @@ export function getVehicleValidationErrors(vehicle, vehicleIndex) {
   const fields = vehicle?.fields || {};
 
   if (!vehicle?.vehicle_id) {
-    addError(errors, `${basePath}.vehicle_id`, 'Vehicle id is missing.');
+    addError(errors, `${basePath}.vehicle_id`, 'Identificativo veicolo mancante.');
   }
 
   if (!['goods', 'passenger'].includes(vehicle?.transport_mode)) {
-    addError(errors, `${basePath}.transport_mode`, 'Select a transport mode.');
+    addError(errors, `${basePath}.transport_mode`, 'Seleziona una modalità di trasporto.');
   }
 
   if (fields.registration_year == null) {
-    addError(errors, `${basePath}.fields.registration_year`, 'Registration year is required.');
+    addError(errors, `${basePath}.fields.registration_year`, "L'anno di immatricolazione è obbligatorio.");
   }
 
   if (!fields.euro_class) {
-    addError(errors, `${basePath}.fields.euro_class`, 'Euro class is required.');
+    addError(errors, `${basePath}.fields.euro_class`, 'La classe Euro è obbligatoria.');
   }
 
   if (!fields.fuel_type) {
-    addError(errors, `${basePath}.fields.fuel_type`, 'Fuel type is required.');
+    addError(errors, `${basePath}.fields.fuel_type`, 'Il tipo di carburante è obbligatorio.');
   }
 
   if (fields.co2_emissions_g_km == null) {
-    addError(errors, `${basePath}.fields.co2_emissions_g_km`, 'CO₂ emissions (g/km) is required.');
+    addError(errors, `${basePath}.fields.co2_emissions_g_km`, 'Le emissioni CO₂ (g/km) sono obbligatorie.');
   }
 
   if (!fields.last_revision_date) {
-    addError(errors, `${basePath}.fields.last_revision_date`, 'Last revision date is required.');
+    addError(errors, `${basePath}.fields.last_revision_date`, "La data dell'ultima revisione è obbligatoria.");
   }
 
   if (fields.blue_sticker == null) {
-    addError(errors, `${basePath}.fields.blue_sticker`, 'Blue sticker value is required.');
+    addError(errors, `${basePath}.fields.blue_sticker`, "Il valore per l'adesivo blu è obbligatorio.");
   }
 
   if (fields.annual_km == null) {
-    addError(errors, `${basePath}.fields.annual_km`, 'Annual km is required.');
+    addError(errors, `${basePath}.fields.annual_km`, 'I km annuali sono obbligatori.');
   }
 
   if (isDualFuelType(fields.fuel_type) && fields.wltp_co2_g_km_alt_fuel == null) {
     addError(
       errors,
       `${basePath}.fields.wltp_co2_g_km_alt_fuel`,
-      'Second CO₂ emissions value (g/km) is required for GPL or methane vehicles.',
+      'Per veicoli a GPL o metano è obbligatorio il secondo valore CO₂ (g/km).',
     );
   }
 
@@ -163,7 +163,7 @@ export function getVehicleValidationErrors(vehicle, vehicleIndex) {
     addError(
       errors,
       `${basePath}.fields.occupancy_profile_code`,
-      'Occupancy profile is required for passenger vehicles.',
+      'Il profilo di occupazione è obbligatorio per i veicoli passeggeri.',
     );
   }
 
@@ -171,7 +171,7 @@ export function getVehicleValidationErrors(vehicle, vehicleIndex) {
     addError(
       errors,
       `${basePath}.fields.load_profile_code`,
-      'Load profile is required for goods vehicles.',
+      'Il profilo di carico è obbligatorio per i veicoli merci.',
     );
   }
 
@@ -179,7 +179,7 @@ export function getVehicleValidationErrors(vehicle, vehicleIndex) {
     addError(
       errors,
       `${basePath}.fields.goods_vehicle_over_3_5_tons`,
-      'Weight class is required for goods vehicles.',
+      'La classe di peso è obbligatoria per i veicoli merci.',
     );
   }
 
@@ -193,12 +193,12 @@ export function validateTransportV2ForSubmit(transportV2) {
 
   QUESTIONNAIRE_FLAG_FIELDS.forEach((field) => {
     if (questionnaireFlags[field.key] == null) {
-      addError(errors, `draft.questionnaire_flags.${field.key}`, `${field.label} is required.`);
+      addError(errors, `draft.questionnaire_flags.${field.key}`, `È obbligatorio rispondere: ${field.label}.`);
     }
   });
 
   if (!vehicles.length) {
-    addError(errors, 'draft.vehicles', 'Add at least one vehicle before submit.');
+    addError(errors, 'draft.vehicles', "Aggiungi almeno un veicolo prima dell'invio.");
   }
 
   vehicles.forEach((vehicle, index) => {
@@ -215,7 +215,7 @@ export function groupErrorsByField(errors = []) {
     }
 
     const current = accumulator[error.field] || [];
-    current.push(error.message || 'Unknown validation error.');
+    current.push(error.message || 'Errore di validazione sconosciuto.');
     accumulator[error.field] = current;
     return accumulator;
   }, {});

@@ -136,10 +136,6 @@ function ProductDetails() {
                     </div>
                 </div>
             </div>
-            <div className="w-full h-auto md:p-8 text-arial text-xl text-black text-center flex flex-col gap-5 items-center">
-                <h1 className="text-2xl font-bold">Info</h1>
-                <p className="p-4 w-full lg:w-[40%] text-justify">Dopo l’acquisto riceverai sulla tua mail un link univoco e privato che ti darà accesso al questionario che ci consentirà di calcolare in tempo reale le emissioni di CO2 della tua struttura/azienda.</p>
-            </div>
             <h1 className="text-3xl font-bold text-center">Altri prodotti</h1>
 
             <div className="w-full mx-auto">

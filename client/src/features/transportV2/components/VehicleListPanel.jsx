@@ -14,9 +14,9 @@ export default function VehicleListPanel({
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Vehicles</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Veicoli</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Keep the list compact here, then edit the selected row in detail on the right.
+            Elenco sintetico; modifica i dettagli della riga selezionata nel pannello a destra.
           </p>
         </div>
         {!readOnly && (
@@ -25,7 +25,7 @@ export default function VehicleListPanel({
             type="button"
             onClick={onAddVehicle}
           >
-            Add vehicle
+            Aggiungi veicolo
           </button>
         )}
       </div>
@@ -49,7 +49,7 @@ export default function VehicleListPanel({
           ))
         ) : (
           <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
-            No vehicles yet. Add one manually or create one from OCR below.
+            Nessun veicolo. Aggiungine uno manualmente o creane uno dall&apos;OCR qui sotto.
           </div>
         )}
       </div>

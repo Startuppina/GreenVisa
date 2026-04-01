@@ -33,7 +33,7 @@ export default function VehicleListItem({ vehicle, index, isSelected, onSelect, 
             type="button"
             onClick={onDelete}
           >
-            Delete
+            Elimina
           </button>
         )}
       </div>

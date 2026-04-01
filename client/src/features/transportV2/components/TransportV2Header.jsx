@@ -1,6 +1,6 @@
 function formatTimestamp(value) {
   if (!value) {
-    return 'Not available';
+    return 'Non disponibile';
   }
 
   const date = new Date(value);
@@ -8,7 +8,13 @@ function formatTimestamp(value) {
     return value;
   }
 
-  return date.toLocaleString();
+  return date.toLocaleString('it-IT');
+}
+
+function statusLabel(status) {
+  if (status === 'submitted') return 'Inviato';
+  if (status === 'draft') return 'Bozza';
+  return status || 'Bozza';
 }
 
 function StatusPill({ status }) {
@@ -19,7 +25,7 @@ function StatusPill({ status }) {
 
   return (
     <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${className}`}>
-      {status || 'draft'}
+      {statusLabel(status)}
     </span>
   );
 }
@@ -30,7 +36,7 @@ export default function TransportV2Header({ meta, certificationId }) {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-slate-900">
-            Certification #{certificationId}
+            Certificazione n. {certificationId}
           </h1>
         </div>
         <StatusPill status={meta?.status} />
@@ -38,19 +44,19 @@ export default function TransportV2Header({ meta, certificationId }) {
 
       <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-xl bg-slate-50 p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Version</div>
-          <div className="mt-1 text-base font-medium text-slate-900">{meta?.version ?? 'n/a'}</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Versione</div>
+          <div className="mt-1 text-base font-medium text-slate-900">{meta?.version ?? 'n/d'}</div>
         </div>
         <div className="rounded-xl bg-slate-50 p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Started</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Inizio</div>
           <div className="mt-1 text-sm text-slate-900">{formatTimestamp(meta?.started_at)}</div>
         </div>
         <div className="rounded-xl bg-slate-50 p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Updated</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Ultimo aggiornamento</div>
           <div className="mt-1 text-sm text-slate-900">{formatTimestamp(meta?.updated_at)}</div>
         </div>
         <div className="rounded-xl bg-slate-50 p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Submitted</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Invio</div>
           <div className="mt-1 text-sm text-slate-900">{formatTimestamp(meta?.submitted_at)}</div>
         </div>
       </div>

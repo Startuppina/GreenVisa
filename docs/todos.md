@@ -10,6 +10,7 @@
 
 ## OCR e gestione veicoli
 -  **Miglioramento:** far sì che l’OCR, durante l’aggiunta di un veicolo, legga anche il nome del modello (es. `Fiat Punto`) e lo mostri come nome del veicolo nella lista.
+- miglioramento aggiungere un altro step in cui l'utente deve fare azione tra il caricamento delle carte di circolazione e la chiamata della pipeline ocr sulle immagini caricate, con la possibilità di rimuovere una o piu immagini. Magari con anche una preview.
 
 
 ## Greenness e analisi veicoli
@@ -33,3 +34,6 @@
 ## Questionari
 - **Bugfix** spesso quando il campo è numerico c'è zero di default, ma quando ci clicchi per scrivere succede che ci sta scritto dentro "02", se pre esempio si è inserito 2.
 -  **Bugfix** vedere se l'intended behaviour è che possono essere aggiunti edifici a sbafo senza pagarli o se si vuole usare il comportamento che puoi aggiungerne in base a quante certificazioni hai comprato.
+
+## Bo
+- bugfix togliere tag e codice quando l'admin aggiunge una certificazione, controllare prima che non servono a niente ma sembra che non servano ad un cazzo.

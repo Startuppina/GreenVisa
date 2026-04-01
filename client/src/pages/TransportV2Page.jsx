@@ -74,7 +74,7 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
 
   usePrompt({
     when: ui.isDirty,
-    message: 'You have unsaved Transport V2 changes. Leave this page?',
+    message: 'Hai modifiche non salvate al questionario trasporti. Uscire dalla pagina?',
   });
 
   const handleFileSelection = async (event) => {
@@ -98,7 +98,7 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
     return withSiteChrome(
       <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
         <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          Loading Transport V2 draft...
+          Caricamento bozza questionario trasporti…
         </div>
       </main>,
     );
@@ -108,14 +108,14 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
     return withSiteChrome(
       <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
         <div className="mx-auto max-w-3xl rounded-2xl border border-rose-200 bg-white p-8 shadow-sm">
-          <h1 className="text-2xl font-semibold text-slate-900">Transport V2 unavailable</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Questionario trasporti non disponibile</h1>
           <p className="mt-3 text-sm text-rose-700">{ui.loadError}</p>
           <button
             className="mt-5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
             type="button"
             onClick={loadTransportV2}
           >
-            Retry
+            Riprova
           </button>
         </div>
       </main>,
