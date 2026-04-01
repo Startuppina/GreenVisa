@@ -18,6 +18,14 @@ function JsonBlock({ title, value }) {
 export default function TransportResultsPanel({ derived, results }) {
   const score = results?.score;
   const co2 = results?.co2;
+  const co2TonsPerYear =
+    co2?.total_tons_per_year === null || co2?.total_tons_per_year === undefined
+      ? null
+      : Number(co2.total_tons_per_year);
+  const co2TonsPerYearDisplay =
+    co2TonsPerYear === null || Number.isNaN(co2TonsPerYear)
+      ? 'n/a'
+      : co2TonsPerYear.toFixed(2);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -38,7 +46,7 @@ export default function TransportResultsPanel({ derived, results }) {
         <div className="rounded-xl bg-sky-50 p-4">
           <div className="text-sm font-medium text-sky-900">CO2 tons/year</div>
           <div className="mt-2 text-3xl font-semibold text-sky-700">
-            {co2?.total_tons_per_year ?? 'n/a'}
+            {co2TonsPerYearDisplay}
           </div>
         </div>
         <div className="rounded-xl bg-slate-50 p-4">

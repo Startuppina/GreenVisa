@@ -8,27 +8,8 @@ import PassInfo from './passInfo';
 import { debounce } from 'lodash';
 
 const normalizeVat = (value) => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-const normalizeEmailDomain = (value) => String(value || '').split('@')[1]?.trim().toLowerCase() || '';
-const normalizeWebsiteDomain = (value) => {
-    const normalizedWebsite = String(value || '').trim().toLowerCase();
-
-    if (!normalizedWebsite) {
-        return '';
-    }
-
-    try {
-        const websiteUrl = normalizedWebsite.startsWith('http://') || normalizedWebsite.startsWith('https://')
-            ? normalizedWebsite
-            : `https://${normalizedWebsite}`;
-
-        return new URL(websiteUrl).hostname.replace(/^www\./, '');
-    } catch (error) {
-        return normalizedWebsite
-            .replace(/^https?:\/\//, '')
-            .replace(/^www\./, '')
-            .split('/')[0];
-    }
-};
+const FIELD_REQUIRED_MESSAGE = 'Campo obbligatorio';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const Signup = () => {
     const [username, setUsername] = useState('');
@@ -51,22 +32,117 @@ const Signup = () => {
     const [isValid, setIsValid] = useState(null); // Gestisci lo stato della validazione della partita iva
     const [isCheckingVat, setIsCheckingVat] = useState(false);
     const [noCompanyEmail, setNoCompanyEmail] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
     const navigate = useNavigate();
 
-    const handleUsernameChange = (e) => setUsername(e.target.value);
-    const handleCompanyNameChange = (e) => setCompany_name(e.target.value);
-    const handleLegalHeadquarterChange = (e) => setLegalHeadquarter(e.target.value);
-    const handlePhoneChange = (value) => setPhone(value);
-    const handleEmailChange = (e) => setEmail(e.target.value);
-    const handleConfirmEmailChange = (e) => setConfirmEmail(e.target.value);
-    const handlePasswordChange = (e) => setPassword(e.target.value);
-    const handleConfirmPasswordChange = (e) => setConfirmPassword(e.target.value);
-    const handleTermsChange = (e) => setAcceptedTerms(e.target.checked);
-    const handleCompanyWebsiteChange = (e) => setCompanyWebsite(e.target.value);
-    const handlePecChange = (e) => setPec(e.target.value);
+    const clearFieldErrors = (...keys) => {
+        setFieldErrors((prevErrors) => {
+            const nextErrors = { ...prevErrors };
+            keys.forEach((key) => {
+                delete nextErrors[key];
+            });
+            return nextErrors;
+        });
+    };
+
+    const getFieldClassName = (fieldKey, textClass = 'text-gray-900') =>
+        `bg-gray-50 border ${fieldErrors[fieldKey] ? 'border-rose-500' : 'border-gray-300'} ${textClass} sm:text-sm rounded-lg block w-full p-2.5`;
+
+    const getMissingFieldsErrors = () => {
+        const missingErrors = {};
+        if (!username.trim()) missingErrors.username = FIELD_REQUIRED_MESSAGE;
+        if (!phone.trim()) missingErrors.phone = FIELD_REQUIRED_MESSAGE;
+        if (!password.trim()) missingErrors.password = FIELD_REQUIRED_MESSAGE;
+        if (!confirmPassword.trim()) missingErrors.confirmPassword = FIELD_REQUIRED_MESSAGE;
+        if (!company_name.trim()) missingErrors.company_name = FIELD_REQUIRED_MESSAGE;
+        if (!legal_headquarter.trim()) missingErrors.legal_headquarter = FIELD_REQUIRED_MESSAGE;
+        if (!pec.trim()) missingErrors.pec = FIELD_REQUIRED_MESSAGE;
+        if (!company_website.trim()) missingErrors.company_website = FIELD_REQUIRED_MESSAGE;
+        if (!noCompanyEmail && !email.trim()) missingErrors.email = FIELD_REQUIRED_MESSAGE;
+        if (!noCompanyEmail && !confirmEmail.trim()) missingErrors.confirmEmail = FIELD_REQUIRED_MESSAGE;
+        if (!normalizeVat(vat)) missingErrors.vat = FIELD_REQUIRED_MESSAGE;
+        return missingErrors;
+    };
+
+    const mapServerMessageToFieldErrors = (message) => {
+        const msg = String(message || '').toLowerCase();
+
+        if (!msg) return {};
+        if (msg.includes('riempi tutti i campi') || msg.includes('compilare tutti i campi')) {
+            return getMissingFieldsErrors();
+        }
+        if (msg.includes('password non corretta')) {
+            return { password: message };
+        }
+        if (msg.includes('email non valida')) {
+            return { email: message, confirmEmail: message };
+        }
+        if (msg.includes('le email non corrispondono')) {
+            return { email: message, confirmEmail: message };
+        }
+        if (msg.includes('pec non valida')) {
+            return { pec: message };
+        }
+        if (msg.includes('numero di telefono non valido')) {
+            return { phone: message };
+        }
+        if (msg.includes('partita iva')) {
+            return { vat: message };
+        }
+        if (msg.includes('email già in uso')) {
+            return { email: message };
+        }
+        return {};
+    };
+
+    const handleUsernameChange = (e) => {
+        setUsername(e.target.value);
+        clearFieldErrors('username');
+    };
+    const handleCompanyNameChange = (e) => {
+        setCompany_name(e.target.value);
+        clearFieldErrors('company_name');
+    };
+    const handleLegalHeadquarterChange = (e) => {
+        setLegalHeadquarter(e.target.value);
+        clearFieldErrors('legal_headquarter');
+    };
+    const handlePhoneChange = (value) => {
+        setPhone(value);
+        clearFieldErrors('phone');
+    };
+    const handleEmailChange = (e) => {
+        setEmail(e.target.value);
+        clearFieldErrors('email');
+    };
+    const handleConfirmEmailChange = (e) => {
+        setConfirmEmail(e.target.value);
+        clearFieldErrors('confirmEmail');
+    };
+    const handlePasswordChange = (e) => {
+        setPassword(e.target.value);
+        clearFieldErrors('password');
+    };
+    const handleConfirmPasswordChange = (e) => {
+        setConfirmPassword(e.target.value);
+        clearFieldErrors('confirmPassword');
+    };
+    const handleTermsChange = (e) => {
+        setAcceptedTerms(e.target.checked);
+        clearFieldErrors('acceptedTerms');
+    };
+    const handleCompanyWebsiteChange = (e) => {
+        setCompanyWebsite(e.target.value);
+        clearFieldErrors('company_website');
+    };
+    const handlePecChange = (e) => {
+        setPec(e.target.value);
+        clearFieldErrors('pec');
+    };
     const handleVatChange = (e) => {
         const value = normalizeVat(e.target.value);
         setVat(value);
+        clearFieldErrors('vat');
         if (!value) {
             checkVat.cancel();
             setIsValid(null);
@@ -80,7 +156,10 @@ const Signup = () => {
         setIsCheckingVat(true);
         checkVat(value);
     }
-    const handleNoCompanyEmailChange = (e) => setNoCompanyEmail(e.target.checked);
+    const handleNoCompanyEmailChange = (e) => {
+        setNoCompanyEmail(e.target.checked);
+        clearFieldErrors('noCompanyEmail', 'email', 'confirmEmail');
+    };
     const toggleShowPassword = () => setShowPassword(!showPassword);
     const togglePassInfo = () => setPassInfo(!passInfo);
 
@@ -138,27 +217,51 @@ const Signup = () => {
         };
     }, [checkVat]);
 
-    useEffect(() => {
-        if (noCompanyEmail) {
-            const emailDomain = normalizeEmailDomain(email);
-            const websiteDomain = normalizeWebsiteDomain(company_website);
-
-            if (emailDomain === websiteDomain) {
-                setNoCompanyEmail(false);
-            }
-        }
-    }, [email, company_website, noCompanyEmail]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setFieldErrors({});
+
+        const missingFieldErrors = getMissingFieldsErrors();
+        if (Object.keys(missingFieldErrors).length > 0) {
+            setFieldErrors(missingFieldErrors);
+            setMessagePopup('Per favore riempi tutti i campi');
+            setButtonPopup(true);
+            return;
+        }
+
+        const resolvedEmail = noCompanyEmail ? (email.trim() || pec.trim()) : email.trim();
+        const resolvedConfirmEmail = noCompanyEmail ? (confirmEmail.trim() || resolvedEmail) : confirmEmail.trim();
+
+        if (!EMAIL_REGEX.test(resolvedEmail)) {
+            setFieldErrors({ email: 'Email non valida' });
+            setMessagePopup('Email non valida');
+            setButtonPopup(true);
+            return;
+        }
+
+        if (!EMAIL_REGEX.test(resolvedConfirmEmail)) {
+            setFieldErrors({ confirmEmail: 'Email non valida' });
+            setMessagePopup('Email non valida');
+            setButtonPopup(true);
+            return;
+        }
+
+        if (resolvedEmail !== resolvedConfirmEmail) {
+            setFieldErrors({ email: 'Le email non corrispondono', confirmEmail: 'Le email non corrispondono' });
+            setMessagePopup('Le email non corrispondono');
+            setButtonPopup(true);
+            return;
+        }
 
         if (password !== confirmPassword) {
+            setFieldErrors({ password: 'Le password non corrispondono', confirmPassword: 'Le password non corrispondono' });
             setMessagePopup('Le password non corrispondono');
             setButtonPopup(true);
             return;
         }
 
         if (!acceptedTerms) {
+            setFieldErrors({ acceptedTerms: 'Devi accettare i termini e le condizioni' });
             setMessagePopup('Devi accettare i termini e le condizioni');
             setButtonPopup(true);
             return;
@@ -175,7 +278,19 @@ const Signup = () => {
             return;
         }
 
-        const formData = { username, company_name, email, confirmEmail, password, phone, company_website, pec, vat: normalizedVat, noCompanyEmail, legal_headquarter };
+        const formData = {
+            username,
+            company_name,
+            email: resolvedEmail,
+            confirmEmail: resolvedConfirmEmail,
+            password,
+            phone,
+            company_website,
+            pec,
+            vat: normalizedVat,
+            noCompanyEmail,
+            legal_headquarter,
+        };
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/signup`, formData, {
@@ -196,17 +311,18 @@ const Signup = () => {
                 // setPec('');
                 // setVat('');
 
-                if (response.data.notCompanyEmail) {
-                    navigate('/VerifyAccountNoCompanyEmail');
-                } else {
-                    navigate('/VerifyAccount');
-                }
+                navigate('/VerifyAccount');
 
 
             }
 
         } catch (error) {
-            setMessagePopup(error.response?.data?.msg || error.message);
+            const backendMessage = error.response?.data?.msg || error.message;
+            const backendFieldErrors = mapServerMessageToFieldErrors(backendMessage);
+            if (Object.keys(backendFieldErrors).length > 0) {
+                setFieldErrors((prevErrors) => ({ ...prevErrors, ...backendFieldErrors }));
+            }
+            setMessagePopup(backendMessage);
             setButtonPopup(true);
         }
     };
@@ -216,58 +332,79 @@ const Signup = () => {
     };
 
     return (
-        <div>
+        <div className="min-h-screen w-full bg-slate-50 py-8 md:py-12 px-4 overflow-y-auto">
             <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
 
             {passInfo && <PassInfo onClose={closePassInfo} />}
 
-            <div className="w-full p-10 flex flex-col items-center justify-center overflow-y-auto">
-                <div className="w-full text-arial text-start text-[#2d7044] text-xl font-bold cursor-pointer">
-                    <Link to="/">Home</Link>
+            <div className="mx-auto w-full max-w-5xl">
+                <div className="mb-6 flex items-center justify-between">
+                    <Link to="/" className="text-sm font-semibold text-[#2d7044] hover:underline">
+                        Torna alla home
+                    </Link>
+                    <Link to="/Login" className="text-sm text-slate-600 hover:text-[#2d7044] hover:underline">
+                        Hai gia un account? Accedi
+                    </Link>
                 </div>
 
-                <div className='flex flex-col items-center justify-center mb-5 mt-4'>
-                    <img src="/img/logo.png" alt="logo" className='w-[60%] max-w-[200px] p-0' />
-                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="border-b border-slate-200 px-6 py-6 md:px-10">
+                        <div className="mb-4 flex justify-center">
+                            <img src="/img/logo.png" alt="logo" className="w-[150px] md:w-[180px]" />
+                        </div>
+                        <h1 className="text-center text-2xl font-bold text-[#2d7044] md:text-3xl">
+                            Crea il tuo account
+                        </h1>
+                        <p className="mt-2 text-center text-sm text-slate-600">
+                            Completa i campi per registrare il profilo aziendale.
+                        </p>
+                    </div>
 
-                <form onSubmit={handleSubmit} className="w-full">
+                    <form onSubmit={handleSubmit} className="px-6 py-6 md:px-10 md:py-8">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-800">Informazioni del referente</h2>
 
-                    <h1 className='text-start font-bold text-[#2d7044] text-lg'>Informazioni del referente</h1>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-6">
                         <div className="w-full">
-                            <label htmlFor="username" className="block text-xl">Nome e cognome del referente</label>
+                            <label htmlFor="username" className="mb-2 block text-sm font-medium text-slate-700">Nome e cognome del referente</label>
                             <input
                                 type="text"
                                 name="username"
                                 id="username"
                                 value={username}
                                 onChange={handleUsernameChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                                className={getFieldClassName('username')}
                             />
+                            {fieldErrors.username ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.username}</p> : null}
                         </div>
 
                         <div className="w-full">
-                            <label htmlFor="phone" className="block text-xl">Telefono</label>
+                            <label htmlFor="phone" className="mb-2 block text-sm font-medium text-slate-700">Telefono</label>
                             <PhoneInput
                                 country={'it'}
                                 value={phone}
                                 onChange={handlePhoneChange}
                                 buttonClass="w-[45px] p-2 bg-gray-50"
                                 dropdownClass="w-full p-2 bg-gray-50"
-                                inputStyle={{ width: '100%', height: '42px', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                                inputStyle={{
+                                    width: '100%',
+                                    height: '42px',
+                                    borderRadius: '0.5rem',
+                                    fontSize: '0.875rem',
+                                    border: `1px solid ${fieldErrors.phone ? '#f43f5e' : '#d1d5db'}`,
+                                }}
                                 preferredCountries={['it']}
                             />
+                            {fieldErrors.phone ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.phone}</p> : null}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-8">
                         <div className="w-full">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1">
-                                    <label htmlFor="password" className="block text-xl">Password</label>
+                                    <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">Password</label>
                                     <svg
                                         className="cursor-pointer ml-2"
                                         onClick={togglePassInfo}
@@ -288,7 +425,7 @@ const Signup = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <span className="text-black">Mostra password</span>
+                                    <span className="text-xs text-slate-600">Mostra password</span>
                                     <input
                                         type="checkbox"
                                         name="showPassword"
@@ -305,28 +442,30 @@ const Signup = () => {
                                 id="password"
                                 value={password}
                                 onChange={handlePasswordChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                                className={getFieldClassName('password')}
                             />
+                            {fieldErrors.password ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.password}</p> : null}
                         </div>
 
                         <div className="w-full">
-                            <label htmlFor="confirm" className="block text-xl">Conferma password</label>
+                            <label htmlFor="confirm" className="mb-2 block text-sm font-medium text-slate-700">Conferma password</label>
                             <input
                                 type={showPassword ? "text" : "password"}
                                 name="confirm"
                                 id="confirm"
                                 value={confirmPassword}
                                 onChange={handleConfirmPasswordChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                                className={getFieldClassName('confirmPassword')}
                             />
+                            {fieldErrors.confirmPassword ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.confirmPassword}</p> : null}
                         </div>
                     </div>
 
-                    <h1 className='text-start font-bold text-[#2d7044] text-lg'>Informazioni Aziendali</h1>
+                    <h2 className="mb-4 text-lg font-semibold text-slate-800">Informazioni aziendali</h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-6">
                         <div className="w-full">
-                            <label htmlFor="vat" className="block text-xl mb-2">Partita IVA (formato: codice paese + numero)</label>
+                            <label htmlFor="vat" className="mb-2 block text-sm font-medium text-slate-700">Partita IVA (formato: codice paese + numero)</label>
                             <div className="relative">
                                 <input
                                     type="text"
@@ -335,7 +474,7 @@ const Signup = () => {
                                     value={vat}
                                     onChange={handleVatChange}
                                     placeholder="Inserisci la partita IVA"
-                                    className={`bg-gray-50 border ${isValid === true ? 'border-green-500' : isValid === false ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-lg block w-full p-2.5 pr-20`} // <- spazio a destra
+                                className={`bg-gray-50 border ${fieldErrors.vat ? 'border-rose-500' : isValid === true ? 'border-green-500' : isValid === false ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-lg block w-full p-2.5 pr-20`} // <- spazio a destra
                                 />
                                 {(isCheckingVat || isValid !== null) && (
                                     <span
@@ -345,147 +484,166 @@ const Signup = () => {
                                     </span>
                                 )}
                             </div>
+                            {fieldErrors.vat ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.vat}</p> : null}
                         </div>
 
                         <div className="w-full">
-                            <label htmlFor="company_name" className="block text-xl">Ragione sociale</label>
+                            <label htmlFor="company_name" className="mb-2 block text-sm font-medium text-slate-700">Ragione sociale</label>
                             <input
                                 type="text"
                                 name="company_name"
                                 id="company_name"
                                 value={company_name}
                                 onChange={handleCompanyNameChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-400 sm:text-sm rounded-lg block w-full p-2.5"
+                                className={getFieldClassName('company_name', 'text-gray-400')}
                                 readOnly={isValid === true && Boolean(company_name)}
                             />
+                            {fieldErrors.company_name ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.company_name}</p> : null}
                         </div>
 
                         <div className="w-full">
-                            <label htmlFor="company_name" className="block text-xl">Sede legale</label>
+                            <label htmlFor="company_name" className="mb-2 block text-sm font-medium text-slate-700">Sede legale</label>
                             <input
                                 type="text"
                                 name="legal_headquarter"
                                 id="legal_headquarter"
                                 value={legal_headquarter}
                                 onChange={handleLegalHeadquarterChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-400 sm:text-sm rounded-lg block w-full p-2.5"
+                                className={getFieldClassName('legal_headquarter', 'text-gray-400')}
                                 readOnly={isValid === true && Boolean(legal_headquarter)}
                             />
+                            {fieldErrors.legal_headquarter ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.legal_headquarter}</p> : null}
                         </div>
 
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-6">
 
                         <div className="w-full">
-                            <label htmlFor="pec" className="block text-xl">PEC</label>
+                            <label htmlFor="pec" className="mb-2 block text-sm font-medium text-slate-700">PEC</label>
                             <input
                                 type="text"
                                 name="pec"
                                 id="pec"
                                 value={pec}
                                 onChange={handlePecChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                                className={getFieldClassName('pec')}
                             />
+                            {fieldErrors.pec ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.pec}</p> : null}
                         </div>
 
                         <div className="w-full">
-                            <label htmlFor="company_website" className="block text-xl">Sito web aziendale</label>
+                            <label htmlFor="company_website" className="mb-2 block text-sm font-medium text-slate-700">Sito web aziendale</label>
                             <input
                                 type="text"
                                 name="company_website"
                                 id="company_website"
                                 value={company_website}
                                 onChange={handleCompanyWebsiteChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
+                                className={getFieldClassName('company_website')}
                             />
+                            {fieldErrors.company_website ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.company_website}</p> : null}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
-                        <div className="w-full">
-                            <label htmlFor="email" className="block text-xl">Email aziendale</label>
-                            <input
-                                type="email"
-                                name="email"
-                                id="email"
-                                value={email}
-                                onChange={handleEmailChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
-                            />
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-6">
+                        {!noCompanyEmail ? (
+                            <>
+                                <div className="w-full">
+                                    <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">Email aziendale</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        id="email"
+                                        value={email}
+                                        onChange={handleEmailChange}
+                                        className={getFieldClassName('email')}
+                                    />
+                                    {fieldErrors.email ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.email}</p> : null}
+                                </div>
 
-                        <div className="w-full">
-                            <label htmlFor="email" className="block text-xl">Conferma email aziendale</label>
-                            <input
-                                type="email"
-                                name="email_confirm"
-                                id="email_confirm"
-                                value={confirmEmail}
-                                onChange={handleConfirmEmailChange}
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg block w-full p-2.5"
-                            />
-                        </div>
-
-
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center mb-5">
-
-                        <div className="flex items-start w-full  mx-auto mb-5">
-                            <div className="h-5">
-                                <input
-                                    id="noCompanyEmail"
-                                    aria-describedby="noCompanyEmail"
-                                    type="checkbox"
-                                    className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300"
-                                    checked={noCompanyEmail}
-                                    onChange={handleNoCompanyEmailChange}
-                                />
+                                <div className="w-full">
+                                    <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">Conferma email aziendale</label>
+                                    <input
+                                        type="email"
+                                        name="email_confirm"
+                                        id="email_confirm"
+                                        value={confirmEmail}
+                                        onChange={handleConfirmEmailChange}
+                                        className={getFieldClassName('confirmEmail')}
+                                    />
+                                    {fieldErrors.confirmEmail ? <p className="mt-1 text-sm text-rose-600">{fieldErrors.confirmEmail}</p> : null}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                                Hai indicato che non hai email aziendale: useremo la PEC come email per la registrazione.
                             </div>
+                        )}
+                    </div>
 
-                            <div className="ml-3">
-                                <label htmlFor="noCompanyEmail" className="text-black">
-                                    <a href="#">
+                    <div className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                            <div className="flex items-start w-full">
+                                <div className="h-5">
+                                    <input
+                                        id="noCompanyEmail"
+                                        aria-describedby="noCompanyEmail"
+                                        type="checkbox"
+                                        className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300"
+                                        checked={noCompanyEmail}
+                                        onChange={handleNoCompanyEmailChange}
+                                    />
+                                </div>
+
+                                <div className="ml-3">
+                                    <label htmlFor="noCompanyEmail" className="text-sm text-slate-700">
                                         Non ho una email aziendale
-                                    </a>
-                                </label>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start w-full">
+                                <div className="h-5">
+                                    <input
+                                        id="terms"
+                                        aria-describedby="terms"
+                                        type="checkbox"
+                                        className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300"
+                                        checked={acceptedTerms}
+                                        onChange={handleTermsChange}
+                                    />
+                                </div>
+
+                                <div className="ml-3">
+                                    <label htmlFor="terms" className="text-sm text-slate-700">
+                                        Accetto i{" "}
+                                        <a className="text-[#2d7044] hover:underline" href="#">
+                                            Termini e Condizioni
+                                        </a>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    {fieldErrors.acceptedTerms ? <p className="-mt-3 mb-4 text-sm text-rose-600">{fieldErrors.acceptedTerms}</p> : null}
 
-                    <div className="flex items-start w-full  mx-auto mb-5">
-                        <div className="h-5">
-                            <input
-                                id="terms"
-                                aria-describedby="terms"
-                                type="checkbox"
-                                className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300"
-                                required
-                                onChange={handleTermsChange}
-                            />
-                        </div>
-
-                        <div className="ml-3">
-                            <label htmlFor="terms" className="text-black">
-                                Accetto i{" "}
-                                <a className="text-[#2d7044] hover:underline" href="#">
-                                    Termini e Condizioni
-                                </a>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-center">
+                    <div className="mt-6 flex flex-col items-center gap-3">
                         <input
                             type="submit"
                             value="Registrati"
-                            className="mt-7 font-arial font-bold text-xl w-[50%] sm:w-[40%] md:w-[30%] lg:w-[20%] p-2 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+                            className="w-full rounded-lg bg-[#2d7044] px-4 py-2.5 text-base font-bold text-white transition-colors duration-300 hover:bg-[#255d39] md:w-[260px]"
                         />
+                        <p className="text-sm text-slate-600">
+                            Hai gia un account?{" "}
+                            <Link to="/Login" className="font-semibold text-[#2d7044] hover:underline">
+                                Accedi
+                            </Link>
+                        </p>
                     </div>
-                </form>
+                    </form>
+                </div>
             </div>
-
         </div>
     );
 };

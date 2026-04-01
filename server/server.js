@@ -180,10 +180,13 @@ app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, r
 
 app.post("/api/signup", async (req, res) => {
   const { username, company_name, email, confirmEmail, password, phone, company_website, pec, vat, noCompanyEmail, legal_headquarter } = req.body;
+  const normalizedNoCompanyEmail = Boolean(noCompanyEmail);
+  const resolvedEmail = normalizedNoCompanyEmail ? ((email || '').trim() || (pec || '').trim()) : (email || '').trim();
+  const resolvedConfirmEmail = normalizedNoCompanyEmail ? ((confirmEmail || '').trim() || resolvedEmail) : (confirmEmail || '').trim();
   const normalizedVat = normalizeVatNumber(vat);
 
   // Check if all fields are filled
-  if (!email || !confirmEmail || !company_name || !password || !username || !phone || !company_website || !pec || !normalizedVat || !legal_headquarter) {
+  if (!resolvedEmail || !resolvedConfirmEmail || !company_name || !password || !username || !phone || !company_website || !pec || !normalizedVat || !legal_headquarter) {
     logAuthEvent(req, "validation_failed", { flow: "signup", reason: "missing_fields" }, "warn");
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
   }
@@ -193,15 +196,15 @@ app.post("/api/signup", async (req, res) => {
       .status(400)
       .json({ msg: "Password non corretta. Segui le info per ottenere una password sicura" });
   }
-  if (!emailCheck(email)) {
+  if (!emailCheck(resolvedEmail)) {
     logAuthEvent(req, "validation_failed", { flow: "signup", reason: "invalid_email" }, "warn");
     return res.status(400).json({ msg: "Email non valida" });
   }
-  if (!emailCheck(confirmEmail)) {
+  if (!emailCheck(resolvedConfirmEmail)) {
     logAuthEvent(req, "validation_failed", { flow: "signup", reason: "invalid_confirm_email" }, "warn");
     return res.status(400).json({ msg: "Email non valida" });
   }
-  if (email !== confirmEmail) {
+  if (resolvedEmail !== resolvedConfirmEmail) {
     logAuthEvent(req, "validation_failed", { flow: "signup", reason: "email_mismatch" }, "warn");
     return res.status(400).json({ msg: "Le email non corrispondono" });
   }
@@ -214,24 +217,25 @@ app.post("/api/signup", async (req, res) => {
     return res.status(400).json({ msg: "Numero di telefono non valido" });
   }
 
-  const emailDomain = normalizeEmailDomain(email);
-  const websiteDomain = normalizeWebsiteDomain(company_website);
-
-  if (emailDomain !== websiteDomain && !noCompanyEmail) {
-    logAuthEvent(req, "validation_failed", { flow: "signup", reason: "email_domain_mismatch" }, "warn");
-    return res.status(400).json({ msg: "il dominio della email non corrisponde al dominio del sito aziendale fornito" });
-  }
-
-
   try {
     const result = await pool.query(
       "SELECT email FROM users WHERE email = $1",
-      [email]
+      [resolvedEmail]
     );
 
     if (result.rows.length > 0) {
       logAuthEvent(req, "auth_signup_failed", { reason: "duplicate_email" }, "warn");
       return res.status(400).json({ msg: "Email già in uso" });
+    }
+
+    const existingVat = await pool.query(
+      "SELECT id FROM users WHERE p_iva = $1",
+      [normalizedVat]
+    );
+
+    if (existingVat.rows.length > 0) {
+      logAuthEvent(req, "auth_signup_failed", { reason: "duplicate_vat" }, "warn");
+      return res.status(400).json({ msg: "Partita IVA già registrata" });
     }
 
     const vatValidation = await vatCheck(normalizedVat);
@@ -252,16 +256,8 @@ app.post("/api/signup", async (req, res) => {
 
     const result2 = await pool.query(
       "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, turnover, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
-      [username, company_name, email, newPhone, normalizedVat, null, legal_headquarter, null, false, hashedPassword]
+      [username, company_name, resolvedEmail, newPhone, normalizedVat, null, legal_headquarter, null, false, hashedPassword]
     );
-
-    if (noCompanyEmail) {
-      logAuthEvent(req, "auth_signup_success", {
-        user_id: result2.rows[0].id,
-        pending_company_email_domain: true,
-      });
-      return res.status(200).json({ notCompanyEmail: true });
-    }
 
     if (result2.rowCount > 0) {
       const userID = result2.rows[0].id;
@@ -275,7 +271,7 @@ app.post("/api/signup", async (req, res) => {
       if (updateResult.rowCount > 0) {
         // Tutto ok -> mando email di conferma
         sendConfirmationEmail({
-          recipient_email: email,
+          recipient_email: resolvedEmail,
           recipient_name: username,
           token: userToken,
         });
@@ -285,6 +281,19 @@ app.post("/api/signup", async (req, res) => {
 
     return res.status(200).json({ msg: "Utente registrato" });
   } catch (error) {
+    if (error.code === "23505") {
+      const constraint = error.constraint || "";
+      if (constraint.includes("p_iva")) {
+        logAuthEvent(req, "auth_signup_failed", { reason: "duplicate_vat" }, "warn");
+        return res.status(400).json({ msg: "Partita IVA già registrata" });
+      }
+      if (constraint.includes("email")) {
+        logAuthEvent(req, "auth_signup_failed", { reason: "duplicate_email" }, "warn");
+        return res.status(400).json({ msg: "Email già in uso" });
+      }
+      logAuthEvent(req, "auth_signup_failed", { reason: "duplicate_field", constraint }, "warn");
+      return res.status(400).json({ msg: "Dati già registrati" });
+    }
     logUnexpectedError(req, error, { flow: "signup" });
     return res
       .status(500)
@@ -402,6 +411,51 @@ app.post("/api/send-verify-email", authenticateJWT, authenticateAdmin, async (re
   } catch (error) {
     logUnexpectedError(req, error, { flow: "send_verify_email" });
     return res.status(500).json({ msg: "Errore durante l'invio dell'email di verifica" });
+  }
+})
+
+app.post("/api/verify-user-manually", authenticateJWT, authenticateAdmin, async (req, res) => {
+  try {
+    const { userID } = req.body;
+    if (!userID) {
+      logAuthEvent(req, "validation_failed", { flow: "verify_user_manually", reason: "missing_user_id" }, "warn");
+      return res.status(400).json({ msg: "ID utente mancante" });
+    }
+
+    const userResult = await pool.query(
+      "SELECT id, username, email, isVerified FROM users WHERE id = $1",
+      [userID]
+    );
+
+    if (userResult.rows.length === 0) {
+      logAuthEvent(req, "validation_failed", { flow: "verify_user_manually", reason: "user_not_found" }, "warn");
+      return res.status(404).json({ msg: "Utente non trovato" });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.isverified) {
+      return res.status(200).json({ msg: "Utente gia verificato" });
+    }
+
+    const updateResult = await pool.query(
+      "UPDATE users SET isVerified = true, token = NULL WHERE id = $1",
+      [userID]
+    );
+
+    if (updateResult.rowCount > 0) {
+      sendWelcomeEmail({
+        recipient_email: user.email,
+        recipient_name: user.username,
+      });
+      logAuthEvent(req, "auth_manual_verify_success", { user_id: Number(userID) });
+      return res.status(200).json({ msg: "Account verificato manualmente" });
+    }
+
+    return res.status(500).json({ msg: "Impossibile verificare l'account" });
+  } catch (error) {
+    logUnexpectedError(req, error, { flow: "verify_user_manually" });
+    return res.status(500).json({ msg: "Errore durante la verifica manuale dell'account" });
   }
 })
 

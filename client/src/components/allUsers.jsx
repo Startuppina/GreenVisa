@@ -43,6 +43,21 @@ function AllUsers() {
         }
     }, [currentEmailFormUserId]);
 
+    const fetchNotVerifiedUsers = async () => {
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-not-verified-users`, {
+                withCredentials: true
+            });
+            if (response.status === 200) {
+                setUsersToVerify(response.data.rows);
+                setNumUsersToVerify(response.data.count);
+            }
+        } catch (error) {
+            setMessagePopUp("Errore durante il recupero degli utenti non verificati");
+            setButtonPopup(true);
+        }
+    };
+
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -81,22 +96,6 @@ function AllUsers() {
     }, []);
 
     useEffect(() => {
-        const fetchNotVerifiedUsers = async () => {
-            ;
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-not-verified-users`, {
-                    withCredentials: true
-                });
-                if (response.status === 200) {
-                    setUsersToVerify(response.data.rows);
-                    setNumUsersToVerify(response.data.count);
-                }
-            } catch (error) {
-                setMessagePopUp("Errore durante il recupero degli utenti non verificati");
-                setButtonPopup(true);
-            }
-        };
-
         fetchNotVerifiedUsers();
     }, []);
 
@@ -141,6 +140,22 @@ function AllUsers() {
             if (response.status === 200) {
                 setMessagePopUp("Email di verifica inviata correttamente");
                 setButtonPopup(true);
+            }
+        } catch (error) {
+            setMessagePopUp(error.response?.data?.msg || error.message);
+            setButtonPopup(true);
+        }
+    }
+
+    const handleManualVerifyUser = async (userID) => {
+        try {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/verify-user-manually`, { userID }, {
+                withCredentials: true
+            });
+            if (response.status === 200) {
+                setMessagePopUp("Account verificato manualmente");
+                setButtonPopup(true);
+                fetchNotVerifiedUsers();
             }
         } catch (error) {
             setMessagePopUp(error.response?.data?.msg || error.message);
@@ -414,6 +429,14 @@ function AllUsers() {
                                                 className="bg-blue-500 border-blue-500 border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-blue-500 transition-colors duration-300 ease-in-out"
                                             >
                                                 Invia email di verifica
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    handleManualVerifyUser(user.id);
+                                                }}
+                                                className="bg-[#2d7044] border-[#2d7044] border-2 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-[#2d7044] transition-colors duration-300 ease-in-out"
+                                            >
+                                                Verifica manualmente
                                             </button>
 
                                         </div>
