@@ -385,8 +385,12 @@ const UserPage = () => {
                             {surveyInfo.length > 0 && (
                                 <div className="bg-[#d9d9d9] text-arial text-xl p-6 mx-2 lg:mx-14 my-4 border border-gray-300 rounded-xl">
                                     <h1 className="text-3xl font-bold text-gray-800 mb-4">Questionari disponibili</h1>
-                                    {surveyInfo.map((info) => (
-                                        <div key={info.order_id} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
+                                    {surveyInfo.map((info) => {
+                                        const questionnaireUrl = info.product_category === 'Certificazione trasporti'
+                                            ? `/transport-v2/${info.product_id}`
+                                            : `/questionario/${info.product_category}?param1=${info.product_id}&param2=${info.product_category}`;
+                                        return (
+                                        <div key={`${info.order_id}-${info.product_id}`} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-md hover:shadow-lg transition-shadow duration-300">
                                             <div className='flex flex-col md:flex-row justify-between'>
                                                 <div className='flex flex-col mb-2'>
                                                     <h2 className="text-2xl font-semibold text-gray-800">Questionario per la categoria: {info.product_category}</h2>
@@ -400,13 +404,14 @@ const UserPage = () => {
                                             </div>
                                             <div className='flex justify-center md:justify-start mt-2 md:mt-0'>
                                                 <button className="p-2 w-[235px] z-10 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]">
-                                                    <Link to={`/questionario/${info.product_category}?param1=${info.product_id}&param2=${info.product_category}`}>
+                                                    <Link to={questionnaireUrl}>
                                                         {info.completed ? 'Visualizza questionario' : 'Completa questionario'}
                                                     </Link>
                                                 </button>
                                             </div>
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                             {approvations.length > 0 && (

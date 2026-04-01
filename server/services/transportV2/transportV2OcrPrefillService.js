@@ -1,4 +1,4 @@
-const { deriveTransportModeFromVehicleUseText } = require('./ocr/fieldMapper');
+const { deriveTransportModeFromVehicleUseText } = require('../ocr/fieldMapper');
 
 const OCR_MANAGED_FIELD_KEYS = [
   'registration_year',

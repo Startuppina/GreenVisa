@@ -34,6 +34,14 @@ This starts:
 ## run docker compose (after first time no need to rebuild)
 docker compose -f docker-compose.db.yml up -d
 
+## stop and wipe the local database
+
+Removes containers and the Postgres volume so the next `up` reapplies `server/init.sql` from scratch.
+
+```bash
+docker compose -f docker-compose.db.yml down -v
+```
+
 For local backend development, make sure `server/.env` uses:
 
 ```bash

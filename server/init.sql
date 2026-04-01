@@ -153,8 +153,21 @@ CREATE TABLE IF NOT EXISTS orders (
     FOREIGN KEY (code_id) REFERENCES promocodes(id) ON DELETE SET NULL
 );
 
--- Modifica della colonna product_id per permettere NULL
---ALTER TABLE orders ALTER COLUMN product_id DROP NOT NULL;
+CREATE TABLE IF NOT EXISTS checkout_sessions (
+    id SERIAL PRIMARY KEY,
+    stripe_session_id VARCHAR(255) NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
+    cart_snapshot JSONB NOT NULL,
+    code_id INTEGER DEFAULT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    finalized_at TIMESTAMPTZ DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (code_id) REFERENCES promocodes(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_checkout_sessions_stripe_sid ON checkout_sessions(stripe_session_id);
+CREATE INDEX IF NOT EXISTS idx_checkout_sessions_user_id ON checkout_sessions(user_id);
 
 
 
@@ -359,7 +372,6 @@ CREATE TABLE IF NOT EXISTS document_results (
     review_payload JSONB,
     validation_issues JSONB,
     confirmed_output JSONB,
-    provider_processor_id VARCHAR(500),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -109,35 +109,12 @@ function Carrello() {
             quantity: quantities[product.product_id]
         }));
 
-        localStorage.setItem('productsIDs', JSON.stringify(cartProducts.map(product => product.product_id)));
-        console.log(JSON.parse(localStorage.getItem('productsIDs')));
-
-        // Prepara i dati per il checkout, includendo il promoCode
         const checkoutData = {
             products: productsData,
             promoCode: promoCode
         };
 
         try {
-
-            console.log(promoCode);
-
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/get-code-id`, { code: promoCode }, {
-                withCredentials: true
-            });
-            if (response.status === 200) {
-                console.log(response.data);
-                console.log(response.data.codeId);
-                localStorage.setItem('codeId', response.data.codeId);
-            }
-
-        } catch (error) {
-            setMessagePopUp(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
-        }
-
-        try {
-            // Esegui il checkout e redirigi l'utente alla pagina appropriata
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/checkout-session`, checkoutData, {
                 withCredentials: true
             });

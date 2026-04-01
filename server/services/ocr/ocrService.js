@@ -7,7 +7,7 @@ const {
 } = require('./ocrOutputValidator');
 const repo = require('../documents/documentRepository');
 const documentStorageService = require('../documents/documentStorageService');
-const { buildTransportV2VehiclePrefill } = require('../transportV2OcrPrefillService');
+const { buildTransportV2VehiclePrefill } = require('../transportV2/transportV2OcrPrefillService');
 const logger = require('../../logger');
 
 /**
@@ -69,8 +69,6 @@ async function processDocument(documentRecord, options = {}) {
       derivedOutput,
       reviewPayload,
       validationIssues,
-      processorId: providerResult.metadata?.processorName || null,
-      processorVersion: providerResult.metadata?.processorVersion || null,
     });
 
     await repo.updateDocumentStatus(docId, 'needs_review', {

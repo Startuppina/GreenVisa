@@ -1,4 +1,4 @@
-const repository = require('../repositories/surveyResponsesRepository');
+const repository = require('../../repositories/surveyResponsesRepository');
 const { buildTransportV2Derived } = require('./transportV2DerivedBuilder');
 const { calculateTransportV2Results } = require('./transportV2Calculator');
 const { sanitizeDraftTransportV2 } = require('./transportV2Normalizer');

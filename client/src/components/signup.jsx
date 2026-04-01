@@ -7,6 +7,29 @@ import MessagePopUp from './messagePopUp';
 import PassInfo from './passInfo';
 import { debounce } from 'lodash';
 
+const normalizeVat = (value) => String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const normalizeEmailDomain = (value) => String(value || '').split('@')[1]?.trim().toLowerCase() || '';
+const normalizeWebsiteDomain = (value) => {
+    const normalizedWebsite = String(value || '').trim().toLowerCase();
+
+    if (!normalizedWebsite) {
+        return '';
+    }
+
+    try {
+        const websiteUrl = normalizedWebsite.startsWith('http://') || normalizedWebsite.startsWith('https://')
+            ? normalizedWebsite
+            : `https://${normalizedWebsite}`;
+
+        return new URL(websiteUrl).hostname.replace(/^www\./, '');
+    } catch (error) {
+        return normalizedWebsite
+            .replace(/^https?:\/\//, '')
+            .replace(/^www\./, '')
+            .split('/')[0];
+    }
+};
+
 const Signup = () => {
     const [username, setUsername] = useState('');
     const [phone, setPhone] = useState('');
@@ -18,6 +41,7 @@ const Signup = () => {
     const [passInfo, setPassInfo] = useState(false);
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState('');
+    const [vatValidationMessage, setVatValidationMessage] = useState('');
     const [acceptedTerms, setAcceptedTerms] = useState(false); // Gestisci il checkbox dei termini
     const [company_name, setCompany_name] = useState('');
     const [legal_headquarter, setLegalHeadquarter] = useState('');
@@ -25,9 +49,8 @@ const Signup = () => {
     const [pec, setPec] = useState('');
     const [vat, setVat] = useState('');
     const [isValid, setIsValid] = useState(null); // Gestisci lo stato della validazione della partita iva
+    const [isCheckingVat, setIsCheckingVat] = useState(false);
     const [noCompanyEmail, setNoCompanyEmail] = useState(false);
-    const [page, setPage] = useState(1);
-
     const navigate = useNavigate();
 
     const handleUsernameChange = (e) => setUsername(e.target.value);
@@ -42,39 +65,83 @@ const Signup = () => {
     const handleCompanyWebsiteChange = (e) => setCompanyWebsite(e.target.value);
     const handlePecChange = (e) => setPec(e.target.value);
     const handleVatChange = (e) => {
-        const value = e.target.value.toUpperCase();
+        const value = normalizeVat(e.target.value);
         setVat(value);
+        if (!value) {
+            checkVat.cancel();
+            setIsValid(null);
+            setIsCheckingVat(false);
+            setVatValidationMessage('');
+            setCompany_name('');
+            setLegalHeadquarter('');
+            return;
+        }
+
+        setIsCheckingVat(true);
         checkVat(value);
     }
     const handleNoCompanyEmailChange = (e) => setNoCompanyEmail(e.target.checked);
     const toggleShowPassword = () => setShowPassword(!showPassword);
     const togglePassInfo = () => setPassInfo(!passInfo);
 
-    const checkVat = useCallback( // callack utilizzata per evitare il loop
-        debounce(async (value) => {
-            if (value.length < 3) {
-                setIsValid(null);
-                return;
-            }
-            try {
-                const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/check-vat`, { vatNumber: value });
-                setIsValid(response.data.success);
-                setCompany_name(response.data.companyName);
-                setLegalHeadquarter(response.data.address);
-            } catch (error) {
-                console.error('Errore controllo partita IVA:', error);
-                setIsValid(false);
-                setCompany_name('');
-                setLegalHeadquarter('');
-            }
-        }),
-        []
+    const validateVatNumber = useCallback(async (value) => {
+        const normalizedVat = normalizeVat(value);
+
+        if (!normalizedVat) {
+            setIsValid(null);
+            setIsCheckingVat(false);
+            setVatValidationMessage('');
+            setCompany_name('');
+            setLegalHeadquarter('');
+            return null;
+        }
+
+        if (normalizedVat.length < 13) {
+            setIsValid(null);
+            setIsCheckingVat(false);
+            setVatValidationMessage('');
+            setCompany_name('');
+            setLegalHeadquarter('');
+            return null;
+        }
+
+        try {
+            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/check-vat`, { vatNumber: normalizedVat });
+            setIsValid(response.data.success);
+            setVatValidationMessage('');
+            setCompany_name(response.data.companyName || '');
+            setLegalHeadquarter(response.data.address || '');
+            setVat(response.data.vatNumber || normalizedVat);
+            return response.data.success;
+        } catch (error) {
+            console.error('Errore controllo partita IVA:', error);
+            setVatValidationMessage(error.response?.data?.msg || 'Errore durante la verifica della partita IVA');
+            setIsValid(false);
+            setCompany_name('');
+            setLegalHeadquarter('');
+            return false;
+        } finally {
+            setIsCheckingVat(false);
+        }
+    }, []);
+
+    const checkVat = useCallback(
+        debounce((value) => {
+            void validateVatNumber(value);
+        }, 500),
+        [validateVatNumber]
     );
 
     useEffect(() => {
+        return () => {
+            checkVat.cancel();
+        };
+    }, [checkVat]);
+
+    useEffect(() => {
         if (noCompanyEmail) {
-            const emailDomain = email.split("@")[1];
-            const websiteDomain = company_website.split("www.")[1];
+            const emailDomain = normalizeEmailDomain(email);
+            const websiteDomain = normalizeWebsiteDomain(company_website);
 
             if (emailDomain === websiteDomain) {
                 setNoCompanyEmail(false);
@@ -97,23 +164,18 @@ const Signup = () => {
             return;
         }
 
-        if (!isValid) {
-            setMessagePopup('La partita iva non è valida');
+        checkVat.cancel();
+        setIsCheckingVat(true);
+        const normalizedVat = normalizeVat(vat);
+        const vatValidationResult = await validateVatNumber(normalizedVat);
+
+        if (vatValidationResult !== true) {
+            setMessagePopup(vatValidationMessage || 'La partita iva non è valida');
             setButtonPopup(true);
             return;
         }
 
-        const emailDomain = email.split("@")[1];
-        const websiteDomain = company_website.split("www.")[1];
-        console.log(emailDomain);
-        console.log(websiteDomain);
-        console.log(noCompanyEmail);
-
-        console.log(noCompanyEmail);
-        setPhone(`+${phone}`);
-
-        const formData = { username, company_name, email, confirmEmail, password, phone, company_website, pec, vat, noCompanyEmail, legal_headquarter };
-        console.log(formData);
+        const formData = { username, company_name, email, confirmEmail, password, phone, company_website, pec, vat: normalizedVat, noCompanyEmail, legal_headquarter };
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/signup`, formData, {
@@ -275,11 +337,11 @@ const Signup = () => {
                                     placeholder="Inserisci la partita IVA"
                                     className={`bg-gray-50 border ${isValid === true ? 'border-green-500' : isValid === false ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-lg block w-full p-2.5 pr-20`} // <- spazio a destra
                                 />
-                                {isValid !== null && (
+                                {(isCheckingVat || isValid !== null) && (
                                     <span
-                                        className={`absolute right-3 top-1/2 -translate-y-1/2 text-sm ${isValid ? 'text-green-600' : 'text-red-600'}`}
+                                        className={`absolute right-3 top-1/2 -translate-y-1/2 text-sm ${isCheckingVat ? 'text-gray-500' : isValid ? 'text-green-600' : 'text-red-600'}`}
                                     >
-                                        {isValid ? 'Valida' : 'Non valida'}
+                                        {isCheckingVat ? 'Verifica...' : isValid ? 'Valida' : 'Non valida'}
                                     </span>
                                 )}
                             </div>
@@ -294,7 +356,7 @@ const Signup = () => {
                                 value={company_name}
                                 onChange={handleCompanyNameChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-400 sm:text-sm rounded-lg block w-full p-2.5"
-                                readOnly={true}
+                                readOnly={isValid === true && Boolean(company_name)}
                             />
                         </div>
 
@@ -307,7 +369,7 @@ const Signup = () => {
                                 value={legal_headquarter}
                                 onChange={handleLegalHeadquarterChange}
                                 className="bg-gray-50 border border-gray-300 text-gray-400 sm:text-sm rounded-lg block w-full p-2.5"
-                                readOnly={true}
+                                readOnly={isValid === true && Boolean(legal_headquarter)}
                             />
                         </div>
 
@@ -377,13 +439,13 @@ const Signup = () => {
                                     aria-describedby="noCompanyEmail"
                                     type="checkbox"
                                     className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300"
-                                    value={noCompanyEmail}
+                                    checked={noCompanyEmail}
                                     onChange={handleNoCompanyEmailChange}
                                 />
                             </div>
 
                             <div className="ml-3">
-                                <label htmlFor="terms" className="text-black">
+                                <label htmlFor="noCompanyEmail" className="text-black">
                                     <a href="#">
                                         Non ho una email aziendale
                                     </a>

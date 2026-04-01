@@ -7,13 +7,13 @@ const { storeFileFromBuffer } = require('../services/documents/documentStorageSe
 const repo = require('../services/documents/documentRepository');
 const ocrService = require('../services/ocr/ocrService');
 const { applyNormalizations, validateNormalizedOutput } = require('../services/ocr/ocrOutputValidator');
-const { buildTransportV2VehiclePrefill, normalizeTransportMode } = require('../services/transportV2OcrPrefillService');
+const { buildTransportV2VehiclePrefill, normalizeTransportMode } = require('../services/transportV2/transportV2OcrPrefillService');
 const {
   TransportV2HttpError,
   parseCertificationId,
   resolveTransportSurveyResponse,
   upsertTransportV2OcrVehicle,
-} = require('../services/transportV2DraftService');
+} = require('../services/transportV2/transportV2DraftService');
 const { logDocumentEvent, logUnexpectedError } = require('../lib/businessEvents');
 
 const router = express.Router();

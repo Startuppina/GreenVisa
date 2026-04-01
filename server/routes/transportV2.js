@@ -4,8 +4,8 @@ const {
   TransportV2HttpError,
   loadTransportV2Draft,
   saveTransportV2Draft,
-} = require('../services/transportV2DraftService');
-const { submitTransportV2 } = require('../services/transportV2SubmitService');
+} = require('../services/transportV2/transportV2DraftService');
+const { submitTransportV2 } = require('../services/transportV2/transportV2SubmitService');
 const { logQuestionnaireEvent, logUnexpectedError } = require('../lib/businessEvents');
 
 const router = express.Router();

@@ -8,6 +8,7 @@ export default function VehicleListPanel({
   onAddVehicle,
   onDeleteVehicle,
   onSelectVehicle,
+  readOnly,
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -18,13 +19,15 @@ export default function VehicleListPanel({
             Keep the list compact here, then edit the selected row in detail on the right.
           </p>
         </div>
-        <button
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-          type="button"
-          onClick={onAddVehicle}
-        >
-          Add vehicle
-        </button>
+        {!readOnly && (
+          <button
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            type="button"
+            onClick={onAddVehicle}
+          >
+            Add vehicle
+          </button>
+        )}
       </div>
 
       {getFirstFieldError(fieldErrors, 'draft.vehicles') ? (
@@ -41,6 +44,7 @@ export default function VehicleListPanel({
               isSelected={vehicle.vehicle_id === selectedVehicleId}
               onSelect={() => onSelectVehicle(vehicle.vehicle_id)}
               onDelete={() => onDeleteVehicle(vehicle.vehicle_id)}
+              readOnly={readOnly}
             />
           ))
         ) : (

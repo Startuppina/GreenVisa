@@ -5,7 +5,7 @@ import {
   YES_NO_OPTIONS,
 } from '../utils/validation.js';
 
-function BooleanField({ field, value, onChange, error }) {
+function BooleanField({ field, value, onChange, error, disabled }) {
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 p-4">
       <div>
@@ -19,7 +19,9 @@ function BooleanField({ field, value, onChange, error }) {
           return (
             <label
               key={option.value}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                disabled ? 'cursor-default opacity-70' : 'cursor-pointer'
+              } ${
                 checked
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                   : 'border-slate-300 bg-white text-slate-700'
@@ -30,6 +32,7 @@ function BooleanField({ field, value, onChange, error }) {
                 type="radio"
                 name={field.key}
                 checked={checked}
+                disabled={disabled}
                 onChange={() => onChange(option.value === 'true')}
               />
               {option.label}
@@ -42,15 +45,16 @@ function BooleanField({ field, value, onChange, error }) {
   );
 }
 
-function CoverageField({ field, value, onChange, error }) {
+function CoverageField({ field, value, onChange, error, disabled }) {
   return (
     <label className="space-y-3 rounded-xl border border-slate-200 p-4">
       <div>
         <div className="font-medium text-slate-900">{field.label}</div>
       </div>
       <select
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
         value={value ?? ''}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value || null)}
       >
         <option value="">Select an option</option>
@@ -65,7 +69,7 @@ function CoverageField({ field, value, onChange, error }) {
   );
 }
 
-export default function QuestionnaireFlagsSection({ questionnaireFlags, fieldErrors, onChange }) {
+export default function QuestionnaireFlagsSection({ questionnaireFlags, fieldErrors, onChange, readOnly }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-5">
@@ -83,6 +87,7 @@ export default function QuestionnaireFlagsSection({ questionnaireFlags, fieldErr
                 field={field}
                 value={questionnaireFlags?.[field.key]}
                 error={error}
+                disabled={readOnly}
                 onChange={(value) => onChange(field.key, value)}
               />
             );
@@ -94,6 +99,7 @@ export default function QuestionnaireFlagsSection({ questionnaireFlags, fieldErr
               field={field}
               value={questionnaireFlags?.[field.key]}
               error={error}
+              disabled={readOnly}
               onChange={(value) => onChange(field.key, value)}
             />
           );

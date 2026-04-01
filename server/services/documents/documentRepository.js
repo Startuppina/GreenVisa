@@ -179,14 +179,13 @@ async function deleteResultByDocumentId(documentId) {
 
 async function createResult({
   documentId, rawProviderOutput, normalizedOutput, derivedOutput,
-  reviewPayload, validationIssues, processorId, processorVersion,
+  reviewPayload, validationIssues,
 }) {
   const { rows } = await pool.query(
     `INSERT INTO document_results
        (document_id, raw_provider_output, normalized_output, derived_output,
-        review_payload, validation_issues,
-        provider_processor_id, provider_processor_version)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        review_payload, validation_issues)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
     [
       documentId,
@@ -195,8 +194,6 @@ async function createResult({
       JSON.stringify(derivedOutput || null),
       JSON.stringify(reviewPayload || null),
       JSON.stringify(validationIssues),
-      processorId || null,
-      processorVersion || null,
     ],
   );
   return rows[0];

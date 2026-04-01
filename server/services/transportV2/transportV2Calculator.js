@@ -2,7 +2,7 @@ const {
   emissionClassesPeopleTransport,
   emissionClassesFreightTransport,
   penalities,
-} = require('../constants/transportV2CalculationConstants');
+} = require('../../constants/transportV2CalculationConstants');
 
 function calculateTransportV2Results(draft, { calculatedAt }) {
   const passengerVehicles = Array.isArray(draft?.vehicles)

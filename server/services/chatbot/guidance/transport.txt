@@ -24,6 +24,28 @@ Questa guida contiene le informazioni approvate per aiutare l'utente a compilare
 - Può essere caricata tramite la funzione di scansione OCR per compilare automaticamente alcuni campi.
 - Campi principali ricavabili dalla CDC: targa (A), categoria veicolo (J), massa (F.1, F.2, F.3), potenza motore (P.2), tipo carburante (P.3), classe Euro (V.9).
 
+== SEZIONE: OCR - COSA FA E COME SI USA ==
+
+- L'OCR (riconoscimento ottico dei caratteri) legge automaticamente il testo presente nella carta di circolazione caricata dall'utente e propone una precompilazione di alcuni campi del questionario trasporti.
+- L'obiettivo dell'OCR è ridurre l'inserimento manuale e aiutare l'utente a trovare più velocemente i dati tecnici del veicolo.
+- L'OCR non sostituisce la verifica umana: tutti i dati estratti devono essere controllati dall'utente prima della conferma finale.
+- I campi che l'OCR può aiutare a recuperare includono, se leggibili nel documento: anno di immatricolazione, classe Euro, tipo di carburante, massa complessiva del veicolo, emissioni CO2 e indicazioni utili sulla destinazione d'uso del veicolo.
+- In presenza di immagini sfocate, ritagliate, poco illuminate o documenti parziali, l'OCR potrebbe non riconoscere correttamente tutti i valori oppure lasciare alcuni campi vuoti.
+
+- Come usare l'OCR:
+- Caricare una scansione o foto chiara e completa della carta di circolazione.
+- Attendere l'elaborazione automatica del documento.
+- Controllare i campi proposti dal sistema confrontandoli con il documento originale.
+- Correggere eventuali valori errati o mancanti prima di confermare.
+- Usare i dati confermati per compilare più rapidamente la scheda del veicolo.
+
+- Buone pratiche per ottenere risultati migliori:
+- fotografare il documento intero, senza tagli;
+- evitare riflessi, ombre e immagini mosse;
+- assicurarsi che i campi siano leggibili;
+- caricare preferibilmente il fronte della carta di circolazione se contiene i dati richiesti;
+- in caso di dubbio, usare sempre il valore riportato sul documento ufficiale.
+
 == SEZIONE: BOLLINO BLU ==
 
 - "Bollino blu": indica se il veicolo ha superato il controllo dei gas di scarico. Selezionare "Sì" se il veicolo è in regola con la revisione e il controllo emissioni.
@@ -38,6 +60,12 @@ R: Ogni veicolo va inserito singolarmente con il proprio tipo di carburante. Se 
 
 D: Come calcolo i chilometri annui se non ho dati precisi?
 R: Utilizzare la migliore stima disponibile basata sui registri di manutenzione, fatture carburante o dati del contachilometri. Non inventare dati; se non si dispone di un dato, contattare il supporto.
+
+D: L'OCR compila tutto in automatico?
+R: No. L'OCR aiuta a leggere e proporre alcuni dati della carta di circolazione, ma l'utente deve sempre verificare e correggere le informazioni prima della conferma.
+
+D: Che documento devo caricare per usare l'OCR?
+R: Preferibilmente una carta di circolazione ben leggibile, completa e fotografata/scansionata in modo nitido. Documenti incompleti o poco chiari possono ridurre la precisione del riconoscimento.
 
 ---
 NOTA: Questo file contiene contenuto segnaposto. Il team GreenVisa deve sostituirlo con la guida approvata ufficiale.

@@ -180,9 +180,10 @@ app.get("/api/admin-username", authenticateJWT, authenticateAdmin, async (req, r
 
 app.post("/api/signup", async (req, res) => {
   const { username, company_name, email, confirmEmail, password, phone, company_website, pec, vat, noCompanyEmail, legal_headquarter } = req.body;
+  const normalizedVat = normalizeVatNumber(vat);
 
   // Check if all fields are filled
-  if (!email || !confirmEmail || !company_name || !password || !username || !phone || !company_website || !pec || !vat || !legal_headquarter) {
+  if (!email || !confirmEmail || !company_name || !password || !username || !phone || !company_website || !pec || !normalizedVat || !legal_headquarter) {
     logAuthEvent(req, "validation_failed", { flow: "signup", reason: "missing_fields" }, "warn");
     return res.status(400).json({ msg: "Per favore riempi tutti i campi" });
   }
@@ -213,8 +214,8 @@ app.post("/api/signup", async (req, res) => {
     return res.status(400).json({ msg: "Numero di telefono non valido" });
   }
 
-  const emailDomain = email.split("@")[1];
-  const websiteDomain = company_website.split("www.")[1];
+  const emailDomain = normalizeEmailDomain(email);
+  const websiteDomain = normalizeWebsiteDomain(company_website);
 
   if (emailDomain !== websiteDomain && !noCompanyEmail) {
     logAuthEvent(req, "validation_failed", { flow: "signup", reason: "email_domain_mismatch" }, "warn");
@@ -233,6 +234,17 @@ app.post("/api/signup", async (req, res) => {
       return res.status(400).json({ msg: "Email già in uso" });
     }
 
+    const vatValidation = await vatCheck(normalizedVat);
+    if (vatValidation.serviceUnavailable) {
+      logUnexpectedError(req, new Error("vat_validation_service_unavailable"), { flow: "signup" });
+      return res.status(503).json({ msg: "Servizio verifica partita IVA temporaneamente non disponibile" });
+    }
+
+    if (!vatValidation.valid) {
+      logAuthEvent(req, "validation_failed", { flow: "signup", reason: "invalid_vat" }, "warn");
+      return res.status(400).json({ msg: "Partita IVA non valida o non attiva" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
     const intPrefix = phone.slice(0, 2);
     const intSuffix = phone.slice(2);
@@ -240,7 +252,7 @@ app.post("/api/signup", async (req, res) => {
 
     const result2 = await pool.query(
       "INSERT INTO users (username, company_name, email, phone_number, p_iva, tax_code, legal_headquarter, turnover, administrator, password_digest) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
-      [username, company_name, email, newPhone, vat, null, legal_headquarter, null, false, hashedPassword]
+      [username, company_name, email, newPhone, normalizedVat, null, legal_headquarter, null, false, hashedPassword]
     );
 
     if (noCompanyEmail) {
@@ -282,16 +294,26 @@ app.post("/api/signup", async (req, res) => {
 
 app.post('/api/check-vat', async (req, res) => {
   try {
-    const { vatNumber } = req.body;
+    const normalizedVatNumber = normalizeVatNumber(req.body?.vatNumber);
 
-    if (!vatNumber) {
+    if (!normalizedVatNumber) {
       return res.status(400).json({ success: false, msg: "Partita IVA mancante" });
     }
 
-    const isValid = await vatCheck(vatNumber);
+    const isValid = await vatCheck(normalizedVatNumber);
+
+    if (isValid.serviceUnavailable) {
+      return res.status(503).json({ success: false, msg: "Servizio verifica partita IVA temporaneamente non disponibile" });
+    }
 
     if (isValid.valid) {
-      return res.status(200).json({ success: true, companyName: isValid.companyName, address: isValid.address, msg: "Partita IVA valida" });
+      return res.status(200).json({
+        success: true,
+        vatNumber: normalizedVatNumber,
+        companyName: isValid.companyName,
+        address: isValid.address,
+        msg: "Partita IVA valida",
+      });
     } else {
       return res.status(400).json({ success: false, msg: "Partita IVA non valida o non attiva" });
     }
@@ -2521,13 +2543,34 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       payment_method_types: ['card'],
       line_items: items,
       mode: 'payment',
-      success_url: `${clientBaseUrl}/PaymentSuccess`,
+      success_url: `${clientBaseUrl}/PaymentSuccess?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${clientBaseUrl}/Cart`,
       metadata: {
         user_id: user_id,
         promo_code: promoCode || '',
       },
     });
+
+    const cartSnapshot = [];
+    for (const product of products) {
+      const cartRow = await pool.query(
+        "SELECT quantity, price FROM cart WHERE user_id = $1 AND product_id = $2",
+        [user_id, product.id],
+      );
+      if (cartRow.rows.length > 0) {
+        cartSnapshot.push({
+          product_id: product.id,
+          quantity: cartRow.rows[0].quantity,
+          price: parseFloat(cartRow.rows[0].price),
+        });
+      }
+    }
+
+    await pool.query(
+      `INSERT INTO checkout_sessions (stripe_session_id, user_id, cart_snapshot, code_id)
+       VALUES ($1, $2, $3, $4)`,
+      [session.id, user_id, JSON.stringify(cartSnapshot), promo?.id || null],
+    );
 
     logPaymentEvent(req, "payment_checkout_session_created", {
       user_id,
@@ -2546,6 +2589,82 @@ app.post("/api/checkout-session", authenticateJWT, async (req, res) => {
       "stripe checkout session failed",
     );
     res.status(500).json({ msg: "Errore durante la creazione della sessione di checkout" });
+  }
+});
+
+
+app.post("/api/finalize-checkout-session", authenticateJWT, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { sessionId } = req.body;
+    const { user_id } = req.user;
+
+    if (!sessionId || typeof sessionId !== 'string') {
+      return res.status(400).json({ msg: "ID sessione di checkout mancante." });
+    }
+
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
+      "SELECT * FROM checkout_sessions WHERE stripe_session_id = $1 FOR UPDATE",
+      [sessionId],
+    );
+
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ msg: "Sessione di checkout non trovata." });
+    }
+
+    const checkoutSession = rows[0];
+
+    if (checkoutSession.user_id !== user_id) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ msg: "Accesso negato." });
+    }
+
+    if (checkoutSession.status === 'finalized') {
+      await client.query('COMMIT');
+      return res.status(200).json({ msg: "Ordine già finalizzato.", alreadyFinalized: true });
+    }
+
+    const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+    if (stripeSession.payment_status !== 'paid') {
+      await client.query('ROLLBACK');
+      return res.status(402).json({ msg: "Pagamento non completato." });
+    }
+
+    const cartSnapshot = checkoutSession.cart_snapshot;
+    const orderDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    for (const item of cartSnapshot) {
+      await client.query(
+        "INSERT INTO orders (quantity, price, user_id, product_id, code_id, order_date) VALUES ($1, $2, $3, $4, $5, $6)",
+        [item.quantity, item.price, user_id, item.product_id, checkoutSession.code_id, orderDate],
+      );
+    }
+
+    await client.query("DELETE FROM cart WHERE user_id = $1", [user_id]);
+
+    await client.query(
+      "UPDATE checkout_sessions SET status = 'finalized', finalized_at = NOW() WHERE id = $1",
+      [checkoutSession.id],
+    );
+
+    await client.query('COMMIT');
+
+    logPaymentEvent(req, "checkout_session_finalized", {
+      user_id,
+      stripe_session_id: sessionId,
+      product_count: cartSnapshot.length,
+    });
+
+    res.status(200).json({ msg: "Ordine creato con successo." });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    logUnexpectedError(req, error, { flow: "finalize_checkout_session" });
+    res.status(500).json({ msg: "Errore durante la finalizzazione dell'ordine." });
+  } finally {
+    client.release();
   }
 });
 
@@ -3896,39 +4015,23 @@ app.get("/api/user-questionnaires", authenticateJWT, async (req, res) => {
   try {
     const { user_id } = req.user;
 
-    /*const rows = await pool.query(`
-      SELECT 
+    const rows = await pool.query(`
+      SELECT
+          o.id AS order_id,
           o.product_id AS product_id,
           p.category AS product_category,
+          p.name AS product_name,
           sr.total_score AS total_score,
           sr.co2emissions AS co2emissions,
+          sr.created_at AS date,
           sr.completed AS completed
-      FROM 
-          orders o
-      JOIN 
-          products p ON o.product_id = p.id
-      LEFT JOIN 
-          survey_responses sr ON sr.certification_id = o.product_id
-      WHERE 
-          o.user_id = $1;
-    `, [user_id]);*/
-
-    const rows = await pool.query(`
-     SELECT DISTINCT ON (p.category)
-        o.product_id AS product_id,
-        p.category AS product_category,
-        sr.total_score AS total_score,
-        sr.co2emissions AS co2emissions,
-        sr.created_at AS date,
-        sr.completed AS completed
-    FROM 
-        orders o
-    JOIN 
-        products p ON o.product_id = p.id
-    LEFT JOIN 
-        survey_responses sr ON sr.certification_id = o.product_id
-    WHERE 
-        o.user_id = $1
+      FROM orders o
+      JOIN products p ON o.product_id = p.id
+      LEFT JOIN survey_responses sr
+        ON sr.certification_id = o.product_id
+        AND sr.user_id = o.user_id
+      WHERE o.user_id = $1
+      ORDER BY o.order_date DESC
     `, [user_id]);
 
     res.status(200).json({ surveyInfo: rows.rows });
@@ -4471,6 +4574,40 @@ function emailCheck(email) {
   return re.test(String(email).toLowerCase());
 }
 
+function normalizeVatNumber(vatNumber) {
+  return String(vatNumber || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+function normalizeEmailDomain(email) {
+  return String(email || "")
+    .split("@")[1]
+    ?.trim()
+    .toLowerCase() || "";
+}
+
+function normalizeWebsiteDomain(website) {
+  const normalizedWebsite = String(website || "").trim().toLowerCase();
+
+  if (!normalizedWebsite) {
+    return "";
+  }
+
+  try {
+    const websiteUrl = normalizedWebsite.startsWith("http://") || normalizedWebsite.startsWith("https://")
+      ? normalizedWebsite
+      : `https://${normalizedWebsite}`;
+
+    return new URL(websiteUrl).hostname.replace(/^www\./, "");
+  } catch (error) {
+    return normalizedWebsite
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .split("/")[0];
+  }
+}
+
 function passwordCheck(password) {
   const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/; // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
   return re.test(String(password));
@@ -4484,19 +4621,20 @@ function phoneCheck(phone) {
 
 async function vatCheck(vatNumber) {
   try {
+    const normalizedVatNumber = normalizeVatNumber(vatNumber);
 
-    if (!vatNumber || vatNumber.length < 3) {
-      return false;
+    if (!normalizedVatNumber || normalizedVatNumber.length < 3) {
+      return { valid: false, companyName: "", address: "", serviceUnavailable: false };
     }
 
     //non tutte le societa scelgono di rendere pubblici nome e indirizzo nel sistema VIES.
     const pivaRegex = /^[A-Z]{2}[0-9]{11}$/;
-    if (!pivaRegex.test(vatNumber)) {
-      return false;
+    if (!pivaRegex.test(normalizedVatNumber)) {
+      return { valid: false, companyName: "", address: "", serviceUnavailable: false };
     }
 
-    const countryCode = vatNumber.slice(0, 2).toUpperCase();
-    const number = vatNumber.slice(2);
+    const countryCode = normalizedVatNumber.slice(0, 2);
+    const number = normalizedVatNumber.slice(2);
 
     const validationInfo = await new Promise((resolve, reject) => {
       validate(countryCode, number, (err, info) => {
@@ -4505,10 +4643,15 @@ async function vatCheck(vatNumber) {
       });
     });
 
-    return { valid: validationInfo.valid, companyName: validationInfo.name, address: validationInfo.address }; // true o false
+    return {
+      valid: Boolean(validationInfo.valid),
+      companyName: validationInfo.name || "",
+      address: validationInfo.address || "",
+      serviceUnavailable: false,
+    };
   } catch (error) {
     console.error('Errore durante la verifica della partita IVA:', error);
-    return false;
+    return { valid: false, companyName: "", address: "", serviceUnavailable: true };
   }
 }
 

@@ -1,6 +1,6 @@
 import { getVehicleBadges, getVehicleSubtitle, getVehicleTitle } from '../utils/vehicleSummary.js';
 
-export default function VehicleListItem({ vehicle, index, isSelected, onSelect, onDelete }) {
+export default function VehicleListItem({ vehicle, index, isSelected, onSelect, onDelete, readOnly }) {
   const badges = getVehicleBadges(vehicle, index);
 
   return (
@@ -27,13 +27,15 @@ export default function VehicleListItem({ vehicle, index, isSelected, onSelect, 
           </div>
         </button>
 
-        <button
-          className="rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-700 transition hover:bg-rose-50"
-          type="button"
-          onClick={onDelete}
-        >
-          Delete
-        </button>
+        {!readOnly && (
+          <button
+            className="rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-700 transition hover:bg-rose-50"
+            type="button"
+            onClick={onDelete}
+          >
+            Delete
+          </button>
+        )}
       </div>
     </div>
   );

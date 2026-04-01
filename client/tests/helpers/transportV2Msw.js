@@ -16,6 +16,14 @@ export function createTransportV2PutHandler(resolver) {
   return http.put(transportV2PutUrl(), resolver);
 }
 
+export function transportV2SubmitUrl(certificationId = ':certificationId') {
+  return `*/transport-v2/${certificationId}/submit`;
+}
+
+export function createTransportV2SubmitHandler(resolver) {
+  return http.post(transportV2SubmitUrl(), resolver);
+}
+
 export function jsonResponse(body, init) {
   return HttpResponse.json(body, init);
 }

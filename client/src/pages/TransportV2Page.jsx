@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 import { useBeforeUnload, useParams, unstable_usePrompt as usePrompt } from 'react-router-dom';
 import ChatWidget from '../chatbot/ChatWidget.jsx';
+import Footer from '../components/footer';
+import Navbar from '../components/navbar';
+import ScrollToTop from '../components/scrollToTop.jsx';
 import OcrUploadPanel from '../features/transportV2/components/OcrUploadPanel.jsx';
 import QuestionnaireFlagsSection from '../features/transportV2/components/QuestionnaireFlagsSection.jsx';
 import TransportResultsPanel from '../features/transportV2/components/TransportResultsPanel.jsx';
@@ -34,11 +37,14 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
     submitDraft,
   } = useTransportV2Draft(certificationId);
 
+  const isSubmitted = transportV2.meta?.status === 'submitted';
+
   const handleAppliedOcrVehicle = useCallback((response) => {
     if (response?.transport_v2) {
       applyTransportV2(response.transport_v2, {
         preferredVehicleId: response.vehicle?.vehicle_id || null,
         markDirty: false,
+        saveSuccessAt: new Date().toISOString(),
       });
       return;
     }
@@ -49,6 +55,7 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
   const ocr = useTransportV2Ocr({
     certificationId: Number(certificationId),
     onApplied: handleAppliedOcrVehicle,
+    isSubmitted,
   });
 
   useBeforeUnload(
@@ -78,18 +85,27 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
     event.target.value = '';
   };
 
+  const withSiteChrome = (content) => (
+    <>
+      <ScrollToTop />
+      <Navbar />
+      {content}
+      <Footer />
+    </>
+  );
+
   if (ui.isLoading) {
-    return (
+    return withSiteChrome(
       <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
         <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           Loading Transport V2 draft...
         </div>
-      </main>
+      </main>,
     );
   }
 
   if (ui.loadError) {
-    return (
+    return withSiteChrome(
       <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
         <div className="mx-auto max-w-3xl rounded-2xl border border-rose-200 bg-white p-8 shadow-sm">
           <h1 className="text-2xl font-semibold text-slate-900">Transport V2 unavailable</h1>
@@ -102,66 +118,75 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
             Retry
           </button>
         </div>
-      </main>
+      </main>,
     );
   }
 
-  return (
-    <main className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <TransportV2Header meta={transportV2.meta} certificationId={certificationId} />
+  return withSiteChrome(
+    <>
+      <main className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <TransportV2Header meta={transportV2.meta} certificationId={certificationId} />
 
-        <TransportSubmitBar
-          isDirty={ui.isDirty}
-          isSaving={ui.isSaving}
-          isSubmitting={ui.isSubmitting}
-          saveError={ui.saveError}
-          submitError={ui.submitError}
-          saveSuccessAt={ui.saveSuccessAt}
-          onSave={() => saveDraft()}
-          onSubmit={() => submitDraft()}
-        />
-
-        <QuestionnaireFlagsSection
-          questionnaireFlags={transportV2.draft.questionnaire_flags}
-          fieldErrors={fieldErrors}
-          onChange={updateQuestionnaireFlag}
-        />
-
-        <div className="grid gap-6 xl:grid-cols-[360px,minmax(0,1fr)]">
-          <VehicleListPanel
-            vehicles={transportV2.draft.vehicles}
-            selectedVehicleId={selectedVehicleId}
-            fieldErrors={fieldErrors}
-            onAddVehicle={addVehicle}
-            onDeleteVehicle={deleteVehicle}
-            onSelectVehicle={setSelectedVehicleId}
+          <TransportSubmitBar
+            isDirty={ui.isDirty}
+            isSaving={ui.isSaving}
+            isSubmitting={ui.isSubmitting}
+            isSubmitted={isSubmitted}
+            submittedAt={transportV2.meta?.submitted_at}
+            saveError={ui.saveError}
+            submitError={ui.submitError}
+            saveSuccessAt={ui.saveSuccessAt}
+            onSave={() => saveDraft()}
+            onSubmit={() => submitDraft()}
           />
 
-          <VehicleEditorPanel
-            vehicle={selectedVehicle}
-            vehicleIndex={selectedVehicleIndex}
+          <QuestionnaireFlagsSection
+            questionnaireFlags={transportV2.draft.questionnaire_flags}
             fieldErrors={fieldErrors}
-            onTransportModeChange={(value) => updateVehicleTransportMode(selectedVehicleId, value)}
-            onFieldChange={(fieldName, value) => updateVehicleField(selectedVehicleId, fieldName, value)}
-            onNotesChange={(value) => updateVehicleNotes(selectedVehicleId, value)}
+            onChange={updateQuestionnaireFlag}
+            readOnly={isSubmitted}
           />
+
+          <div className="grid gap-6 xl:grid-cols-[360px,minmax(0,1fr)]">
+            <VehicleListPanel
+              vehicles={transportV2.draft.vehicles}
+              selectedVehicleId={selectedVehicleId}
+              fieldErrors={fieldErrors}
+              onAddVehicle={addVehicle}
+              onDeleteVehicle={deleteVehicle}
+              onSelectVehicle={setSelectedVehicleId}
+              readOnly={isSubmitted}
+            />
+
+            <VehicleEditorPanel
+              vehicle={selectedVehicle}
+              vehicleIndex={selectedVehicleIndex}
+              fieldErrors={fieldErrors}
+              onTransportModeChange={(value) => updateVehicleTransportMode(selectedVehicleId, value)}
+              onFieldChange={(fieldName, value) => updateVehicleField(selectedVehicleId, fieldName, value)}
+              onNotesChange={(value) => updateVehicleNotes(selectedVehicleId, value)}
+              readOnly={isSubmitted}
+            />
+          </div>
+
+          {!isSubmitted && (
+            <OcrUploadPanel
+              uploads={ocr.uploads}
+              isUploading={ocr.isUploading}
+              uploadError={ocr.uploadError}
+              onFileSelection={handleFileSelection}
+              onTransportModeChange={ocr.setUploadTransportMode}
+              onApplyUpload={ocr.applyUpload}
+              onRefreshUpload={ocr.refreshUploadResult}
+            />
+          )}
+
+          <TransportResultsPanel derived={transportV2.derived} results={transportV2.results} />
         </div>
-
-        <OcrUploadPanel
-          uploads={ocr.uploads}
-          isUploading={ocr.isUploading}
-          uploadError={ocr.uploadError}
-          onFileSelection={handleFileSelection}
-          onTransportModeChange={ocr.setUploadTransportMode}
-          onApplyUpload={ocr.applyUpload}
-          onRefreshUpload={ocr.refreshUploadResult}
-        />
-
-        <TransportResultsPanel derived={transportV2.derived} results={transportV2.results} />
-      </div>
+      </main>
 
       <ChatWidget questionnaireType="transport" certificationId={certificationId} />
-    </main>
+    </>,
   );
 }

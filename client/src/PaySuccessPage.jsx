@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MutatingDots } from 'react-loader-spinner'
 import { useRecoveryContext } from './provider/provider';
 import axios from 'axios';
@@ -7,18 +7,27 @@ import axios from 'axios';
 function PaySuccessPage() {
   const { setCartProducts, setQuantities, setIsEmpty } = useRecoveryContext();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const finalizePurchase = async () => {
-      const orderDataRaw = localStorage.getItem('productsIDs');
-      const codeIdRaw = localStorage.getItem('codeId');
-      const codeID = codeIdRaw ? Number(codeIdRaw) : null;
+      const sessionId = searchParams.get('session_id');
+      if (!sessionId) {
+        return;
+      }
 
-      await createOrder(orderDataRaw, codeID);
-      await remove_user_cart();
-
-      localStorage.removeItem('productsIDs');
-      localStorage.removeItem('codeId');
+      try {
+        await axios.post(
+          `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/finalize-checkout-session`,
+          { sessionId },
+          { withCredentials: true },
+        );
+        setCartProducts([]);
+        setQuantities({});
+        setIsEmpty(true);
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     finalizePurchase();
@@ -30,50 +39,6 @@ function PaySuccessPage() {
       clearTimeout(timer);
     };
   }, []);
-
-  const remove_user_cart = async () => {
-
-
-    try {
-      const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/remove-user-cart`, {
-        withCredentials: true
-      });
-      if (response.status === 200) {
-        console.log(response.data);
-        setCartProducts([]);
-        setQuantities({});
-        setIsEmpty(true);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const createOrder = async (orderDataRaw, codeID) => {
-    const parsedOrderData = orderDataRaw ? JSON.parse(orderDataRaw) : [];
-    if (!Array.isArray(parsedOrderData) || parsedOrderData.length === 0) {
-      console.warn("Nessun prodotto trovato in productsIDs: salto creazione ordine.");
-      return;
-    }
-
-    try {
-      //IL POST VERRA FATTO DUE VOLTE, QUINDI DUE ORDINI INVECE CHE UNO IN QUANTO IN MAIN.JS C'E'
-      //REACT STRICT MODE CHE IN AMBIENTE DI PRODUZIONE E' DISABILITATO
-      const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/create-order`, { orderData: parsedOrderData, codeID }, {
-        withCredentials: true
-      });
-
-      if (response.status === 200 || response.status === 201) {
-        console.log(response.data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const returnToLogin = () => {
-    navigate('/Cart');
-  };
 
   return (
     <div className="text-arial">
@@ -98,16 +63,6 @@ function PaySuccessPage() {
             />
           </div>
         </div>
-        {/* 
-        <div className="w-full flex items-center justify-center p-8">
-          <button
-            className="font-bold w-auto flex justify-center items-center border-2 border-transparent rounded-xl py-4 bg-[#2d7044] text-white hover:bg-white hover:text-[#2d7044] hover:border-[#2d7044] transition-colors duration-300 ease-in-out text-xl"
-            onClick={returnToLogin}
-          >
-            Torna a carrello
-          </button>
-        </div>
-        */}
       </div>
     </div>
   );

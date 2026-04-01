@@ -54,6 +54,7 @@ export default function VehicleFieldsForm({
   onTransportModeChange,
   onFieldChange,
   onNotesChange,
+  readOnly,
 }) {
   const fieldPath = (name) => `draft.vehicles[${vehicleIndex}].fields.${name}`;
   const vehiclePath = (name) => `draft.vehicles[${vehicleIndex}].${name}`;
@@ -62,7 +63,7 @@ export default function VehicleFieldsForm({
   const showAltFuelField = isDualFuelType(vehicle.fields.fuel_type);
 
   return (
-    <div className="space-y-5">
+    <fieldset disabled={readOnly} className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
         <InputField label="Transport mode" error={getFirstFieldError(fieldErrors, vehiclePath('transport_mode'))}>
           <BaseSelect
@@ -291,6 +292,6 @@ export default function VehicleFieldsForm({
           </pre>
         </div>
       ) : null}
-    </div>
+    </fieldset>
   );
 }

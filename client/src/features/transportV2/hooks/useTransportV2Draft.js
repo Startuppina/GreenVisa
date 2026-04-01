@@ -10,6 +10,8 @@ import createEmptyTransportV2Draft from '../utils/emptyTransportV2Draft.js';
 import createEmptyVehicleRow from '../utils/emptyVehicleRow.js';
 import { groupErrorsByField, isDualFuelType, validateTransportV2ForSubmit } from '../utils/validation.js';
 
+const AUTOSAVE_DEBOUNCE_MS = 500;
+
 function clearErrorFields(errorMap, fieldsToClear) {
   if (!fieldsToClear.length) {
     return errorMap;
@@ -39,6 +41,7 @@ export default function useTransportV2Draft(certificationId) {
   const [transportV2, setTransportV2] = useState(() => createEmptyTransportV2Draft(numericCertificationId));
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [draftRevision, setDraftRevision] = useState(0);
   const [ui, setUi] = useState({
     isLoading: true,
     isSaving: false,
@@ -52,6 +55,9 @@ export default function useTransportV2Draft(certificationId) {
 
   const transportV2Ref = useRef(transportV2);
   const uiRef = useRef(ui);
+  const autosaveTimeoutRef = useRef(null);
+  const lastAutosaveAttemptRevisionRef = useRef(0);
+  const autosavePausedRef = useRef(false);
 
   useEffect(() => {
     transportV2Ref.current = transportV2;
@@ -75,6 +81,7 @@ export default function useTransportV2Draft(certificationId) {
       isDirty: options.markDirty ?? previous.isDirty,
       saveError: options.saveError ?? null,
       submitError: options.submitError ?? null,
+      saveSuccessAt: options.saveSuccessAt ?? previous.saveSuccessAt,
     }));
 
     return normalized;
@@ -127,6 +134,8 @@ export default function useTransportV2Draft(certificationId) {
   const updateDraft = useCallback((updater, clearedFields = []) => {
     setTransportV2((previous) => updater(previous));
     setFieldErrors((previous) => clearErrorFields(previous, clearedFields));
+    autosavePausedRef.current = false;
+    setDraftRevision((previous) => previous + 1);
     setUi((previous) => ({
       ...previous,
       isDirty: true,
@@ -272,6 +281,11 @@ export default function useTransportV2Draft(certificationId) {
   }, [updateVehicle]);
 
   const saveDraft = useCallback(async ({ silentSuccess = false } = {}) => {
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+      autosaveTimeoutRef.current = null;
+    }
+
     setUi((previous) => ({
       ...previous,
       isSaving: true,
@@ -300,6 +314,9 @@ export default function useTransportV2Draft(certificationId) {
       return { ok: true, transportV2: normalized };
     } catch (error) {
       const nextFieldErrors = extractApiFieldErrors(error);
+      if (error?.response?.status === 409) {
+        autosavePausedRef.current = true;
+      }
       setFieldErrors(nextFieldErrors);
       setUi((previous) => ({
         ...previous,
@@ -309,6 +326,42 @@ export default function useTransportV2Draft(certificationId) {
       return { ok: false, fieldErrors: nextFieldErrors };
     }
   }, [numericCertificationId]);
+
+  const isSubmitted = transportV2.meta?.status === 'submitted';
+
+  useEffect(() => {
+    if (!ui.isDirty || ui.isLoading || ui.isSubmitting || isSubmitted) {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (ui.isSaving || autosavePausedRef.current) {
+      return;
+    }
+
+    if (draftRevision <= lastAutosaveAttemptRevisionRef.current) {
+      return;
+    }
+
+    autosaveTimeoutRef.current = setTimeout(() => {
+      autosaveTimeoutRef.current = null;
+      if (!uiRef.current.isDirty || uiRef.current.isLoading || uiRef.current.isSubmitting || uiRef.current.isSaving) {
+        return;
+      }
+      lastAutosaveAttemptRevisionRef.current = draftRevision;
+      saveDraft({ silentSuccess: true });
+    }, AUTOSAVE_DEBOUNCE_MS);
+
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+    };
+  }, [draftRevision, isSubmitted, saveDraft, ui.isDirty, ui.isLoading, ui.isSaving, ui.isSubmitting]);
 
   const submitDraft = useCallback(async () => {
     const clientErrors = validateTransportV2ForSubmit(transportV2Ref.current);

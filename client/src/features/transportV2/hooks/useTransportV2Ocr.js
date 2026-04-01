@@ -23,7 +23,7 @@ function createUploadItem(seed = {}) {
   };
 }
 
-export default function useTransportV2Ocr({ certificationId, onApplied }) {
+export default function useTransportV2Ocr({ certificationId, onApplied, isSubmitted = false }) {
   const [uploads, setUploads] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
@@ -62,7 +62,7 @@ export default function useTransportV2Ocr({ certificationId, onApplied }) {
   }, [updateUpload]);
 
   const uploadFiles = useCallback(async (files) => {
-    if (!files?.length) {
+    if (!files?.length || isSubmitted) {
       return;
     }
 
@@ -97,7 +97,7 @@ export default function useTransportV2Ocr({ certificationId, onApplied }) {
       setIsUploading(false);
       setUploadError(extractApiErrorMessage(error, 'Unable to upload OCR documents.'));
     }
-  }, [certificationId, loadDocumentResult]);
+  }, [certificationId, isSubmitted, loadDocumentResult]);
 
   const setUploadTransportMode = useCallback((documentId, value) => {
     updateUpload(documentId, {
@@ -106,6 +106,10 @@ export default function useTransportV2Ocr({ certificationId, onApplied }) {
   }, [updateUpload]);
 
   const applyUpload = useCallback(async (documentId) => {
+    if (isSubmitted) {
+      return { ok: false };
+    }
+
     const upload = uploads.find((item) => item.documentId === documentId);
     if (!upload) {
       return { ok: false };
@@ -137,7 +141,7 @@ export default function useTransportV2Ocr({ certificationId, onApplied }) {
       });
       return { ok: false };
     }
-  }, [certificationId, onApplied, updateUpload, uploads]);
+  }, [certificationId, isSubmitted, onApplied, updateUpload, uploads]);
 
   return {
     uploads,

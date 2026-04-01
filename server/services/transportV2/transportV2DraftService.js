@@ -1,4 +1,4 @@
-const repository = require('../repositories/surveyResponsesRepository');
+const repository = require('../../repositories/surveyResponsesRepository');
 const {
   createDefaultTransportV2,
   isTransportV2Submitted,
