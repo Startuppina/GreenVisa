@@ -37,3 +37,6 @@
 
 ## Bo
 - bugfix togliere tag e codice quando l'admin aggiunge una certificazione, controllare prima che non servono a niente ma sembra che non servano ad un cazzo.
+
+## Sicurezza
+- critico ricordars di controllare che pgweb non sia utilizzabile da un utente.

@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
+const backendTarget = process.env.VITE_BACKEND_TARGET || 'http://localhost:8080';
+
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -17,12 +19,12 @@ export default defineConfig({
     hmr: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: backendTarget,
         changeOrigin: true,
         secure: false,
       },
       '/uploaded_img': {
-        target: 'http://localhost:8080',
+        target: backendTarget,
         changeOrigin: true,
         secure: false,
       },

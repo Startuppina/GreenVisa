@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import ScrollToTop from './components/scrollToTop';
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Building from "./components/building";
 import Plants from "./components/plants";
