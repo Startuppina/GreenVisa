@@ -36,7 +36,7 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
-    path: "/Login",
+    path: "/login",
     element: <LoginPage />,
   },
   {
@@ -68,7 +68,7 @@ const router = createBrowserRouter([
     element: <ProductPage />,
   },
   {
-    path: "/Cart",
+    path: "/cart",
     element: <CarrelloPage />,
   },
   {
@@ -76,23 +76,23 @@ const router = createBrowserRouter([
     element: <PaymentPage />,
   },
   {
-    path: "/User",
+    path: "/user",
     element: <UserPage />,
   },
   {
-    path: "/InsertEmail",
+    path: "/insertemail",
     element: <InsertEmail />,
   },
   {
-    path: "/Verification",
+    path: "/verification",
     element: <OTPInput />,
   },
   {
-    path: "/Reset",
+    path: "/reset",
     element: <Reset />,
   },
   {
-    path: "/Recovered",
+    path: "/recovered",
     element: <Recovered />,
   },
   {

@@ -67,7 +67,7 @@ function PromoCodeForm() {
                     setCategory('');
                 }, 3000);
 
-                navigate('/User');
+                navigate('/user');
 
             }
 

@@ -119,18 +119,3 @@ Da PowerShell, da qualsiasi cartella (Docker deve essere avviato):
 docker exec -e PGPASSWORD=pass123 greenvisa-db psql -U admin -d green-visa -c "SELECT id, email, username FROM users WHERE administrator IS NOT TRUE;"
 docker exec -e PGPASSWORD=pass123 greenvisa-db psql -U admin -d green-visa -c "DELETE FROM users WHERE administrator IS NOT TRUE;"
 ```
-
-## Se hai installato il client PostgreSQL sul PC
-
-Allora puoi usare `psql` verso `localhost` e la password in `server/.env` (`DB_PASSWORD`):
-
-```powershell
-cd server
-$env:PGPASSWORD = ((Get-Content .env) | Where-Object { $_ -match '^DB_PASSWORD=' }) -replace '^DB_PASSWORD=',''
-psql -h localhost -p 5432 -U admin -d "green-visa" -c "SELECT id, email, username FROM users WHERE administrator IS NOT TRUE;"
-psql -h localhost -p 5432 -U admin -d "green-visa" -c "DELETE FROM users WHERE administrator IS NOT TRUE;"
-```
-
-Se `DB_HOST`, `DB_PORT`, `DB_USER` o `DB_NAME` nel tuo `.env` differiscono, sostituiscili nel comando `psql`.
-
-Se un `DELETE` fallisce per vincoli FK (es. righe in `buildings` legate a quell’utente), va gestita prima la catena di dipendenze o gli FK nel database.

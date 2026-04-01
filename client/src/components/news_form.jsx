@@ -68,7 +68,7 @@ const NewsForm = () => {
                     setContent('');
                     setImage(null);
                 }, 3000);
-                navigate("/User");
+                navigate("/user");
             }
 
             /*const contentType = response.headers.get('Content-Type');

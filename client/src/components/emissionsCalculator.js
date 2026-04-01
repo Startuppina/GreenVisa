@@ -46,8 +46,6 @@ export async function EmissionsCalculator(buildingID) {
 
 
     //PHASE 1: FETCH DATA FROM THE SERVER
-    const token = localStorage.getItem("token");
-    //console.log("Token:", token);
     //console.log("Building ID:", buildingID);
 
     try {

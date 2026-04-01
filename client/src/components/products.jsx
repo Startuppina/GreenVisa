@@ -3,11 +3,11 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import ConfirmPopUp from "./confirmPopUp";
 import getPriceCategory from "./getPriceCategory";
+import axiosInstance from "../axiosInstance";
 
 const NextArrow = (props) => {
     const { onClick } = props;
@@ -58,9 +58,8 @@ function Products() {
         const getProductsInfo = async () => {
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/products-info`, {
+                const response = await axiosInstance.get('/products-info', {
                     params: { order: productOrdering },
-                    withCredentials: true,
                 });
 
                 if (response.status === 200) {
@@ -97,17 +96,8 @@ function Products() {
 
     const deleteProduct = async () => {
 
-
-        if (!token) {
-            setMessagePopUp('Token non trovato');
-            setButtonPopup(true);
-            return;
-        }
-
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-product/${productToDelete}`, {
-                withCredentials: true,
-            })
+            const response = await axiosInstance.delete(`/delete-product/${productToDelete}`);
 
             if (response.status === 200) {
                 navigate(0);

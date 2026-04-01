@@ -1,9 +1,9 @@
 import { useState } from "react";
 import React from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
 import PassInfo from "./passInfo"; // Assuming PassInfo is used for password requirements info
+import axiosInstance from "../axiosInstance";
 
 export default function Reset() {
   const [password, setPassword] = useState('');
@@ -40,14 +40,10 @@ export default function Reset() {
     }
 
     try {
-      const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/change-password`, {
-        password
-      }, {
-        withCredentials: true,
-      });
+      const response = await axiosInstance.put('/change-password', { password });
 
       if (response.status === 200) {
-        navigate("/Recovered");
+        navigate("/recovered");
       }
     } catch (error) {
       console.log(error);

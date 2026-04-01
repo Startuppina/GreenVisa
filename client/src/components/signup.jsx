@@ -344,7 +344,7 @@ const Signup = () => {
                     <Link to="/" className="text-sm font-semibold text-[#2d7044] hover:underline">
                         Torna alla home
                     </Link>
-                    <Link to="/Login" className="text-sm text-slate-600 hover:text-[#2d7044] hover:underline">
+                    <Link to="/login" className="text-sm text-slate-600 hover:text-[#2d7044] hover:underline">
                         Hai gia un account? Accedi
                     </Link>
                 </div>
@@ -636,7 +636,7 @@ const Signup = () => {
                         />
                         <p className="text-sm text-slate-600">
                             Hai gia un account?{" "}
-                            <Link to="/Login" className="font-semibold text-[#2d7044] hover:underline">
+                            <Link to="/login" className="font-semibold text-[#2d7044] hover:underline">
                                 Accedi
                             </Link>
                         </p>

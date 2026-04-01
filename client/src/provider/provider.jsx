@@ -6,7 +6,6 @@ const RecoveryContext = createContext();
 // Crea un provider per il contesto
 export const RecoveryContextProvider = ({ children }) => {
     const [email, setEmail] = useState('');
-    const [OTP, setOTP] = useState('');
     const [cartProducts, setCartProducts] = useState([]);
     const [quantities, setQuantities] = useState({});
     const [isEmpty, setIsEmpty] = useState(true);
@@ -24,7 +23,7 @@ export const RecoveryContextProvider = ({ children }) => {
 
     return (
         <RecoveryContext.Provider value={{
-            email, setEmail, OTP, setOTP, cartProducts, setCartProducts,
+            email, setEmail, cartProducts, setCartProducts,
             quantities, setQuantities, isEmpty, setIsEmpty, codeTrigger, setCodeTrigger,
             addBuildingTrigger, setAddBuildingTrigger, buildingID, setBuildingID, refresh,
             triggerRefresh, initialData, setInitialData, refreshResults, triggerRefreshResults

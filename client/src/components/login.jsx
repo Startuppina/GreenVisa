@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../axiosInstance';
 import { useRecoveryContext } from '../provider/provider';
 import MessagePopUp from './messagePopUp';
 
@@ -19,7 +19,7 @@ const Login = () => {
     const toggleShowPassword = () => setShowPassword(!showPassword);
 
     const navigateToOtp = async (e) => {
-        navigate('/InsertEmail');
+        navigate('/insertemail');
     };
 
     const handleSubmit = async (e) => {
@@ -28,9 +28,7 @@ const Login = () => {
         const formData = { email, password };;
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/login`, formData, {
-                withCredentials: true
-            });
+            const response = await axiosInstance.post('/login', formData);
 
             if (response.status === 200) {
                 console.log('Login successful:', response.data);
@@ -41,7 +39,7 @@ const Login = () => {
                 if (response.data.first_login) {
                     navigate('/Products');
                 } else {
-                    navigate('/User');
+                    navigate('/user');
                 }
             } else {
                 console.error('Error:', response.data.msg);

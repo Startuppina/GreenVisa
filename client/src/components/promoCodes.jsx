@@ -58,7 +58,7 @@ function PromoCodes() {
                         start: formatDate(code.start), // Formatta la data di inizio
                         expiration: formatDate(code.expiration) // Formatta la data di scadenza
                     })));
-                    navigate("/User");
+                    navigate("/user");
                 }
 
             } catch (error) {
@@ -132,7 +132,7 @@ function PromoCodes() {
                 setButtonPopup(true);
                 setPromoCodeToPublish(null);
                 setCodeTrigger(!CodeTrigger);
-                navigate("/User");
+                navigate("/user");
             }
         } catch (error) {
             setPopupConfirmPublish(false);
@@ -154,7 +154,7 @@ function PromoCodes() {
                 setButtonPopup(true);
                 setPromoCodeToPublish(null);
                 setCodeTrigger(!CodeTrigger);
-                navigate("/User");
+                navigate("/user");
             }
         } catch (error) {
             setPopupConfirmPublish(false);

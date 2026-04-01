@@ -79,7 +79,7 @@ function ProductsForm() {
                     setTag('');
                 }, 3000); // Caricamento finto di 2 secondi
 
-                navigate("/User");
+                navigate("/user");
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
                 setButtonPopup(true);

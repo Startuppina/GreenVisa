@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import MessagePopUp from './messagePopUp';
 import { useRecoveryContext } from '../provider/provider';
+import axiosInstance from '../axiosInstance';
 
 const InsertEmail = () => {
-  const { OTP, setOTP } = useRecoveryContext();
+  const { setEmail: setRecoveryEmail } = useRecoveryContext();
   const [email, setEmail] = useState('');
   const [buttonPopup, setButtonPopup] = useState(false);
   const [messagePopup, setMessagePopup] = useState('');
@@ -17,45 +17,11 @@ const InsertEmail = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send_email`, { email }, {
-        withCredentials: true
-      });
-
-      console.log(response.data);
-
-      if (response.data.exist === false) {
-        setMessagePopup("L'email inserita non esiste");
-        setButtonPopup(true);
-        return;
-      }
+      const response = await axiosInstance.post('/send_email', { email });
 
       if (response.status === 200) {
-        const recoveryToken = response.data.token;
-        console.log(recoveryToken);
-
-        if (recoveryToken) {
-          const OTP = Math.floor(Math.random() * 9000 + 1000);
-          console.log(OTP);
-          setOTP(OTP);
-
-          try {
-            const response2 = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send_recovery_email`, { email, OTP }, {
-              withCredentials: true
-            });
-
-            console.log(response2.data);
-
-            if (response2.status === 200) {
-              navigate('/Verification');
-            } else {
-              setMessagePopup(response2.data.msg);
-              setButtonPopup(true);
-            }
-          } catch (error) {
-            setMessagePopup(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
-          }
-        }
+        setRecoveryEmail(email);
+        navigate('/verification');
       }
     } catch (error) {
       setMessagePopup(error.response?.data?.msg || error.message);

@@ -6,7 +6,7 @@ const nodemailer = require("nodemailer");
 const pool = require("./db"); // Your database connection pool
 const rootLogger = require("./logger");
 const { createRequestLoggingMiddleware } = require("./middleware/httpLogger");
-const { authenticateJWT, authenticateAdmin } = require("./middleware/auth");
+const { authenticateJWT, authenticateRecoveryToken, authenticateAdmin } = require("./middleware/auth");
 const {
   logAuthEvent,
   logQuestionnaireEvent,
@@ -67,6 +67,67 @@ const upload = multer({ storage: storage });
 app.use('/uploaded_img', express.static(path.join(__dirname, 'uploaded_img')));
 
 const secretKey = process.env.SECRET_KEY;
+const isProduction = process.env.NODE_ENV === "production";
+const cookieBaseOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: "Lax",
+};
+const accessTokenCookieOptions = {
+  ...cookieBaseOptions,
+  maxAge: 3 * 24 * 60 * 60 * 1000,
+};
+const sessionCookieOptions = {
+  ...cookieBaseOptions,
+  maxAge: 3 * 24 * 60 * 60 * 1000,
+};
+const recoveryTokenCookieOptions = {
+  ...cookieBaseOptions,
+  maxAge: 15 * 60 * 1000,
+};
+const passwordRecoveryChallenges = new Map();
+
+function hashRecoveryCode(code) {
+  return crypto.createHash("sha256").update(String(code)).digest("hex");
+}
+
+function generateRecoveryCode() {
+  return String(crypto.randomInt(100000, 1000000));
+}
+
+function saveRecoveryChallenge(email, code) {
+  const normalizedEmail = email.toLowerCase();
+  passwordRecoveryChallenges.set(normalizedEmail, {
+    hash: hashRecoveryCode(code),
+    expiresAt: Date.now() + 5 * 60 * 1000,
+  });
+}
+
+function verifyRecoveryChallenge(email, code) {
+  const normalizedEmail = email.toLowerCase();
+  const challenge = passwordRecoveryChallenges.get(normalizedEmail);
+  if (!challenge) {
+    return false;
+  }
+  if (Date.now() > challenge.expiresAt) {
+    passwordRecoveryChallenges.delete(normalizedEmail);
+    return false;
+  }
+  if (challenge.hash !== hashRecoveryCode(code)) {
+    return false;
+  }
+  passwordRecoveryChallenges.delete(normalizedEmail);
+  return true;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [email, challenge] of passwordRecoveryChallenges.entries()) {
+    if (challenge.expiresAt <= now) {
+      passwordRecoveryChallenges.delete(email);
+    }
+  }
+}, 60 * 1000);
 
 //const purify = DOMPurify(window);
 app.use(cookieParser());
@@ -87,12 +148,7 @@ app.use((req, res, next) => {
 
     if (!sessionId) {
       sessionId = '_' + Math.random().toString(36).substr(2, 9);
-      res.cookie('sessionId', sessionId, {
-        httpOnly: false,
-        secure: false,
-        sameSite: 'Lax',
-        maxAge: 3 * 24 * 60 * 60 * 1000 // 3 days 
-      });
+      res.cookie('sessionId', sessionId, sessionCookieOptions);
     }
   }
 
@@ -510,18 +566,9 @@ app.post("/api/login", async (req, res) => {
       await pool.query("UPDATE cart SET user_id = $1, session_id = NULL  WHERE session_id = $2", [user_id, sessionID])
     }
 
-    res.cookie('accessToken', token, {
-      httpOnly: false,
-      secure: false, // in poducazione mettere true
-      sameSite: 'Lax',
-      maxAge: 3 * 24 * 60 * 60 * 1000 // 3 days
-    });
+    res.cookie('accessToken', token, accessTokenCookieOptions);
 
-    res.clearCookie('sessionId', {
-      httpOnly: false,
-      secure: false, // Impostalo su true se stai usando HTTPS
-      sameSite: 'Lax'
-    });
+    res.clearCookie('sessionId', cookieBaseOptions);
 
 
     logAuthEvent(req, "auth_login_success", {
@@ -531,7 +578,7 @@ app.post("/api/login", async (req, res) => {
 
     return res
       .status(200)
-      .json({ msg: "Login effettuato con successo!", token, first_login });
+      .json({ msg: "Login effettuato con successo!", first_login });
   } catch (error) {
     logUnexpectedError(req, error, { flow: "login" });
     return res
@@ -542,11 +589,8 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/logout", authenticateJWT, (req, res) => {
   logAuthEvent(req, "auth_logout", { user_id: req.user?.user_id });
-  res.clearCookie('accessToken', {
-    httpOnly: false,
-    secure: false, // Impostalo su true se stai usando HTTPS
-    sameSite: 'Lax'
-  });
+  res.clearCookie('accessToken', cookieBaseOptions);
+  res.clearCookie('recoveryToken', cookieBaseOptions);
   res.status(200).json({ msg: "Logout effettuato con successo!" });
 });
 
@@ -563,17 +607,9 @@ app.delete("/api/delete-account", authenticateJWT, async (req, res) => {
       return res.status(404).json({ message: "Account non trovato" });
     }
 
-    res.clearCookie('accessToken', {
-      httpOnly: false,
-      secure: false, // Impostalo su true se stai usando HTTPS
-      sameSite: 'Lax'
-    });
-
-    res.clearCookie('sessionId', {
-      httpOnly: true,
-      secure: false, // Impostalo su true se stai usando HTTPS
-      sameSite: 'Lax'
-    });
+    res.clearCookie('accessToken', cookieBaseOptions);
+    res.clearCookie('recoveryToken', cookieBaseOptions);
+    res.clearCookie('sessionId', cookieBaseOptions);
 
     res.status(200).json({ message: "Account eliminato con successo" });
   } catch (err) {
@@ -849,28 +885,22 @@ app.get("/api/fetch-not-verified-users", authenticateJWT, authenticateAdmin, asy
 
 app.post("/api/send_email", async (req, res) => {
   try {
+    const email = req.body?.email;
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ msg: "Email non valida" });
+    }
+
     //verifica se l'email esiste nel database
     const result = await pool.query(
       "SELECT id, email FROM users WHERE email = $1",
-      [req.body.email]
+      [email]
     );
     if (result.rows.length > 0) {
-      const recoveryToken = jwt.sign(
-        { id: result.rows[0].id },
-        secretKey,
-        { expiresIn: "1h" }
-      )
-      res.cookie('recoveryToken', recoveryToken, {
-        httpOnly: false,
-        secure: false,
-        sameSite: 'Lax',
-        maxAge: 6 * 10 * 60 * 1000 // 1 hour
-      });
-      //console.log(recoveryToken);
-      res.status(200).json({ exist: true, token: recoveryToken });
-    } else {
-      res.status(200).json({ exist: false });
+      const recoveryCode = generateRecoveryCode();
+      saveRecoveryChallenge(email, recoveryCode);
+      await sendEmail({ recipient_email: email, OTP: recoveryCode });
     }
+    res.status(200).json({ msg: "Se l'email esiste, abbiamo inviato un codice di recupero." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Errore interno del server" });
@@ -1507,28 +1537,69 @@ function sendEmailResponse({ recipient_email, email_title, email_content, receiv
   });
 }
 
-app.post("/api/send_recovery_email", authenticateJWT, (req, res) => {
-  const { email, OTP } = req.body;
-  sendEmail({ recipient_email: email, OTP })
-    .then((response) => {
+app.post("/api/send_recovery_email", async (req, res) => {
+  try {
+    const email = req.body?.email;
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ msg: "Email non valida" });
+    }
+
+    const result = await pool.query(
+      "SELECT id FROM users WHERE email = $1",
+      [email]
+    );
+    if (result.rows.length > 0) {
+      const recoveryCode = generateRecoveryCode();
+      saveRecoveryChallenge(email, recoveryCode);
+      await sendEmail({ recipient_email: email, OTP: recoveryCode });
       logAuthEvent(req, "auth_password_recovery_requested", {
-        recovery_email_domain: email && typeof email === "string" ? email.split("@")[1] : undefined,
+        recovery_email_domain: email.split("@")[1],
       });
-      res.status(200).json(response);
-    })
-    .catch((error) => {
-      rootLogger.error(
-        { event: "unexpected_error", flow: "password_recovery_email", err: { message: error?.message } },
-        "recovery email send failed",
-      );
-      res.status(500).json(error);
-    });
+    }
+
+    return res.status(200).json({ msg: "Se l'email esiste, abbiamo inviato un codice di recupero." });
+  } catch (error) {
+    rootLogger.error(
+      { event: "unexpected_error", flow: "password_recovery_email", err: { message: error?.message } },
+      "recovery email send failed",
+    );
+    return res.status(500).json({ msg: "Errore interno del server" });
+  }
 });
 
-app.put("/api/change-password", authenticateJWT, async (req, res) => {
+app.post("/api/verify-recovery-code", async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ msg: "Email e codice sono obbligatori" });
+    }
+
+    const isValid = verifyRecoveryChallenge(email, code);
+    if (!isValid) {
+      return res.status(400).json({ msg: "Codice OTP non valido o scaduto" });
+    }
+
+    const userResult = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ msg: "Codice OTP non valido o scaduto" });
+    }
+
+    const recoveryToken = jwt.sign(
+      { user_id: userResult.rows[0].id, purpose: "recovery" },
+      secretKey,
+      { expiresIn: "15m" }
+    );
+    res.cookie("recoveryToken", recoveryToken, recoveryTokenCookieOptions);
+    return res.status(200).json({ msg: "Codice verificato con successo" });
+  } catch (error) {
+    return res.status(500).json({ msg: "Errore interno del server" });
+  }
+});
+
+app.put("/api/change-password", authenticateRecoveryToken, async (req, res) => {
   try {
     const { password } = req.body;
-    const { id } = req.user;
+    const user_id = req.user?.user_id;
 
     if (!passwordCheck(password)) {
       return res
@@ -1541,16 +1612,15 @@ app.put("/api/change-password", authenticateJWT, async (req, res) => {
 
     // Prepare the SQL query
     const query = "UPDATE users SET password_digest = $1 WHERE id = $2";
-    const values = [hashedPassword, id];
+    const values = [hashedPassword, user_id];
 
     // Execute the query
-    await pool.query(query, values);
+    const result = await pool.query(query, values);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Utente non trovato" });
+    }
 
-    res.clearCookie('recoveryToken', {
-      httpOnly: false,
-      secure: false,  // Impostalo su true se stai usando HTTPS
-      sameSite: 'Lax'
-    });
+    res.clearCookie('recoveryToken', cookieBaseOptions);
 
     res.status(200).json({ message: "Password modificata con successo" });
   } catch (err) {
@@ -2092,7 +2162,7 @@ app.put("/api/update-quantity/:id", async (req, res) => {
     const { id } = req.params;
     const { quantity } = req.body;
 
-    if (req.headers.authorization) {
+    if (req.cookies.accessToken) {
       await new Promise((resolve, reject) => {
         authenticateJWT(req, res, (err) => {
           if (err) {
@@ -2104,7 +2174,7 @@ app.put("/api/update-quantity/:id", async (req, res) => {
     }
 
     const user_id = req.user?.user_id;
-    const session_id = req.header('session-id');
+    const session_id = req.cookies.sessionId;
 
     let query;
     let values;
