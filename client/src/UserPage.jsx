@@ -49,10 +49,8 @@ const UserPage = () => {
     useEffect(() => {
         const fetchInfo = async () => {
 
-            console.log("env", import.meta.env.VITE_REACT_SERVER_ADDRESS);
-
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
+                const response = await axios.get(`/api/user-info`, {
                     withCredentials: true
                 });
 
@@ -80,7 +78,7 @@ const UserPage = () => {
         const fetchOrdersCategory = async () => {
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-questionnaires`, {
+                const response = await axios.get(`/api/user-questionnaires`, {
                     withCredentials: true
                 });
 
@@ -108,7 +106,7 @@ const UserPage = () => {
 
     const logout = async () => {
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/logout`, {}, {
+            const response = await axios.post(`/api/logout`, {}, {
                 withCredentials: true
             });
 
@@ -135,7 +133,7 @@ const UserPage = () => {
         try {
 
 
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-account`, {
+            const response = await axios.delete(`/api/delete-account`, {
                 withCredentials: true
             });
 
@@ -175,7 +173,7 @@ const UserPage = () => {
         const fetchUserApprovations = async () => {
             try {
 
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-approved-requests`, {
+                const response = await axios.get(`/api/fetch-approved-requests`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -195,7 +193,7 @@ const UserPage = () => {
 
         try {
             // Effettua la richiesta di aggiornamento
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/cancel-approvation/${approvation_id}`, {}, {
+            const response = await axios.put(`/api/cancel-approvation/${approvation_id}`, {}, {
                 withCredentials: true
             });
 
@@ -250,7 +248,7 @@ const UserPage = () => {
         const fetchIsUserCertifiable = async () => {
             try {
 
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/is-user-certificable`, {
+                const response = await axios.get(`/api/is-user-certificable`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {

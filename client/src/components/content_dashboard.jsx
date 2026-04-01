@@ -37,7 +37,7 @@ const Dashboard = () => {
 
 
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/messages`, {
+        const response = await axios.get(`/api/messages`, {
           withCredentials: true
         });
         if (response.status === 200) {
@@ -52,7 +52,7 @@ const Dashboard = () => {
     const fetchRequests = async () => {
       ;
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-second-level-requests`, {
+        const response = await axios.get(`/api/fetch-second-level-requests`, {
           withCredentials: true
         });
 
@@ -68,7 +68,7 @@ const Dashboard = () => {
     const fetchNotVerifiedUsers = async () => {
       ;
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-not-verified-users`, {
+        const response = await axios.get(`/api/fetch-not-verified-users`, {
           withCredentials: true
         });
         if (response.status === 200) {

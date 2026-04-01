@@ -37,7 +37,7 @@ function Photovoltaics() {
                 return;
             }
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-photovoltaics`, {
+                const response = await axios.get(`/api/buildings/${id}/fetch-photovoltaics`, {
                     withCredentials: true
                 });
                 console.log('Photos data:', response.data); // Log the response data
@@ -58,7 +58,7 @@ function Photovoltaics() {
 
         const { id } = photoToDelete;
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-photovoltaic/${id}`, {
+            const response = await axios.delete(`/api/delete-photovoltaic/${id}`, {
                 withCredentials: true
             });
 

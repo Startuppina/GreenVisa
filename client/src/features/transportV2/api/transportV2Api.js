@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const transportV2Axios = axios.create({
-  baseURL: `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api`,
+  baseURL: '/api',
   withCredentials: true,
 });
 

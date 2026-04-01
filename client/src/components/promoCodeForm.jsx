@@ -31,7 +31,7 @@ function PromoCodeForm() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/categories`);
+                const response = await axios.get(`/api/categories`);
                 const data = response.data
                 setCategories(["Tutti", ...data]);
             } catch (error) {
@@ -50,7 +50,7 @@ function PromoCodeForm() {
         setIsLoading(true);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/create-promo-code`, { code, discount, start, expiration, category }, {
+            const response = await axios.post(`/api/create-promo-code`, { code, discount, start, expiration, category }, {
                 withCredentials: true,
             });
 

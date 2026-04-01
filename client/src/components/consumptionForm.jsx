@@ -41,7 +41,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         const fetchUserEnergies = async () => {
             try {
                 ;
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-user-energies`, {
+                const response = await axios.get(`/api/${buildingID}/fetch-user-energies`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -67,7 +67,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         };
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/add-consumption`, consumption, {
+            const response = await axios.post(`/api/${buildingID}/add-consumption`, consumption, {
                 withCredentials: true
             });
             if (response.status === 200) {
@@ -105,7 +105,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         try {
 
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
+            const response = await axios.put(`/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -151,7 +151,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
 
         try {
             ;
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/add-consumption`, consumption, {
+            const response = await axios.post(`/api/${buildingID}/add-consumption`, consumption, {
                 withCredentials: true
             });
 
@@ -199,7 +199,7 @@ function ConsumptionForm({ allConsumptionsData = "empty", data = 'empty', isEdit
         try {
 
             ;
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
+            const response = await axios.put(`/api/${buildingID}/modify-consumption/${data.id}`, consumption, {
                 withCredentials: true
             })
 

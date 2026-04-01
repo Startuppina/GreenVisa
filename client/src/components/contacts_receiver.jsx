@@ -37,7 +37,7 @@ const MessagesDashboard = () => {
 
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/messages`, {
+                const response = await axios.get(`/api/messages`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -53,7 +53,7 @@ const MessagesDashboard = () => {
         const fetchAdminUsername = async () => {
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/admin-username`, {
+                const response = await axios.get(`/api/admin-username`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -77,7 +77,7 @@ const MessagesDashboard = () => {
 
 
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-message/${id}`, {
+            const response = await axios.delete(`/api/delete-message/${id}`, {
                 withCredentials: true
             });
             if (response.status === 200) {
@@ -101,7 +101,7 @@ const MessagesDashboard = () => {
 
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-email-message`, { email }, {
+            const response = await axios.post(`/api/send-email-message`, { email }, {
                 withCredentials: true
             });
 
@@ -121,7 +121,7 @@ const MessagesDashboard = () => {
         setIsLoading(true);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-message-response`, { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
+            const response = await axios.post(`/api/send-message-response`, { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
                 withCredentials: true
             });
 

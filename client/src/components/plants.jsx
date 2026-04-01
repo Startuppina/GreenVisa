@@ -41,7 +41,7 @@ function Plants() {
                 return;
             }
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-plants`, {
+                const response = await axios.get(`/api/buildings/${id}/fetch-plants`, {
                     withCredentials: true
                 });
                 console.log('Plants data:', response.data); // Log the response data
@@ -63,7 +63,7 @@ function Plants() {
 
         const { id } = plantsToDelete;
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-plant/${id}`, {
+            const response = await axios.delete(`/api/delete-plant/${id}`, {
                 withCredentials: true
             });
 

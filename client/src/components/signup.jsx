@@ -185,7 +185,7 @@ const Signup = () => {
         }
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/check-vat`, { vatNumber: normalizedVat });
+            const response = await axios.post(`/api/check-vat`, { vatNumber: normalizedVat });
             setIsValid(response.data.success);
             setVatValidationMessage('');
             setCompany_name(response.data.companyName || '');
@@ -293,7 +293,7 @@ const Signup = () => {
         };
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/signup`, formData, {
+            const response = await axios.post(`/api/signup`, formData, {
                 withCredentials: true,
             });
 

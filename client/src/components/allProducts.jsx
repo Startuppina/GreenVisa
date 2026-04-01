@@ -45,7 +45,7 @@ function AllProducts() {
         const fetchProducts = async () => {
             try {
                 const response = await axios.get(
-                    `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/products-info`,
+                    `/api/products-info`,
                     {
                         withCredentials: true
                     }
@@ -68,7 +68,7 @@ function AllProducts() {
         const fetchCategories = async () => {
             try {
                 const response = await axios.get(
-                    `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/categories`,
+                    `/api/categories`,
                 );
                 if (response.status === 200) {
                     setCategories(response.data);
@@ -90,7 +90,7 @@ function AllProducts() {
 
         try {
             const response = await axios.delete(
-                `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-product/${id}`,
+                `/api/delete-product/${id}`,
                 {
                     withCredentials: true
                 }
@@ -136,7 +136,7 @@ function AllProducts() {
             }
 
             const response = await axios.put(
-                `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-product/${id}`,
+                `/api/edit-product/${id}`,
                 formData,
                 {
                     withCredentials: true
@@ -231,7 +231,7 @@ function AllProducts() {
                                     </h3>
                                     <div className="mb-2 w-[150px] h-[150px]">
                                         <img
-                                            src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${productItem.image}`}
+                                            src={`/uploaded_img/${productItem.image}`}
                                             alt={productItem.name}
                                             className=" object-cover rounded mb-2"
                                         />

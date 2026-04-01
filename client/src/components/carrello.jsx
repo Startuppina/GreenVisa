@@ -199,7 +199,7 @@ function Carrello() {
                             <div className="w-full h-auto flex flex-col md:flex-row items-center justify-center px-5 mx-auto gap-5 transition-all duration-500 ease-out">
                                 <div className="w-[250px] h-[200px] overflow-hidden mt-3 mb-3">
                                     <img
-                                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${product.image}`}
+                                        src={`/uploaded_img/${product.image}`}
                                         alt={product.name}
                                         className="w-full h-full object-cover rounded-lg"
                                     />

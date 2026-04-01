@@ -49,7 +49,7 @@ export async function EmissionsCalculator(buildingID) {
     //console.log("Building ID:", buildingID);
 
     try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-emissions-data`, {
+        const response = await axios.get(`/api/${buildingID}/fetch-emissions-data`, {
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -624,7 +624,7 @@ export async function EmissionsCalculator(buildingID) {
 
     //aggiornamento dell'edificio per aggiungere il voto finale e le emissioni calcolate
     try {
-        const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/insert-results/${buildingID}`, { finalVote, totalCO2Emissions, areaCO2Emissions }, {
+        const response = await axios.put(`/api/insert-results/${buildingID}`, { finalVote, totalCO2Emissions, areaCO2Emissions }, {
             headers: {
                 'Content-Type': 'application/json',
             },

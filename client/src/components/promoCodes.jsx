@@ -48,7 +48,7 @@ function PromoCodes() {
             ;
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-promo-codes`, {
+                const response = await axios.get(`/api/fetch-promo-codes`, {
                     withCredentials: true,
                 });
 
@@ -69,7 +69,7 @@ function PromoCodes() {
         const fetchUsers = async () => {
             ;
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-users`, {
+                const response = await axios.get(`/api/fetch-users`, {
                     withCredentials: true,
                 });
                 if (response.status === 200) {
@@ -100,7 +100,7 @@ function PromoCodes() {
     const deleteCode = async () => {
         ;
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-promo-code/${promoCodeToDelete}`, {
+            const response = await axios.delete(`/api/delete-promo-code/${promoCodeToDelete}`, {
                 withCredentials: true,
             });
             if (response.status === 200) {
@@ -123,7 +123,7 @@ function PromoCodes() {
     const publishCode = async () => {
         ;
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/publish-promo-code/${promoCodeToPublish}`, {}, {
+            const response = await axios.post(`/api/publish-promo-code/${promoCodeToPublish}`, {}, {
                 withCredentials: true,
             });
             if (response.status === 200) {
@@ -146,7 +146,7 @@ function PromoCodes() {
         console.log("selectedUsers:", selectedUsers);
         ;
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/assign-promo-code-to-users/${promoCodeToPublish}`, { selectedUsers }, {
+            const response = await axios.post(`/api/assign-promo-code-to-users/${promoCodeToPublish}`, { selectedUsers }, {
                 withCredentials: true,
             });
             if (response.status === 200) {
@@ -166,7 +166,7 @@ function PromoCodes() {
     const fetchUsersNotAssignedCodes = async (codeId) => {
         ;
         try {
-            const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-users-not-assigned-codes/${codeId}`, {
+            const response = await axios.get(`/api/fetch-users-not-assigned-codes/${codeId}`, {
                 withCredentials: true,
             });
             if (response.status === 200) {

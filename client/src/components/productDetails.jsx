@@ -30,7 +30,7 @@ function ProductDetails() {
         const getProductDetails = async () => {
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/product-details/${id}`, {
+                const response = await axios.get(`/api/product-details/${id}`, {
                     withCredentials: true
                 });
 
@@ -62,7 +62,7 @@ function ProductDetails() {
         console.log("Dati del carrello:", cartData);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/cart-insertion/${id}`, cartData, {
+            const response = await axios.post(`/api/cart-insertion/${id}`, cartData, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -96,7 +96,7 @@ function ProductDetails() {
                 {/* Sezione immagine prodotto */}
                 <div className="w-full max-w-lg lg:max-w-xl h-[250px] sm:h-[300px] lg:h-[400px] overflow-hidden">
                     <img
-                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${product.image}`}
+                        src={`/uploaded_img/${product.image}`}
                         alt={product.name}
                         className="w-full h-full object-cover rounded-lg"
                     />

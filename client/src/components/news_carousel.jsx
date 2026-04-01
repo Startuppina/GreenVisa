@@ -157,7 +157,7 @@ const NewsCarousel = () => {
                                     >
                                         <div className="w-full h-full border-gray-300 border-2 rounded-lg">
                                             <img
-                                                src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${item.image}`}
+                                                src={`/uploaded_img/${item.image}`}
                                                 alt={item.title}
                                                 className="w-full h-full object-fill rounded-lg"
                                             />

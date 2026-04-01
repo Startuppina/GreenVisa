@@ -13,7 +13,7 @@ const CodeUsage = () => {
     const fetchFromPublished = async () => {
 
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-published-assinged-codes`,
+        const response = await axios.get(`/api/fetch-published-assinged-codes`,
           {
             withCredentials: true
           }

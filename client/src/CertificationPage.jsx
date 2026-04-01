@@ -46,7 +46,7 @@ const CertificationPage = () => {
     useEffect(() => {
         const fetchInfo = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
+                const response = await axios.get(`/api/user-info`, {
                     withCredentials: true
                 });
 

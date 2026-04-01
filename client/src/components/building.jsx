@@ -18,7 +18,7 @@ function Building() {
         const fetchBuilding = async () => {
             setBuildingID(id);
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-building/${id}`, {
+                const response = await axios.get(`/api/fetch-building/${id}`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {

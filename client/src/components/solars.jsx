@@ -39,7 +39,7 @@ function Solars() {
                 return;
             }
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-solars`, {
+                const response = await axios.get(`/api/buildings/${id}/fetch-solars`, {
                     withCredentials: true,
                 });
                 console.log('Plants data:', response.data); // Log the response data
@@ -60,7 +60,7 @@ function Solars() {
 
         const { id } = solarToDelete;
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-solar/${id}`, {
+            const response = await axios.delete(`/api/delete-solar/${id}`, {
                 withCredentials: true,
             });
 

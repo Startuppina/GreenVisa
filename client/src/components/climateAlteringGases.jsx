@@ -41,7 +41,7 @@ function ClimateAlteringGases() {
                 return;
             }
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/fetch-gases`, {
+                const response = await axios.get(`/api/buildings/${id}/fetch-gases`, {
                     withCredentials: true
                 });
                 console.log('Gases data:', response.data); // Log the response data
@@ -63,7 +63,7 @@ function ClimateAlteringGases() {
 
         const { id } = gasToDelete;
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-gas/${id}`, {
+            const response = await axios.delete(`/api/delete-gas/${id}`, {
                 withCredentials: true
             });
 

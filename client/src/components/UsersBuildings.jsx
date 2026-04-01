@@ -14,7 +14,7 @@ function UsersBuildings() {
     const fetchUserInfo = async () => {
         ;
         try {
-            const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-info-by-buildings`, {
+            const response = await axios.get(`/api/fetch-user-info-by-buildings`, {
                 withCredentials: true,
             });
             if (response.status === 200) {

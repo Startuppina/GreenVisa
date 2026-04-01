@@ -28,7 +28,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
         };
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/gas/${gas.id}`, formData, {
+            const response = await axios.put(`/api/buildings/${id}/update/gas/${gas.id}`, formData, {
                 withCredentials: true
             });
 
@@ -71,7 +71,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/gas`, formData, {
+            const response = await axios.post(`/api/buildings/${id}/upload/gas`, formData, {
                 withCredentials: true
             });
 

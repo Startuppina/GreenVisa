@@ -58,7 +58,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
         }
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/plant/${plant.id}`, formData, {
+            const response = await axios.put(`/api/buildings/${id}/update/plant/${plant.id}`, formData, {
                 withCredentials: true
             });
 
@@ -129,7 +129,7 @@ function PlantForm({ plant = 'empty', isEdit, onButtonClick }) {
 
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/plant`, formData, {
+            const response = await axios.post(`/api/buildings/${id}/upload/plant`, formData, {
                 withCredentials: true
             });
 

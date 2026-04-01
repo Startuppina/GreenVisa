@@ -45,7 +45,7 @@ function AllNews() {
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/news`, {
+                const response = await axios.get(`/api/news`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -70,7 +70,7 @@ function AllNews() {
 
         try {
             const response = await axios.delete(
-                `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-news/${id}`,
+                `/api/delete-news/${id}`,
                 {
                     withCredentials: true,
                 }
@@ -112,7 +112,7 @@ function AllNews() {
             }
 
             const response = await axios.put(
-                `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-news/${id}`,
+                `/api/edit-news/${id}`,
                 formData,
                 {
                     withCredentials: true,
@@ -209,7 +209,7 @@ function AllNews() {
                                     </h3>
                                     <div className="mb-2 w-[150px] h-[150px]">
                                         <img
-                                            src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${newsItem.image}`}
+                                            src={`/uploaded_img/${newsItem.image}`}
                                             alt={newsItem.title}
                                             className="w-full h-full object-cover rounded mb-2"
                                         />

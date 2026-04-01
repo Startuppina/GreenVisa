@@ -18,7 +18,7 @@ function UserBuldingsPageAdmin() {
     useEffect(() => {
         const fetchUserBuildings = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-buildings/${id}`, {
+                const response = await axios.get(`/api/fetch-user-buildings/${id}`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -43,7 +43,7 @@ function UserBuldingsPageAdmin() {
         console.log("building solars", buildingSolars);
 
         try {
-            const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-building-plants-solars-photos/${id}/${buildingId}`, {
+            const response = await axios.get(`/api/fetch-building-plants-solars-photos/${id}/${buildingId}`, {
                 withCredentials: true
             });
             if (response.status === 200) {

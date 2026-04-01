@@ -174,7 +174,7 @@ function Products() {
                                         <Link to={`/ProductDetails/${item.id}`}>
                                             <div className="w-full bg-[#2d7044] rounded-lg p-2 hover:transform hover:scale-105 duration-300">
                                                 <div className="h-[35vh]"> {/* Adjusted height */}
-                                                    <img src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
+                                                    <img src={`/uploaded_img/${item.image}`} alt={item.name} className="w-full h-full object-cover rounded-lg" />
                                                 </div>
                                                 <div className="text-arial text-xl text-white font-bold text-center pt-3">{item.name}</div>
                                                 <div className="text-arial text-xl text-white text-center pt-2">{getPriceCategory(item.category)}</div>

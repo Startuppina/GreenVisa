@@ -30,7 +30,7 @@ function Consumption() {
         const fetchConsumptionData = async () => {
             try {
                 ;
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/fetch-consumption-data`, {
+                const response = await axios.get(`/api/${buildingID}/fetch-consumption-data`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -53,7 +53,7 @@ function Consumption() {
         console.log("Consumption ID to delete:", id);
 
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/${buildingID}/delete-consumption/${id}`, {
+            const response = await axios.delete(`/api/${buildingID}/delete-consumption/${id}`, {
                 withCredentials: true
             });
             if (response.status === 200) {

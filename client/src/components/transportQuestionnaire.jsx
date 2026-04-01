@@ -186,7 +186,7 @@ function TransportQuestionnaire({ certification_id }) {
 
   const secondLevelCertification = async (userInfo, certification_id) => {
     try {
-      await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/second-level-certification`, { userInfo, certification_id }, {
+      await axios.post(`/api/second-level-certification`, { userInfo, certification_id }, {
         withCredentials: true,
       });
       //console.log("Second Level Certification completed successfully");

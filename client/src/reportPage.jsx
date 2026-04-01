@@ -438,7 +438,7 @@ function ReportPage() {
     useEffect(() => {
         const fetchBuildings = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-report-data`, {
+                const response = await axios.get(`/api/fetch-report-data`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {

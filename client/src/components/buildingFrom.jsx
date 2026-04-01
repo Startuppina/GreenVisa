@@ -46,10 +46,8 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
     useEffect(() => {
         const fetchInfo = async () => {
 
-            console.log("env", import.meta.env.VITE_REACT_SERVER_ADDRESS);
-
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
+                const response = await axios.get(`/api/user-info`, {
                     withCredentials: true
                 });
 
@@ -108,7 +106,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         console.log('Form data:', formData);
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/edit-building`, formData, {
+            const response = await axios.put(`/api/edit-building`, formData, {
                 withCredentials: true
             });
 
@@ -184,7 +182,7 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         console.log('Form data:', formData);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-building`, formData, {
+            const response = await axios.post(`/api/upload-building`, formData, {
                 headers: {
                     'Content-Type': 'application/json',
                 },

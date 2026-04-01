@@ -15,6 +15,18 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     hmr: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploaded_img': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
     watch: {
       usePolling: true,
     },

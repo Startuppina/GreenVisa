@@ -37,7 +37,7 @@ export default function Buildings() {
             setBuildingID(0);
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-buildings`, {
+                const response = await axios.get(`/api/fetch-buildings`, {
                     withCredentials: true
                 });
 
@@ -53,7 +53,7 @@ export default function Buildings() {
         const fetchUserTotalQuantity = async () => {
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-all-user-quantity`, {
+                const response = await axios.get(`/api/fetch-all-user-quantity`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -74,7 +74,7 @@ export default function Buildings() {
 
         const { id } = buildingToDelete;
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-building/${id}`, {
+            const response = await axios.delete(`/api/delete-building/${id}`, {
                 withCredentials: true
             });
 

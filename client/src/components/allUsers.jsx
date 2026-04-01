@@ -45,7 +45,7 @@ function AllUsers() {
 
     const fetchNotVerifiedUsers = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-not-verified-users`, {
+            const response = await axios.get(`/api/fetch-not-verified-users`, {
                 withCredentials: true
             });
             if (response.status === 200) {
@@ -61,7 +61,7 @@ function AllUsers() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-users`, {
+                const response = await axios.get(`/api/fetch-users`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -77,7 +77,7 @@ function AllUsers() {
         const fetchAdminUsername = async () => {
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/admin-username`, {
+                const response = await axios.get(`/api/admin-username`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -112,7 +112,7 @@ function AllUsers() {
         setIsLoading(true);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-message-response`, { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
+            const response = await axios.post(`/api/send-message-response`, { emailTitle, emailContent, receiverEmail: currentMessageEmail }, {
                 withCredentials: true
             });
             if (response.status === 200) {
@@ -134,7 +134,7 @@ function AllUsers() {
 
         console.log(userID);
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-verify-email`, { userID }, {
+            const response = await axios.post(`/api/send-verify-email`, { userID }, {
                 withCredentials: true
             });
             if (response.status === 200) {
@@ -149,7 +149,7 @@ function AllUsers() {
 
     const handleManualVerifyUser = async (userID) => {
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/verify-user-manually`, { userID }, {
+            const response = await axios.post(`/api/verify-user-manually`, { userID }, {
                 withCredentials: true
             });
             if (response.status === 200) {

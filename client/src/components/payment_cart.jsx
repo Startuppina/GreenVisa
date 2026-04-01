@@ -14,7 +14,7 @@ function Payment_cart() {
 
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-cart`, {
+                const response = await axios.get(`/api/fetch-user-cart`, {
                     withCredentials: true
                 });
 
@@ -47,7 +47,7 @@ function Payment_cart() {
                 {cartProducts.map((cartProduct) => (
                     <div className="w-full flex flex-row items-center justify-between gap-4 pb-3" key={cartProduct.id}>
                         <div className="w-[250px]">
-                            <img src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${cartProduct.image}`} alt={cartProduct.name} className="rounded-lg" />
+                            <img src={`/uploaded_img/${cartProduct.image}`} alt={cartProduct.name} className="rounded-lg" />
                         </div >
                         <div className="mb-4 text-right">
                             <p className="font-semibold">{cartProduct.name}</p>

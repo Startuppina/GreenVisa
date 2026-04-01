@@ -66,6 +66,59 @@ cd server; npm run dev
 cd client; npm run dev
 ```
 
+## frontend proxy behavior (dev and remote LAN)
+
+The frontend now calls relative paths:
+- API: `/api/...`
+- Uploaded images: `/uploaded_img/...`
+
+In development, Vite proxies these paths to the backend on `http://localhost:8080`.
+This means a browser opened from another PC must point to the frontend host (for example `http://<server-ip>:5173`) and will not call its own `localhost:8080`.
+
+Quick check from browser DevTools Network:
+- requests must go to `http://<frontend-host>:5173/api/...`
+- requests must not go directly to `http://localhost:8080/...`
+
+## production note (important)
+
+`vite server.proxy` works only with `npm run dev`.
+For production, configure an equivalent reverse proxy in front of the built frontend/static files.
+
+Example Nginx mapping (same-origin safe):
+
+```nginx
+server {
+  listen 80;
+  server_name your-domain.example;
+
+  # Frontend static build
+  location / {
+    root /var/www/greenvisa-client;
+    try_files $uri /index.html;
+  }
+
+  # Backend API
+  location /api/ {
+    proxy_pass http://127.0.0.1:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # Uploaded images served by backend
+  location /uploaded_img/ {
+    proxy_pass http://127.0.0.1:8080/uploaded_img/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+If you deploy on HTTPS, keep backend cookies in production mode (`NODE_ENV=production`) so `secure` cookies are enabled.
+
 
 # google cloud for ocr
 

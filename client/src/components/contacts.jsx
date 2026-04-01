@@ -53,7 +53,7 @@ function Contacts() {
         };
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/send-message`, contactData, {
+            const response = await axios.post(`/api/send-message`, contactData, {
                 withCredentials: true
             });
 

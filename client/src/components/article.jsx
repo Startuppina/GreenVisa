@@ -11,7 +11,7 @@ function Article() {
     useEffect(() => {
         const getArticleData = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/article/${id}`, {
+                const response = await axios.get(`/api/article/${id}`, {
                     withCredentials: true
                 });
 
@@ -29,7 +29,7 @@ function Article() {
             ;
 
             try {
-                const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/set-news-read/${id}`, {}, {
+                const response = await axios.put(`/api/set-news-read/${id}`, {}, {
                     withCredentials: true
                 });
 
@@ -113,7 +113,7 @@ function Article() {
             </div>
             <div className="w-[400px] h-[400px] border-gray-300 border-2 rounded-lg">
                 <img
-                    src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${article.image}`}
+                    src={`/uploaded_img/${article.image}`}
                     alt={article.title}
                     className="w-full h-full object-fill rounded-lg"
                 />
