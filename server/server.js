@@ -2066,6 +2066,20 @@ app.post("/api/cart-insertion/:id", async (req, res) => {
       return res.status(404).json({ msg: "Certificazione non trovata" });
     }
 
+    // Prevent repurchase of already owned certifications for authenticated users.
+    if (user_id) {
+      const alreadyPurchasedQuery = `
+        SELECT 1
+        FROM orders
+        WHERE user_id = $1 AND product_id = $2
+        LIMIT 1
+      `;
+      const alreadyPurchasedResult = await pool.query(alreadyPurchasedQuery, [user_id, id]);
+      if (alreadyPurchasedResult.rows.length > 0) {
+        return res.status(409).json({ msg: "Hai già acquistato questo prodotto" });
+      }
+    }
+
     // Check if the product is already in the cart
     let cartQuery;
     let cartValues;
