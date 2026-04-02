@@ -1,28 +1,8 @@
 import React from 'react';
-
-const FAQ_MAP = {
-  transport: [
-    { key: 'targa', label: 'Dove trovo il numero di targa?' },
-    { key: 'euro', label: 'Cosa significa classe Euro?' },
-    { key: 'documenti_veicoli', label: 'Quali documenti servono per i veicoli?' },
-    { key: 'carburante', label: 'Come inserisco i dati del carburante?' },
-  ],
-  buildings: [
-    { key: 'consumi', label: 'Dove trovo i dati dei consumi energetici?' },
-    { key: 'ape', label: "Cos'è un attestato APE?" },
-    { key: 'impianti', label: 'Quali informazioni servono sugli impianti?' },
-    { key: 'bollette', label: 'Come inserisco i dati delle bollette?' },
-  ],
-  spa: [
-    { key: 'raccolta_diff', label: 'Come gestisco le domande sulla raccolta differenziata?' },
-    { key: 'elettrodomestici', label: 'Come compilo le domande su lavastoviglie e lavatrici?' },
-    { key: 'ristorazione', label: 'Quando devo compilare le domande su bar e ristorazione?' },
-    { key: 'dispenser', label: 'Quando la domanda sulle cabine e sui dispenser e applicabile?' },
-  ],
-};
+import { getFaqs } from './faqContent';
 
 export default function FAQChips({ questionnaireType, onSelect, disabled }) {
-  const faqs = FAQ_MAP[questionnaireType] || FAQ_MAP.transport;
+  const faqs = getFaqs(questionnaireType);
 
   return (
     <div className="flex flex-wrap gap-2 px-4 py-2">

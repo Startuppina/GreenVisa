@@ -15,6 +15,7 @@ export default function ChatWidget({ questionnaireType, certificationId, buildin
     close,
     minimize,
     sendMessage,
+    answerFaq,
     requestHandoff,
     dismissError,
     dismissEmailDraft,
@@ -39,7 +40,7 @@ export default function ChatWidget({ questionnaireType, certificationId, buildin
         error={error}
         emailDraft={emailDraft}
         onSend={(text) => sendMessage(text)}
-        onFaqSelect={(label, key) => sendMessage(label, key)}
+        onFaqSelect={(label, key) => answerFaq(label, key)}
         onMinimize={minimize}
         onClose={close}
         onRequestHandoff={requestHandoff}

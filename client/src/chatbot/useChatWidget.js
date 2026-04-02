@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import * as chatApi from './chatApi';
+import { getFaqAnswer } from './faqContent';
 
 const GREETING_TEXT = 'Ciao, sono qui per aiutarti a compilare il questionario. Puoi farmi domande su questa sezione.';
 
@@ -84,6 +85,20 @@ export default function useChatWidget({ questionnaireType, certificationId, buil
     }
   }, [isLoading, ensureConversation]);
 
+  const answerFaq = useCallback((text, faqKey) => {
+    const trimmedText = text.trim();
+    const faqAnswer = getFaqAnswer(questionnaireType, faqKey);
+
+    if (!trimmedText || !faqAnswer || isLoading) return;
+
+    setError(null);
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', content: trimmedText, id: `${Date.now()}-faq-user` },
+      { role: 'assistant', content: faqAnswer, id: `${Date.now()}-faq-assistant` },
+    ]);
+  }, [isLoading, questionnaireType]);
+
   const handleRequestHandoff = useCallback(async () => {
     if (!conversationIdRef.current) return;
 
@@ -114,6 +129,7 @@ export default function useChatWidget({ questionnaireType, certificationId, buil
     close,
     minimize,
     sendMessage,
+    answerFaq,
     requestHandoff: handleRequestHandoff,
     dismissError,
     dismissEmailDraft,

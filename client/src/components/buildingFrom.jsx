@@ -377,6 +377,9 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                         type="number"
                                         value={employees}
                                         onChange={handleEmployeesChange}
+                                        onFocus={(e) => {
+                                            if (String(employees) === "0" && e.target?.select) e.target.select();
+                                        }}
                                         className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                     />
                                 </label>
@@ -621,6 +624,9 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                         type="text"
                                         value={lighting}
                                         onChange={handleLightingChange}
+                                        onFocus={(e) => {
+                                            if (String(lighting) === "0" && e.target?.select) e.target.select();
+                                        }}
                                         className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                     />
                                 </div>
@@ -632,6 +638,9 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                         type="text"
                                         value={led}
                                         onChange={handleLedChange}
+                                        onFocus={(e) => {
+                                            if (String(led) === "0" && e.target?.select) e.target.select();
+                                        }}
                                         className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                     />
                                 </div>
@@ -643,6 +652,9 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                                         type="text"
                                         value={gasLamp}
                                         onChange={handleGasChange}
+                                        onFocus={(e) => {
+                                            if (String(gasLamp) === "0" && e.target?.select) e.target.select();
+                                        }}
                                         className="bg-gray-50 border border-gray-300 text-gray-900 text-xl rounded-lg block w-full p-2.5"
                                     />
                                 </div>

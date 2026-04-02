@@ -2,6 +2,42 @@ GUIDA APPROVATA — QUESTIONARIO TRASPORTI
 
 Questa guida contiene le informazioni approvate per aiutare l'utente a compilare il questionario trasporti GreenVisa.
 
+== SEZIONE: OBBLIGATORIETÀ DEI CAMPI (VALIDAZIONE PIATTAFORMA) ==
+
+Riferimento: questionario Trasporti v2 — invio finale (submit) e salvataggio bozza. In bozza molti campi possono essere incompleti; all'invio devono essere soddisfatti i vincoli sotto.
+
+INVIO FINALE — BLOCCO DOMANDE (questionnaire_flags)
+Tutti obbligatori (deve essere data una risposta, non null):
+- I veicoli rispettano la normativa (compliance_with_vehicle_regulations)
+- Utilizzo di sistemi di navigazione (uses_navigator)
+- Adozione di pneumatici di classe A (uses_class_a_tires)
+- Copertura formazione eco-guida (eco_drive_training)
+- Interesse a un corso per mobility manager (interested_in_mobility_manager_course)
+- Interesse alla certificazione di secondo livello (interested_in_second_level_certification)
+
+INVIO FINALE — VEICOLI
+- Obbligatorio almeno un veicolo in elenco.
+- Per ogni veicolo obbligatori:
+  - Identificativo veicolo (vehicle_id)
+  - Modalità di trasporto: passeggeri (passenger) oppure merci (goods)
+  - Anno di immatricolazione
+  - Classe Euro
+  - Tipo di carburante
+  - Emissioni CO2 (g/km) — valore intero obbligatorio (campo co2_emissions_g_km)
+  - Data ultima revisione (formato data)
+  - Bollino / adesivo blu (sì/no, booleano)
+  - Chilometri annui (intero, maggiore o uguale a zero)
+- Obbligatorio solo se carburante GPL o metano:
+  - Secondo valore CO2 WLTP (g/km) per il carburante alternativo (wltp_co2_g_km_alt_fuel)
+- Se modalità passeggeri: obbligatorio codice profilo occupazione (1–6); non va indicato il profilo carico merci.
+- Se modalità merci: obbligatorio codice profilo carico (1–6); obbligatorio indicare se il veicolo supera 3,5 t (goods_vehicle_over_3_5_tons, sì/no); non va indicato il profilo occupazione passeggeri.
+
+FACOLTATIVO IN SUBMIT (salvo quanto sopra)
+- Campi tecnici o di supporto non elencati tra i vincoli di submit (es. metadati OCR) finché non richiesti dal flusso o dal messaggio di errore del sistema.
+
+BOZZA
+- È possibile salvare progressivamente senza avere tutti i campi del veicolo compilati; le stesse informazioni diventano obbligatorie solo in fase di invio definitivo.
+
 == SEZIONE: DATI GENERALI DELLA FLOTTA ==
 
 - "Numero di veicoli": inserire il numero totale di veicoli utilizzati dall'azienda per attività di trasporto.
@@ -52,11 +88,11 @@ Questa guida contiene le informazioni approvate per aiutare l'utente a compilare
 
 == DOMANDE FREQUENTI ==
 
-D: Dove trovo la classe Euro del mio veicolo?
-R: La classe Euro si trova sulla carta di circolazione alla voce V.9. Se non è indicata, potrebbe essere necessario consultare il costruttore o verificare tramite il portale dell'ACI.
+D: Cosa significa classe Euro?
+R: La classe Euro indica la normativa sulle emissioni a cui il veicolo è conforme. La trovi sulla carta di circolazione alla voce V.9.
 
 D: Cosa faccio se ho veicoli con carburanti diversi?
-R: Ogni veicolo va inserito singolarmente con il proprio tipo di carburante. Se un veicolo è bifuel (es. benzina/GPL), selezionare il carburante prevalente o quello indicato sulla CDC.
+R: Ogni veicolo va inserito singolarmente con il proprio tipo di carburante. Per ogni mezzo usa i dati riportati nella carta di circolazione.
 
 D: Come calcolo i chilometri annui se non ho dati precisi?
 R: Utilizzare la migliore stima disponibile basata sui registri di manutenzione, fatture carburante o dati del contachilometri. Non inventare dati; se non si dispone di un dato, contattare il supporto.
@@ -67,5 +103,11 @@ R: No. L'OCR aiuta a leggere e proporre alcuni dati della carta di circolazione,
 D: Che documento devo caricare per usare l'OCR?
 R: Preferibilmente una carta di circolazione ben leggibile, completa e fotografata/scansionata in modo nitido. Documenti incompleti o poco chiari possono ridurre la precisione del riconoscimento.
 
----
-NOTA: Questo file contiene contenuto segnaposto. Il team GreenVisa deve sostituirlo con la guida approvata ufficiale.
+D: Dove trovo il numero di targa?
+R: Il numero di targa si trova sulla carta di circolazione del veicolo. Inseriscilo esattamente come riportato nel documento, senza modifiche.
+
+D: Quali documenti servono per i veicoli?
+R: Il documento principale è la carta di circolazione. Da lì puoi ricavare targa, categoria veicolo, tipo di carburante, potenza e classe Euro.
+
+D: Come inserisco i dati del carburante?
+R: Inserisci il consumo annuo totale del carburante usando le quantità fisiche corrette: litri per benzina o gasolio, kg per il metano, kWh per i veicoli elettrici. Puoi recuperare il dato da fatture di rifornimento o sistemi di gestione flotta.

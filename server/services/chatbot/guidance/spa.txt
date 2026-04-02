@@ -1,5 +1,27 @@
 Linee guida operative per la compilazione del questionario SPA e Resorts.
 
+0) Obbligatorietà dei campi (validazione e logica del questionario in app)
+
+Riferimento: questionario SPA e Resorts integrato nella piattaforma (modulo Survey) e testo introduttivo mostrato all'utente.
+
+- Il questionario presenta all'utente l'obbligo di rispondere in modo completo e coerente; le domande a scelta SI/NO con punteggio sono il cuore della compilazione.
+- Salvataggio in bozza: i dati possono essere inviati al server mentre si compila (anche non completi), pagina per pagina.
+- Completamento (invio finale con questionario terminato): l'utente deve aver risposto alle domande richieste dal flusso del questionario fino alla fine; le domande nascoste non si compilano.
+
+OBBLIGATORIE QUANDO VISIBILI (domande condizionali)
+- Raccolta ulteriormente frazionata (es. alluminio, sughero, tappi): solo se la struttura dichiara di effettuare regolarmente la raccolta differenziata (filtro su raccolta differenziata = SI).
+- Domande su bar/ristorazione e su compostaggio scarti alimentari da ristorazione: solo se la struttura dichiara di avere servizio di bar/ristorazione (wellness_has_food_service = SI).
+- Domande su lavastoviglie (dettaglio e classe): solo se la struttura dichiara di avere lavastoviglie (wellness_has_dishwasher = SI).
+- Domande su lavatrice: solo se la struttura dichiara di avere lavatrici (wellness_has_washing_machine = SI).
+- Domanda sulle cabine: solo se la struttura dichiara di avere cabine (wellness_has_cabins = SI).
+
+NON OBBLIGATORIE / NON PERSISTITE (comportamento applicativo)
+- Se al filtro si risponde NO, le domande dipendenti non sono applicabili e i relativi valori vengono rimossi in sanitizzazione (non vanno compilate).
+- La prima sezione informativa (testo HTML introduttivo) non è una domanda da compilare.
+
+DOMANDE FILTRO (individuazione servizi: bar/ristorazione, lavastoviglie, lavatrici, cabine)
+- Quando compaiono nel percorso, vanno risposte per definire quali sezioni successive sono attive; in base alla risposta, altre domande diventano obbligatorie solo se la sezione resta attiva.
+
 1) Logica delle domande condizionali
 - Le domande su Bar/Ristorazione sono applicabili solo se la struttura ha effettivamente questi servizi.
 - Le domande su lavastoviglie sono applicabili solo se in struttura e presente almeno una lavastoviglie.
@@ -21,3 +43,17 @@ Linee guida operative per la compilazione del questionario SPA e Resorts.
 
 5) Assistenza
 - In caso di dubbio sulla disponibilita di un servizio o di un impianto, verificare con il responsabile operativo prima di rispondere.
+
+6) Domande frequenti
+
+D: Come gestisco le domande sulla raccolta differenziata?
+R: Se la struttura non effettua regolarmente la raccolta differenziata, la domanda sul frazionamento aggiuntivo non va compilata. Se invece la raccolta differenziata e attiva, indica se esiste un'ulteriore separazione per materiali specifici.
+
+D: Come compilo le domande su lavastoviglie e lavatrici?
+R: Compila queste domande solo se la struttura dispone davvero di lavastoviglie o lavatrici. Le domande servono a verificare in dettaglio la classe energetica di queste categorie specifiche.
+
+D: Quando devo compilare le domande su bar e ristorazione?
+R: Le domande su bar e ristorazione sono applicabili solo se la struttura offre effettivamente questi servizi. Se il servizio non esiste, non vanno compilate.
+
+D: Quando la domanda sulle cabine e sui dispenser e applicabile?
+R: La domanda sulle cabine e applicabile solo se la struttura dispone di cabine. Per i dispenser e i dosatori, rispondi in base alle pratiche ambientali realmente adottate dalla struttura.
