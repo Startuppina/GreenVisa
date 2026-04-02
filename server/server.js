@@ -3036,7 +3036,69 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       //buildingScore
     } = req.body;
 
-    if (!name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+    const nameNormalized = typeof name === "string" ? name.trim() : "";
+    const addressNormalized = typeof address === "string" ? address.trim() : "";
+    const usageNormalized = typeof usage === "string" ? usage.trim() : "";
+    const atecoNormalized =
+      ateco === null || ateco === undefined || String(ateco).trim() === ""
+        ? null
+        : String(ateco).trim();
+    const activityDescriptionNormalized =
+      activityDescription === null || activityDescription === undefined || String(activityDescription).trim() === ""
+        ? null
+        : String(activityDescription).trim();
+    const prodProcessDescriptionNormalized =
+      prodProcessDescription === null || prodProcessDescription === undefined || String(prodProcessDescription).trim() === ""
+        ? null
+        : String(prodProcessDescription).trim();
+    const annualTurnoverNormalized =
+      annualTurnover === null || annualTurnover === undefined || String(annualTurnover).trim() === ""
+        ? null
+        : Number(annualTurnover);
+    const employeesNormalized =
+      employees === null || employees === undefined || String(employees).trim() === ""
+        ? null
+        : Number(employees);
+
+    const overflowValidation = [
+      { value: nameNormalized, max: 255, message: "Il campo 'Nome' deve avere massimo 255 caratteri." },
+      { value: addressNormalized, max: 255, message: "Il campo 'Indirizzo' deve avere massimo 255 caratteri." },
+      { value: usageNormalized, max: 50, message: "Il campo 'Destinazione d'uso' deve avere massimo 50 caratteri." },
+      { value: activityDescriptionNormalized, max: 300, message: "Il campo 'Descrizione attività' deve avere massimo 300 caratteri." },
+      { value: prodProcessDescriptionNormalized, max: 300, message: "Il campo 'Descrizione processi produttivi' deve avere massimo 300 caratteri." },
+    ];
+
+    for (const check of overflowValidation) {
+      if (check.value && check.value.length > check.max) {
+        logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "field_overflow" }, "warn");
+        return res.status(400).json({ msg: check.message });
+      }
+    }
+
+    // `buildings.ateco` is VARCHAR(8) in the DB.
+    if (atecoNormalized && atecoNormalized.length > 8) {
+      logBuildingEvent(
+        req,
+        "validation_failed",
+        { flow: "building_create", reason: "invalid_ateco_length" },
+        "warn"
+      );
+      return res.status(400).json({
+        msg: "Il campo 'Codice Ateco' deve avere massimo 8 caratteri.",
+      });
+    }
+
+    if (employeesNormalized !== null && !Number.isInteger(employeesNormalized)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_employees" }, "warn");
+      return res.status(400).json({ msg: "Il campo 'Numero dipendenti' deve essere un numero intero." });
+    }
+
+    if (annualTurnoverNormalized !== null && !Number.isInteger(annualTurnoverNormalized)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_turnover" }, "warn");
+      return res.status(400).json({ msg: "Il campo 'Fatturato annuo' deve essere un numero intero." });
+    }
+
+    if (!nameNormalized || !addressNormalized || !usageNormalized || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "missing_fields" }, "warn");
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
@@ -3068,10 +3130,10 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
     }
 
     const values = [
-      name,
+      nameNormalized,
       userId,
-      address,
-      usage,
+      addressNormalized,
+      usageNormalized,
       location,
       year,
       area,
@@ -3088,11 +3150,11 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       gasLamp,
       electricityAnalyzer,
       autoLightingControlSystem,
-      ateco,
-      activityDescription,
-      annualTurnover,
-      employees,
-      prodProcessDescription
+      atecoNormalized,
+      activityDescriptionNormalized,
+      annualTurnoverNormalized,
+      employeesNormalized,
+      prodProcessDescriptionNormalized
     ];
 
     const query = `
@@ -3171,11 +3233,71 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       //buildingScore
     } = req.body;
 
+    const nameNormalized = typeof name === "string" ? name.trim() : "";
+    const addressNormalized = typeof address === "string" ? address.trim() : "";
+    const usageNormalized = typeof usage === "string" ? usage.trim() : "";
+    const atecoNormalized =
+      ateco === null || ateco === undefined || String(ateco).trim() === ""
+        ? null
+        : String(ateco).trim();
+    const activityDescriptionNormalized =
+      activityDescription === null || activityDescription === undefined || String(activityDescription).trim() === ""
+        ? null
+        : String(activityDescription).trim();
+    const prodProcessDescriptionNormalized =
+      prodProcessDescription === null || prodProcessDescription === undefined || String(prodProcessDescription).trim() === ""
+        ? null
+        : String(prodProcessDescription).trim();
+    const annualTurnoverNormalized =
+      annualTurnover === null || annualTurnover === undefined || String(annualTurnover).trim() === ""
+        ? null
+        : Number(annualTurnover);
+    const employeesNormalized =
+      employees === null || employees === undefined || String(employees).trim() === ""
+        ? null
+        : Number(employees);
 
+    const overflowValidation = [
+      { value: nameNormalized, max: 255, message: "Il campo 'Nome' deve avere massimo 255 caratteri." },
+      { value: addressNormalized, max: 255, message: "Il campo 'Indirizzo' deve avere massimo 255 caratteri." },
+      { value: usageNormalized, max: 50, message: "Il campo 'Destinazione d'uso' deve avere massimo 50 caratteri." },
+      { value: activityDescriptionNormalized, max: 300, message: "Il campo 'Descrizione attività' deve avere massimo 300 caratteri." },
+      { value: prodProcessDescriptionNormalized, max: 300, message: "Il campo 'Descrizione processi produttivi' deve avere massimo 300 caratteri." },
+    ];
+
+    for (const check of overflowValidation) {
+      if (check.value && check.value.length > check.max) {
+        logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "field_overflow" }, "warn");
+        return res.status(400).json({ msg: check.message });
+      }
+    }
+
+    // `buildings.ateco` is VARCHAR(8) in the DB.
+    if (atecoNormalized && atecoNormalized.length > 8) {
+      logBuildingEvent(
+        req,
+        "validation_failed",
+        { flow: "building_update", reason: "invalid_ateco_length" },
+        "warn"
+      );
+      return res.status(400).json({
+        msg: "Il campo 'Codice Ateco' deve avere massimo 8 caratteri.",
+      });
+    }
+
+    if (employeesNormalized !== null && !Number.isInteger(employeesNormalized)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_employees" }, "warn");
+      return res.status(400).json({ msg: "Il campo 'Numero dipendenti' deve essere un numero intero." });
+    }
+
+    if (annualTurnoverNormalized !== null && !Number.isInteger(annualTurnoverNormalized)) {
+      logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_turnover" }, "warn");
+      return res.status(400).json({ msg: "Il campo 'Fatturato annuo' deve essere un numero intero." });
+    }
 
     //console.log(req.body);
 
-    if (!id || !name || !address || !usage || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+    if (!id || !nameNormalized || !addressNormalized || !usageNormalized || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
       logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "missing_fields" }, "warn");
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
@@ -3207,10 +3329,10 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
     }
 
     const values = [
-      name,
+      nameNormalized,
       userId,
-      address,
-      usage,
+      addressNormalized,
+      usageNormalized,
       location,
       year,
       area,
@@ -3227,11 +3349,11 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       gasLamp,
       electricityAnalyzer,
       autoLightingControlSystem,
-      ateco,
-      activityDescription,
-      annualTurnover,
-      employees,
-      prodProcessDescription,
+      atecoNormalized,
+      activityDescriptionNormalized,
+      annualTurnoverNormalized,
+      employeesNormalized,
+      prodProcessDescriptionNormalized,
       id
     ];
 

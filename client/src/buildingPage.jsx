@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import ScrollToTop from './components/scrollToTop';
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Building from "./components/building";
 import Plants from "./components/plants";
 import Solars from "./components/solars";
@@ -18,6 +18,7 @@ import ChatWidget from "./chatbot/ChatWidget";
 
 
 function BuildingPage() {
+    const { id } = useParams();
     const [activeSection, setActiveSection] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const { buildingID, triggerRefreshResults } = useRecoveryContext();
@@ -224,7 +225,7 @@ function BuildingPage() {
                 )
             }
             <Footer />
-            <ChatWidget questionnaireType="buildings" buildingId={buildingID} />
+            <ChatWidget questionnaireType="buildings" buildingId={id || null} />
         </div >
     )
 }

@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import ConfirmPopUp from "./components/confirmPopUp";
 import { useRecoveryContext } from "./provider/provider";
 import { useNavigate } from "react-router-dom";
+import ChatWidget from "./chatbot/ChatWidget";
 
 export default function Buildings() {
     const [buildings, setBuildings] = useState([]);
@@ -20,7 +21,7 @@ export default function Buildings() {
 
     const { addBuildingTrigger, setAddBuildingTrigger } = useRecoveryContext();
 
-    const { buildingID, setBuildingID } = useRecoveryContext();
+    const { setBuildingID } = useRecoveryContext();
 
     const navigate = useNavigate();
 
@@ -268,6 +269,7 @@ export default function Buildings() {
 
             </main >
             <Footer />
+            <ChatWidget questionnaireType="buildings" />
         </div >
     );
 }
