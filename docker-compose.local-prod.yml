@@ -1,32 +1,28 @@
-version: '3.8'
-
 services:
+  nginx:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+
   server:
     build:
       context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
+      dockerfile: dockerfile
+    command: ["node", "server"]
+    environment:
+      - DB_HOST=db
+      - NODE_ENV=production
+      - CLIENT_URL=http://localhost
+      - SERVER_URL=http://localhost
     volumes:
       - ./server/uploaded_img:/app/uploaded_img
     depends_on:
       db:
-        condition: service_healthy # Attende che il db sia sano
-
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./client/src:/app/src
-      - /app/node_modules
-    depends_on:
-      - server
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - VITE_BACKEND_TARGET=http://server:8080
+        condition: service_healthy
 
   db:
     image: postgres:16
@@ -37,7 +33,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - green-visa-db:/var/lib/postgresql
+      - green-visa-local-prod-db:/var/lib/postgresql
       - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin -d green-visa" ]
@@ -55,7 +51,4 @@ services:
       - db
 
 volumes:
-  green-visa-db:
-  client-data:
-
-
+  green-visa-local-prod-db:

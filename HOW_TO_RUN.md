@@ -21,9 +21,9 @@ cd client
 npm install
 ```
 
-## build docker image
+## build docker image (development — DB only)
 ```bash
-docker compose -f docker-compose.db.yml up -d --build
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 This starts:
@@ -33,15 +33,17 @@ This starts:
 # Run app
 
 ## run docker compose (after first time no need to rebuild)
-docker compose -f docker-compose.db.yml up -d
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
 
 ## reset database
 
-`down -v` removes the Postgres volume; next `up` reapplies `server/init.sql`. Run from repo root (where `docker-compose.db.yml` lives).
+`down -v` removes the Postgres volume; next `up` reapplies `server/init.sql`. Run from repo root (where `docker-compose.dev.yml` lives).
 
 
 ```powershell
-docker compose -f docker-compose.db.yml down -v; docker compose -f docker-compose.db.yml up -d
+docker compose -f docker-compose.dev.yml down -v; docker compose -f docker-compose.dev.yml up -d
 ```
 
 ## open pgweb
@@ -79,12 +81,57 @@ Quick check from browser DevTools Network:
 - requests must go to `http://<frontend-host>:5173/api/...`
 - requests must not go directly to `http://localhost:8080/...`
 
-## production note (important)
+# Test locale stack completo (local-prod)
 
-`vite server.proxy` works only with `npm run dev`.
-For production, configure an equivalent reverse proxy in front of the built frontend/static files.
+Per testare l'intera architettura di produzione in locale (nginx + server + db + pgweb) senza bisogno del VPS:
 
-Example Nginx mapping (same-origin safe):
+```bash
+docker compose -f docker-compose.local-prod.yml up --build
+```
+
+Questo avvia:
+- **nginx** su `http://localhost` (porta 80) — serve il client built e fa da reverse proxy per `/api/` e `/uploaded_img/`
+- **server** con `node server` (non nodemon) e `NODE_ENV=production`
+- **db** PostgreSQL su `localhost:5432`
+- **pgweb** su `http://localhost:8081`
+
+Per fermare e rimuovere i dati:
+```powershell
+docker compose -f docker-compose.local-prod.yml down -v
+```
+
+Il volume DB (`green-visa-local-prod-db`) e separato da quello di sviluppo e produzione.
+
+# Deploy produzione (VPS)
+
+## 1. Build del frontend
+
+```bash
+cd client
+npm install
+npm run build
+```
+
+Questo genera `client/dist/` con i file statici ottimizzati.
+
+## 2. Copia dei file statici sul VPS
+
+Copiare il contenuto di `client/dist/` dove nginx sul VPS lo serve (es. `/var/www/greenvisa-client/`).
+
+## 3. Avvio server + database
+
+Sul VPS, dalla root del repo:
+```bash
+docker compose up -d --build
+```
+
+Questo usa `docker-compose.yml` (compose di produzione) che avvia solo `server` + `db`:
+- Il server gira con `node server` (non nodemon) e `NODE_ENV=production`
+- Il DB PostgreSQL con volume persistente
+
+## 4. Configurazione nginx sul VPS
+
+Il reverse proxy nginx sul VPS deve essere configurato per servire i file statici e fare da proxy all'API:
 
 ```nginx
 server {
@@ -116,6 +163,13 @@ server {
   }
 }
 ```
+
+## 5. Note .env per produzione
+
+In `server/.env` sul VPS, assicurarsi che:
+- `CLIENT_URL` punti all'URL del reverse proxy (es. `http://vps-0fde778b.vps.ovh.net` senza `:5173`)
+- `SERVER_URL` idem (senza `:8080`)
+- `DB_HOST` puo restare `localhost` perche il compose di produzione fa override con `DB_HOST=db`
 
 If you deploy on HTTPS, keep backend cookies in production mode (`NODE_ENV=production`) so `secure` cookies are enabled.
 
@@ -155,9 +209,9 @@ node .\scripts\seedTransportV2Access.js
 
 Operazione distruttiva: rimuove tutte le righe in `users` con `administrator = false` (gli account con `administrator = true` restano). Prima controlla cosa verrebbe cancellato, poi esegui la `DELETE`.
 
-Su Windows spesso **non** c’è `psql` nel PATH (`psql` non riconosciuto): in quel caso non serve installare nulla se usi Postgres da Docker Compose (questo repo).
+Su Windows spesso **non** c'è `psql` nel PATH (`psql` non riconosciuto): in quel caso non serve installare nulla se usi Postgres da Docker Compose (questo repo).
 
-## Se il DB gira in Docker (`docker compose -f docker-compose.db.yml up`)
+## Se il DB gira in Docker (`docker compose -f docker-compose.dev.yml up`)
 
 `psql` è **dentro** il container `greenvisa-db`. Password e utente coincidono con `Dockerfile.db` (`admin` / `pass123`), non con `server/.env` a meno che non le allinei tu.
 
