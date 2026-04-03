@@ -1,0 +1,19 @@
+# Stage 1: compile the SPA; output lands in /app/dist
+FROM node:20-alpine AS build
+# App root inside the build container
+WORKDIR /app
+# Install deps first (better layer cache when only source changes)
+COPY package*.json ./
+RUN npm install
+# Copy source and config needed for the production build
+COPY . .
+RUN npm run build
+
+# Stage 2: serve static files only (no Node in the final image)
+FROM nginx:alpine
+# Deploy the built assets to nginx’s default web root
+COPY --from=build /app/dist /usr/share/nginx/html
+# Replace default nginx site config (e.g. SPA fallback, headers)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Document that the container listens on HTTP (informational)
+EXPOSE 80

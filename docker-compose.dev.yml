@@ -1,31 +1,55 @@
-
 services:
   db:
+    # Costruisce l'immagine del database usando un Dockerfile custom
     build:
+      # Cartella di contesto per la build
       context: .
-      dockerfile: Dockerfile.db
+      # Dockerfile da usare per costruire l'immagine del DB
+      dockerfile: dockerfile.database
+
+    # Nome fisso del container del database
     container_name: greenvisa-db
+
     ports:
+      # Espone Postgres sulla porta standard 5432
       - "5432:5432"
+
     volumes:
+      # Salva i dati del database in un volume persistente
       - greenvisa_postgres_data:/var/lib/postgresql/data
+
     healthcheck:
+      # Controlla se Postgres è pronto ad accettare connessioni
       test: [ "CMD-SHELL", "pg_isready -U admin -d green-visa" ]
+      # Esegue il controllo ogni 10 secondi
       interval: 10s
+      # Considera fallito il check dopo 5 secondi
       timeout: 5s
+      # Dopo 5 fallimenti consecutivi il servizio è unhealthy
       retries: 5
 
   pgweb:
+    # Usa l'immagine già pronta di pgweb
     image: sosedoff/pgweb
+
+    # Nome fisso del container dell'interfaccia web
     container_name: greenvisa-pgweb
+
     environment:
-      # pgweb legge DATABASE_URL (non PGW_*); così apre subito il DB senza form di connessione
+      # URL di connessione al database usato da pgweb
+      # "db" è il nome del servizio Docker Compose, quindi il nome host interno
+      # sslmode=disable disabilita SSL nella rete locale tra container
       DATABASE_URL: postgres://admin:pass123@db:5432/green-visa?sslmode=disable
+
     ports:
+      # Espone pgweb sulla porta 8081 del computer
       - "8081:8081"
+
     depends_on:
       db:
+        # Avvia pgweb solo quando il database risulta healthy
         condition: service_healthy
 
 volumes:
+  # Volume nominato usato per persistere i dati di Postgres
   greenvisa_postgres_data:

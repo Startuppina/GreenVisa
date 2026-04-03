@@ -1,4 +1,4 @@
-# Dockerfile per il server
+# dockerfile per il server
 FROM node:20-alpine
 
 # Crea e imposta la directory di lavoro

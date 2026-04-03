@@ -38,7 +38,7 @@ Il progetto usa tre compose file:
 | File | Scopo | Servizi |
 |------|-------|---------|
 | `docker-compose.dev.yml` | Sviluppo locale (solo DB) | db, pgweb |
-| `docker-compose.yml` | Produzione (VPS) | server, db |
+| `docker-compose.prod.yml` | Produzione (VPS) | server, db |
 | `docker-compose.local-prod.yml` | Test stack prod in locale | nginx, server, db, pgweb |
 
 ### Sviluppo locale
@@ -63,7 +63,7 @@ Sul VPS, con nginx configurato come reverse proxy:
 
 ```
 cd client && npm install && npm run build
-docker compose up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ### Comandi utili

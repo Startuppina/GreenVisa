@@ -122,12 +122,14 @@ Copiare il contenuto di `client/dist/` dove nginx sul VPS lo serve (es. `/var/ww
 
 Sul VPS, dalla root del repo:
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Questo usa `docker-compose.yml` (compose di produzione) che avvia solo `server` + `db`:
+Questo usa `docker-compose.prod.yml` (compose di produzione) che avvia solo `server` + `db`:
 - Il server gira con `node server` (non nodemon) e `NODE_ENV=production`
 - Il DB PostgreSQL con volume persistente
+- `init.sql` è montato come bind mount in `/docker-entrypoint-initdb.d/init.sql` perché il servizio DB usa l'immagine ufficiale `postgres:16` direttamente nel compose: così il bootstrap del database resta semplice e non richiede una build dedicata dell'immagine DB
+- `nginx` non è nel compose prod perché sul VPS il reverse proxy vive fuori da Docker e serve direttamente i file statici del frontend, oltre a inoltrare `/api/` e `/uploaded_img/` al backend
 
 ## 4. Configurazione nginx sul VPS
 
@@ -213,7 +215,7 @@ Su Windows spesso **non** c'è `psql` nel PATH (`psql` non riconosciuto): in que
 
 ## Se il DB gira in Docker (`docker compose -f docker-compose.dev.yml up`)
 
-`psql` è **dentro** il container `greenvisa-db`. Password e utente coincidono con `Dockerfile.db` (`admin` / `pass123`), non con `server/.env` a meno che non le allinei tu.
+`psql` è **dentro** il container `greenvisa-db`. Password e utente coincidono con `dockerfile.database` (`admin` / `pass123`), non con `server/.env` a meno che non le allinei tu.
 
 Da PowerShell, da qualsiasi cartella (Docker deve essere avviato):
 

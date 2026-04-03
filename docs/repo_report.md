@@ -34,6 +34,7 @@ GreenVisa-main/
 │   │   └── index.css                # Tailwind directives
 │   ├── .env                         # VITE_REACT_SERVER_ADDRESS
 │   ├── dockerfile                   # Docker build for client
+│   ├── dockerfile.prod              # nginx multi-stage production image
 │   ├── vite.config.js               # Vite dev server config
 │   ├── tailwind.config.mjs          # Tailwind configuration
 │   ├── wait-for-server.sh           # Bash script (Docker only)
@@ -50,9 +51,10 @@ GreenVisa-main/
 │   └── package.json
 ├── patches/                         # patch-package fixes
 │   └── buffer-equal-constant-time+1.0.1.patch
-├── docker-compose.yml               # Production: server, db
+├── docker-compose.prod.yml          # Production: server, db
 ├── docker-compose.dev.yml           # Development: db, pgweb
 ├── docker-compose.local-prod.yml    # Local prod test: nginx, server, db, pgweb
+├── dockerfile.database              # Postgres image for docker-compose.dev
 ├── .dockerignore
 ├── .gitignore
 ├── package.json                     # Root package (minimal, mostly metadata)
@@ -252,11 +254,11 @@ The admin user is auto-created on server startup if no admin exists.
 
 | File | Purpose | Services |
 |------|---------|----------|
-| `docker-compose.yml` | **Production** (VPS with external nginx) | `server`, `db` |
+| `docker-compose.prod.yml` | **Production** (VPS with external nginx) | `server`, `db` |
 | `docker-compose.dev.yml` | **Development** (DB only, app runs natively) | `db`, `pgweb` |
 | `docker-compose.local-prod.yml` | **Local prod test** (full stack on localhost) | `nginx`, `server`, `db`, `pgweb` |
 
-### Production compose (`docker-compose.yml`)
+### Production compose (`docker-compose.prod.yml`)
 
 | Service | Image | Port | Notes |
 |---------|-------|------|-------|
@@ -269,7 +271,7 @@ Nginx on the VPS host serves the built client static files and proxies `/api/` a
 
 | Service | Image | Port | Notes |
 |---------|-------|------|-------|
-| `db` | Built from `Dockerfile.db` | 5432:5432 | `container_name: greenvisa-db` |
+| `db` | Built from `dockerfile.database` | 5432:5432 | `container_name: greenvisa-db` |
 | `pgweb` | `sosedoff/pgweb` | 8081:8081 | |
 
 Server and client run natively with `npm run dev`.
@@ -278,7 +280,7 @@ Server and client run natively with `npm run dev`.
 
 | Service | Image | Port | Notes |
 |---------|-------|------|-------|
-| `nginx` | Built from `client/Dockerfile.prod` (multi-stage: node build + nginx) | 80:80 | SPA fallback + API proxy |
+| `nginx` | Built from `client/dockerfile.prod` (multi-stage: node build + nginx) | 80:80 | SPA fallback + API proxy |
 | `server` | Built from `./server/dockerfile` | — | `command: node server`, `NODE_ENV=production` |
 | `db` | `postgres:16` | 5432:5432 | Separate volume `green-visa-local-prod-db` |
 | `pgweb` | `sosedoff/pgweb` | 8081:8081 | |
