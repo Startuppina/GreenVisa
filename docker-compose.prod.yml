@@ -18,7 +18,7 @@ services:
   db:
     build:
       context: .
-      dockerfile: dockerfile.database.prod
+      dockerfile: dockerfile.database
     ports:
       - "5432:5432"
     volumes:
@@ -28,6 +28,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  pgweb:
+    image: sosedoff/pgweb
+    environment:
+      DATABASE_URL: postgres://admin:pass123@db:5432/green-visa?sslmode=disable
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   green-visa-db:

@@ -10,7 +10,6 @@ export default function TransportSubmitBar({
   saveError,
   submitError,
   saveSuccessAt,
-  onSave,
   onSubmit,
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -46,7 +45,11 @@ export default function TransportSubmitBar({
           </p>
           <div className="text-sm text-slate-700">
             Stato bozza:{' '}
-            {isDirty ? 'Modifiche locali non salvate' : 'La bozza coincide con l&apos;ultimo salvataggio'}
+            {isSaving
+              ? 'Salvataggio in corso…'
+              : isDirty
+                ? 'Modifiche locali non salvate'
+                : 'La bozza coincide con l&apos;ultimo salvataggio'}
           </div>
           {saveSuccessAt ? (
             <div className="text-sm text-emerald-700">
@@ -58,14 +61,6 @@ export default function TransportSubmitBar({
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <button
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-            type="button"
-            onClick={onSave}
-            disabled={isSaving || isSubmitting}
-          >
-            {isSaving ? 'Salvataggio…' : 'Salva bozza'}
-          </button>
           <button
             className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             type="button"

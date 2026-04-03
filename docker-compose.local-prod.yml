@@ -4,7 +4,7 @@ services:
       context: ./client
       dockerfile: dockerfile.prod
     ports:
-      - "80:80"
+      - "5173:80"
     depends_on:
       - server
 
@@ -13,6 +13,8 @@ services:
       context: ./server
       dockerfile: dockerfile
     command: ["node", "server"]
+    ports:
+      - "8080:8080"
     environment:
       - DB_HOST=db
       - NODE_ENV=production
@@ -27,7 +29,7 @@ services:
   db:
     build:
       context: .
-      dockerfile: dockerfile.database.local-prod
+      dockerfile: dockerfile.database
     ports:
       - "5432:5432"
     volumes:
@@ -45,7 +47,8 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   green-visa-local-prod-db:

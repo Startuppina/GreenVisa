@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import * as chatApi from './chatApi';
 import { getFaqAnswer } from './faqContent';
 
-const GREETING_TEXT = 'Ciao, sono qui per aiutarti a compilare il questionario. Puoi farmi domande su questa sezione.';
+const GREETING_TEXT = 'Ciao, sono qui per aiutarti a compilare il questionario. Puoi farmi domande su come compilare questa sezione.';
 
 export default function useChatWidget({ questionnaireType, certificationId, buildingId }) {
   const [isOpen, setIsOpen] = useState(false);

@@ -33,7 +33,6 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
     updateVehicleTransportMode,
     updateVehicleField,
     updateVehicleNotes,
-    saveDraft,
     submitDraft,
   } = useTransportV2Draft(certificationId);
 
@@ -137,7 +136,6 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
             saveError={ui.saveError}
             submitError={ui.submitError}
             saveSuccessAt={ui.saveSuccessAt}
-            onSave={() => saveDraft()}
             onSubmit={() => submitDraft()}
           />
 
