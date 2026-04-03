@@ -3195,7 +3195,7 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
     const buildingId = insertResult.rows[0]?.id;
     logBuildingEvent(req, "building_created", { user_id: userId, building_id: buildingId });
 
-    res.status(200).json({ msg: "Edificio caricato con successo" });
+    res.status(200).json({ msg: "Edificio caricato con successo", buildingId });
   } catch (error) {
     logUnexpectedError(req, error, { flow: "building_create" });
     res.status(500).json({ msg: "Errore interno del server" });

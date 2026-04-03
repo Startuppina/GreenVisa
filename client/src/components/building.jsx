@@ -11,10 +11,17 @@ function Building() {
     const { setBuildingID, refresh } = useRecoveryContext();
     const [showModifierBuildingForm, setShowModifierBuildingForm] = useState(false);
 
+    const isNewBuilding = id === 'new';
+
     // Crea una ref per il form
     const formRef = useRef(null);
 
     useEffect(() => {
+        if (isNewBuilding) {
+            setBuildingID(0);
+            return;
+        }
+
         const fetchBuilding = async () => {
             setBuildingID(id);
             try {
@@ -31,7 +38,7 @@ function Building() {
         };
 
         fetchBuilding();
-    }, [refresh]);
+    }, [id, refresh, setBuildingID]);
 
     // Effettua lo scroll verso il form quando showModifierBuildingForm diventa true
     useEffect(() => {
@@ -39,6 +46,22 @@ function Building() {
             formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     }, [showModifierBuildingForm]);
+
+    if (isNewBuilding) {
+        return (
+            <div className="text-arial text-xl">
+                <h1 className="text-3xl font-bold text-center">
+                    <span className="uppercase text-[#2d7044]">Nuovo edificio</span>
+                </h1>
+                <p className="text-center text-lg mt-2 text-gray-600">
+                    Compila i dati qui sotto. Dopo il salvataggio potrai gestire impianti, consumi e le altre sezioni.
+                </p>
+                <div className="mt-6">
+                    <BuildingFrom buildingData="empty" isEdit={false} />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="text-arial text-xl">

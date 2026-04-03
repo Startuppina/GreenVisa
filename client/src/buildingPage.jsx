@@ -225,7 +225,7 @@ function BuildingPage() {
                 )
             }
             <Footer />
-            <ChatWidget questionnaireType="buildings" buildingId={id || null} />
+            <ChatWidget questionnaireType="buildings" buildingId={id === 'new' ? null : (id || null)} />
         </div >
     )
 }

@@ -220,7 +220,12 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
                     setButtonPopup(true);
                 }, 3000); // Caricamento finto di 3 secondi
 
-                navigate('/buildings');
+                const newBuildingId = response.data.buildingId;
+                if (newBuildingId != null) {
+                    navigate(`/building/${newBuildingId}`, { replace: true });
+                } else {
+                    navigate('/buildings');
+                }
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
                 setButtonPopup(true);
