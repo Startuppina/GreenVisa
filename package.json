@@ -10,6 +10,9 @@
   "keywords": [],
   "author": "Chionne Daniel",
   "license": "ISC",
+  "scripts": {
+    "seed:transport-v2-dev": "TRANSPORT_V2_DEV_SEED=1 DB_HOST=localhost node scripts/seedTransportV2Access.js"
+  },
   "dependencies": {
     "@google-cloud/documentai": "^9.6.0",
     "buffer-equal-constant-time": "^1.0.1",
