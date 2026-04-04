@@ -2,19 +2,18 @@ const express = require('express');
 const multer = require('multer');
 const { authenticateJWT } = require('../middleware/auth');
 const ocrConfig = require('../config/ocr');
-const { validateFile } = require('../services/documents/documentValidationService');
-const { storeFileFromBuffer } = require('../services/documents/documentStorageService');
+const documentValidationService = require('../services/documents/documentValidationService');
+const documentStorageService = require('../services/documents/documentStorageService');
 const repo = require('../services/documents/documentRepository');
 const ocrService = require('../services/ocr/ocrService');
 const { applyNormalizations, validateNormalizedOutput } = require('../services/ocr/ocrOutputValidator');
+const { applyApeNormalizations, validateApeNormalizedOutput } = require('../services/ocr/apeOcrOutputValidator');
+const { buildBuildingCertificationPrefill } = require('../services/buildingCertification/buildingCertificationOcrPrefillService');
+const buildingCertificationOcrApply = require('../services/buildingCertification/buildingCertificationOcrApplyService');
 const { buildTransportV2VehiclePrefill, normalizeTransportMode } = require('../services/transportV2/transportV2OcrPrefillService');
-const {
-  TransportV2HttpError,
-  parseCertificationId,
-  resolveTransportSurveyResponse,
-  upsertTransportV2OcrVehicle,
-} = require('../services/transportV2/transportV2DraftService');
+const transportV2DraftService = require('../services/transportV2/transportV2DraftService');
 const { logDocumentEvent, logUnexpectedError } = require('../lib/businessEvents');
+const { resolveUploadCategory } = require('../services/documents/uploadCategory');
 
 const router = express.Router();
 
@@ -48,8 +47,16 @@ router.post(
     try {
       const userId = req.user.user_id;
       const buildingId = req.body.buildingId ? parseInt(req.body.buildingId, 10) : null;
-      const category = req.body.category || 'transport';
-      const certificationId = req.body.certificationId ? parseCertificationId(req.body.certificationId) : null;
+
+      const resolvedCategory = resolveUploadCategory(req.body.category);
+      if (!resolvedCategory.ok) {
+        return res.status(resolvedCategory.status).json(resolvedCategory.body);
+      }
+      const { category } = resolvedCategory;
+
+      const certificationId = req.body.certificationId
+        ? transportV2DraftService.parseCertificationId(req.body.certificationId)
+        : null;
       const files = req.files;
       let surveyResponseId = null;
 
@@ -58,8 +65,9 @@ router.post(
         return res.status(400).json({ msg: 'Nessun file fornito.' });
       }
 
+      // Transport-specific survey linking. APE uploads do not link to a transport survey response.
       if (category === 'transport' && certificationId) {
-        const transportLink = await resolveTransportSurveyResponse({
+        const transportLink = await transportV2DraftService.resolveTransportSurveyResponse({
           userId,
           certificationId,
         });
@@ -77,7 +85,7 @@ router.post(
       const documentSummaries = [];
 
       for (const file of files) {
-        const validation = validateFile(file, existingHashes);
+        const validation = documentValidationService.validateFile(file, existingHashes);
 
         if (!validation.valid) {
           const dup = validation.issues?.some((i) => /duplicate|duplicat/i.test(i.message || ''));
@@ -124,7 +132,7 @@ router.post(
 
         if (validation.hash) existingHashes.add(validation.hash);
 
-        const stored = storeFileFromBuffer(file.buffer, file.originalname);
+        const stored = documentStorageService.storeFileFromBuffer(file.buffer, file.originalname);
 
         const doc = await repo.createDocument({
           batchId: batch.id,
@@ -150,7 +158,7 @@ router.post(
         });
         logDocumentEvent(req, 'ocr_processing_started', { document_id: doc.id, batch_id: batch.id });
 
-        const result = await ocrService.processDocument(doc);
+        const result = await ocrService.processDocument(doc, { category });
 
         if (result.status === 'failed') {
           logDocumentEvent(
@@ -195,7 +203,7 @@ router.post(
         documents: documentSummaries,
       });
     } catch (err) {
-      if (err instanceof TransportV2HttpError) {
+      if (err instanceof transportV2DraftService.TransportV2HttpError) {
         if (req.log) {
           req.log.warn({ event: 'validation_failed', flow: 'document_upload', status_code: err.statusCode });
         }
@@ -333,6 +341,10 @@ router.get('/documents/:documentId/result', authenticateJWT, async (req, res) =>
         result.confirmed_output?.transport_v2_vehicle_prefill ||
         result.normalized_output?.transport_v2_vehicle_prefill ||
         null,
+      buildingCertificationPrefill:
+        result.confirmed_output?.building_certification_prefill ||
+        result.normalized_output?.building_certification_prefill ||
+        null,
       validationIssues: result.validation_issues || [],
       confirmedOutput: result.confirmed_output || null,
     });
@@ -366,27 +378,53 @@ router.post('/documents/:documentId/confirm', authenticateJWT, async (req, res) 
       });
     }
 
-    const normalizedFields = applyNormalizations(fields);
-    const validationIssues = validateNormalizedOutput(normalizedFields);
-    const transportV2VehiclePrefill = buildTransportV2VehiclePrefill({
-      documentId: docId,
-      reviewFields: normalizedFields,
-    });
+    const batch = await repo.getBatchById(doc.batch_id);
+    const category = batch?.category || 'transport';
 
-    const confirmedOutput = {
-      fields: normalizedFields,
-      validationIssues,
-      transport_v2_vehicle_prefill: transportV2VehiclePrefill,
-      confirmedBy: req.user.user_id,
-      confirmedAt: new Date().toISOString(),
-    };
+    let confirmedOutput;
+    if (category === 'ape') {
+      const normalizedFields = applyApeNormalizations(fields);
+      const validationIssues = validateApeNormalizedOutput(normalizedFields);
+      const building_certification_prefill = buildBuildingCertificationPrefill({
+        documentId: docId,
+        reviewFields: normalizedFields,
+        validationIssues,
+        gplUserAccepted: true,
+      });
+      confirmedOutput = {
+        fields: normalizedFields,
+        validationIssues,
+        building_certification_prefill,
+        confirmedBy: req.user.user_id,
+        confirmedAt: new Date().toISOString(),
+      };
+    } else {
+      const normalizedFields = applyNormalizations(fields);
+      const validationIssues = validateNormalizedOutput(normalizedFields);
+      const transportV2VehiclePrefill = buildTransportV2VehiclePrefill({
+        documentId: docId,
+        reviewFields: normalizedFields,
+      });
+      confirmedOutput = {
+        fields: normalizedFields,
+        validationIssues,
+        transport_v2_vehicle_prefill: transportV2VehiclePrefill,
+        confirmedBy: req.user.user_id,
+        confirmedAt: new Date().toISOString(),
+      };
+    }
 
     await repo.updateResultConfirmed(docId, confirmedOutput);
     await repo.updateDocumentStatus(docId, 'confirmed', { confirmedBy: req.user.user_id });
     await repo.updateBatchStatus(doc.batch_id);
 
+    const confirmMsg =
+      category === 'ape'
+        ? "Dati OCR APE confermati. Puoi applicarli all'edificio collegato al documento."
+        : 'Dati OCR confermati. Il passaggio successivo puo prefilarli nel draft Transport V2.';
+
     res.json({
-      msg: 'Dati OCR confermati. Il passaggio successivo puo prefilarli nel draft Transport V2.',
+      msg: confirmMsg,
       documentId: docId,
       status: 'confirmed',
       confirmedOutput,
@@ -421,11 +459,55 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
       return res.status(400).json({ msg: 'Nessun risultato OCR trovato per questo documento.' });
     }
 
+    const batch = await repo.getBatchById(doc.batch_id);
+    const category = batch?.category || 'transport';
+
+    if (category === 'ape') {
+      if (!doc.building_id) {
+        return res.status(400).json({
+          msg: 'Il documento APE non e collegato a un edificio (building_id). Impossibile applicare i dati.',
+        });
+      }
+
+      const buildingPrefill =
+        result.confirmed_output?.building_certification_prefill ||
+        result.normalized_output?.building_certification_prefill;
+
+      if (!buildingPrefill || typeof buildingPrefill !== 'object') {
+        return res.status(400).json({ msg: "Nessun prefill edilizio OCR disponibile per l'applicazione." });
+      }
+
+      try {
+        const applied = await buildingCertificationOcrApply.applyBuildingCertificationOcrPrefill({
+          userId: req.user.user_id,
+          buildingId: doc.building_id,
+          prefill: buildingPrefill,
+        });
+
+        await repo.updateDocumentStatus(docId, 'applied');
+        await repo.updateBatchStatus(doc.batch_id);
+
+        return res.json({
+          msg: "Dati OCR APE applicati all'edificio.",
+          documentId: docId,
+          status: 'applied',
+          buildingId: doc.building_id,
+          building: applied.building,
+          consumptions: applied.consumptions,
+        });
+      } catch (err) {
+        if (err instanceof buildingCertificationOcrApply.BuildingCertificationOcrApplyError) {
+          return res.status(err.statusCode).json({ msg: err.message });
+        }
+        throw err;
+      }
+    }
+
     if (!req.body || req.body.certificationId == null) {
       return res.status(400).json({ msg: 'certificationId e obbligatorio per il prefill OCR.' });
     }
 
-    const certificationId = parseCertificationId(req.body.certificationId);
+    const certificationId = transportV2DraftService.parseCertificationId(req.body.certificationId);
     const transportMode = normalizeTransportMode(req.body.transportMode);
     const prefillFields =
       result.confirmed_output?.fields ||
@@ -444,7 +526,7 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
       transport_mode: transportMode ?? basePrefill.transport_mode ?? null,
     };
 
-    const upsertResult = await upsertTransportV2OcrVehicle({
+    const upsertResult = await transportV2DraftService.upsertTransportV2OcrVehicle({
       userId: req.user.user_id,
       certificationId,
       vehiclePrefill,
@@ -467,7 +549,7 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
       transport_v2: upsertResult.transportV2,
     });
   } catch (err) {
-    if (err instanceof TransportV2HttpError) {
+    if (err instanceof transportV2DraftService.TransportV2HttpError) {
       return res.status(err.statusCode).json({ msg: err.message, ...(err.extras.errors ? { errors: err.extras.errors } : {}) });
     }
     logUnexpectedError(req, err, { flow: 'documents_apply' });
@@ -498,7 +580,11 @@ router.post('/documents/:documentId/retry', authenticateJWT, async (req, res) =>
       });
     }
 
-    const result = await ocrService.processDocument(doc);
+    // Resolve category from the parent batch so ocrService can select the right processor.
+    const batch = await repo.getBatchById(doc.batch_id);
+    const category = batch?.category || 'transport';
+
+    const result = await ocrService.processDocument(doc, { category });
     await repo.updateBatchStatus(doc.batch_id);
 
     res.json({

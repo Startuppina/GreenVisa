@@ -21,8 +21,45 @@ const config = {
   google: {
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',
     location: process.env.GOOGLE_DOCUMENT_AI_LOCATION || 'eu',
-    processorId: process.env.GOOGLE_DOCUMENT_AI_PROCESSOR_ID || '',
-    processorVersion: process.env.GOOGLE_DOCUMENT_AI_PROCESSOR_VERSION || '',
+
+    /**
+     * Category-aware processor configuration.
+     *
+     * Each category maps to its own Document AI processor so that
+     * transport and APE documents are routed to the correct trained model.
+     *
+     * Legacy env vars (GOOGLE_DOCUMENT_AI_PROCESSOR_ID / _VERSION) are kept
+     * as a fallback for the transport processor so existing deployments keep
+     * working without changes.
+     */
+    processors: {
+      transport: {
+        processorId:
+          process.env.GOOGLE_DOCUMENT_AI_TRANSPORT_PROCESSOR_ID ||
+          process.env.GOOGLE_DOCUMENT_AI_PROCESSOR_ID ||
+          '',
+        processorVersion:
+          process.env.GOOGLE_DOCUMENT_AI_TRANSPORT_PROCESSOR_VERSION ||
+          process.env.GOOGLE_DOCUMENT_AI_PROCESSOR_VERSION ||
+          '',
+      },
+      ape: {
+        processorId: process.env.GOOGLE_DOCUMENT_AI_APE_PROCESSOR_ID || '',
+        processorVersion: process.env.GOOGLE_DOCUMENT_AI_APE_PROCESSOR_VERSION || '',
+      },
+    },
+
+    /**
+     * @deprecated Use `google.processors.transport` instead.
+     * Kept for backward compatibility with any code that still reads
+     * `ocrConfig.google.processorId` directly.
+     */
+    get processorId() {
+      return config.google.processors.transport.processorId;
+    },
+    get processorVersion() {
+      return config.google.processors.transport.processorVersion;
+    },
   },
 
   upload: {

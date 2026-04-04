@@ -25,4 +25,5 @@ dist-ssr
 server/uploaded_img/
 .env
 .DS_Store
-.cursor
+.cursor/
+.claude/

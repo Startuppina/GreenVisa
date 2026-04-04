@@ -26,8 +26,14 @@ function getClient() {
   });
 }
 
-function buildProcessorName() {
-  const { projectId, location, processorId, processorVersion } = ocrConfig.google;
+/**
+ * Build the full processor resource name.
+ *
+ * @param {object} processorConfig — { processorId, processorVersion }
+ */
+function buildProcessorName(processorConfig) {
+  const { projectId, location } = ocrConfig.google;
+  const { processorId, processorVersion } = processorConfig;
   const base = `projects/${projectId}/locations/${location}/processors/${processorId}`;
   return processorVersion ? `${base}/processorVersions/${processorVersion}` : base;
 }
@@ -81,18 +87,29 @@ function normalizeProcessorVersionString(value) {
 
 // ── Public entry point ────────────────────────────────────────
 
-async function processDocument(fileBytes, mimeType) {
+/**
+ * Submit a document to Google Document AI and return the trimmed provider result.
+ *
+ * @param {Buffer} fileBytes
+ * @param {string} mimeType
+ * @param {object} processorConfig — { processorId, processorVersion } for the target category.
+ *   Callers should resolve this from `ocrConfig.google.processors[category]` before calling.
+ *   Falls back to the transport processor config when omitted (backward compat).
+ */
+async function processDocument(fileBytes, mimeType, processorConfig) {
+  // Resolve processor config: explicit param > transport default.
+  const resolved = processorConfig || ocrConfig.google.processors.transport;
 
-  const { projectId, processorId } = ocrConfig.google;
-  if (!projectId || !processorId) {
+  const { projectId } = ocrConfig.google;
+  if (!projectId || !resolved.processorId) {
     throw new Error(
       'Google Document AI not configured. ' +
-      'Set GOOGLE_CLOUD_PROJECT_ID and GOOGLE_DOCUMENT_AI_PROCESSOR_ID',
+      'Set GOOGLE_CLOUD_PROJECT_ID and the appropriate GOOGLE_DOCUMENT_AI_*_PROCESSOR_ID',
     );
   }
 
   const client = getClient();
-  const name = buildProcessorName();
+  const name = buildProcessorName(resolved);
 
   const request = {
     name,
