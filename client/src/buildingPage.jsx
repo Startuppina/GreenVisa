@@ -19,7 +19,15 @@ function BuildingPage() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [isCreatingDraft, setIsCreatingDraft] = useState(false);
-    const { buildingID, triggerRefreshResults, buildingLocked, setBuildingLocked, buildingComplete, setBuildingComplete } = useRecoveryContext();
+    const {
+        buildingID,
+        triggerRefreshResults,
+        buildingLocked,
+        setBuildingLocked,
+        buildingComplete,
+        setBuildingComplete,
+        requestBuildingFormValidation,
+    } = useRecoveryContext();
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const createDraftAttemptedRef = useRef(false);
 
@@ -99,7 +107,7 @@ function BuildingPage() {
         setIsCreatingDraft(false);
     }, [id, navigate, setBuildingComplete, setBuildingLocked]);
 
-    const canSubmitEmissions = !buildingLocked && id !== 'new' && Boolean(buildingID) && buildingComplete;
+    const canClickCalculateEmissions = !buildingLocked && id !== 'new' && Boolean(buildingID);
 
 
 
@@ -162,14 +170,28 @@ function BuildingPage() {
                 ) : (
                     <div className="w-full flex flex-col justify-center items-center mt-5 gap-3 mb-5">
                         <button
-                            type="submit"
-                            className="mt-7 font-arial text-xl w-[50%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700"
+                            type="button"
+                            className="mt-7 font-arial text-xl w-[50%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            title={
+                                !canClickCalculateEmissions
+                                    ? undefined
+                                    : !buildingComplete
+                                        ? "Completa i campi obbligatori dell’edificio prima di calcolare le emissioni."
+                                        : "Confermando il calcolo, i dati non saranno più modificabili."
+                            }
                             onClick={() => {
-                                if (canSubmitEmissions) {
-                                    setShowConfirmDialog(true);
+                                if (!canClickCalculateEmissions) {
+                                    return;
                                 }
+                                if (!buildingComplete) {
+                                    requestBuildingFormValidation();
+                                    setMessagePopup("Compila i campi obbligatori prima di calcolare le emissioni.");
+                                    setButtonPopUp(true);
+                                    return;
+                                }
+                                setShowConfirmDialog(true);
                             }}
-                            disabled={!canSubmitEmissions}
+                            disabled={!canClickCalculateEmissions}
                         >
                             Calcola le emissioni
                         </button>

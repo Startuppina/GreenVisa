@@ -6,23 +6,32 @@ import useAutosave from "./useAutosave";
 import { useNavigate } from "react-router-dom";
 import { useRecoveryContext } from "../provider/provider";
 import {
+    BUILDING_FIELD_SCROLL_ORDER,
     BUILDING_FORM_OPTIONS,
     REGION_OPTIONS,
     createBuildingPayload,
+    getBuildingPayloadFieldErrors,
     isBuildingPayloadComplete,
 } from "./buildingFormConfig";
 
-function Field({ label, children, hint = null }) {
+function Field({ label, children, hint = null, error = null, fieldId = null }) {
     return (
-        <label className="space-y-2">
+        <label
+            className="block space-y-2"
+            id={fieldId ? `building-field-${fieldId}` : undefined}
+        >
             <div className="text-sm font-medium text-slate-800">{label}</div>
             {children}
             {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
+            {error ? <div className="text-sm text-rose-600">{error}</div> : null}
         </label>
     );
 }
 
-const inputClassName = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-500";
+const baseInputClass =
+    "w-full rounded-lg border px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-500";
+
+const inputClassName = `${baseInputClass} border-slate-300`;
 
 function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly = false }) {
     const buildingID = buildingData.id || 0;
@@ -55,6 +64,7 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
     );
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
+    const [validationErrors, setValidationErrors] = useState({});
 
     const year = buildingData.construction_year || "";
     const ventilation = buildingData.ventilation || "";
@@ -63,8 +73,25 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
     const gasLamp = parseInt(buildingData.gas_lamp, 10) || 0;
     const autoLightingControlSystem = buildingData.autolightingcontrolsystem || "";
 
-    const { setAddBuildingTrigger, triggerRefresh, setBuildingComplete } = useRecoveryContext();
+    const { setAddBuildingTrigger, setBuildingComplete, buildingFormValidateNonce } = useRecoveryContext();
     const navigate = useNavigate();
+
+    const clearValidationKey = useCallback((key) => {
+        setValidationErrors((prev) => {
+            if (!prev[key]) {
+                return prev;
+            }
+            const next = { ...prev };
+            delete next[key];
+            return next;
+        });
+    }, []);
+
+    const controlClass = useCallback(
+        (fieldKey) =>
+            `${baseInputClass} ${validationErrors[fieldKey] ? "border-rose-500 ring-1 ring-rose-500" : "border-slate-300"}`,
+        [validationErrors],
+    );
 
     useEffect(() => {
         const fetchInfo = async () => {
@@ -193,6 +220,25 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
         setBuildingComplete(isPayloadComplete);
     }, [isPayloadComplete, setBuildingComplete]);
 
+    useEffect(() => {
+        if (buildingFormValidateNonce === 0) {
+            return;
+        }
+        const errors = getBuildingPayloadFieldErrors(payload);
+        setValidationErrors(errors);
+        const firstKey = BUILDING_FIELD_SCROLL_ORDER.find((key) => errors[key]);
+        if (firstKey) {
+            requestAnimationFrame(() => {
+                document.getElementById(`building-field-${firstKey}`)?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+            });
+        }
+        // Solo quando l'utente preme "Calcola"; il payload è quello del render corrente al tick del nonce.
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: non ricalcolare ad ogni keystroke
+    }, [buildingFormValidateNonce]);
+
     const saveBuilding = useCallback(async () => {
         if (isEdit && !hasPersistedBuilding) {
             return;
@@ -209,11 +255,9 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
             });
 
         if (response.status === 200) {
-            triggerRefresh();
-
             if (isEdit) {
                 if (typeof onEditSuccess === "function") {
-                    onEditSuccess();
+                    onEditSuccess(payload);
                 }
                 return;
             }
@@ -226,7 +270,7 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
                 navigate("/buildings");
             }
         }
-    }, [hasPersistedBuilding, isEdit, navigate, onEditSuccess, payload, setAddBuildingTrigger, triggerRefresh]);
+    }, [hasPersistedBuilding, isEdit, navigate, onEditSuccess, payload, setAddBuildingTrigger]);
 
     const autosave = useAutosave({
         valueSignature: JSON.stringify(payload),
@@ -260,8 +304,16 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
                     <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <h3 className="mb-4 text-base font-semibold text-slate-900">Dettagli edificio</h3>
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                            <Field label="Nome">
-                                <input type="text" value={name} onChange={(event) => setName(event.target.value)} className={inputClassName} />
+                            <Field label="Nome" fieldId="name" error={validationErrors.name}>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(event) => {
+                                        clearValidationKey("name");
+                                        setName(event.target.value);
+                                    }}
+                                    className={controlClass("name")}
+                                />
                             </Field>
                             <Field label="Codice Ateco">
                                 <input type="text" value={ateco} onChange={(event) => setAteco(event.target.value)} maxLength={8} className={inputClassName} />
@@ -269,28 +321,69 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
                             <Field label="Numero dipendenti">
                                 <input type="number" min="0" value={employees} onChange={(event) => setEmployees(event.target.value)} className={inputClassName} />
                             </Field>
-                            <Field label="Superficie (m²)">
-                                <input type="number" min="0" value={area} onChange={(event) => setArea(event.target.value)} className={inputClassName} />
+                            <Field label="Superficie (m²)" fieldId="area" error={validationErrors.area}>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={area}
+                                    onChange={(event) => {
+                                        clearValidationKey("area");
+                                        setArea(event.target.value);
+                                    }}
+                                    className={controlClass("area")}
+                                />
                             </Field>
-                            <Field label="Anno di costruzione">
-                                <input type="number" min="1000" max="9999" value={constructionYearValue} onChange={(event) => setConstructionYearValue(event.target.value)} className={inputClassName} />
+                            <Field label="Anno di costruzione" fieldId="constructionYearValue" error={validationErrors.constructionYearValue}>
+                                <input
+                                    type="number"
+                                    min="1000"
+                                    max="9999"
+                                    value={constructionYearValue}
+                                    onChange={(event) => {
+                                        clearValidationKey("constructionYearValue");
+                                        setConstructionYearValue(event.target.value);
+                                    }}
+                                    className={controlClass("constructionYearValue")}
+                                />
                             </Field>
                             <Field label="Zona climatica">
                                 <input type="text" maxLength={5} value={climateZone} onChange={(event) => setClimateZone(event.target.value.toUpperCase())} className={inputClassName} />
                             </Field>
-                            <Field label="Destinazione d'uso">
-                                <input type="text" value={usage} onChange={(event) => setUsage(event.target.value)} className={inputClassName} />
+                            <Field label="Destinazione d'uso" fieldId="usage" error={validationErrors.usage}>
+                                <input
+                                    type="text"
+                                    value={usage}
+                                    onChange={(event) => {
+                                        clearValidationKey("usage");
+                                        setUsage(event.target.value);
+                                    }}
+                                    className={controlClass("usage")}
+                                />
                             </Field>
-                            <Field label="Diffusione calore">
-                                <select value={heating} onChange={(event) => setHeating(event.target.value)} className={inputClassName}>
+                            <Field label="Diffusione calore" fieldId="heating" error={validationErrors.heating}>
+                                <select
+                                    value={heating}
+                                    onChange={(event) => {
+                                        clearValidationKey("heating");
+                                        setHeating(event.target.value);
+                                    }}
+                                    className={controlClass("heating")}
+                                >
                                     <option value="" disabled>Seleziona</option>
                                     {BUILDING_FORM_OPTIONS.heatDistribution.map((option) => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="Ristrutturazioni fatte">
-                                <select value={renovation} onChange={(event) => setRenovation(event.target.value)} className={inputClassName}>
+                            <Field label="Ristrutturazioni fatte" fieldId="renovation" error={validationErrors.renovation}>
+                                <select
+                                    value={renovation}
+                                    onChange={(event) => {
+                                        clearValidationKey("renovation");
+                                        setRenovation(event.target.value);
+                                    }}
+                                    className={controlClass("renovation")}
+                                >
                                     <option value="" disabled>Seleziona</option>
                                     {BUILDING_FORM_OPTIONS.renovation.map((option) => (
                                         <option key={option} value={option}>{option}</option>
@@ -306,22 +399,54 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
                             <Field label="Stato">
                                 <input type="text" value={country} onChange={(event) => setCountry(event.target.value)} className={inputClassName} />
                             </Field>
-                            <Field label="Regione">
-                                <select value={location} onChange={(event) => setLocation(event.target.value)} className={inputClassName}>
+                            <Field label="Regione" fieldId="location" error={validationErrors.location}>
+                                <select
+                                    value={location}
+                                    onChange={(event) => {
+                                        clearValidationKey("location");
+                                        setLocation(event.target.value);
+                                    }}
+                                    className={controlClass("location")}
+                                >
                                     <option value="" disabled>Seleziona</option>
                                     {REGION_OPTIONS.map((option) => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="CAP">
-                                <input type="text" maxLength={5} value={cap} onChange={(event) => setCap(event.target.value)} className={inputClassName} />
+                            <Field label="CAP" fieldId="cap" error={validationErrors.cap}>
+                                <input
+                                    type="text"
+                                    maxLength={5}
+                                    value={cap}
+                                    onChange={(event) => {
+                                        clearValidationKey("cap");
+                                        setCap(event.target.value);
+                                    }}
+                                    className={controlClass("cap")}
+                                />
                             </Field>
-                            <Field label="Comune">
-                                <input type="text" value={municipality} onChange={(event) => setMunicipality(event.target.value)} className={inputClassName} />
+                            <Field label="Comune" fieldId="municipality" error={validationErrors.municipality}>
+                                <input
+                                    type="text"
+                                    value={municipality}
+                                    onChange={(event) => {
+                                        clearValidationKey("municipality");
+                                        setMunicipality(event.target.value);
+                                    }}
+                                    className={controlClass("municipality")}
+                                />
                             </Field>
-                            <Field label="Via / Piazza">
-                                <input type="text" value={street} onChange={(event) => setStreet(event.target.value)} className={inputClassName} />
+                            <Field label="Via / Piazza" fieldId="street" error={validationErrors.street}>
+                                <input
+                                    type="text"
+                                    value={street}
+                                    onChange={(event) => {
+                                        clearValidationKey("street");
+                                        setStreet(event.target.value);
+                                    }}
+                                    className={controlClass("street")}
+                                />
                             </Field>
                             <Field label="Numero civico">
                                 <input type="text" value={streetNumber} onChange={(event) => setStreetNumber(event.target.value)} className={inputClassName} />
@@ -332,38 +457,60 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
                     <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <h3 className="mb-4 text-base font-semibold text-slate-900">Gestione consumi e fornitura</h3>
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                            <Field label="Controllo dei consumi">
-                                <select value={energyControl} onChange={(event) => setEnergyControl(event.target.value)} className={inputClassName}>
+                            <Field label="Controllo dei consumi" fieldId="energyControl" error={validationErrors.energyControl}>
+                                <select
+                                    value={energyControl}
+                                    onChange={(event) => {
+                                        clearValidationKey("energyControl");
+                                        setEnergyControl(event.target.value);
+                                    }}
+                                    className={controlClass("energyControl")}
+                                >
                                     <option value="" disabled>Seleziona</option>
                                     {BUILDING_FORM_OPTIONS.energyControl.map((option) => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="Manutenzione periodica impianto">
-                                <select value={maintenance} onChange={(event) => setMaintenance(event.target.value)} className={inputClassName}>
+                            <Field label="Manutenzione periodica impianto" fieldId="maintenance" error={validationErrors.maintenance}>
+                                <select
+                                    value={maintenance}
+                                    onChange={(event) => {
+                                        clearValidationKey("maintenance");
+                                        setMaintenance(event.target.value);
+                                    }}
+                                    className={controlClass("maintenance")}
+                                >
                                     <option value="" disabled>Seleziona</option>
                                     {BUILDING_FORM_OPTIONS.maintenance.map((option) => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="Recupero acqua piovana">
-                                <select value={waterRecovery} onChange={(event) => setWaterRecovery(event.target.value)} className={inputClassName}>
+                            <Field label="Recupero acqua piovana" fieldId="waterRecovery" error={validationErrors.waterRecovery}>
+                                <select
+                                    value={waterRecovery}
+                                    onChange={(event) => {
+                                        clearValidationKey("waterRecovery");
+                                        setWaterRecovery(event.target.value);
+                                    }}
+                                    className={controlClass("waterRecovery")}
+                                >
                                     <option value="" disabled>Seleziona</option>
                                     {BUILDING_FORM_OPTIONS.waterRecovery.map((option) => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="Classe di potenza contrattuale">
+                            <Field label="Classe di potenza contrattuale" fieldId="contractPowerClass" error={validationErrors.contractPowerClass}>
                                 <select
                                     value={contractPowerClass}
                                     onChange={(event) => {
+                                        clearValidationKey("contractPowerClass");
                                         setContractPowerClass(event.target.value);
                                         setElectricityCounter(event.target.value);
                                     }}
-                                    className={inputClassName}
+                                    className={controlClass("contractPowerClass")}
                                 >
                                     <option value="" disabled>Seleziona</option>
                                     {BUILDING_FORM_OPTIONS.electricityMeter.map((option) => (
@@ -371,16 +518,30 @@ function BuildingFrom({ buildingData = "empty", isEdit, onEditSuccess, readOnly 
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="Fonte elettrica">
-                                <select value={electricForniture} onChange={(event) => setElectricForniture(event.target.value)} className={inputClassName}>
+                            <Field label="Fonte elettrica" fieldId="electricForniture" error={validationErrors.electricForniture}>
+                                <select
+                                    value={electricForniture}
+                                    onChange={(event) => {
+                                        clearValidationKey("electricForniture");
+                                        setElectricForniture(event.target.value);
+                                    }}
+                                    className={controlClass("electricForniture")}
+                                >
                                     <option value="" disabled>Seleziona</option>
                                     {BUILDING_FORM_OPTIONS.electricForniture.map((option) => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="Analizzatori di rete per il controllo dei consumi elettrici">
-                                <select value={electricityAnalyzer} onChange={(event) => setElectricityAnalyzer(event.target.value)} className={inputClassName}>
+                            <Field label="Analizzatori di rete per il controllo dei consumi elettrici" fieldId="electricityAnalyzer" error={validationErrors.electricityAnalyzer}>
+                                <select
+                                    value={electricityAnalyzer}
+                                    onChange={(event) => {
+                                        clearValidationKey("electricityAnalyzer");
+                                        setElectricityAnalyzer(event.target.value);
+                                    }}
+                                    className={controlClass("electricityAnalyzer")}
+                                >
                                     <option value="" disabled>Seleziona</option>
                                     {BUILDING_FORM_OPTIONS.analyzers.map((option) => (
                                         <option key={option} value={option}>{option}</option>
