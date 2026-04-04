@@ -66,7 +66,6 @@ export function getConstructionYearBucket(constructionYearValue, fallbackYear = 
 }
 
 export function composeLegacyAddress({
-  address = "",
   street = "",
   streetNumber = "",
   municipality = "",
@@ -77,8 +76,7 @@ export function composeLegacyAddress({
   const lineOne = [street, streetNumber].filter(Boolean).join(", ");
   const lineTwo = [cap, municipality].filter(Boolean).join(" ");
   const lineThree = [region, country].filter(Boolean).join(", ");
-  const composed = [lineOne, lineTwo, lineThree].filter(Boolean).join(" - ").trim();
-  return composed || address || "";
+  return [lineOne, lineTwo, lineThree].filter(Boolean).join(" - ").trim();
 }
 
 export function normalizeIntegerOrNull(value) {
@@ -92,7 +90,6 @@ export function normalizeIntegerOrNull(value) {
 export function createBuildingPayload({
   buildingID,
   name,
-  address,
   usage,
   location,
   year,
@@ -128,7 +125,6 @@ export function createBuildingPayload({
     id: buildingID,
     name,
     address: composeLegacyAddress({
-      address,
       street,
       streetNumber,
       municipality,
@@ -168,4 +164,90 @@ export function createBuildingPayload({
     constructionYearValue: normalizeIntegerOrNull(constructionYearValue),
     contractPowerClass: contractPowerClass || electricityCounter || null,
   };
+}
+
+/** Ordine di visualizzazione nel form per scroll al primo campo invalido */
+export const BUILDING_FIELD_SCROLL_ORDER = [
+  "name",
+  "usage",
+  "area",
+  "constructionYearValue",
+  "heating",
+  "renovation",
+  "location",
+  "cap",
+  "municipality",
+  "street",
+  "energyControl",
+  "maintenance",
+  "waterRecovery",
+  "contractPowerClass",
+  "electricForniture",
+  "electricityAnalyzer",
+];
+
+/**
+ * Chiavi di campo del form anagrafico → messaggio (stessa logica di completezza del payload).
+ * @returns {Record<string, string>}
+ */
+export function getBuildingPayloadFieldErrors(payload) {
+  const errors = {};
+  const areaNumber = Number(payload.area);
+  const capValue = String(payload.cap || "").trim();
+  const powerClass = String(payload.contractPowerClass || payload.electricityCounter || "").trim();
+
+  if (!String(payload.name || "").trim()) {
+    errors.name = "Il nome è obbligatorio.";
+  }
+  if (!String(payload.usage || "").trim()) {
+    errors.usage = "La destinazione d'uso è obbligatoria.";
+  }
+  if (!payload.year) {
+    errors.constructionYearValue = "L'anno di costruzione è obbligatorio (o non valido).";
+  }
+  if (!Number.isFinite(areaNumber) || areaNumber <= 0) {
+    errors.area = "Indica una superficie maggiore di zero.";
+  }
+  if (!String(payload.location || "").trim()) {
+    errors.location = "Seleziona la regione.";
+  }
+  if (!String(payload.renovation || "").trim()) {
+    errors.renovation = "Seleziona le ristrutturazioni.";
+  }
+  if (!String(payload.heating || "").trim()) {
+    errors.heating = "Seleziona la diffusione del calore.";
+  }
+  if (!String(payload.energyControl || "").trim()) {
+    errors.energyControl = "Seleziona il controllo dei consumi.";
+  }
+  if (!String(payload.maintenance || "").trim()) {
+    errors.maintenance = "Seleziona la manutenzione periodica.";
+  }
+  if (!String(payload.waterRecovery || "").trim()) {
+    errors.waterRecovery = "Seleziona il recupero acqua piovana.";
+  }
+  if (!powerClass) {
+    errors.contractPowerClass = "Seleziona la classe di potenza contrattuale.";
+  }
+  if (!String(payload.electricityAnalyzer || "").trim()) {
+    errors.electricityAnalyzer = "Seleziona gli analizzatori di rete.";
+  }
+  if (!String(payload.electricForniture || "").trim()) {
+    errors.electricForniture = "Seleziona la fonte elettrica.";
+  }
+  if (!/^\d{5}$/.test(capValue)) {
+    errors.cap = "Il CAP deve essere di 5 cifre.";
+  }
+  if (!String(payload.municipality || "").trim()) {
+    errors.municipality = "Il comune è obbligatorio.";
+  }
+  if (!String(payload.street || "").trim()) {
+    errors.street = "La via è obbligatoria.";
+  }
+
+  return errors;
+}
+
+export function isBuildingPayloadComplete(payload) {
+  return Object.keys(getBuildingPayloadFieldErrors(payload)).length === 0;
 }

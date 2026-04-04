@@ -637,8 +637,15 @@ export async function EmissionsCalculator(buildingID) {
         }
     } catch (error) {
         if (error.response && error.response.data) {
-            return error.response.data.msg; // Messaggio di errore dal server
+            return {
+                success: false,
+                message: error.response.data.msg,
+            };
         }
+        return {
+            success: false,
+            message: error.message || "Errore durante il calcolo delle emissioni.",
+        };
     }
 
 }

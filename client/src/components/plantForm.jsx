@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import axios from "axios";
-import MessagePopUp from "./messagePopUp";
-import { MutatingDots } from "react-loader-spinner";
+import AutosaveStatus from "./AutosaveStatus";
+import useAutosave from "./useAutosave";
 import { useRecoveryContext } from "../provider/provider";
 import {
   getFuelUnit,
@@ -72,7 +72,28 @@ const FUEL_OPTIONS = [
   "Energia termica",
 ];
 
-function PlantForm({ plant = "empty", isEdit, onButtonClick, title = null, systemType = null }) {
+const inputClassName = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-500";
+
+function Field({ label, children, hint = null }) {
+  return (
+    <label className="space-y-2">
+      <div className="text-sm font-medium text-slate-800">{label}</div>
+      {children}
+      {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
+    </label>
+  );
+}
+
+function PlantForm({
+  plant = "empty",
+  isEdit,
+  onButtonClick,
+  onSubmitSuccess,
+  title = null,
+  systemType = null,
+  readOnly = false,
+  onDeletePlant = null,
+}) {
   const resolvedSystemType = systemType || plant.system_type || "";
   const isThermalSystem = THERMAL_SYSTEM_TYPES.includes(resolvedSystemType);
   const isVentilation = resolvedSystemType === "Ventilazione meccanica";
@@ -83,20 +104,20 @@ function PlantForm({ plant = "empty", isEdit, onButtonClick, title = null, syste
   const [plantType, setPlantType] = useState(plant.plant_type || "");
   const [generatorType, setGeneratorType] = useState(plant.generator_type || "");
   const [generatorDescription, setGeneratorDescription] = useState(plant.generator_description || "");
-  const [fuelType, setFuelType] = useState(
-    resolvedSystemType === "Illuminazione" ? (plant.fuel_type || "Elettricità") : (plant.fuel_type || ""),
-  );
+  const [fuelType, setFuelType] = useState(plant.fuel_type || "");
   const [fuelConsumption, setFuelConsumption] = useState(plant.fuel_consumption || "");
-  const [hasGasLeak, setHasGasLeak] = useState(Boolean(plant.has_gas_leak));
-  const [refrigerantGases, setRefrigerantGases] = useState([]);
+  const [hasGasLeak, setHasGasLeak] = useState(Boolean(plant.has_gas_leak || plant.refrigerantGases?.length));
+  const [refrigerantGases, setRefrigerantGases] = useState(
+    (plant.refrigerantGases || []).map((gas) => ({
+      type: gas.gas_type || gas.type || "",
+      quantity: gas.quantity_kg || gas.quantity || "",
+    })),
+  );
   const [hasHeatRecovery, setHasHeatRecovery] = useState(Boolean(plant.has_heat_recovery));
   const [incandescentCount, setIncandescentCount] = useState(plant.incandescent_count || 0);
   const [ledCount, setLedCount] = useState(plant.led_count || 0);
   const [gasLampCount, setGasLampCount] = useState(plant.gas_lamp_count || 0);
   const [autoLightingControl, setAutoLightingControl] = useState(Boolean(plant.auto_lighting_control));
-  const [isLoading, setIsLoading] = useState(false);
-  const [buttonPopup, setButtonPopup] = useState(false);
-  const [messagePopup, setMessagePopup] = useState("");
 
   const { buildingID, triggerRefresh } = useRecoveryContext();
 
@@ -106,7 +127,7 @@ function PlantForm({ plant = "empty", isEdit, onButtonClick, title = null, syste
   );
   const quantityUnit = useMemo(() => getFuelUnit(fuelType), [fuelType]);
 
-  const buildPayload = () => {
+  const buildPayload = useCallback(() => {
     const payload = {
       systemType: resolvedSystemType,
       plantType: isLighting ? null : plantType || null,
@@ -135,7 +156,27 @@ function PlantForm({ plant = "empty", isEdit, onButtonClick, title = null, syste
     }
 
     return payload;
-  };
+  }, [
+    autoLightingControl,
+    fuelConsumption,
+    fuelType,
+    gasLampCount,
+    generatorDescription,
+    generatorType,
+    hasGasLeak,
+    hasHeatRecovery,
+    incandescentCount,
+    isLighting,
+    isThermalSystem,
+    isVentilation,
+    ledCount,
+    plantType,
+    quantityUnit,
+    refrigerantGases,
+    requiresFuel,
+    resolvedSystemType,
+    supportsGasLeak,
+  ]);
 
   const handleGasChange = (index, field, value) => {
     const updated = [...refrigerantGases];
@@ -161,49 +202,154 @@ function PlantForm({ plant = "empty", isEdit, onButtonClick, title = null, syste
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const payload = buildPayload();
-      const response = isEdit
-        ? await axios.put(`/api/buildings/${buildingID}/update/plant/${plant.id}`, payload, { withCredentials: true })
-        : await axios.post(`/api/buildings/${buildingID}/upload/plant`, payload, { withCredentials: true });
-
-      if (response.status === 200) {
-        setMessagePopup(response.data.msg);
-        setButtonPopup(true);
-        triggerRefresh();
-      }
-    } catch (error) {
-      setMessagePopup(error.response?.data?.msg || error.message);
-      setButtonPopup(true);
-    } finally {
-      setIsLoading(false);
+  const canAutosave = useMemo(() => {
+    if (!resolvedSystemType) {
+      return false;
     }
-  };
+
+    if ((isThermalSystem || isVentilation) && !plantType) {
+      return false;
+    }
+
+    if (isThermalSystem && !generatorType) {
+      return false;
+    }
+
+    if (isThermalSystem && generatorType === "Altro" && !generatorDescription.trim()) {
+      return false;
+    }
+
+    if (requiresFuel && !fuelType) {
+      return false;
+    }
+
+    if (requiresFuel && fuelConsumption === "") {
+      return false;
+    }
+
+    if (isLighting) {
+      const counts = [incandescentCount, ledCount, gasLampCount].map((value) => Number(value));
+      if (counts.some((value) => !Number.isFinite(value) || value < 0)) {
+        return false;
+      }
+      if (counts.reduce((total, value) => total + value, 0) <= 0) {
+        return false;
+      }
+    }
+
+    if (supportsGasLeak && hasGasLeak) {
+      return refrigerantGases.some(
+        (gas) => gas.type.trim() !== "" && gas.quantity !== "" && Number.isFinite(Number(gas.quantity)) && Number(gas.quantity) > 0,
+      );
+    }
+
+    return true;
+  }, [
+    fuelConsumption,
+    fuelType,
+    gasLampCount,
+    generatorDescription,
+    generatorType,
+    hasGasLeak,
+    incandescentCount,
+    isLighting,
+    isThermalSystem,
+    isVentilation,
+    ledCount,
+    plantType,
+    refrigerantGases,
+    requiresFuel,
+    resolvedSystemType,
+    supportsGasLeak,
+  ]);
+
+  const autosaveSignature = useMemo(() => JSON.stringify({
+    resolvedSystemType,
+    plantType,
+    generatorType,
+    generatorDescription,
+    fuelType,
+    fuelConsumption,
+    hasGasLeak,
+    refrigerantGases,
+    hasHeatRecovery,
+    incandescentCount,
+    ledCount,
+    gasLampCount,
+    autoLightingControl,
+  }), [
+    autoLightingControl,
+    fuelConsumption,
+    fuelType,
+    gasLampCount,
+    generatorDescription,
+    generatorType,
+    hasGasLeak,
+    hasHeatRecovery,
+    incandescentCount,
+    ledCount,
+    plantType,
+    refrigerantGases,
+    resolvedSystemType,
+  ]);
+
+  const savePlant = useCallback(async () => {
+    const payload = buildPayload();
+    const response = isEdit
+      ? await axios.put(`/api/buildings/${buildingID}/update/plant/${plant.id}`, payload, { withCredentials: true })
+      : await axios.post(`/api/buildings/${buildingID}/upload/plant`, payload, { withCredentials: true });
+
+    if (response.status === 200) {
+      triggerRefresh();
+      if (typeof onSubmitSuccess === "function") {
+        onSubmitSuccess();
+      }
+    }
+  }, [buildPayload, buildingID, isEdit, onSubmitSuccess, plant.id, triggerRefresh]);
+
+  const autosave = useAutosave({
+    valueSignature: autosaveSignature,
+    enabled: !readOnly,
+    canSave: canAutosave,
+    onSave: savePlant,
+  });
+
+  const statusLabel = readOnly ? "Scheda salvata" : "Scheda compilabile";
+  const statusClassName = readOnly ? "bg-slate-100 text-slate-700" : "bg-emerald-100 text-emerald-700";
+  const canCancel = typeof onButtonClick === "function";
 
   return (
-    <div className="w-full mx-auto flex justify-center">
-      <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
-        {messagePopup}
-      </MessagePopUp>
-      <div className="w-full mx-auto my-4 rounded-2xl border border-gray-300 bg-[#f6f3f3] px-6 py-6 font-arial text-xl shadow-xl">
-        <h2 className="mb-6 text-center text-2xl font-bold">{title || (isEdit ? "Modifica Impianto" : "Aggiungi un impianto")}</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col">
-          <div className="mb-4 rounded-lg bg-white px-4 py-3 text-center font-semibold text-[#2d7044]">
-            Tipo impianto: {resolvedSystemType}
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900">
+            {title || (isEdit ? "Scheda impianto" : "Nuovo impianto")}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Le modifiche vengono salvate automaticamente come nel questionario trasporti. La scheda diventa in sola lettura solo a edificio finalizzato.
+          </p>
+        </div>
+        <div className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusClassName}`}>
+          {statusLabel}
+        </div>
+      </div>
+
+      <form onSubmit={(event) => event.preventDefault()}>
+        <fieldset disabled={readOnly} className="space-y-5">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-medium text-slate-800">Categoria impianto</div>
+            <div className="mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-700">
+              {resolvedSystemType || "-"}
+            </div>
           </div>
 
           {(isThermalSystem || isVentilation) && (
-            <div className="mb-6 flex flex-col md:flex-row md:gap-4">
-              <label className="flex w-full flex-col md:w-1/2">
-                <span className="mb-2 block">Tipo di impianto</span>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Tipo di impianto">
                 <select
                   value={plantType}
                   onChange={(event) => setPlantType(event.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
+                  className={inputClassName}
                   required
                 >
                   <option value="" disabled>Seleziona tipo di impianto</option>
@@ -211,18 +357,17 @@ function PlantForm({ plant = "empty", isEdit, onButtonClick, title = null, syste
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
-              </label>
+              </Field>
             </div>
           )}
 
           {isThermalSystem && (
-            <div className="mb-6 flex flex-col md:flex-row md:gap-4">
-              <label className="flex w-full flex-col md:w-1/2">
-                <span className="mb-2 block">Tipo di generatore</span>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Tipo di generatore">
                 <select
                   value={generatorType}
                   onChange={(event) => setGeneratorType(event.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
+                  className={inputClassName}
                   required
                 >
                   <option value="" disabled>Seleziona tipo di generatore</option>
@@ -230,92 +375,68 @@ function PlantForm({ plant = "empty", isEdit, onButtonClick, title = null, syste
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
-              </label>
+              </Field>
 
               {generatorType === "Altro" && (
-                <label className="flex w-full flex-col md:w-1/2">
-                  <span className="mb-2 block">Descrizione del generatore</span>
+                <Field label="Descrizione del generatore">
                   <input
                     type="text"
                     value={generatorDescription}
                     onChange={(event) => setGeneratorDescription(event.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
+                    className={inputClassName}
                   />
-                </label>
+                </Field>
               )}
             </div>
           )}
 
           {isVentilation && (
-            <div className="mb-6">
-              <label className="flex items-center space-x-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <label className="flex items-center gap-3 text-sm text-slate-800">
                 <input
                   type="checkbox"
                   checked={hasHeatRecovery}
                   onChange={(event) => setHasHeatRecovery(event.target.checked)}
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                 />
-                <span className="text-lg">Ventilazione meccanica con recupero</span>
+                Ventilazione meccanica con recupero
               </label>
             </div>
           )}
 
           {isLighting && (
-            <div className="mb-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="grid gap-4 md:grid-cols-3">
-                <label className="flex flex-col">
-                  <span className="mb-2 block">Numero incandescenza</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={incandescentCount}
-                    onChange={(event) => setIncandescentCount(event.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
-                  />
-                </label>
-                <label className="flex flex-col">
-                  <span className="mb-2 block">Numero LED</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={ledCount}
-                    onChange={(event) => setLedCount(event.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
-                  />
-                </label>
-                <label className="flex flex-col">
-                  <span className="mb-2 block">Numero a gas</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={gasLampCount}
-                    onChange={(event) => setGasLampCount(event.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
-                  />
-                </label>
+                <Field label="Numero incandescenza">
+                  <input type="number" min="0" value={incandescentCount} onChange={(event) => setIncandescentCount(event.target.value)} className={inputClassName} />
+                </Field>
+                <Field label="Numero LED">
+                  <input type="number" min="0" value={ledCount} onChange={(event) => setLedCount(event.target.value)} className={inputClassName} />
+                </Field>
+                <Field label="Numero a gas">
+                  <input type="number" min="0" value={gasLampCount} onChange={(event) => setGasLampCount(event.target.value)} className={inputClassName} />
+                </Field>
               </div>
 
-              <label className="flex items-center space-x-3">
+              <label className="mt-4 flex items-center gap-3 text-sm text-slate-800">
                 <input
                   type="checkbox"
                   checked={autoLightingControl}
                   onChange={(event) => setAutoLightingControl(event.target.checked)}
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                 />
-                <span className="text-lg">Sistemi di regolazione e controllo automatici dei corpi illuminanti</span>
+                Sistemi di regolazione e controllo automatici dei corpi illuminanti
               </label>
             </div>
           )}
 
           {requiresFuel && (
-            <div className="mb-6 grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col">
-                <span className="mb-2 block">Tipo di carburante</span>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Tipo di carburante">
                 <select
                   value={fuelType}
                   onChange={(event) => setFuelType(event.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
-                  disabled={isLighting}
+                  className={inputClassName}
                   required
                 >
                   <option value="" disabled>Seleziona tipo di carburante</option>
@@ -323,124 +444,125 @@ function PlantForm({ plant = "empty", isEdit, onButtonClick, title = null, syste
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
-              </label>
+              </Field>
 
-              <label className="flex flex-col">
-                <span className="mb-2 block">Quantità consumata {quantityUnit ? `(${quantityUnit})` : ""}</span>
+              <Field label={`Quantità consumata${quantityUnit ? ` (${quantityUnit})` : ""}`}>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={fuelConsumption}
                   onChange={(event) => setFuelConsumption(event.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
+                  className={inputClassName}
                   required
                 />
-              </label>
+              </Field>
             </div>
           )}
 
           {supportsGasLeak && (
-            <>
-              <div className="mb-6">
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={hasGasLeak}
-                    onChange={handleHasGasLeakChange}
-                    className="h-5 w-5"
-                  />
-                  <span className="text-lg">L’impianto ha disperso gas refrigeranti negli ultimi 12 mesi?</span>
-                </label>
-              </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <label className="flex items-center gap-3 text-sm text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={hasGasLeak}
+                  onChange={handleHasGasLeakChange}
+                  className="h-4 w-4"
+                />
+                L’impianto ha disperso gas refrigeranti negli ultimi 12 mesi?
+              </label>
 
               {hasGasLeak && (
-                <div className="mb-6 rounded-xl border border-gray-300 bg-white p-4 shadow-inner">
-                  <h3 className="mb-4 text-xl font-semibold">Gas refrigeranti dispersi</h3>
-
+                <div className="mt-4 space-y-4">
                   {refrigerantGases.map((gas, index) => (
-                    <div key={index} className="mb-4 flex flex-col justify-center md:flex-row md:items-end md:gap-4">
-                      <label className="flex w-full flex-col md:w-1/2">
-                        <span className="mb-2 block">Tipo di gas</span>
+                    <div key={index} className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_auto] md:items-end">
+                      <Field label="Tipo di gas">
                         <select
                           value={gas.type}
                           onChange={(event) => handleGasChange(index, "type", event.target.value)}
-                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
+                          className={inputClassName}
                         >
                           <option value="">Seleziona un gas</option>
                           {GAS_NAMES.map((option) => (
                             <option key={option} value={option}>{option}</option>
                           ))}
                         </select>
-                      </label>
+                      </Field>
 
-                      <label className="flex w-full flex-col md:w-1/3">
-                        <span className="mb-2 block">Quantità (kg)</span>
+                      <Field label="Quantità (kg)">
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={gas.quantity}
                           onChange={(event) => handleGasChange(index, "quantity", event.target.value)}
-                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-xl text-gray-900"
+                          className={inputClassName}
                         />
-                      </label>
+                      </Field>
 
-                      <button
-                        type="button"
-                        onClick={() => removeGasField(index)}
-                        className="mt-2 text-red-600 hover:text-red-800 md:mt-0"
-                        title="Rimuovi"
-                      >
-                        Elimina
-                      </button>
+                      {!readOnly ? (
+                        <button
+                          type="button"
+                          onClick={() => removeGasField(index)}
+                          className="rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-700 transition hover:bg-rose-50"
+                        >
+                          Elimina
+                        </button>
+                      ) : null}
                     </div>
                   ))}
 
-                  <button
-                    type="button"
-                    onClick={addGasField}
-                    className="mt-2 text-lg font-semibold text-[#2d7044] hover:underline"
-                  >
-                    + Aggiungi un altro gas
-                  </button>
+                  {!readOnly ? (
+                    <button
+                      type="button"
+                      onClick={addGasField}
+                      className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      + Aggiungi un altro gas
+                    </button>
+                  ) : null}
                 </div>
               )}
-            </>
+            </div>
           )}
+        </fieldset>
+      </form>
 
-          {isLoading ? (
-            <div className="mt-5 flex items-center justify-center">
-              <MutatingDots
-                height="100"
-                width="100"
-                color="#2d7044"
-                secondaryColor="#2d7044"
-                radius="12.5"
-                ariaLabel="mutating-dots-loading"
-                visible
-              />
-            </div>
-          ) : (
-            <div className="mt-5 flex items-center justify-center gap-3">
-              <button
-                type="submit"
-                className="mt-7 w-[30%] rounded-lg border-2 border-transparent bg-[#2d7044] p-1 font-arial text-xl text-white transition-colors duration-300 ease-in-out hover:border-[#2d7044] hover:bg-white hover:text-[#2d7044] md:w-[30%] md:text-2xl lg:w-[20%] lg:text-2xl"
-              >
-                Salva
-              </button>
-              <button
-                type="button"
-                onClick={onButtonClick}
-                className="mt-7 w-[30%] rounded-lg border-2 border-transparent bg-gray-500 p-1 font-arial text-xl text-white transition-colors duration-300 ease-in-out hover:border-gray-500 hover:bg-white hover:text-gray-500 md:w-[30%] md:text-2xl lg:w-[20%] lg:text-2xl"
-              >
-                Annulla
-              </button>
-            </div>
-          )}
-        </form>
-      </div>
-    </div>
+      <AutosaveStatus
+        readOnly={readOnly}
+        isDirty={autosave.isDirty}
+        isSaving={autosave.isSaving}
+        canSave={canAutosave}
+        saveError={autosave.saveError}
+        saveSuccessAt={autosave.saveSuccessAt}
+        idleLabel="Le modifiche alla scheda impianto vengono salvate automaticamente."
+        incompleteLabel="Completa i campi obbligatori della scheda per attivare il salvataggio automatico."
+      />
+
+      {!readOnly && canCancel ? (
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={onButtonClick}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Annulla
+          </button>
+        </div>
+      ) : null}
+
+      {isEdit && typeof onDeletePlant === "function" ? (
+        <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
+          <button
+            type="button"
+            onClick={onDeletePlant}
+            className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+          >
+            Elimina impianto
+          </button>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import ScrollToTop from './components/scrollToTop';
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import ConfirmPopUp from "./components/confirmPopUp";
+import MessagePopUp from "./components/messagePopUp";
 import { useRecoveryContext } from "./provider/provider";
 import { useNavigate } from "react-router-dom";
 
@@ -14,11 +15,11 @@ export default function Buildings() {
     const [buildingToDelete, setBuildingToDelete] = useState(null);
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
-    const [totalQuantity, setTotalQuantity] = useState(0);
+    const [isCreatingBuilding, setIsCreatingBuilding] = useState(false);
+    const [buttonPopup, setButtonPopup] = useState(false);
+    const [messagePopup, setMessagePopup] = useState("");
 
-    const { addBuildingTrigger, setAddBuildingTrigger } = useRecoveryContext();
-
-    const { setBuildingID } = useRecoveryContext();
+    const { addBuildingTrigger, setBuildingID } = useRecoveryContext();
 
     const navigate = useNavigate();
 
@@ -40,25 +41,9 @@ export default function Buildings() {
             }
         };
 
-        const fetchUserTotalQuantity = async () => {
-
-            try {
-                const response = await axios.get(`/api/fetch-all-user-quantity`, {
-                    withCredentials: true
-                });
-                if (response.status === 200) {
-                    setTotalQuantity(response.data.quantity);
-                    console.log("totale: ", response.data.quantity);
-                }
-            } catch (error) {
-                console.log(error);
-            }
-        };
-
         fetchBuildings();
-        fetchUserTotalQuantity();
 
-    }, [addBuildingTrigger]);
+    }, [addBuildingTrigger, setBuildingID]);
 
     const deleteBuilding = async () => {
 
@@ -86,9 +71,38 @@ export default function Buildings() {
         return `hsl(${baseHue + hueShift}, 70%, 80%)`;
     };
 
+    const createDraftBuilding = async () => {
+        if (isCreatingBuilding) {
+            return;
+        }
+
+        setIsCreatingBuilding(true);
+        try {
+            const response = await axios.post("/api/buildings/create-draft", {}, {
+                withCredentials: true,
+            });
+
+            const newBuildingId = response.data?.buildingId;
+            if (!newBuildingId) {
+                throw new Error("Il server non ha restituito un identificativo edificio valido.");
+            }
+
+            setBuildingID(Number(newBuildingId));
+            navigate(`/building/${newBuildingId}`);
+        } catch (error) {
+            setMessagePopup(error.response?.data?.msg || error.message || "Errore durante la creazione della bozza edificio.");
+            setButtonPopup(true);
+        } finally {
+            setIsCreatingBuilding(false);
+        }
+    };
+
     return (
         <div>
             <ScrollToTop />
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+                {messagePopup}
+            </MessagePopUp>
             <ConfirmPopUp
                 trigger={popupConfirmDelete}
                 setTrigger={setPopupConfirmDelete}
@@ -110,7 +124,8 @@ export default function Buildings() {
                         <div className="flex flex-col items-center justify-center m-2 mt-5">
                             <button
                                 className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                                onClick={() => navigate('/building/new')}
+                                onClick={createDraftBuilding}
+                                disabled={isCreatingBuilding}
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -174,7 +189,8 @@ export default function Buildings() {
                             { /* dnumBuildings < totalQuantity ? (
                                 <button
                                     className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                                    onClick={() => navigate('/building/new')}
+                                    onClick={createDraftBuilding}
+                                    disabled={isCreatingBuilding}
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -200,7 +216,8 @@ export default function Buildings() {
 
                                 <button
                                     className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                                    onClick={() => navigate('/building/new')}
+                                    onClick={createDraftBuilding}
+                                    disabled={isCreatingBuilding}
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"

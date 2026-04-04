@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import ScrollToTop from './components/scrollToTop';
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Building from "./components/building";
 import ClimateAlteringGases from "./components/climateAlteringGases";
 import { EmissionsCalculator } from "./components/emissionsCalculator";
@@ -15,9 +16,20 @@ import BuildingSubmitConfirmDialog from "./components/buildingSubmitConfirmDialo
 
 function BuildingPage() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
-    const { buildingID, triggerRefreshResults, buildingLocked, setBuildingLocked } = useRecoveryContext();
+    const [isCreatingDraft, setIsCreatingDraft] = useState(false);
+    const {
+        buildingID,
+        triggerRefreshResults,
+        buildingLocked,
+        setBuildingLocked,
+        buildingComplete,
+        setBuildingComplete,
+        requestBuildingFormValidation,
+    } = useRecoveryContext();
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const createDraftAttemptedRef = useRef(false);
 
     const [buttonPopUp, setButtonPopUp] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
@@ -59,10 +71,43 @@ function BuildingPage() {
     useEffect(() => {
         if (id === 'new') {
             setBuildingLocked(false);
-        }
-    }, [id, setBuildingLocked]);
+            setBuildingComplete(false);
+            if (createDraftAttemptedRef.current) {
+                return;
+            }
 
-    const canSubmitEmissions = !buildingLocked && id !== 'new' && Boolean(buildingID);
+            createDraftAttemptedRef.current = true;
+            setIsCreatingDraft(true);
+
+            const createDraft = async () => {
+                try {
+                    const response = await axios.post("/api/buildings/create-draft", {}, {
+                        withCredentials: true,
+                    });
+                    const newBuildingId = response.data?.buildingId;
+
+                    if (!newBuildingId) {
+                        throw new Error("Il server non ha restituito un identificativo edificio valido.");
+                    }
+
+                    navigate(`/building/${newBuildingId}`, { replace: true });
+                } catch (error) {
+                    setMessagePopup(error.response?.data?.msg || error.message || "Errore durante la creazione della bozza edificio.");
+                    setButtonPopUp(true);
+                    setIsCreatingDraft(false);
+                    createDraftAttemptedRef.current = false;
+                }
+            };
+
+            createDraft();
+            return;
+        }
+
+        createDraftAttemptedRef.current = false;
+        setIsCreatingDraft(false);
+    }, [id, navigate, setBuildingComplete, setBuildingLocked]);
+
+    const canClickCalculateEmissions = !buildingLocked && id !== 'new' && Boolean(buildingID);
 
 
 
@@ -83,14 +128,31 @@ function BuildingPage() {
                     }}
                 />
             )}
-            <Building />
-            {id !== 'new' && (
-                <ClimateAlteringGases
-                    scope="building"
-                    title="Gas clima alteranti"
-                    description="Sottosezione dell'edificio dedicata ai gas clima alteranti archiviati direttamente sulla scheda edificio."
-                    emptyMessage="Nessun gas clima alterante associato direttamente all'edificio"
-                />
+            {isCreatingDraft ? (
+                <div className="flex justify-center items-center mt-10">
+                    <MutatingDots
+                        height="100"
+                        width="100"
+                        color="#2d7044"
+                        secondaryColor='#2d7044'
+                        radius='12.5'
+                        ariaLabel="draft-building-loading"
+                        visible={true}
+                    />
+                </div>
+            ) : (
+                <Building />
+            )}
+            {!isCreatingDraft && id !== "new" && (
+                <div className="mx-2 md:mx-14">
+                    <ClimateAlteringGases
+                        scope="building"
+                        title="Gas clima alteranti"
+                        description="Ogni scheda resta visibile con lo stesso layout del form. Dopo il salvataggio passa in sola lettura."
+                        emptyMessage="Nessuna scheda gas presente. Usa il selettore in alto per aggiungerne una."
+                        readOnly={buildingLocked}
+                    />
+                </div>
             )}
             {
                 isLoading ? (
@@ -108,27 +170,43 @@ function BuildingPage() {
                 ) : (
                     <div className="w-full flex flex-col justify-center items-center mt-5 gap-3 mb-5">
                         <button
-                            type="submit"
-                            className="mt-7 font-arial text-xl w-[50%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700"
+                            type="button"
+                            className="mt-7 font-arial text-xl w-[50%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            title={
+                                !canClickCalculateEmissions
+                                    ? undefined
+                                    : !buildingComplete
+                                        ? "Completa i campi obbligatori dell’edificio prima di calcolare le emissioni."
+                                        : "Confermando il calcolo, i dati non saranno più modificabili."
+                            }
                             onClick={() => {
-                                if (canSubmitEmissions) {
-                                    setShowConfirmDialog(true);
+                                if (!canClickCalculateEmissions) {
+                                    return;
                                 }
+                                if (!buildingComplete) {
+                                    requestBuildingFormValidation();
+                                    setMessagePopup("Compila i campi obbligatori prima di calcolare le emissioni.");
+                                    setButtonPopUp(true);
+                                    return;
+                                }
+                                setShowConfirmDialog(true);
                             }}
-                            disabled={!canSubmitEmissions}
+                            disabled={!canClickCalculateEmissions}
                         >
                             Calcola le emissioni
                         </button>
                         <div className="w-full text-arial text-xl text-center">
                             {buildingLocked
                                 ? "Dati finalizzati: non sono più consentite modifiche."
-                                : "Confermando il calcolo, i dati non saranno più modificabili."}
+                                : buildingComplete
+                                    ? "Confermando il calcolo, i dati non saranno più modificabili."
+                                    : "Completa i dati obbligatori dell'edificio prima di calcolare le emissioni."}
                         </div>
                     </div>
                 )
             }
             <Footer />
-            <ChatWidget questionnaireType="buildings" buildingId={id === 'new' ? null : (id || null)} />
+            <ChatWidget questionnaireType="buildings" buildingId={isCreatingDraft || id === 'new' ? null : (id || null)} />
         </div >
     )
 }

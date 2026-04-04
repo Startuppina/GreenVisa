@@ -2,6 +2,9 @@ const { defineConfig } = require('vitest/config');
 
 module.exports = defineConfig({
   test: {
+    env: {
+      VITEST: 'true',
+    },
     environment: 'node',
     fileParallelism: false,
     globals: true,

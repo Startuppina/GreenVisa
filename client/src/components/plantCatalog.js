@@ -115,7 +115,7 @@ export function getGeneratorOptions(systemType, plantType) {
 }
 
 export function plantRequiresFuel(systemType) {
-  return THERMAL_SYSTEM_TYPES.includes(systemType) || systemType === "Illuminazione";
+  return THERMAL_SYSTEM_TYPES.includes(systemType);
 }
 
 export function plantSupportsGasLeak(systemType) {

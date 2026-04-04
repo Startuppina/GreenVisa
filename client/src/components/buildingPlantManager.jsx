@@ -6,19 +6,19 @@ import PlantForm from "./plantForm";
 import SolarForm from "./solarForm";
 import PhotoForm from "./photoForm";
 import { useRecoveryContext } from "../provider/provider";
-import { getFuelUnit, PLANT_SELECTOR_OPTIONS } from "./plantCatalog";
+import { PLANT_SELECTOR_OPTIONS } from "./plantCatalog";
 
-function BuildingPlantManager() {
+function BuildingPlantManager({ readOnly = false }) {
   const { buildingID, refresh, triggerRefresh, buildingLocked } = useRecoveryContext();
   const [plants, setPlants] = useState([]);
   const [solars, setSolars] = useState([]);
   const [photovoltaics, setPhotovoltaics] = useState([]);
+  const [gases, setGases] = useState([]);
   const [draftType, setDraftType] = useState("");
   const [selectedType, setSelectedType] = useState("");
-  const [editingItem, setEditingItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
-  const [messageConfirm, setMessageConfirm] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
   const [buttonPopup, setButtonPopup] = useState(false);
   const [messagePopup, setMessagePopup] = useState("");
 
@@ -28,19 +28,22 @@ function BuildingPlantManager() {
         setPlants([]);
         setSolars([]);
         setPhotovoltaics([]);
+        setGases([]);
         return;
       }
 
       try {
-        const [plantsResponse, solarsResponse, photosResponse] = await Promise.all([
+        const [plantsResponse, solarsResponse, photosResponse, gasesResponse] = await Promise.all([
           axios.get(`/api/buildings/${buildingID}/fetch-plants`, { withCredentials: true }),
           axios.get(`/api/buildings/${buildingID}/fetch-solars`, { withCredentials: true }),
           axios.get(`/api/buildings/${buildingID}/fetch-photovoltaics`, { withCredentials: true }),
+          axios.get(`/api/buildings/${buildingID}/fetch-gases`, { withCredentials: true }),
         ]);
 
         setPlants(plantsResponse.data.plants || []);
         setSolars(solarsResponse.data.solars || []);
         setPhotovoltaics(photosResponse.data.photos || []);
+        setGases(gasesResponse.data.gases || []);
       } catch (error) {
         setMessagePopup("Errore durante il recupero degli impianti");
         setButtonPopup(true);
@@ -50,29 +53,43 @@ function BuildingPlantManager() {
     fetchAll();
   }, [buildingID, refresh]);
 
+  const effectiveReadOnly = readOnly || buildingLocked;
+
   const items = useMemo(
     () => [
-      ...plants.map((plant) => ({ ...plant, itemKind: "plant", label: plant.system_type })),
-      ...solars.map((solar) => ({ ...solar, itemKind: "solar", label: "Solare termico" })),
-      ...photovoltaics.map((photo) => ({ ...photo, itemKind: "photo", label: "Fotovoltaico" })),
+      ...plants.map((plant) => ({
+        ...plant,
+        itemKind: "plant",
+        title: plant.system_type || "Scheda impianto",
+        refrigerantGases: gases.filter((gas) => gas.plant_id === plant.id),
+      })),
+      ...solars.map((solar) => ({
+        ...solar,
+        itemKind: "solar",
+        title: "Impianto solare termico",
+      })),
+      ...photovoltaics.map((photo) => ({
+        ...photo,
+        itemKind: "photo",
+        title: "Impianto fotovoltaico",
+      })),
     ],
-    [photovoltaics, plants, solars],
+    [gases, photovoltaics, plants, solars],
   );
 
-  const cancelEditing = () => {
+  const resetDraft = () => {
     setDraftType("");
     setSelectedType("");
-    setEditingItem(null);
   };
 
   const askDelete = (item) => {
     setItemToDelete(item);
-    setMessageConfirm(`Sei sicuro di voler eliminare ${item.label.toLowerCase()}?`);
-    setPopupConfirmDelete(true);
+    setDeleteMessage(`Sei sicuro di voler eliminare ${item.title.toLowerCase()}?`);
+    setShowDeleteConfirm(true);
   };
 
-  const deleteItem = async () => {
-    if (buildingLocked || !itemToDelete) {
+  const handleDelete = async () => {
+    if (!itemToDelete || effectiveReadOnly) {
       return;
     }
 
@@ -80,14 +97,16 @@ function BuildingPlantManager() {
       if (itemToDelete.itemKind === "plant") {
         await axios.delete(`/api/delete-plant/${itemToDelete.id}`, { withCredentials: true });
       }
+
       if (itemToDelete.itemKind === "solar") {
         await axios.delete(`/api/delete-solar/${itemToDelete.id}`, { withCredentials: true });
       }
+
       if (itemToDelete.itemKind === "photo") {
         await axios.delete(`/api/delete-photovoltaic/${itemToDelete.id}`, { withCredentials: true });
       }
 
-      setPopupConfirmDelete(false);
+      setShowDeleteConfirm(false);
       setItemToDelete(null);
       triggerRefresh();
     } catch (error) {
@@ -107,119 +126,103 @@ function BuildingPlantManager() {
     }
 
     if (option.kind === "solar") {
-      return <SolarForm solar="empty" isEdit={false} onButtonClick={cancelEditing} />;
+      return (
+        <SolarForm
+          solar="empty"
+          isEdit={false}
+          onButtonClick={resetDraft}
+          onSubmitSuccess={resetDraft}
+          readOnly={false}
+        />
+      );
     }
+
     if (option.kind === "photo") {
-      return <PhotoForm photo="empty" isEdit={false} onButtonClick={cancelEditing} />;
+      return (
+        <PhotoForm
+          photo="empty"
+          isEdit={false}
+          onButtonClick={resetDraft}
+          onSubmitSuccess={resetDraft}
+          readOnly={false}
+        />
+      );
     }
 
     return (
       <PlantForm
         plant="empty"
         isEdit={false}
-        onButtonClick={cancelEditing}
+        onButtonClick={resetDraft}
+        onSubmitSuccess={resetDraft}
         systemType={option.id}
-        title={`Aggiungi ${option.label.toLowerCase()}`}
+        title={`Nuova scheda ${option.label.toLowerCase()}`}
+        readOnly={false}
       />
     );
   };
 
-  const renderEditForm = () => {
-    if (!editingItem) {
-      return null;
+  const renderSavedForm = (item) => {
+    const deleteProps =
+      !effectiveReadOnly ? { onDeletePlant: () => askDelete(item) } : {};
+
+    if (item.itemKind === "solar") {
+      return <SolarForm solar={item} isEdit readOnly={effectiveReadOnly} {...deleteProps} />;
     }
 
-    if (editingItem.itemKind === "solar") {
-      return <SolarForm solar={editingItem} isEdit onButtonClick={cancelEditing} />;
-    }
-    if (editingItem.itemKind === "photo") {
-      return <PhotoForm photo={editingItem} isEdit onButtonClick={cancelEditing} />;
+    if (item.itemKind === "photo") {
+      return <PhotoForm photo={item} isEdit readOnly={effectiveReadOnly} {...deleteProps} />;
     }
 
     return (
       <PlantForm
-        plant={editingItem}
+        plant={item}
         isEdit
-        onButtonClick={cancelEditing}
-        systemType={editingItem.system_type}
-        title={`Modifica ${editingItem.system_type?.toLowerCase() || "impianto"}`}
+        systemType={item.system_type}
+        title={item.title}
+        readOnly={effectiveReadOnly}
+        {...deleteProps}
       />
-    );
-  };
-
-  const renderPlantSummary = (item) => {
-    if (item.itemKind === "solar") {
-      return <div><strong>Superficie installata:</strong> {item.installed_area} m²</div>;
-    }
-    if (item.itemKind === "photo") {
-      return <div><strong>Potenza installata:</strong> {item.power} kW</div>;
-    }
-
-    return (
-      <>
-        <div><strong>Categoria:</strong> {item.system_type}</div>
-        {item.plant_type && <div><strong>Tipo impianto:</strong> {item.plant_type}</div>}
-        {item.generator_type && <div><strong>Generatore:</strong> {item.generator_type}</div>}
-        {item.fuel_type && (
-          <div>
-            <strong>Consumo:</strong> {item.fuel_consumption || "-"} {item.fuel_unit || getFuelUnit(item.fuel_type)} di {item.fuel_type}
-          </div>
-        )}
-        {item.system_type === "Ventilazione meccanica" && (
-          <div><strong>Recupero:</strong> {item.has_heat_recovery ? "Si" : "No"}</div>
-        )}
-        {item.system_type === "Illuminazione" && (
-          <>
-            <div><strong>Incandescenza:</strong> {item.incandescent_count || 0}</div>
-            <div><strong>LED:</strong> {item.led_count || 0}</div>
-            <div><strong>Lampade gas:</strong> {item.gas_lamp_count || 0}</div>
-            <div><strong>Controllo automatico:</strong> {item.auto_lighting_control ? "Si" : "No"}</div>
-          </>
-        )}
-      </>
     );
   };
 
   if (!buildingID) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-8 text-center text-base text-gray-600">
-        Salva prima i dettagli dell'edificio per aggiungere gli impianti.
+      <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-8 text-center text-sm text-slate-600">
+        Completa i dettagli dell'edificio e attendi il primo salvataggio automatico per aggiungere gli impianti.
       </div>
     );
   }
 
   return (
-    <div className="mt-8 rounded-xl bg-[#D9D9D9] p-4">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <ConfirmPopUp
-        trigger={popupConfirmDelete}
-        setTrigger={setPopupConfirmDelete}
-        onButtonClick={deleteItem}
+        trigger={showDeleteConfirm}
+        setTrigger={setShowDeleteConfirm}
+        onButtonClick={handleDelete}
       >
-        {messageConfirm}
+        {deleteMessage}
       </ConfirmPopUp>
       <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
         {messagePopup}
       </MessagePopUp>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Impianti</h2>
-          <p className="mt-2 max-w-3xl text-base text-gray-600">
-            Aggiungi le sottoschede impianto direttamente dalla scheda edificio. Ogni impianto mantiene il suo consumo associato.
+          <h2 className="text-xl font-semibold text-slate-900">Schede impianto</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Ogni scheda usa l'autosave come il questionario trasporti e resta modificabile finché l'edificio non viene finalizzato.
           </p>
         </div>
 
-        {!buildingLocked && (
-          <div className="w-full md:w-auto">
-            <label className="block text-sm font-semibold text-gray-700">Aggiungi impianto</label>
-            <div className="mt-2 flex gap-2">
+        {!effectiveReadOnly ? (
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="text-sm font-medium text-slate-800">Aggiungi una nuova scheda</div>
+            <div className="mt-3 flex gap-2">
               <select
                 value={draftType}
-                onChange={(event) => {
-                  setEditingItem(null);
-                  setDraftType(event.target.value);
-                }}
-                className="min-w-[260px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-base"
+                onChange={(event) => setDraftType(event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500"
               >
                 <option value="">Seleziona un tipo</option>
                 {PLANT_SELECTOR_OPTIONS.map((option) => (
@@ -234,71 +237,35 @@ function BuildingPlantManager() {
                     setButtonPopup(true);
                     return;
                   }
-                  setEditingItem(null);
                   setSelectedType(draftType);
                 }}
-                className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#2d7044] text-2xl text-white"
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
                 +
               </button>
             </div>
           </div>
+        ) : (
+          <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+            Schede in sola lettura
+          </div>
         )}
       </div>
 
-      {items.length === 0 && !selectedType ? (
-        <div className="py-8 text-center text-base text-gray-700">
-          Nessun impianto presente. Usa il pulsante "+" per creare la prima sottoscheda.
-        </div>
-      ) : null}
+      {selectedType ? <div className="mb-6">{renderCreateForm()}</div> : null}
 
-      {selectedType && !editingItem && (
-        <div className="mt-4">
-          {renderCreateForm()}
+      {items.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">
+          Nessuna scheda impianto presente. Usa il selettore in alto per aggiungerne una.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {items.map((item) => (
+            <div key={`${item.itemKind}-${item.id}`}>{renderSavedForm(item)}</div>
+          ))}
         </div>
       )}
-
-      <div className="mt-4 space-y-4">
-        {items.map((item) => (
-          <div key={`${item.itemKind}-${item.id}`} className="rounded-lg bg-white p-4 shadow-md">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div className="space-y-2">
-                <div className="text-lg font-semibold text-[#2d7044]">{item.label}</div>
-                {renderPlantSummary(item)}
-              </div>
-
-              {!buildingLocked && (
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedType("");
-                      setEditingItem(editingItem?.id === item.id && editingItem?.itemKind === item.itemKind ? null : item);
-                    }}
-                    className="rounded-lg bg-[#2d7044] px-4 py-2 text-white"
-                  >
-                    {editingItem?.id === item.id && editingItem?.itemKind === item.itemKind ? "Annulla" : "Modifica"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => askDelete(item)}
-                    className="rounded-lg bg-red-500 px-4 py-2 text-white"
-                  >
-                    Elimina
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {editingItem?.id === item.id && editingItem?.itemKind === item.itemKind && (
-              <div className="mt-4">
-                {renderEditForm()}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }
 

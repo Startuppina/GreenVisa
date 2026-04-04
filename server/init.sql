@@ -211,6 +211,7 @@ CREATE TABLE IF NOT EXISTS buildings (
     gas_lamp INTEGER NOT NULL,
     analyzers VARCHAR(50) NOT NULL,
     autoLightingControlSystem VARCHAR(50) NOT NULL,
+    is_draft BOOLEAN DEFAULT FALSE,
     emissionMark INTEGER DEFAULT NULL,
     emissionCO2 DECIMAL(10, 5) DEFAULT NULL,
     areaEmissionCO2 DECIMAL(10, 5) DEFAULT NULL,

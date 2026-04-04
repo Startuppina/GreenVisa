@@ -16,7 +16,10 @@ export const RecoveryContextProvider = ({ children }) => {
     const [refreshResults, setRefreshResults] = useState(false);
     const [initialData, setInitialData] = useState(null); // Stato per i dati iniziali
     const [buildingLocked, setBuildingLocked] = useState(false);
+    const [buildingComplete, setBuildingComplete] = useState(false);
+    const [buildingFormValidateNonce, setBuildingFormValidateNonce] = useState(0);
 
+    const requestBuildingFormValidation = () => setBuildingFormValidateNonce((n) => n + 1);
 
     const triggerRefresh = () => setRefresh(prev => !prev);
     const triggerRefreshResults = () => setRefreshResults(prev => !prev);
@@ -28,7 +31,8 @@ export const RecoveryContextProvider = ({ children }) => {
             quantities, setQuantities, isEmpty, setIsEmpty, codeTrigger, setCodeTrigger,
             addBuildingTrigger, setAddBuildingTrigger, buildingID, setBuildingID, refresh,
             triggerRefresh, initialData, setInitialData, refreshResults, triggerRefreshResults,
-            buildingLocked, setBuildingLocked
+            buildingLocked, setBuildingLocked, buildingComplete, setBuildingComplete,
+            buildingFormValidateNonce, requestBuildingFormValidation
         }}>
             {children}
         </RecoveryContext.Provider>
