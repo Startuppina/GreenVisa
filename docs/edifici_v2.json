@@ -1,0 +1,121 @@
+{
+    "building": {
+      "id": "string",
+      "name": "string",
+      "location": {
+        "countryCode": "IT",
+        "region": "string",
+        "postalCode": "string",
+        "municipality": "string",
+        "street": "string",
+        "streetNumber": "string",
+        "climateZone": "A"
+      },
+      "details": {
+        "useType": "string",
+        "constructionYear": 1998,
+        "areaM2": 1250.5,
+        "renovations": ["building_envelope"],
+        "consumptionMonitoringFrequency": "monthly",
+        "plantMaintenanceFrequency": "annual",
+        "rainwaterRecoveryUse": "irrigation",
+        "electricitySupplyType": "generic_mix",
+        "contractPowerClass": "20_30_kw",
+        "networkAnalyzers": true
+      }
+    },
+  
+    "plants": [
+      {
+        "id": "plant_001",
+        "category": "heating",
+        "plantType": "centralized",
+        "generatorType": "traditional_boiler",
+        "generatorTypeOtherDescription": null,
+        "energySource": "natural_gas"
+      },
+      {
+        "id": "plant_002",
+        "category": "cooling",
+        "plantType": "autonomous",
+        "generatorType": "heat_pump",
+        "generatorTypeOtherDescription": null,
+        "energySource": "electricity"
+      },
+      {
+        "id": "plant_003",
+        "category": "dhw",
+        "plantType": "centralized",
+        "generatorType": "condensing_boiler",
+        "generatorTypeOtherDescription": null,
+        "energySource": "natural_gas"
+      },
+      {
+        "id": "plant_004",
+        "category": "other_thermal_production",
+        "plantType": "centralized",
+        "generatorType": "other",
+        "generatorTypeOtherDescription": "Forno industriale",
+        "energySource": "diesel"
+      },
+      {
+        "id": "plant_002",
+        "category": "mechanical_ventilation",
+        "hasHeatRecovery": true
+      },
+      {
+        "id": "plant_003",
+        "category": "lighting",
+        "incandescentCount": 10,
+        "ledCount": 85,
+        "gasLampCount": 0,
+        "automaticLightingControl": true
+      },
+      {
+        "id": "plant_004",
+        "category": "solar_thermal",
+        "installedAreaM2": 22.5
+      },
+      {
+        "id": "plant_005",
+        "category": "photovoltaic",
+        "nominalPowerKw": 35
+      }
+    ],
+  
+    "consumptions": [
+      {
+        "id": "cons_001",
+        "energySource": "electricity",
+        "amount": 24500,
+        "plantId": null
+      },
+      {
+        "id": "cons_002",
+        "energySource": "natural_gas",
+        "amount": 8200,
+        "plantId": "plant_001"
+      }
+    ],
+  
+    "climateAlteringGases": [
+      {
+        "id": "gas_001",
+        "gasType": "R410A",
+        "quantityKg": 12.5,
+        "plantId": null
+      },
+      {
+        "id": "gas_001",
+        "gasType": "R410A",
+        "quantityKg": 7.5,
+        "plantId": "plant_002"
+      }
+    ],
+  
+    "results": {
+      "finalScore": null,
+      "totalCO2Emissions": null,
+      "areaCO2Emissions": null
+    }
+  }
