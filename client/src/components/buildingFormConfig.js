@@ -66,7 +66,6 @@ export function getConstructionYearBucket(constructionYearValue, fallbackYear = 
 }
 
 export function composeLegacyAddress({
-  address = "",
   street = "",
   streetNumber = "",
   municipality = "",
@@ -77,8 +76,7 @@ export function composeLegacyAddress({
   const lineOne = [street, streetNumber].filter(Boolean).join(", ");
   const lineTwo = [cap, municipality].filter(Boolean).join(" ");
   const lineThree = [region, country].filter(Boolean).join(", ");
-  const composed = [lineOne, lineTwo, lineThree].filter(Boolean).join(" - ").trim();
-  return composed || address || "";
+  return [lineOne, lineTwo, lineThree].filter(Boolean).join(" - ").trim();
 }
 
 export function normalizeIntegerOrNull(value) {
@@ -92,7 +90,6 @@ export function normalizeIntegerOrNull(value) {
 export function createBuildingPayload({
   buildingID,
   name,
-  address,
   usage,
   location,
   year,
@@ -128,7 +125,6 @@ export function createBuildingPayload({
     id: buildingID,
     name,
     address: composeLegacyAddress({
-      address,
       street,
       streetNumber,
       municipality,
@@ -168,4 +164,29 @@ export function createBuildingPayload({
     constructionYearValue: normalizeIntegerOrNull(constructionYearValue),
     contractPowerClass: contractPowerClass || electricityCounter || null,
   };
+}
+
+export function isBuildingPayloadComplete(payload) {
+  const areaNumber = Number(payload.area);
+  const capValue = String(payload.cap || "").trim();
+
+  return Boolean(
+    String(payload.name || "").trim()
+    && String(payload.usage || "").trim()
+    && payload.year
+    && Number.isFinite(areaNumber)
+    && areaNumber > 0
+    && String(payload.location || "").trim()
+    && String(payload.renovation || "").trim()
+    && String(payload.heating || "").trim()
+    && String(payload.energyControl || "").trim()
+    && String(payload.maintenance || "").trim()
+    && String(payload.waterRecovery || "").trim()
+    && String(payload.contractPowerClass || payload.electricityCounter || "").trim()
+    && String(payload.electricityAnalyzer || "").trim()
+    && String(payload.electricForniture || "").trim()
+    && /^\d{5}$/.test(capValue)
+    && String(payload.municipality || "").trim()
+    && String(payload.street || "").trim()
+  );
 }

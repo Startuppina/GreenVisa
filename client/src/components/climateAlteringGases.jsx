@@ -1,72 +1,51 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import ClimateGasAlteringForm from "./climateGasAlteringForm";
-import { useRecoveryContext } from "../provider/provider";
 import ConfirmPopUp from "./confirmPopUp";
 import MessagePopUp from "./messagePopUp";
+import ClimateGasAlteringForm, { GAS_NAMES } from "./climateGasAlteringForm";
+import { useRecoveryContext } from "../provider/provider";
 
 function ClimateAlteringGases({
     title = "Gas clima alteranti utilizzati per la produzione",
-    description = "",
-    emptyMessage = "Nessun gas clima alterante presente",
+    description = "Ogni scheda usa l'autosave come il questionario trasporti e resta modificabile finché l'edificio non viene finalizzato.",
+    emptyMessage = "Nessuna scheda gas presente. Usa il selettore in alto per aggiungerne una.",
     scope = "all",
+    readOnly = false,
 }) {
-
-    const [gases, setGases] = useState([]); // Inizializzato come array vuoto
-    const [numGases, setNumGases] = useState(0);
-    const [showGasFrom, setShowGasFrom] = useState(false);
-    const [showGasFormModifier, setShowGasFormModifier] = useState(null);
-
-    const [gasToDelete, setGasToDelete] = useState(null);
-    const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
-    const [messageConfirm, setMessageConfirm] = useState('');
-
+    const [gases, setGases] = useState([]);
+    const [draftType, setDraftType] = useState("");
+    const [selectedType, setSelectedType] = useState("");
+    const [itemToDelete, setItemToDelete] = useState(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
-    const { buildingID, refresh, triggerRefresh, buildingLocked } = useRecoveryContext();
-
-    // Crea una ref per il form
-    const formRef = useRef(null);
+    const { buildingID, refresh, buildingLocked, triggerRefresh } = useRecoveryContext();
 
     useEffect(() => {
-        if (showGasFrom && formRef.current) {
-            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-    }, [showGasFrom]);
-
-    useEffect(() => {
-        if (buildingLocked) {
-            setShowGasFrom(false);
-            setShowGasFormModifier(null);
-        }
-    }, [buildingLocked]);
-
-
-    useEffect(() => {
-
         const fetchGases = async () => {
-            ;
             const id = buildingID;
             if (!id) {
-                console.log('No building ID available');
+                setGases([]);
                 return;
             }
+
             try {
                 const response = await axios.get(`/api/buildings/${id}/fetch-gases`, {
-                    withCredentials: true
+                    withCredentials: true,
                 });
-                console.log('Gases data:', response.data); // Log the response data
                 if (response.status === 200) {
-                    setGases(response.data.gases);
+                    setGases(response.data.gases || []);
                 }
             } catch (error) {
-                setMessagePopup('Errore durante il recupero dei gas clima alteranti');
+                setMessagePopup("Errore durante il recupero dei gas clima alteranti");
                 setButtonPopup(true);
             }
         };
+
         fetchGases();
-    }, [buildingID, refresh]); // Added buildingID as a dependency, also plantrigger as a dependency
+    }, [buildingID, refresh]);
 
     const visibleGases = useMemo(() => {
         if (scope === "building") {
@@ -78,153 +57,141 @@ function ClimateAlteringGases({
         return gases;
     }, [gases, scope]);
 
-    useEffect(() => {
-        setNumGases(visibleGases.length);
-    }, [visibleGases]);
+    const effectiveReadOnly = readOnly || buildingLocked;
 
-    const deleteGas = async () => {
-        if (buildingLocked) {
-            setMessagePopup("Edificio finalizzato: modifiche non consentite.");
-            setButtonPopup(true);
+    const resetDraft = () => {
+        setDraftType("");
+        setSelectedType("");
+    };
+
+    const askDelete = (gas) => {
+        const label = gas.gas_type || "questa scheda gas";
+        setItemToDelete(gas);
+        setDeleteMessage(`Sei sicuro di voler eliminare la scheda per ${label}?`);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleDelete = async () => {
+        if (!itemToDelete || effectiveReadOnly) {
             return;
         }
 
-        const { id } = gasToDelete;
         try {
-            const response = await axios.delete(`/api/delete-gas/${id}`, {
-                withCredentials: true
-            });
-
-            if (response.status === 200) {
-                const updatedGases = gases.filter((gas) => gas.id !== id);
-                setGases(updatedGases);
-                setNumGases(updatedGases.length);
-                setPopupConfirmDelete(false);
-                setMessagePopup('Gas clima alterante eliminato con successo');
-                setButtonPopup(true);
-
-                triggerRefresh();
-            }
+            await axios.delete(`/api/delete-gas/${itemToDelete.id}`, { withCredentials: true });
+            setShowDeleteConfirm(false);
+            setItemToDelete(null);
+            triggerRefresh();
         } catch (error) {
-            setMessagePopup('Errore durante l\'eliminazione dell gas clima alterante');
+            setMessagePopup("Errore durante l'eliminazione della scheda gas");
             setButtonPopup(true);
         }
     };
 
-    const cancelEdit = () => {
-        setShowGasFormModifier(null);
-        setShowGasFrom(false);
-    };
+    if (!buildingID) {
+        return (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-8 text-center text-sm text-slate-600">
+                Completa i dettagli dell'edificio e attendi il primo salvataggio automatico per aggiungere le schede gas.
+            </div>
+        );
+    }
 
     return (
-        <div className="text-arial text-xl mt-4 mb-4">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <ConfirmPopUp
-                trigger={popupConfirmDelete}
-                setTrigger={setPopupConfirmDelete}
-                onButtonClick={deleteGas}
+                trigger={showDeleteConfirm}
+                setTrigger={setShowDeleteConfirm}
+                onButtonClick={handleDelete}
             >
-                {messageConfirm}
+                {deleteMessage}
             </ConfirmPopUp>
-            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup} >
+            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
                 {messagePopup}
             </MessagePopUp>
-            <div className=" bg-[#D9D9D9] rounded-lg mx-2 lg:mx-14">
-                <div className="flex flex-row justify-between">
-                    <div className="p-4">
-                        <h1 className="text-2xl font-bold mb-2 text-center lg:text-left">{title}</h1>
-                        {description && <p className="max-w-3xl text-base text-gray-600">{description}</p>}
-                    </div>
-                    <div className="flex flex-col items-center justify-center m-2">
-                        {!buildingLocked && (
-                            <button
-                                className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                                onClick={() => setShowGasFrom(!showGasFrom)}
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="2"
-                                    stroke="currentColor"
-                                    className="w-6 h-6"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M12 4.5v15m7.5-7.5h-15"
-                                    />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-                </div>
-                {buildingLocked && (
-                    <div className="px-4 pb-2 text-red-600 font-semibold">
-                        Edificio finalizzato: modifiche non consentite.
-                    </div>
-                )}
 
-                {numGases === 0 ? (
-                    <div className="flex flex-col items-center justify-center pb-4">
-                        <div className="text-center pb-4">{emptyMessage}</div>
-                        {/*<button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>*/}
+            <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+                    {description ? (
+                        <p className="mt-1 text-sm text-slate-600">{description}</p>
+                    ) : null}
+                </div>
+
+                {!effectiveReadOnly ? (
+                    <div className="w-full max-w-md rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="text-sm font-medium text-slate-800">Aggiungi una nuova scheda</div>
+                        <div className="mt-3 flex gap-2">
+                            <select
+                                value={draftType}
+                                onChange={(event) => setDraftType(event.target.value)}
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500"
+                            >
+                                <option value="">Seleziona tipologia gas</option>
+                                {GAS_NAMES.map((name) => (
+                                    <option key={name} value={name}>
+                                        {name}
+                                    </option>
+                                ))}
+                            </select>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!draftType) {
+                                        setMessagePopup("Seleziona prima la tipologia di gas da aggiungere");
+                                        setButtonPopup(true);
+                                        return;
+                                    }
+                                    setSelectedType(draftType);
+                                }}
+                                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                            >
+                                +
+                            </button>
+                        </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col mx-4 max-h-[70vh] overflow-y-auto mb-4">
-                        {visibleGases.map((gas) => (
-                            <div
-                                className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
-                                key={gas.id}
-                            >
-                                <div className="">
-                                    <strong>Tipologia:</strong> {gas.gas_type}
-                                </div>
-                                <div className="">
-                                    {gas.plant_id ? (
-                                        <span><strong>Quantità dispersa negli ultimi 12 mesi:</strong> {gas.quantity_kg}</span>
-                                    ) : (
-                                        <span><strong>Quantità consumata:</strong> {gas.quantity_kg}</span>
-                                    )}
-                                </div>
-
-                                {gas.plant_id && (
-                                    <div className="">
-                                        <strong>Impianto:</strong> {gas.plant_name}
-                                    </div>
-                                )}
-
-                                {!buildingLocked && (
-                                    <div className="flex justify-end gap-2">
-                                        <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
-                                            onClick={() => setShowGasFormModifier(showGasFormModifier === gas.id ? null : gas.id)}                                    >
-                                            {showGasFormModifier === gas.id ? 'Annulla' : 'Modifica'}
-                                        </button>
-                                        <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
-                                            onClick={() => {
-                                                setGasToDelete({
-                                                    id: gas.id,
-                                                });
-                                                setMessageConfirm(
-                                                    "Sei sicuro di voler eliminare questo gas?"
-                                                );
-                                                setPopupConfirmDelete(true);
-                                            }}>
-                                            Elimina
-                                        </button>
-                                    </div>
-                                )}
-                                {!buildingLocked && showGasFormModifier === gas.id && <ClimateGasAlteringForm gas={gas} isEdit={true} onButtonClick={cancelEdit} />}
-                            </div>
-                        ))}
+                    <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                        Schede in sola lettura
                     </div>
-
                 )}
+            </div>
 
-            </div>
-            <div ref={formRef}>
-                {!buildingLocked && showGasFrom && (<div className="flex justify-center"><ClimateGasAlteringForm gas="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
-            </div>
-        </div >
+            {selectedType && !effectiveReadOnly ? (
+                <div className="mb-6">
+                    <ClimateGasAlteringForm
+                        key={selectedType}
+                        gas="empty"
+                        isEdit={false}
+                        initialGasType={selectedType}
+                        onButtonClick={resetDraft}
+                        onSubmitSuccess={resetDraft}
+                        readOnly={false}
+                    />
+                </div>
+            ) : null}
+
+            {visibleGases.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">
+                    {emptyMessage}
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {visibleGases.map((gas) => (
+                        <ClimateGasAlteringForm
+                            key={gas.id}
+                            gas={gas}
+                            isEdit
+                            readOnly={effectiveReadOnly}
+                            title={
+                                gas.plant_id
+                                    ? `Gas clima alterante - ${gas.plant_name || "impianto"}`
+                                    : "Gas clima alterante"
+                            }
+                            {...(!effectiveReadOnly ? { onDeleteGas: () => askDelete(gas) } : {})}
+                        />
+                    ))}
+                </div>
+            )}
+        </section>
     );
 }
 
