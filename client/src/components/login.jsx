@@ -1,115 +1,167 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useRecoveryContext } from '../provider/provider';
-import MessagePopUp from './messagePopUp';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useRecoveryContext } from "../provider/provider";
+import MessagePopUp from "./messagePopUp";
 
 const Login = () => {
-    const { email, setEmail } = useRecoveryContext(); // Corretto uso del contesto
-    const [password, setPassword] = useState('');
-    const navigate = useNavigate();
+  const { email, setEmail } = useRecoveryContext(); // Corretto uso del contesto
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-    const [buttonPopup, setButtonPopup] = useState(false);
-    const [messagePopup, setMessagePopup] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+  const [buttonPopup, setButtonPopup] = useState(false);
+  const [messagePopup, setMessagePopup] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-    const handleEmailChange = (e) => setEmail(e.target.value);
-    const handlePasswordChange = (e) => setPassword(e.target.value);
+  const handleEmailChange = (e) => setEmail(e.target.value);
+  const handlePasswordChange = (e) => setPassword(e.target.value);
 
-    const toggleShowPassword = () => setShowPassword(!showPassword);
+  const toggleShowPassword = () => setShowPassword(!showPassword);
 
-    const navigateToOtp = async (e) => {
-        navigate('/InsertEmail');
-    };
+  const navigateToOtp = async (e) => {
+    navigate("/InsertEmail");
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        const formData = { email, password };;
+    const form = e.currentTarget;
+    const emailFromForm = (
+      form.elements.namedItem("email")?.value ?? ""
+    ).trim();
+    const passwordFromForm = form.elements.namedItem("password")?.value ?? "";
 
-        try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/login`, formData, {
-                withCredentials: true
-            });
+    if (!emailFromForm || !passwordFromForm) {
+      setMessagePopup("Per favore riempi tutti i campi");
+      setButtonPopup(true);
+      return;
+    }
 
-            if (response.status === 200) {
-                console.log('Login successful:', response.data);
+    const formData = { email: emailFromForm, password: passwordFromForm };
 
-                // reset the form fields
-                setEmail('');
-                setPassword('');
-                if (response.data.first_login) {
-                    navigate('/Products');
-                } else {
-                    navigate('/User');
-                }
-            } else {
-                console.error('Error:', response.data.msg);
-                //alert(response.data.msg);
-                setMessagePopup(response.data.msg);
-                setButtonPopup(true);
-            }
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/login`,
+        formData,
+        {
+          withCredentials: true,
+        },
+      );
 
-        } catch (error) {
-            //alert(error.response?.data?.msg || error.message);
-            setMessagePopup(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
+      if (response.status === 200) {
+        console.log("Login successful:", response.data);
+
+        // reset the form fields
+        setEmail("");
+        setPassword("");
+        if (response.data.first_login) {
+          navigate("/Products");
+        } else {
+          navigate("/User");
         }
-    };
+      } else {
+        console.error("Error:", response.data.msg);
+        //alert(response.data.msg);
+        setMessagePopup(response.data.msg);
+        setButtonPopup(true);
+      }
+    } catch (error) {
+      //alert(error.response?.data?.msg || error.message);
+      setMessagePopup(error.response?.data?.msg || error.message);
+      setButtonPopup(true);
+    }
+  };
 
-    return (
-        <div className="w-screen h-screen bg-[#406d50] bg-cover bg-center bg-no-repeat m-0 p-0 flex items-center justify-center">
-            <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
-                {messagePopup}
-            </MessagePopUp>
-            <div className='w-full md:w-[60%] lg:w-[60%] h-auto flex flex-col items-center justify-center pb-10 bg-white rounded-lg'>
-
-                <div className='relative top-2 left-3 text-arial w-full text-left text-[#2d7044] font-bold text-xl cursor-pointer'>
-                    <Link to="/">Home</Link>
-                </div>
-
-                <div className='flex flex-col items-center justify-center mb-5 mt-4'>
-                    <img src="/img/logo.png" alt="logo" className='w-[35%] max-w-[200px] mb-5 p-0' />
-                    <p className='font-arial text-xl font-bold w-full text-center'>
-                        Non sei ancora registrato? <span className='text-[#2d7044]'><Link to="/Signup">Registrati</Link></span>
-                    </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className='w-full'>
-                    <div className='flex flex-col items-center justify-center mb-5'>
-                        <div className='w-[80%] lg:w-[60%]'>
-                            <label htmlFor="email" className='block text-xl'>Email</label>
-                            <div className="flex items-center justify-between">
-                                <input type="email" name="email" id="email" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handleEmailChange} />
-                            </div>
-                        </div>
-                    </div>
-                    <div className='flex flex-col items-center justify-center mb-5'>
-                        <div className='w-[80%] lg:w-[60%]'>
-                            <div className="flex items-center justify-between">
-                                <label htmlFor="password" className='block text-xl' >Password</label>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-black">Mostra password</span>
-                                    <input
-                                        type="checkbox"
-                                        name="showPassword"
-                                        id="showPassword"
-                                        onClick={toggleShowPassword}
-                                        className="cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-                            <input type={showPassword ? "text" : "password"} name="password" id="password" className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5' onChange={handlePasswordChange} />
-                        </div>
-                    </div>
-                    <p className='font-arial text-xl w-full text-center'>Password dimenticata? <span className='text-[#2d7044]'><a onClick={navigateToOtp} className='cursor-pointer'>Clicca qui</a></span></p>
-                    <div className='flex justify-center'>
-                        <input type="submit" value="Accedi" className="mt-7 font-arial font-bold text-xl w-[40%] md:w-[30%] lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]" />
-                    </div>
-                </form>
-            </div>
+  return (
+    <div className="w-screen h-screen bg-[#406d50] bg-cover bg-center bg-no-repeat m-0 p-0 flex items-center justify-center">
+      <MessagePopUp trigger={buttonPopup} setTrigger={setButtonPopup}>
+        {messagePopup}
+      </MessagePopUp>
+      <div className="w-full md:w-[60%] lg:w-[60%] h-auto flex flex-col items-center justify-center pb-10 bg-white rounded-lg">
+        <div className="relative top-2 left-3 text-arial w-full text-left text-[#2d7044] font-bold text-xl cursor-pointer">
+          <Link to="/">Home</Link>
         </div>
-    );
+
+        <div className="flex flex-col items-center justify-center mb-5 mt-4">
+          <img
+            src="/img/logo.png"
+            alt="logo"
+            className="w-[35%] max-w-[200px] mb-5 p-0"
+          />
+          <p className="font-arial text-xl font-bold w-full text-center">
+            Non sei ancora registrato?{" "}
+            <span className="text-[#2d7044]">
+              <Link to="/Signup">Registrati</Link>
+            </span>
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="flex flex-col items-center justify-center mb-5">
+            <div className="w-[80%] lg:w-[60%]">
+              <label htmlFor="email" className="block text-xl">
+                Email
+              </label>
+              <div className="flex items-center justify-between">
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  autoComplete="email"
+                  value={email}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5"
+                  onChange={handleEmailChange}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center mb-5">
+            <div className="w-[80%] lg:w-[60%]">
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="block text-xl">
+                  Password
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-black">Mostra password</span>
+                  <input
+                    type="checkbox"
+                    name="showPassword"
+                    id="showPassword"
+                    onClick={toggleShowPassword}
+                    className="cursor-pointer"
+                  />
+                </div>
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                id="password"
+                autoComplete="current-password"
+                value={password}
+                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg   block w-full p-2.5"
+                onChange={handlePasswordChange}
+              />
+            </div>
+          </div>
+          <p className="font-arial text-xl w-full text-center">
+            Password dimenticata?{" "}
+            <span className="text-[#2d7044]">
+              <a onClick={navigateToOtp} className="cursor-pointer">
+                Clicca qui
+              </a>
+            </span>
+          </p>
+          <div className="flex justify-center">
+            <input
+              type="submit"
+              value="Accedi"
+              className="mt-7 font-arial font-bold text-xl w-[40%] md:w-[30%] lg:w-[20%] p-1 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]"
+            />
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

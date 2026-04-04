@@ -22,12 +22,12 @@ function pickReviewFieldValue(entries, key) {
   }
 
   const normalized = hit.normalizedValue;
-  if (normalized !== undefined && normalized !== null && normalized !== '') {
+  if (normalized !== undefined && normalized !== null && normalized !== "") {
     return normalized;
   }
 
   const raw = hit.value;
-  if (raw !== undefined && raw !== null && raw !== '') {
+  if (raw !== undefined && raw !== null && raw !== "") {
     return raw;
   }
 
@@ -35,7 +35,7 @@ function pickReviewFieldValue(entries, key) {
 }
 
 function appendLine(lines, label, value) {
-  if (value === undefined || value === null || value === '') {
+  if (value === undefined || value === null || value === "") {
     return;
   }
 
@@ -44,10 +44,10 @@ function appendLine(lines, label, value) {
 
 function formatYesNo(value) {
   if (value === true) {
-    return 'Yes';
+    return "Sì";
   }
   if (value === false) {
-    return 'No';
+    return "No";
   }
   return null;
 }
@@ -62,29 +62,37 @@ export function buildOcrUploadPreviewLines(result) {
   const fields = prefill?.fields || {};
   const reviewEntries = reviewFieldEntries(result);
 
-  appendLine(lines, 'Registration year', fields.registration_year);
-  appendLine(lines, 'Euro class', fields.euro_class);
-  appendLine(lines, 'Fuel type', fields.fuel_type);
-  appendLine(lines, 'Transport mode', prefill?.transport_mode);
+  appendLine(lines, "Anno di immatricolazione", fields.registration_year);
+  appendLine(lines, "Classe Euro", fields.euro_class);
+  appendLine(lines, "Carburante", fields.fuel_type);
+  appendLine(lines, "Modalità di trasporto", prefill?.transport_mode);
 
   const co2FromPrefill = fields.co2_emissions_g_km;
-  const co2Fallback = pickReviewFieldValue(reviewEntries, 'co2_emissions_g_km');
-  const co2Display = co2FromPrefill != null && co2FromPrefill !== '' ? co2FromPrefill : co2Fallback;
-  appendLine(lines, 'CO₂ emissions (g/km)', co2Display);
+  const co2Fallback = pickReviewFieldValue(reviewEntries, "co2_emissions_g_km");
+  const co2Display =
+    co2FromPrefill != null && co2FromPrefill !== ""
+      ? co2FromPrefill
+      : co2Fallback;
+  appendLine(lines, "Emissioni CO₂ (g/km)", co2Display);
 
-  const maxMass = pickReviewFieldValue(reviewEntries, 'max_vehicle_mass_kg');
-  appendLine(lines, 'Max vehicle mass (kg)', maxMass);
+  const maxMass = pickReviewFieldValue(reviewEntries, "max_vehicle_mass_kg");
+  appendLine(lines, "Massa massima veicolo (kg)", maxMass);
 
   const goodsFromPrefill = fields.goods_vehicle_over_3_5_tons;
-  const goodsFromReview = pickReviewFieldValue(reviewEntries, 'goods_vehicle_over_3_5_tons');
+  const goodsFromReview = pickReviewFieldValue(
+    reviewEntries,
+    "goods_vehicle_over_3_5_tons",
+  );
   const goodsDisplay =
     formatYesNo(goodsFromPrefill) ??
     formatYesNo(goodsFromReview) ??
-    (goodsFromReview != null && goodsFromReview !== '' ? String(goodsFromReview) : null);
-  appendLine(lines, 'Goods vehicle over 3.5 t', goodsDisplay);
+    (goodsFromReview != null && goodsFromReview !== ""
+      ? String(goodsFromReview)
+      : null);
+  appendLine(lines, "Veicolo merci oltre 3,5 t", goodsDisplay);
 
-  const vehicleUse = pickReviewFieldValue(reviewEntries, 'vehicle_use_text');
-  appendLine(lines, 'Vehicle use (extracted text)', vehicleUse);
+  const vehicleUse = pickReviewFieldValue(reviewEntries, "vehicle_use_text");
+  appendLine(lines, "Uso veicolo (testo estratto)", vehicleUse);
 
   return lines;
 }

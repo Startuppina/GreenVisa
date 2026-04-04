@@ -1,34 +1,34 @@
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
+import ReactDOM from "react-dom/client";
+import App from "./App.jsx";
 //import './index.css'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import LoginPage from './LoginPage.jsx';
-import NewsPage from './NewsPage.jsx';
-import SignUpPage from './SignUpPage.jsx';
-import ArticlePage from './ArticlePage.jsx';
-import ContactsPage from './ContactsPage.jsx';
-import PrivacyPage from './PrivacyPage.jsx';
-import EntryPage from './EntryPage.jsx';
-import ProductPage from './ProductPage.jsx';
-import CarrelloPage from './CarrelloPage.jsx';
-import PaymentPage from './paymentPage.jsx';
-import UserPage from './UserPage.jsx';
-import OTPInput from './components/OTPInput.jsx';
-import Reset from './components/reset.jsx';
-import Recovered from './components/recovered.jsx';
-import InsertEmail from './components/insertEmail.jsx';
-import PaySuccessPage from './PaySuccessPage.jsx';
-import { RecoveryContextProvider } from './provider/provider.jsx';
-import Buildings from './buildingsPage.jsx';
-import BuildingPage from './buildingPage.jsx';
-import QuestionnairePage from './questionnairePage.jsx';
-import NotFoundPage from './notFoundPage.jsx';
-import UserBuldingsPageAdmin from './userBuldingsPageAdmin.jsx';
-import ReportPage from './reportPage.jsx';
-import CertificationPage from './CertificationPage.jsx';
-import ConfirmAccountPage from './confirmAccountPage.jsx';
-import VerifyAccount from './accountVerifiedPage.jsx';
-import TransportV2Page from './pages/TransportV2Page.jsx';
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import LoginPage from "./LoginPage.jsx";
+import NewsPage from "./NewsPage.jsx";
+import SignUpPage from "./SignUpPage.jsx";
+import ArticlePage from "./ArticlePage.jsx";
+import ContactsPage from "./ContactsPage.jsx";
+import PrivacyPage from "./PrivacyPage.jsx";
+import EntryPage from "./EntryPage.jsx";
+import ProductPage from "./ProductPage.jsx";
+import CarrelloPage from "./CarrelloPage.jsx";
+import PaymentPage from "./paymentPage.jsx";
+import UserPage from "./UserPage.jsx";
+import OTPInput from "./components/OTPInput.jsx";
+import Reset from "./components/reset.jsx";
+import Recovered from "./components/recovered.jsx";
+import InsertEmail from "./components/insertEmail.jsx";
+import PaySuccessPage from "./PaySuccessPage.jsx";
+import { RecoveryContextProvider } from "./provider/provider.jsx";
+import Buildings from "./buildingsPage.jsx";
+import BuildingPage from "./buildingPage.jsx";
+import QuestionnairePage from "./questionnairePage.jsx";
+import NotFoundPage from "./notFoundPage.jsx";
+import UserBuldingsPageAdmin from "./userBuldingsPageAdmin.jsx";
+import ReportPage from "./reportPage.jsx";
+import CertificationPage from "./CertificationPage.jsx";
+import ConfirmAccountPage from "./confirmAccountPage.jsx";
+import VerifyAccount from "./accountVerifiedPage.jsx";
+import TransportV2Page from "./pages/TransportV2Page.jsx";
 
 const router = createBrowserRouter([
   {
@@ -142,14 +142,16 @@ const router = createBrowserRouter([
   },
 ]);
 
-{/*<React.StrictMode>
+{
+  /*<React.StrictMode>
     <RecoveryContextProvider>
       <RouterProvider router={router} />
     </RecoveryContextProvider>
-  </React.StrictMode>,*/}
+  </React.StrictMode>,*/
+}
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <RecoveryContextProvider>
     <RouterProvider router={router} />
-  </RecoveryContextProvider>
-)
+  </RecoveryContextProvider>,
+);

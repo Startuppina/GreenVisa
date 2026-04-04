@@ -2,62 +2,47 @@ import {
   COVERAGE_OPTIONS,
   getFirstFieldError,
   QUESTIONNAIRE_FLAG_FIELDS,
-  YES_NO_OPTIONS,
-} from '../utils/validation.js';
+} from "../utils/validation.js";
+import YesNoSwitch from "./YesNoSwitch.jsx";
 
 function BooleanField({ field, value, onChange, error, disabled }) {
-  return (
-    <div className="space-y-3 rounded-xl border border-slate-200 p-4">
-      <div>
-        <div className="font-medium text-slate-900">{field.label}</div>
-      </div>
-      <div className="flex flex-wrap gap-3">
-        {YES_NO_OPTIONS.map((option) => {
-          const checked =
-            (option.value === 'true' && value === true) || (option.value === 'false' && value === false);
+  const labelId = `q-flag-${field.key}-label`;
 
-          return (
-            <label
-              key={option.value}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                disabled ? 'cursor-default opacity-70' : 'cursor-pointer'
-              } ${
-                checked
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                  : 'border-slate-300 bg-white text-slate-700'
-              }`}
-            >
-              <input
-                className="h-4 w-4"
-                type="radio"
-                name={field.key}
-                checked={checked}
-                disabled={disabled}
-                onChange={() => onChange(option.value === 'true')}
-              />
-              {option.label}
-            </label>
-          );
-        })}
+  return (
+    <div className="flex min-h-full flex-col gap-3">
+      <div id={labelId} className="text-sm font-medium leading-snug text-slate-900">
+        {field.label}
       </div>
+      <YesNoSwitch
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        aria-labelledby={labelId}
+      />
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
     </div>
   );
 }
 
 function CoverageField({ field, value, onChange, error, disabled }) {
+  const selectId = `q-flag-${field.key}-select`;
+
   return (
-    <label className="space-y-3 rounded-xl border border-slate-200 p-4">
-      <div>
-        <div className="font-medium text-slate-900">{field.label}</div>
-      </div>
+    <div className="flex min-h-full flex-col gap-3">
+      <label
+        htmlFor={selectId}
+        className="text-sm font-medium leading-snug text-slate-900"
+      >
+        {field.label}
+      </label>
       <select
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
-        value={value ?? ''}
+        id={selectId}
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:bg-slate-100"
+        value={value ?? ""}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value || null)}
       >
-        <option value="">Select an option</option>
+        <option value="">Seleziona un’opzione</option>
         {COVERAGE_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -65,22 +50,36 @@ function CoverageField({ field, value, onChange, error, disabled }) {
         ))}
       </select>
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-    </label>
+    </div>
   );
 }
 
-export default function QuestionnaireFlagsSection({ questionnaireFlags, fieldErrors, onChange, readOnly }) {
+export default function QuestionnaireFlagsSection({
+  questionnaireFlags,
+  fieldErrors,
+  onChange,
+  readOnly,
+}) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-5">
-        <h2 className="text-xl font-semibold text-slate-900">Questionnaire flags</h2>
-      </div>
+    <section className="rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-8">
+      <header className="mb-8 max-w-3xl">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+          Domande generali sul trasporto
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          Rispondi a queste voci prima di compilare l’elenco veicoli: servono al calcolo del punteggio e
+          descrivono politiche aziendali (pneumatici, formazione, strumenti di guida, ecc.).
+        </p>
+      </header>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
         {QUESTIONNAIRE_FLAG_FIELDS.map((field) => {
-          const error = getFirstFieldError(fieldErrors, `draft.questionnaire_flags.${field.key}`);
+          const error = getFirstFieldError(
+            fieldErrors,
+            `draft.questionnaire_flags.${field.key}`,
+          );
 
-          if (field.type === 'coverage') {
+          if (field.type === "coverage") {
             return (
               <CoverageField
                 key={field.key}
