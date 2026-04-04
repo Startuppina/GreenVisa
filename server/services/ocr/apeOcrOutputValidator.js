@@ -1,192 +1,213 @@
 const ocrConfig = require('../../config/ocr');
 
-const VALID_CLIMATE_ZONES = new Set(['A', 'B', 'C', 'D', 'E', 'F']);
-
-const CONSUMPTION_FIELD_KEYS = new Set([
-  'consumptions.electricity.amount',
-  'consumptions.natural_gas.amount',
-  'consumptions.gpl.amount',
+const REGION_OPTIONS = new Set([
+  'Abruzzo',
+  'Basilicata',
+  'Calabria',
+  'Campania',
+  'Emilia-Romagna',
+  'Friuli-Venezia Giulia',
+  'Lazio',
+  'Liguria',
+  'Lombardia',
+  'Marche',
+  'Molise',
+  'Piemonte',
+  'Puglia',
+  'Sardegna',
+  'Sicilia',
+  'Toscana',
+  'Trentino-Alto Adige',
+  'Umbria',
+  "Valle d'Aosta",
+  'Veneto',
 ]);
 
+const CLIMATE_ZONE = new Set(['A', 'B', 'C', 'D', 'E', 'F']);
+
+function normalizeDisplayValue(value) {
+  if (value == null) {
+    return null;
+  }
+  const normalized = String(value).trim();
+  return normalized || null;
+}
+
+function normalizeConstructionYear(value) {
+  if (value == null) {
+    return null;
+  }
+  const digits = String(value).match(/\b(19\d{2}|20\d{2})\b/);
+  if (!digits) {
+    return null;
+  }
+  return Number.parseInt(digits[1], 10);
+}
+
+function normalizeClimateZone(value) {
+  const raw = normalizeDisplayValue(value);
+  if (!raw) {
+    return null;
+  }
+  const letter = raw.toUpperCase().replace(/[^A-F]/g, '').slice(0, 1);
+  return letter && CLIMATE_ZONE.has(letter) ? letter : null;
+}
+
+function normalizeConsumptionNumber(value) {
+  if (value == null) {
+    return null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value >= 0 ? value : null;
+  }
+  const raw = String(value).trim().replace(/\s+/g, '').replace(',', '.');
+  if (!raw) {
+    return null;
+  }
+  const parsed = Number.parseFloat(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return parsed;
+}
+
+function buildFieldWarnings(field) {
+  const warnings = [];
+  if (field.value !== null && field.confidence < ocrConfig.confidence.lowThreshold) {
+    warnings.push({
+      code: 'low_confidence',
+      message: `${field.label}: confidenza bassa (${Math.round(field.confidence * 100)}%).`,
+      confidence: field.confidence,
+    });
+  }
+  if (field.value !== null && field.value !== '' && field.normalizedValue === null) {
+    warnings.push({
+      code: 'manual_check_required',
+      message: `${field.label}: valore da verificare manualmente.`,
+      confidence: field.confidence,
+    });
+  }
+  return warnings;
+}
+
+function normalizeApeFieldValue(fieldKey, value) {
+  switch (fieldKey) {
+    case 'construction_year':
+      return normalizeConstructionYear(value);
+    case 'climate_zone':
+      return normalizeClimateZone(value);
+    case 'consumption_electricity':
+    case 'consumption_natural_gas':
+    case 'consumption_lpg':
+    case 'consumption_diesel':
+      return normalizeConsumptionNumber(value);
+    default:
+      return normalizeDisplayValue(value);
+  }
+}
+
 /**
- * Parse strings like `4130.84 kWh`, `2000 m3`, `2000 m³`, `4130,84 kWh`.
- *
- * @returns {{ ok: true, amount: number, unit: string } | { ok: false, code: string }}
+ * @param {Array<object>} fields
+ * @returns {Array<object>}
  */
-function parseConsumptionText(raw) {
-  if (raw == null) return { ok: false, code: 'parse_error' };
-  let s = String(raw).trim().replace(/\s+/g, ' ');
-  if (!s) return { ok: false, code: 'parse_error' };
-
-  s = s.replace(/m³/gi, 'm3').replace(/\u00b3/g, '3');
-
-  const m = s.match(/^(-?\d+(?:[.,]\d+)?)\s*([a-zA-Z0-9²³/^]+)?\s*$/i);
-  if (!m) return { ok: false, code: 'parse_error' };
-
-  let numPart = m[1];
-  if (numPart.includes(',') && !numPart.includes('.')) {
-    numPart = numPart.replace(',', '.');
-  }
-  const amount = Number(numPart);
-  if (!Number.isFinite(amount)) return { ok: false, code: 'parse_error' };
-  if (amount < 0) return { ok: false, code: 'negative_amount', amount };
-
-  let unitRaw = (m[2] || '').trim().toLowerCase();
-  if (!unitRaw) return { ok: false, code: 'parse_error' };
-
-  let unit;
-  if (unitRaw === 'kwh' || unitRaw.startsWith('kwh')) unit = 'kWh';
-  else if (unitRaw === 'm3' || unitRaw === 'm^3') unit = 'm3';
-  else return { ok: false, code: 'parse_error' };
-
-  return { ok: true, amount, unit };
-}
-
-function normalizeUseType(raw) {
-  const t = String(raw ?? '')
-    .toLowerCase()
-    .trim();
-  if (!t) return 'other';
-  if (t.includes('non') && t.includes('residenz')) return 'non_residential';
-  if (t.includes('residenz')) return 'residential';
-  return 'other';
-}
-
-function normalizeConstructionYearField(field) {
-  let y = field.providerIntegerValue;
-  if (y == null) {
-    const m = String(field.value ?? '').match(/\b(1[0-9]{3}|20[0-9]{2})\b/);
-    y = m ? parseInt(m[1], 10) : null;
-  }
-  field.normalizedValue = y;
-}
-
 function applyApeNormalizations(fields) {
-  if (!Array.isArray(fields)) return [];
-
+  if (!Array.isArray(fields)) {
+    return [];
+  }
   return fields.map((field) => {
-    const f = { ...field };
-    const { key } = f;
-
-    if (key === 'building.location.region') {
-      f.normalizedValue = String(f.value ?? '').trim();
-      return f;
-    }
-
-    if (key === 'building.location.municipality' || key === 'building.location.street') {
-      f.normalizedValue = String(f.value ?? '').trim();
-      return f;
-    }
-
-    if (key === 'building.location.streetNumber') {
-      f.normalizedValue = String(f.value ?? '').trim();
-      return f;
-    }
-
-    if (key === 'building.location.climateZone') {
-      f.normalizedValue = String(f.value ?? '')
-        .trim()
-        .toUpperCase();
-      return f;
-    }
-
-    if (key === 'building.details.constructionYear') {
-      normalizeConstructionYearField(f);
-      return f;
-    }
-
-    if (key === 'building.details.useType') {
-      f.normalizedValue = normalizeUseType(f.value);
-      return f;
-    }
-
-    if (CONSUMPTION_FIELD_KEYS.has(key)) {
-      const parsed = parseConsumptionText(f.value);
-      if (parsed.ok) {
-        f.normalizedValue = { amount: parsed.amount, unit: parsed.unit };
-      } else {
-        f.normalizedValue = null;
-        f.consumptionParseError = true;
-        f.consumptionParseCode = parsed.code;
-      }
-      if (key === 'consumptions.gpl.amount' && String(f.value ?? '').trim() !== '') {
-        f.warnings = [...(f.warnings || []), 'possible_table_row_mismatch'];
-      }
-      return f;
-    }
-
-    f.normalizedValue = f.value;
-    return f;
+    const copy = { ...field };
+    copy.value = normalizeDisplayValue(field.value);
+    copy.normalizedValue = normalizeApeFieldValue(field.key, copy.value);
+    copy.warnings = buildFieldWarnings(copy);
+    return copy;
   });
 }
 
+function validateApeFieldValue(field) {
+  const issues = [];
+  switch (field.key) {
+    case 'region': {
+      if (field.normalizedValue && !REGION_OPTIONS.has(field.normalizedValue)) {
+        issues.push({
+          fieldKey: field.key,
+          type: 'unrecognized_value',
+          message: `Regione "${field.value}" non è nella lista standard (verificare ortografia).`,
+        });
+      }
+      break;
+    }
+    case 'construction_year': {
+      const y = field.normalizedValue;
+      const current = new Date().getFullYear();
+      if (y !== null && (!Number.isInteger(y) || y < 1800 || y > current)) {
+        issues.push({
+          fieldKey: field.key,
+          type: 'invalid_format',
+          message: `Anno di costruzione "${field.value}" non valido.`,
+        });
+      }
+      break;
+    }
+    case 'use_type': {
+      if (field.normalizedValue && field.normalizedValue.length > 50) {
+        issues.push({
+          fieldKey: field.key,
+          type: 'invalid_format',
+          message: "Destinazione d'uso supera 50 caratteri.",
+        });
+      }
+      break;
+    }
+    case 'consumption_electricity':
+    case 'consumption_natural_gas':
+    case 'consumption_lpg':
+    case 'consumption_diesel': {
+      const n = field.normalizedValue;
+      if (field.value !== null && field.value !== '' && (n === null || !Number.isFinite(n))) {
+        issues.push({
+          fieldKey: field.key,
+          type: 'invalid_format',
+          message: `Consumo "${field.value}" non è un numero valido.`,
+        });
+      }
+      break;
+    }
+    default:
+      break;
+  }
+  return issues;
+}
+
+/**
+ * @param {Array<object>} fields
+ * @returns {Array<object>}
+ */
 function validateApeNormalizedOutput(fields) {
   const issues = [];
-  if (!Array.isArray(fields)) return issues;
-
+  if (!Array.isArray(fields)) {
+    return issues;
+  }
   for (const field of fields) {
-    if (field.value !== null && field.value !== '' && field.confidence < ocrConfig.confidence.lowThreshold) {
+    if (!field) {
+      continue;
+    }
+    if (field.value !== null && field.confidence < ocrConfig.confidence.lowThreshold) {
       issues.push({
         fieldKey: field.key,
         type: 'low_confidence',
         message: `${field.label}: confidenza bassa (${Math.round(field.confidence * 100)}%)`,
       });
     }
-
-    if (field.key === 'building.location.climateZone') {
-      const z = field.normalizedValue;
-      if (z && !VALID_CLIMATE_ZONES.has(String(z))) {
-        issues.push({
-          fieldKey: field.key,
-          type: 'invalid_enum',
-          message: `Zona climatica "${field.value}" non valida`,
-        });
-      }
-    }
-
-    if (field.key === 'building.details.constructionYear') {
-      const y = field.normalizedValue;
-      if (
-        field.value != null &&
-        String(field.value).trim() !== '' &&
-        (!Number.isInteger(y) || y < 1700 || y > 2100)
-      ) {
-        issues.push({
-          fieldKey: field.key,
-          type: 'invalid_number',
-          message: `Anno di costruzione "${field.value}" non valido`,
-        });
-      }
-    }
-
-    if (CONSUMPTION_FIELD_KEYS.has(field.key)) {
-      if (field.consumptionParseError) {
-        const isNegative = field.consumptionParseCode === 'negative_amount';
-        issues.push({
-          fieldKey: field.key,
-          type: isNegative ? 'invalid_number' : 'parse_error',
-          message: isNegative
-            ? `Quantità negativa non ammessa`
-            : `Consumo "${field.value}" non interpretabile`,
-        });
-      }
-
-      if (field.key === 'consumptions.gpl.amount' && field.value !== null && field.value !== '') {
-        issues.push({
-          fieldKey: field.key,
-          type: 'suspected_false_positive',
-          message: 'GPL: possibile errore di allineamento tabella — verificare manualmente',
-        });
-      }
+    if (field.value !== null && field.value !== '') {
+      issues.push(...validateApeFieldValue(field));
     }
   }
-
   return issues;
 }
 
 module.exports = {
-  validateApeNormalizedOutput,
   applyApeNormalizations,
-  parseConsumptionText,
-  CONSUMPTION_FIELD_KEYS,
+  validateApeNormalizedOutput,
+  normalizeApeFieldValue,
+  REGION_OPTIONS,
 };

@@ -1,170 +1,148 @@
-/**
- * APE field mapping — Google Document AI custom entity types → stable review field keys.
- */
+// Maps Google Document AI entity types to the APE OCR review schema (building + consumptions).
 
-const APE_ENTITY_DEFS = [
-  { providerType: 'building_region', key: 'building.location.region', label: 'Regione' },
-  { providerType: 'building_municipality', key: 'building.location.municipality', label: 'Comune' },
-  { providerType: 'building_street_name', key: 'building.location.street', label: 'Indirizzo (via)' },
-  { providerType: 'building_street_number', key: 'building.location.streetNumber', label: 'Civico' },
-  { providerType: 'building_climate_zone', key: 'building.location.climateZone', label: 'Zona climatica' },
-  { providerType: 'building_construction_year', key: 'building.details.constructionYear', label: 'Anno di costruzione' },
-  { providerType: 'building_use_type', key: 'building.details.useType', label: "Destinazione d'uso" },
+const APE_FIELD_DEFINITIONS = [
   {
-    providerType: 'grid_electricity_annual_consumption_raw',
-    key: 'consumptions.electricity.amount',
-    label: 'Energia elettrica da rete',
+    key: 'region',
+    label: 'Regione',
+    providerTypes: ['region', 'ape_region', 'administrative_area'],
+    required: false,
   },
   {
-    providerType: 'natural_gas_annual_consumption_raw',
-    key: 'consumptions.natural_gas.amount',
-    label: 'Gas naturale',
+    key: 'municipality',
+    label: 'Comune',
+    providerTypes: ['municipality', 'comune', 'city'],
+    required: false,
   },
   {
-    providerType: 'lpg_annual_consumption_raw',
-    key: 'consumptions.gpl.amount',
-    label: 'GPL',
+    key: 'street',
+    label: 'Via',
+    providerTypes: ['street', 'road', 'street_name'],
+    required: false,
+  },
+  {
+    key: 'street_number',
+    label: 'Civico',
+    providerTypes: ['street_number', 'civic_number', 'street_number_civic'],
+    required: false,
+  },
+  {
+    key: 'climate_zone',
+    label: 'Zona climatica',
+    providerTypes: ['climate_zone', 'zona_climatica'],
+    required: false,
+  },
+  {
+    key: 'construction_year',
+    label: 'Anno di costruzione',
+    providerTypes: ['construction_year', 'year_of_construction'],
+    required: false,
+  },
+  {
+    key: 'use_type',
+    label: "Destinazione d'uso",
+    providerTypes: ['use_type', 'building_use', 'destination_of_use'],
+    required: false,
+  },
+  {
+    key: 'consumption_electricity',
+    label: 'Consumo elettricità (kWh)',
+    providerTypes: ['electricity_consumption', 'consumption_electricity', 'annual_electricity_kwh'],
+    required: false,
+  },
+  {
+    key: 'consumption_natural_gas',
+    label: 'Consumo gas naturale',
+    providerTypes: ['natural_gas_consumption', 'methane_consumption', 'gas_natural_consumption'],
+    required: false,
+  },
+  {
+    key: 'consumption_lpg',
+    label: 'Consumo GPL',
+    providerTypes: ['lpg_consumption', 'gpl_consumption', 'consumption_gpl'],
+    required: false,
+  },
+  {
+    key: 'consumption_diesel',
+    label: 'Consumo gasolio',
+    providerTypes: ['diesel_consumption', 'gasoil_consumption'],
+    required: false,
   },
 ];
 
-const DEF_BY_PROVIDER_TYPE = new Map(APE_ENTITY_DEFS.map((d) => [d.providerType, d]));
-
-function pickDisplayText(entity) {
-  const m = entity?.mentionText;
-  if (m != null && String(m).trim() !== '') return String(m);
-  const n = entity?.normalizedValue;
-  if (n != null && String(n).trim() !== '') return String(n);
-  return '';
+function pickProviderRawText(entity) {
+  const normalized = entity.normalizedValue;
+  const mention = entity.mentionText;
+  if (normalized != null && String(normalized).trim() !== '') {
+    return normalized;
+  }
+  if (mention != null && String(mention).trim() !== '') {
+    return mention;
+  }
+  return null;
 }
 
-function pickProviderIntegerValue(rawEnt) {
-  const iv = rawEnt?.normalizedValue?.integerValue;
-  if (iv === undefined || iv === null || iv === '') return null;
-  const n = typeof iv === 'number' ? iv : parseInt(String(iv), 10);
-  return Number.isFinite(n) ? n : null;
+function findEntityByProviderTypes(entities, providerTypes) {
+  if (!Array.isArray(entities) || !Array.isArray(providerTypes)) {
+    return null;
+  }
+  for (const providerType of providerTypes) {
+    const entity = entities.find((candidate) => candidate.type === providerType);
+    if (entity) {
+      return entity;
+    }
+  }
+  return null;
+}
+
+function mapReviewValue(def, entity) {
+  if (!entity) {
+    return null;
+  }
+  return pickProviderRawText(entity) ?? null;
 }
 
 /**
- * Map uniform provider entities (from googleDocumentAiService.extractEntitiesFromResponse)
- * into raw APE review fields. Unknown entity types are skipped.
- *
- * @param {Array} entities
- * @param {Array} [rawDocumentEntities] — optional Google `document.entities` for integer hints
- * @returns {Array<object>}
+ * @param {object} providerResult — `{ entities }` from Google Document AI parsing layer.
  */
-function mapApeProviderEntitiesToFields(entities, rawDocumentEntities = []) {
-  const fields = [];
-  if (!Array.isArray(entities)) return fields;
+function normalizeApeProviderOutput(providerResult) {
+  const { entities } = providerResult;
 
-  const rawByType = new Map();
-  for (const e of rawDocumentEntities || []) {
-    if (e && e.type && !rawByType.has(e.type)) rawByType.set(e.type, e);
-  }
-
-  const keysSeen = new Set();
-  for (const ent of entities) {
-    const def = DEF_BY_PROVIDER_TYPE.get(ent.type);
-    if (!def) continue;
-    if (keysSeen.has(def.key)) continue;
-    keysSeen.add(def.key);
-
-    const conf = typeof ent.confidence === 'number' ? +ent.confidence.toFixed(4) : 0;
-    const field = {
+  const fields = APE_FIELD_DEFINITIONS.map((def) => {
+    const entity = findEntityByProviderTypes(entities, def.providerTypes);
+    return {
       key: def.key,
       label: def.label,
-      value: pickDisplayText(ent),
-      confidence: conf,
-      required: false,
-      sourceMethod: 'EXTRACT',
-      sourcePage: ent.pageNumber ?? null,
-      boundingPoly: ent.boundingPoly ?? null,
-      sourceEntityType: ent.type,
+      value: mapReviewValue(def, entity),
+      confidence: entity ? +Number(entity.confidence).toFixed(4) : 0,
+      required: def.required,
+      sourceMethod: entity ? 'EXTRACT' : 'NOT_FOUND',
+      sourcePage: entity?.pageNumber ?? null,
+      boundingPoly: entity?.boundingPoly ?? null,
     };
+  });
 
-    if (def.key === 'building.details.constructionYear') {
-      const hint = pickProviderIntegerValue(rawByType.get(ent.type));
-      if (hint != null) field.providerIntegerValue = hint;
-    }
+  return { fields };
+}
 
-    fields.push(field);
+function markApeSuspiciousLpgFromOcr(fields) {
+  if (!Array.isArray(fields)) {
+    return [];
   }
-
-  return fields;
-}
-
-/**
- * @param {Array} normalizedFields
- */
-function buildApeDerivedOutputFromNormalizedFields(normalizedFields) {
-  const consumptionMeta = {
-    'consumptions.electricity.amount': { energySource: 'electricity' },
-    'consumptions.natural_gas.amount': { energySource: 'natural_gas' },
-    'consumptions.gpl.amount': { energySource: 'gpl' },
-  };
-
-  const parsedConsumptions = [];
-  for (const f of normalizedFields || []) {
-    const meta = consumptionMeta[f.key];
-    if (!meta) continue;
-    const nv = f.normalizedValue;
-    if (nv && typeof nv === 'object' && Number.isFinite(nv.amount) && nv.unit) {
-      parsedConsumptions.push({
-        energySource: meta.energySource,
-        amount: nv.amount,
-        unit: nv.unit,
-        fieldKey: f.key,
-      });
+  return fields.map((f) => {
+    if (!f || f.key !== 'consumption_lpg') {
+      return f;
     }
-  }
-
-  const hasGpl = (normalizedFields || []).some((f) => f.key === 'consumptions.gpl.amount');
-  const suspiciousFields = hasGpl ? ['consumptions.gpl.amount'] : [];
-
-  return {
-    category: 'ape',
-    version: 1,
-    parsedConsumptions,
-    suspiciousFields,
-  };
-}
-
-/** @param {Array} [fields] @param {object} [building_certification_prefill] */
-function buildApeNormalizedOutput(fields = [], building_certification_prefill = {}) {
-  return {
-    category: 'ape',
-    version: 1,
-    fields,
-    building_certification_prefill,
-  };
-}
-
-/** @param {object} [partial] */
-function buildApeDerivedOutput(partial = {}) {
-  return {
-    category: 'ape',
-    version: 1,
-    parsedConsumptions: partial.parsedConsumptions ?? [],
-    suspiciousFields: partial.suspiciousFields ?? [],
-  };
-}
-
-/** @param {object} [partial] */
-function buildApeReviewPayload(partial = {}) {
-  return {
-    category: 'ape',
-    version: 1,
-    fields: partial.fields ?? [],
-    validationIssues: partial.validationIssues ?? [],
-    building_certification_prefill: partial.building_certification_prefill ?? {},
-    derivedSummary: partial.derivedSummary ?? buildApeDerivedOutput(),
-  };
+    if (f.sourceMethod === 'NOT_FOUND') {
+      return f;
+    }
+    // APE GPL/LPG is often misread; never auto-apply without an explicit confirm pass (Batch 3/4).
+    return { ...f, suspiciousLpg: true };
+  });
 }
 
 module.exports = {
-  mapApeProviderEntitiesToFields,
-  buildApeDerivedOutputFromNormalizedFields,
-  buildApeNormalizedOutput,
-  buildApeDerivedOutput,
-  buildApeReviewPayload,
-  APE_ENTITY_DEFS,
+  APE_FIELD_DEFINITIONS,
+  normalizeApeProviderOutput,
+  markApeSuspiciousLpgFromOcr,
+  findEntityByProviderTypes,
 };

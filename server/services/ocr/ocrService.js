@@ -1,14 +1,16 @@
 const googleDocAi = require('./googleDocumentAiService');
-const fieldMapper = require('./fieldMapper');
+const { normalizeProviderOutput } = require('./fieldMapper');
+const { normalizeApeProviderOutput, markApeSuspiciousLpgFromOcr } = require('./apeFieldMapper');
 const {
   validateNormalizedOutput,
   applyNormalizations,
   injectDerivedGoodsVehicleReviewField,
 } = require('./ocrOutputValidator');
+const { applyApeNormalizations, validateApeNormalizedOutput } = require('./apeOcrOutputValidator');
 const repo = require('../documents/documentRepository');
 const documentStorageService = require('../documents/documentStorageService');
 const { buildTransportV2VehiclePrefill } = require('../transportV2/transportV2OcrPrefillService');
-const ocrConfig = require('../../config/ocr');
+const { buildBuildingCertificationPrefill } = require('../buildingCertification/buildingCertificationOcrPrefillService');
 const logger = require('../../logger');
 
 // ── APE post-processing modules ───────────────────────────────────────────────
@@ -55,94 +57,58 @@ async function processDocument(documentRecord, options = {}) {
     const providerResult = await googleDocAi.processDocument(
       fileBytes,
       documentRecord.mime_type,
-      processorConfig,
     );
 
-    // ── Category dispatch ─────────────────────────────────────────────────
-    // Each category has its own post-processing path. Generic OCR shell steps
-    // (file read, provider call, raw persistence) are shared above.
-    if (category === 'transport') {
-      return await processTransportDocument(docId, providerResult);
-    } else if (category === 'ape') {
-      return await processApeDocument(docId, providerResult);
+    const batchRow =
+      documentRecord.batch_id != null ? await repo.getBatchById(documentRecord.batch_id) : null;
+    const category = batchRow?.category || 'transport';
+
+    let normalizedFields;
+    let validationIssues;
+    let normalizedOutput;
+    let derivedOutput;
+    let reviewPayload;
+
+    if (category === 'ape') {
+      const rawApeFields = markApeSuspiciousLpgFromOcr(normalizeApeProviderOutput(providerResult).fields);
+      normalizedFields = applyApeNormalizations(rawApeFields);
+      validationIssues = validateApeNormalizedOutput(normalizedFields);
+      const buildingCertificationPrefill = buildBuildingCertificationPrefill({
+        documentId: docId,
+        reviewFields: normalizedFields,
+        confirmPass: false,
+      });
+      derivedOutput = { building_certification_prefill: buildingCertificationPrefill };
+      reviewPayload = {
+        fields: normalizedFields,
+        validationIssues,
+        building_certification_prefill: buildingCertificationPrefill,
+        derivedSummary: derivedOutput,
+      };
+      normalizedOutput = {
+        fields: normalizedFields,
+        building_certification_prefill: buildingCertificationPrefill,
+      };
     } else {
-      // Should never reach here — category is validated at the route level.
-      throw new Error(`Unsupported OCR category: "${category}"`);
+      const { fields: rawFields } = normalizeProviderOutput(providerResult);
+      normalizedFields = injectDerivedGoodsVehicleReviewField(applyNormalizations(rawFields));
+      validationIssues = validateNormalizedOutput(normalizedFields);
+      const transportV2VehiclePrefill = buildTransportV2VehiclePrefill({
+        documentId: docId,
+        reviewFields: normalizedFields,
+      });
+      derivedOutput = buildDerivedTransportDerivedOutput(transportV2VehiclePrefill);
+      reviewPayload = {
+        fields: normalizedFields,
+        validationIssues,
+        transport_v2_vehicle_prefill: transportV2VehiclePrefill,
+        derivedSummary: derivedOutput,
+      };
+      normalizedOutput = {
+        fields: normalizedFields,
+        transport_v2_vehicle_prefill: transportV2VehiclePrefill,
+      };
     }
-  } catch (err) {
-    if (err.code === 'OCR_PROVIDER_TIMEOUT') {
-      logger.warn(
-        {
-          event: 'ocr_provider_timeout',
-          document_id: docId,
-          category,
-          retryable: err.retryable === true,
-          err: { message: err.message, code: err.code },
-        },
-        err.message || 'Google Document AI request timed out',
-      );
-    } else {
-      logger.error(
-        {
-          event: 'ocr_processing_failed',
-          document_id: docId,
-          category,
-          err: { message: err.message, code: err.code },
-        },
-        'OCR provider or pipeline failed',
-      );
-    }
-
-    await repo.updateDocumentStatus(docId, 'failed', {
-      errorCode: err.code || 'PROCESSING_ERROR',
-      errorMessage: err.message || 'Unknown error during OCR processing',
-    });
-
-    return { status: 'failed', error: err.message };
-  }
-}
-
-// ── Processor config resolution ───────────────────────────────────────────────
-
-/**
- * Return the Google Document AI processor config for the given category.
- * Throws if the category is not recognised (defence-in-depth; routes validate first).
- *
- * @param {string} category
- * @returns {{ processorId: string, processorVersion: string }}
- */
-function resolveProcessorConfig(category) {
-  const processors = ocrConfig.google.processors;
-  if (processors[category]) {
-    return processors[category];
-  }
-  throw new Error(`No processor config found for category "${category}"`);
-}
-
-// ── Transport-specific OCR post-processing ────────────────────────────────────
-
-async function processTransportDocument(docId, providerResult) {
-  const { fields: rawFields } = fieldMapper.normalizeProviderOutput(providerResult);
-
-  const normalizedFields = injectDerivedGoodsVehicleReviewField(applyNormalizations(rawFields));
-
-  const validationIssues = validateNormalizedOutput(normalizedFields);
-
-  const transportV2VehiclePrefill = buildTransportV2VehiclePrefill({
-    documentId: docId,
-    reviewFields: normalizedFields,
-  });
-
-  const derivedOutput = {
-    transport_v2_vehicle_prefill: transportV2VehiclePrefill,
-  };
-
-  const reviewPayload = {
-    fields: normalizedFields,
-    validationIssues,
-    transport_v2_vehicle_prefill: transportV2VehiclePrefill,
-    derivedSummary: derivedOutput,
-  };
 
   await repo.deleteResultByDocumentId(docId);
 
@@ -157,6 +123,14 @@ async function processTransportDocument(docId, providerResult) {
     reviewPayload,
     validationIssues,
   });
+    await repo.createResult({
+      documentId: docId,
+      rawProviderOutput: providerResult.rawProviderOutput,
+      normalizedOutput,
+      derivedOutput,
+      reviewPayload,
+      validationIssues,
+    });
 
   await repo.updateDocumentStatus(docId, 'needs_review', {
     errorCode: null,
@@ -210,6 +184,42 @@ async function processApeDocument(docId, providerResult) {
   );
 
   return { status: 'needs_review', fields: normalizedFields, validationIssues };
+    return { status: 'needs_review', fields: normalizedFields, validationIssues };
+  } catch (err) {
+    if (err.code === 'OCR_PROVIDER_TIMEOUT') {
+      logger.warn(
+        {
+          event: 'ocr_provider_timeout',
+          document_id: docId,
+          retryable: err.retryable === true,
+          err: { message: err.message, code: err.code },
+        },
+        err.message || 'Google Document AI request timed out',
+      );
+    } else {
+      logger.error(
+        {
+          event: 'ocr_processing_failed',
+          document_id: docId,
+          err: { message: err.message, code: err.code },
+        },
+        'OCR provider or pipeline failed',
+      );
+    }
+
+    await repo.updateDocumentStatus(docId, 'failed', {
+      errorCode: err.code || 'PROCESSING_ERROR',
+      errorMessage: err.message || 'Unknown error during OCR processing',
+    });
+
+    return { status: 'failed', error: err.message };
+  }
+}
+
+function buildDerivedTransportDerivedOutput(transportV2VehiclePrefill) {
+  return {
+    transport_v2_vehicle_prefill: transportV2VehiclePrefill,
+  };
 }
 
 module.exports = { processDocument, resolveProcessorConfig };

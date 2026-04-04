@@ -171,6 +171,28 @@ async function linkDocumentToSurveyResponse(docId, surveyResponseId) {
   return rows[0] || null;
 }
 
+async function updateDocumentBuildingId(docId, buildingId) {
+  const { rows } = await pool.query(
+    `UPDATE documents
+     SET building_id = $2, updated_at = NOW()
+     WHERE id = $1
+     RETURNING *`,
+    [docId, buildingId],
+  );
+  return rows[0] || null;
+}
+
+async function getDocumentBatchMeta(documentId) {
+  const { rows } = await pool.query(
+    `SELECT db.category, d.building_id, d.batch_id
+     FROM documents d
+     INNER JOIN document_batches db ON db.id = d.batch_id
+     WHERE d.id = $1`,
+    [documentId],
+  );
+  return rows[0] || null;
+}
+
 // ── Results ───────────────────────────────────────────────────
 
 async function deleteResultByDocumentId(documentId) {
@@ -240,6 +262,8 @@ module.exports = {
   getDocumentsByBatchId,
   getDocumentsByUserId,
   linkDocumentToSurveyResponse,
+  updateDocumentBuildingId,
+  getDocumentBatchMeta,
   deleteResultByDocumentId,
   createResult,
   getResultByDocumentId,

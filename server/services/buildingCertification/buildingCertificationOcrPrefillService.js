@@ -1,129 +1,121 @@
 /**
- * Build a safe `building_certification_prefill` patch from normalized APE OCR review fields.
- * Excludes invalid / low-confidence values and GPL rows flagged as suspected false positives.
+ * Builds a trimmed business patch from APE OCR review fields.
+ * Output is persisted on OCR layers only; apply merges into `buildings` + `user_consumptions`.
+ *
+ * suspicious LPG: OCR marks `consumption_lpg` with suspiciousLpg. Exclude from this prefill unless
+ * `confirmPass` is true (user submitted fields on /confirm — explicit acceptance).
  */
 
-function fieldKeyExcludedFromPrefill(issue) {
-  if (!issue?.fieldKey) return false;
-  return (
-    issue.type === 'invalid_enum' ||
-    issue.type === 'parse_error' ||
-    issue.type === 'invalid_number' ||
-    issue.type === 'low_confidence'
-  );
-}
+const CONSUMPTION_FIELD_TO_ENERGY = {
+  consumption_electricity: 'Elettricità',
+  consumption_natural_gas: 'Gas naturale',
+  consumption_lpg: 'GPL',
+  consumption_diesel: 'Gasolio',
+};
 
-/**
- * When `gplUserAccepted` is true (review confirm path), the user explicitly submits GPL for inclusion;
- * do not auto-strip it because of `suspected_false_positive` — that warning is informational only after confirm.
- */
-function shouldExcludeGplFromPrefill(validationIssues, { gplUserAccepted = false } = {}) {
-  if (gplUserAccepted) return false;
-  return (validationIssues || []).some(
-    (i) => i.fieldKey === 'consumptions.gpl.amount' && i.type === 'suspected_false_positive',
-  );
-}
-
-/**
- * @param {object} params
- * @param {number} [params.documentId]
- * @param {Array} [params.reviewFields]
- * @param {Array} [params.validationIssues]
- * @returns {object}
- */
-function buildBuildingCertificationPrefill({
-  documentId: _documentId,
-  reviewFields = [],
-  validationIssues = [],
-  /** @type {boolean} Set true when persisting user-confirmed APE fields (Batch 4 confirm). */
-  gplUserAccepted = false,
-} = {}) {
-  const invalidKeys = new Set();
-  for (const issue of validationIssues || []) {
-    if (fieldKeyExcludedFromPrefill(issue)) invalidKeys.add(issue.fieldKey);
+function pickField(fields, key) {
+  if (!Array.isArray(fields)) {
+    return null;
   }
+  return fields.find((f) => f && f.key === key) || null;
+}
 
-  const excludeGpl = shouldExcludeGplFromPrefill(validationIssues, { gplUserAccepted });
+function includeLpgConsumption(field, { confirmPass }) {
+  if (!field || field.key !== 'consumption_lpg') {
+    return true;
+  }
+  const hasValue = field.normalizedValue != null && Number.isFinite(field.normalizedValue);
+  if (!hasValue) {
+    return false;
+  }
+  if (confirmPass) {
+    return true;
+  }
+  // Do not auto-apply suspicious LPG from review/normalized paths (Batch 4 safety).
+  return !field.suspiciousLpg;
+}
 
-  const prefill = {
-    building: {
-      location: {},
-      details: {},
-    },
+/**
+ * @param {object} opts
+ * @param {number} opts.documentId
+ * @param {Array<object>} opts.reviewFields
+ * @param {boolean} [opts.confirmPass] — true when rebuilding from POST /confirm body
+ */
+function buildBuildingCertificationPrefill({ documentId, reviewFields, confirmPass = false }) {
+  const patch = {
+    ocr_document_id: Number.isInteger(Number(documentId)) ? Number(documentId) : null,
+    building: {},
     consumptions: [],
   };
 
-  const setIfValid = (fieldKey, value, apply) => {
-    if (invalidKeys.has(fieldKey)) return;
-    if (value === null || value === undefined || value === '') return;
-    apply(value);
-  };
+  const location = {};
+  const details = {};
 
-  for (const f of reviewFields) {
-    const nv = f.normalizedValue;
-    switch (f.key) {
-      case 'building.location.region':
-        setIfValid(f.key, nv, (v) => {
-          prefill.building.location.region = v;
-        });
-        break;
-      case 'building.location.municipality':
-        setIfValid(f.key, nv, (v) => {
-          prefill.building.location.municipality = v;
-        });
-        break;
-      case 'building.location.street':
-        setIfValid(f.key, nv, (v) => {
-          prefill.building.location.street = v;
-        });
-        break;
-      case 'building.location.streetNumber':
-        setIfValid(f.key, nv, (v) => {
-          prefill.building.location.streetNumber = v;
-        });
-        break;
-      case 'building.location.climateZone':
-        setIfValid(f.key, nv, (v) => {
-          prefill.building.location.climateZone = v;
-        });
-        break;
-      case 'building.details.constructionYear':
-        setIfValid(f.key, nv, (v) => {
-          prefill.building.details.constructionYear = v;
-        });
-        break;
-      case 'building.details.useType':
-        setIfValid(f.key, nv, (v) => {
-          prefill.building.details.useType = v;
-        });
-        break;
-      default:
-        break;
-    }
+  const region = pickField(reviewFields, 'region');
+  if (region?.normalizedValue) {
+    location.region = region.normalizedValue;
   }
 
-  const pushConsumption = (energySource, f) => {
-    if (invalidKeys.has(f.key)) return;
-    if (energySource === 'gpl' && excludeGpl) return;
-    const c = f.normalizedValue;
-    if (!c || typeof c !== 'object' || !Number.isFinite(c.amount)) return;
-    prefill.consumptions.push({
+  const municipality = pickField(reviewFields, 'municipality');
+  if (municipality?.normalizedValue) {
+    location.municipality = municipality.normalizedValue;
+  }
+
+  const street = pickField(reviewFields, 'street');
+  if (street?.normalizedValue) {
+    location.street = street.normalizedValue;
+  }
+
+  const streetNumber = pickField(reviewFields, 'street_number');
+  if (streetNumber?.normalizedValue) {
+    location.streetNumber = streetNumber.normalizedValue;
+  }
+
+  const climate = pickField(reviewFields, 'climate_zone');
+  if (climate?.normalizedValue) {
+    location.climateZone = climate.normalizedValue;
+  }
+
+  const year = pickField(reviewFields, 'construction_year');
+  if (year?.normalizedValue != null && Number.isInteger(year.normalizedValue)) {
+    details.constructionYear = year.normalizedValue;
+  }
+
+  const useType = pickField(reviewFields, 'use_type');
+  if (useType?.normalizedValue) {
+    details.useType = useType.normalizedValue.slice(0, 50);
+  }
+
+  if (Object.keys(location).length) {
+    patch.building.location = location;
+  }
+  if (Object.keys(details).length) {
+    patch.building.details = details;
+  }
+
+  for (const [fieldKey, energySource] of Object.entries(CONSUMPTION_FIELD_TO_ENERGY)) {
+    const field = pickField(reviewFields, fieldKey);
+    if (!field) {
+      continue;
+    }
+    if (fieldKey === 'consumption_lpg' && !includeLpgConsumption(field, { confirmPass })) {
+      continue;
+    }
+    const n = field.normalizedValue;
+    if (n == null || !Number.isFinite(n)) {
+      continue;
+    }
+    patch.consumptions.push({
       energySource,
-      amount: c.amount,
+      consumption: n,
       plantId: null,
     });
-  };
-
-  for (const f of reviewFields) {
-    if (f.key === 'consumptions.electricity.amount') pushConsumption('electricity', f);
-    if (f.key === 'consumptions.natural_gas.amount') pushConsumption('natural_gas', f);
-    if (f.key === 'consumptions.gpl.amount') pushConsumption('gpl', f);
   }
 
-  return prefill;
+  return patch;
 }
 
 module.exports = {
   buildBuildingCertificationPrefill,
-  shouldExcludeGplFromPrefill,
+  CONSUMPTION_FIELD_TO_ENERGY,
 };

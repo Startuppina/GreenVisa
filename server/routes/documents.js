@@ -8,10 +8,19 @@ const repo = require('../services/documents/documentRepository');
 const ocrService = require('../services/ocr/ocrService');
 const { applyNormalizations, validateNormalizedOutput } = require('../services/ocr/ocrOutputValidator');
 const { applyApeNormalizations, validateApeNormalizedOutput } = require('../services/ocr/apeOcrOutputValidator');
-const { buildBuildingCertificationPrefill } = require('../services/buildingCertification/buildingCertificationOcrPrefillService');
-const buildingCertificationOcrApply = require('../services/buildingCertification/buildingCertificationOcrApplyService');
 const { buildTransportV2VehiclePrefill, normalizeTransportMode } = require('../services/transportV2/transportV2OcrPrefillService');
-const transportV2DraftService = require('../services/transportV2/transportV2DraftService');
+const { buildBuildingCertificationPrefill } = require('../services/buildingCertification/buildingCertificationOcrPrefillService');
+const {
+  applyBuildingCertificationOcrPatch,
+  BuildingCertificationOcrHttpError,
+} = require('../services/buildingCertification/buildingCertificationOcrApplyService');
+const { resolveBuildingCertificationPrefillForApply } = require('../services/buildingCertification/apeApplyPrefillResolve');
+const {
+  TransportV2HttpError,
+  parseCertificationId,
+  resolveTransportSurveyResponse,
+  upsertTransportV2OcrVehicle,
+} = require('../services/transportV2/transportV2DraftService');
 const { logDocumentEvent, logUnexpectedError } = require('../lib/businessEvents');
 const { resolveUploadCategory } = require('../services/documents/uploadCategory');
 
@@ -65,7 +74,11 @@ router.post(
         return res.status(400).json({ msg: 'Nessun file fornito.' });
       }
 
-      // Transport-specific survey linking. APE uploads do not link to a transport survey response.
+      if (category === 'ape' && !buildingId) {
+        logDocumentEvent(req, 'validation_failed', { flow: 'document_upload', reason: 'ape_missing_building' }, 'warn');
+        return res.status(400).json({ msg: 'buildingId e obbligatorio per documenti APE.' });
+      }
+
       if (category === 'transport' && certificationId) {
         const transportLink = await transportV2DraftService.resolveTransportSurveyResponse({
           userId,
@@ -378,23 +391,22 @@ router.post('/documents/:documentId/confirm', authenticateJWT, async (req, res) 
       });
     }
 
-    const batch = await repo.getBatchById(doc.batch_id);
-    const category = batch?.category || 'transport';
+    const batchMeta = await repo.getDocumentBatchMeta(docId);
+    const category = batchMeta?.category || 'transport';
 
     let confirmedOutput;
     if (category === 'ape') {
       const normalizedFields = applyApeNormalizations(fields);
       const validationIssues = validateApeNormalizedOutput(normalizedFields);
-      const building_certification_prefill = buildBuildingCertificationPrefill({
+      const buildingCertificationPrefill = buildBuildingCertificationPrefill({
         documentId: docId,
         reviewFields: normalizedFields,
-        validationIssues,
-        gplUserAccepted: true,
+        confirmPass: true,
       });
       confirmedOutput = {
         fields: normalizedFields,
         validationIssues,
-        building_certification_prefill,
+        building_certification_prefill: buildingCertificationPrefill,
         confirmedBy: req.user.user_id,
         confirmedAt: new Date().toISOString(),
       };
@@ -424,7 +436,10 @@ router.post('/documents/:documentId/confirm', authenticateJWT, async (req, res) 
         : 'Dati OCR confermati. Il passaggio successivo puo prefilarli nel draft Transport V2.';
 
     res.json({
-      msg: confirmMsg,
+      msg:
+        category === 'ape'
+          ? 'Dati OCR APE confermati. Puoi applicarli al profilo edificio.'
+          : 'Dati OCR confermati. Il passaggio successivo puo prefilarli nel draft Transport V2.',
       documentId: docId,
       status: 'confirmed',
       confirmedOutput,
@@ -459,48 +474,48 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
       return res.status(400).json({ msg: 'Nessun risultato OCR trovato per questo documento.' });
     }
 
-    const batch = await repo.getBatchById(doc.batch_id);
-    const category = batch?.category || 'transport';
+    const batchMeta = await repo.getDocumentBatchMeta(docId);
+    const category = batchMeta?.category || 'transport';
 
     if (category === 'ape') {
+      const bodyBuildingId =
+        req.body && req.body.buildingId != null ? parseInt(req.body.buildingId, 10) : null;
+      const buildingId = doc.building_id != null ? doc.building_id : bodyBuildingId;
+      if (!buildingId || Number.isNaN(buildingId)) {
+        return res.status(400).json({ msg: 'buildingId e obbligatorio per applicare OCR edificio.' });
+      }
+      if (doc.building_id != null && doc.building_id !== buildingId) {
+        return res.status(400).json({ msg: 'buildingId non coerente con il documento.' });
+      }
+
+      const prefill = resolveBuildingCertificationPrefillForApply(doc.ocr_status, result);
+
+      if (!prefill || typeof prefill !== 'object') {
+        return res.status(400).json({ msg: 'Nessun prefill edificio disponibile per questo documento.' });
+      }
+
       if (!doc.building_id) {
-        return res.status(400).json({
-          msg: 'Il documento APE non e collegato a un edificio (building_id). Impossibile applicare i dati.',
-        });
+        await repo.updateDocumentBuildingId(docId, buildingId);
       }
 
-      const buildingPrefill =
-        result.confirmed_output?.building_certification_prefill ||
-        result.normalized_output?.building_certification_prefill;
+      const applyResult = await applyBuildingCertificationOcrPatch({
+        userId: req.user.user_id,
+        buildingId,
+        prefillPatch: prefill,
+      });
 
-      if (!buildingPrefill || typeof buildingPrefill !== 'object') {
-        return res.status(400).json({ msg: "Nessun prefill edilizio OCR disponibile per l'applicazione." });
-      }
+      await repo.updateDocumentStatus(docId, 'applied');
+      await repo.updateBatchStatus(doc.batch_id);
 
-      try {
-        const applied = await buildingCertificationOcrApply.applyBuildingCertificationOcrPrefill({
-          userId: req.user.user_id,
-          buildingId: doc.building_id,
-          prefill: buildingPrefill,
-        });
-
-        await repo.updateDocumentStatus(docId, 'applied');
-        await repo.updateBatchStatus(doc.batch_id);
-
-        return res.json({
-          msg: "Dati OCR APE applicati all'edificio.",
-          documentId: docId,
-          status: 'applied',
-          buildingId: doc.building_id,
-          building: applied.building,
-          consumptions: applied.consumptions,
-        });
-      } catch (err) {
-        if (err instanceof buildingCertificationOcrApply.BuildingCertificationOcrApplyError) {
-          return res.status(err.statusCode).json({ msg: err.message });
-        }
-        throw err;
-      }
+      res.json({
+        msg: 'Dati OCR edificio applicati al profilo edificio.',
+        documentId: docId,
+        status: 'applied',
+        buildingId: applyResult.buildingId,
+        building: applyResult.building,
+        consumptions: applyResult.consumptions,
+      });
+      return;
     }
 
     if (!req.body || req.body.certificationId == null) {
@@ -549,7 +564,10 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
       transport_v2: upsertResult.transportV2,
     });
   } catch (err) {
-    if (err instanceof transportV2DraftService.TransportV2HttpError) {
+    if (err instanceof BuildingCertificationOcrHttpError) {
+      return res.status(err.statusCode).json({ msg: err.message, ...(err.extras.errors ? { errors: err.extras.errors } : {}) });
+    }
+    if (err instanceof TransportV2HttpError) {
       return res.status(err.statusCode).json({ msg: err.message, ...(err.extras.errors ? { errors: err.extras.errors } : {}) });
     }
     logUnexpectedError(req, err, { flow: 'documents_apply' });

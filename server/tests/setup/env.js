@@ -3,7 +3,17 @@
 // Sets the minimum env vars needed for config modules to load without errors.
 
 import { vi } from 'vitest';
+const path = require('path');
+const dotenv = require('dotenv');
 
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
+
+process.env.NODE_ENV = 'test';
+// Keep test output readable; override with LOG_LEVEL=debug when debugging failing tests.
+process.env.LOG_LEVEL = process.env.LOG_LEVEL || 'silent';
+process.env.SECRET_KEY = process.env.SECRET_KEY || 'gv-transport-v2-test-secret';
+process.env.TEST_DB_SCHEMA = process.env.TEST_DB_SCHEMA || 'gv_transport_v2_test';
+process.env.DB_OPTIONS = process.env.DB_OPTIONS || `--search_path=${process.env.TEST_DB_SCHEMA}`;
 globalThis.__GVITEST_VI__ = vi;
 
 process.env.NODE_ENV = 'test';
@@ -23,3 +33,4 @@ process.env.DB_USER = 'test';
 process.env.DB_PASSWORD = 'test';
 process.env.DB_NAME = 'test';
 process.env.SECRET_KEY = 'test-secret';
+process.env.NODE_ENV = 'test';
