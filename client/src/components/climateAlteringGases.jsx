@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import axios from "axios";
 import ClimateGasAlteringForm from "./climateGasAlteringForm";
 import { useRecoveryContext } from "../provider/provider";
 import ConfirmPopUp from "./confirmPopUp";
 import MessagePopUp from "./messagePopUp";
 
-function ClimateAlteringGases() {
+function ClimateAlteringGases({
+    title = "Gas clima alteranti utilizzati per la produzione",
+    description = "",
+    emptyMessage = "Nessun gas clima alterante presente",
+    scope = "all",
+}) {
 
     const [gases, setGases] = useState([]); // Inizializzato come array vuoto
     const [numGases, setNumGases] = useState(0);
@@ -53,10 +58,7 @@ function ClimateAlteringGases() {
                 });
                 console.log('Gases data:', response.data); // Log the response data
                 if (response.status === 200) {
-                    setGases(response.data.gases); // Controllo aggiuntivo
-                    setNumGases(response.data.count);
-
-
+                    setGases(response.data.gases);
                 }
             } catch (error) {
                 setMessagePopup('Errore durante il recupero dei gas clima alteranti');
@@ -65,6 +67,20 @@ function ClimateAlteringGases() {
         };
         fetchGases();
     }, [buildingID, refresh]); // Added buildingID as a dependency, also plantrigger as a dependency
+
+    const visibleGases = useMemo(() => {
+        if (scope === "building") {
+            return gases.filter((gas) => !gas.plant_id);
+        }
+        if (scope === "plant") {
+            return gases.filter((gas) => Boolean(gas.plant_id));
+        }
+        return gases;
+    }, [gases, scope]);
+
+    useEffect(() => {
+        setNumGases(visibleGases.length);
+    }, [visibleGases]);
 
     const deleteGas = async () => {
         if (buildingLocked) {
@@ -114,7 +130,10 @@ function ClimateAlteringGases() {
             </MessagePopUp>
             <div className=" bg-[#D9D9D9] rounded-lg mx-2 lg:mx-14">
                 <div className="flex flex-row justify-between">
-                    <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Gas clima alteranti utilizzati per la produzione</h1>
+                    <div className="p-4">
+                        <h1 className="text-2xl font-bold mb-2 text-center lg:text-left">{title}</h1>
+                        {description && <p className="max-w-3xl text-base text-gray-600">{description}</p>}
+                    </div>
                     <div className="flex flex-col items-center justify-center m-2">
                         {!buildingLocked && (
                             <button
@@ -147,12 +166,12 @@ function ClimateAlteringGases() {
 
                 {numGases === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
-                        <div className="text-center pb-4">Nessun gas clima alterante presente</div>
+                        <div className="text-center pb-4">{emptyMessage}</div>
                         {/*<button className="p-2 w-auto bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] mx-auto" onClick={() => setShowPlantForm(!showPlantForm)}>Aggiungi un impianto</button>*/}
                     </div>
                 ) : (
                     <div className="flex flex-col mx-4 max-h-[70vh] overflow-y-auto mb-4">
-                        {gases.map((gas, index) => ( // Controllo per prevenire plants undefined
+                        {visibleGases.map((gas) => (
                             <div
                                 className="w-full rounded-lg p-4 bg-white shadow-md mb-4"
                                 key={gas.id}

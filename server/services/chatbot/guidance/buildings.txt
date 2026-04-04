@@ -10,7 +10,7 @@ OBBLIGATORI (scheda edificio — creazione nuovo edificio)
 - Nome edificio
 - Indirizzo
 - Destinazione d'uso
-- Locazione della struttura (regione)
+- Regione
 - Anno di costruzione (fascia selezionata nel modulo)
 - Superficie (area, valore numerico)
 - Ristrutturazione (tipo)

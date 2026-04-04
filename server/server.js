@@ -189,6 +189,237 @@ async function assertBuildingEditable(res, userId, buildingId) {
   return true;
 }
 
+function firstNonEmpty(...values) {
+  for (const value of values) {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return value;
+    }
+  }
+  return null;
+}
+
+function deriveConstructionYearLabel(constructionYearValue, fallbackYear = "") {
+  const yearNumber = Number(constructionYearValue);
+  if (!Number.isFinite(yearNumber) || yearNumber <= 0) {
+    return fallbackYear || null;
+  }
+  if (yearNumber < 1976) {
+    return "Prima del 1976";
+  }
+  if (yearNumber <= 1991) {
+    return "Tra 1976 e 1991";
+  }
+  if (yearNumber <= 2004) {
+    return "Tra 1991 e 2004";
+  }
+  return "Dopo il 2004";
+}
+
+function composeLegacyBuildingAddress({
+  address,
+  street,
+  streetNumber,
+  municipality,
+  cap,
+  location,
+  country,
+}) {
+  const lineOne = [street, streetNumber].filter(Boolean).join(", ");
+  const lineTwo = [cap, municipality].filter(Boolean).join(" ");
+  const lineThree = [location, country].filter(Boolean).join(", ");
+  const composed = [lineOne, lineTwo, lineThree].filter(Boolean).join(" - ").trim();
+  return composed || address || "";
+}
+
+async function ensureBuildingFormColumns() {
+  await pool.query(`
+    ALTER TABLE buildings
+    ADD COLUMN IF NOT EXISTS country VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS region VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS cap VARCHAR(5),
+    ADD COLUMN IF NOT EXISTS municipality VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS street VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS street_number VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS climate_zone VARCHAR(10),
+    ADD COLUMN IF NOT EXISTS construction_year_value INTEGER,
+    ADD COLUMN IF NOT EXISTS contract_power_class VARCHAR(50)
+  `);
+}
+
+async function ensurePlantManagementColumns() {
+  await pool.query(`
+    ALTER TABLE plants
+    ADD COLUMN IF NOT EXISTS system_type VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS fuel_consumption DOUBLE PRECISION,
+    ADD COLUMN IF NOT EXISTS fuel_unit VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS has_heat_recovery BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS incandescent_count INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS led_count INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS gas_lamp_count INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS auto_lighting_control BOOLEAN DEFAULT FALSE
+  `);
+
+  await pool.query(`
+    ALTER TABLE plants
+    DROP COLUMN IF EXISTS description,
+    DROP COLUMN IF EXISTS service_type
+  `);
+}
+
+function parseNullablePositiveNumber(value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return null;
+  }
+  return numericValue;
+}
+
+function normalizePlantPayload(body) {
+  const systemType = typeof body.systemType === "string" ? body.systemType.trim() : "";
+  const plantType = typeof body.plantType === "string" ? body.plantType.trim() : null;
+  const generatorType = typeof body.generatorType === "string" ? body.generatorType.trim() : null;
+  const generatorDescription = typeof body.generatorDescription === "string" ? body.generatorDescription.trim() : "";
+  const fuelType = typeof body.fuelType === "string" ? body.fuelType.trim() : null;
+  const fuelUnit = typeof body.fuelUnit === "string" ? body.fuelUnit.trim() : null;
+  const fuelConsumption = parseNullablePositiveNumber(body.fuelConsumption);
+  const incandescentCount = Number(body.incandescentCount ?? 0);
+  const ledCount = Number(body.ledCount ?? 0);
+  const gasLampCount = Number(body.gasLampCount ?? 0);
+
+  return {
+    systemType,
+    plantType,
+    generatorType,
+    generatorDescription,
+    fuelType,
+    fuelUnit,
+    fuelConsumption,
+    hasHeatRecovery: Boolean(body.hasHeatRecovery),
+    hasGasLeak: Boolean(body.hasGasLeak),
+    refrigerantGases: Array.isArray(body.refrigerantGases) ? body.refrigerantGases : [],
+    incandescentCount,
+    ledCount,
+    gasLampCount,
+    autoLightingControl: Boolean(body.autoLightingControl),
+  };
+}
+
+function validatePlantPayload(payload) {
+  const thermalTypes = new Set([
+    "Riscaldamento",
+    "Raffrescamento",
+    "Acqua calda sanitaria",
+    "Altra produzione termica",
+  ]);
+  const allowedTypes = new Set([...thermalTypes, "Ventilazione meccanica", "Illuminazione"]);
+  if (!allowedTypes.has(payload.systemType)) {
+    return "Tipo di impianto non valido";
+  }
+
+  if ((thermalTypes.has(payload.systemType) || payload.systemType === "Ventilazione meccanica") && !payload.plantType) {
+    return "Il tipo di impianto è obbligatorio";
+  }
+
+  if (thermalTypes.has(payload.systemType) && !payload.generatorType) {
+    return "Il tipo di generatore è obbligatorio";
+  }
+
+  if ((thermalTypes.has(payload.systemType) || payload.systemType === "Illuminazione") && !payload.fuelType) {
+    return "Il carburante è obbligatorio";
+  }
+
+  if ((thermalTypes.has(payload.systemType) || payload.systemType === "Illuminazione") && payload.fuelConsumption === null) {
+    return "La quantità consumata è obbligatoria";
+  }
+
+  if (payload.systemType === "Illuminazione") {
+    if ([payload.incandescentCount, payload.ledCount, payload.gasLampCount].some((value) => !Number.isFinite(value) || value < 0)) {
+      return "I campi illuminazione devono essere numerici e non negativi";
+    }
+    if ((payload.incandescentCount + payload.ledCount + payload.gasLampCount) <= 0) {
+      return "Inserisci almeno un corpo illuminante";
+    }
+  }
+
+  if (thermalTypes.has(payload.systemType) && payload.hasGasLeak) {
+    const validGases = payload.refrigerantGases.filter(
+      (gas) => gas.type?.trim() && gas.quantity !== "" && Number.isFinite(Number(gas.quantity)) && Number(gas.quantity) > 0,
+    );
+    if (validGases.length === 0) {
+      return "Devi inserire almeno un gas refrigerante";
+    }
+  }
+
+  return null;
+}
+
+function deriveLegacyBuildingFromPlants(building, plantRows) {
+  const lightingPlants = plantRows.filter((plant) => plant.system_type === "Illuminazione");
+  const ventilationPlants = plantRows.filter((plant) => plant.system_type === "Ventilazione meccanica");
+  const lightingTotals = lightingPlants.reduce((accumulator, plant) => ({
+    incandescent: accumulator.incandescent + Number(plant.incandescent_count || 0),
+    led: accumulator.led + Number(plant.led_count || 0),
+    gasLamp: accumulator.gasLamp + Number(plant.gas_lamp_count || 0),
+    autoLightingControl: accumulator.autoLightingControl || Boolean(plant.auto_lighting_control),
+  }), {
+    incandescent: 0,
+    led: 0,
+    gasLamp: 0,
+    autoLightingControl: false,
+  });
+
+  const ventilationValue = ventilationPlants.some((plant) => plant.has_heat_recovery)
+    ? "Si, con recupero calore"
+    : ventilationPlants.length > 0
+      ? "Si"
+      : building.ventilation;
+
+  return {
+    ...building,
+    ventilation: ventilationValue,
+    incandescent: lightingTotals.incandescent || Number(building.incandescent || 0),
+    led: lightingTotals.led || Number(building.led || 0),
+    gas_lamp: lightingTotals.gasLamp || Number(building.gas_lamp || 0),
+    autolightingcontrolsystem: lightingPlants.length > 0
+      ? (lightingTotals.autoLightingControl ? "Si" : "No")
+      : building.autolightingcontrolsystem,
+  };
+}
+
+function buildConsumptionsFromPlants(plantRows) {
+  const consumptionsByFuel = new Map();
+  plantRows.forEach((plant) => {
+    if (!plant.fuel_type || plant.fuel_consumption === null || plant.fuel_consumption === undefined || plant.fuel_consumption === "") {
+      return;
+    }
+    const previousValue = consumptionsByFuel.get(plant.fuel_type) || 0;
+    consumptionsByFuel.set(plant.fuel_type, previousValue + Number(plant.fuel_consumption));
+  });
+
+  return Array.from(consumptionsByFuel.entries()).map(([energySource, consumption]) => ({
+    energy_source: energySource,
+    consumption,
+  }));
+}
+
+function mapPlantsForCalculator(plantRows) {
+  const thermalTypes = new Set([
+    "Riscaldamento",
+    "Raffrescamento",
+    "Acqua calda sanitaria",
+    "Altra produzione termica",
+  ]);
+  return plantRows
+    .filter((plant) => thermalTypes.has(plant.system_type))
+    .map((plant) => ({
+      ...plant,
+      service_type: plant.system_type,
+    }));
+}
+
 const cleanUpCart = async () => {
   const job = "cart_session_cleanup";
   logCronEvent("cron_started", { job_name: job });
@@ -3064,13 +3295,95 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       activityDescription,
       annualTurnover,
       employees,
-      prodProcessDescription
-      //buildingScore
+      prodProcessDescription,
+      country,
+      region,
+      cap,
+      municipality,
+      street,
+      streetNumber,
+      climateZone,
+      constructionYearValue,
+      contractPowerClass,
     } = req.body;
 
     const nameNormalized = typeof name === "string" ? name.trim() : "";
-    const addressNormalized = typeof address === "string" ? address.trim() : "";
     const usageNormalized = typeof usage === "string" ? usage.trim() : "";
+    const locationNormalized = firstNonEmpty(
+      typeof region === "string" ? region.trim() : null,
+      typeof location === "string" ? location.trim() : null,
+    );
+    const countryNormalized =
+      typeof country === "string" && country.trim() !== "" ? country.trim() : "Italia";
+    const capNormalized =
+      cap === null || cap === undefined || String(cap).trim() === "" ? null : String(cap).trim();
+    const municipalityNormalized =
+      municipality === null || municipality === undefined || String(municipality).trim() === ""
+        ? null
+        : String(municipality).trim();
+    const streetNormalized =
+      street === null || street === undefined || String(street).trim() === ""
+        ? null
+        : String(street).trim();
+    const streetNumberNormalized =
+      streetNumber === null || streetNumber === undefined || String(streetNumber).trim() === ""
+        ? null
+        : String(streetNumber).trim();
+    const climateZoneNormalized =
+      climateZone === null || climateZone === undefined || String(climateZone).trim() === ""
+        ? null
+        : String(climateZone).trim().toUpperCase();
+    const constructionYearValueNormalized =
+      constructionYearValue === null || constructionYearValue === undefined || String(constructionYearValue).trim() === ""
+        ? null
+        : Number(constructionYearValue);
+    const contractPowerClassNormalized = firstNonEmpty(
+      typeof contractPowerClass === "string" ? contractPowerClass.trim() : null,
+      typeof electricityCounter === "string" ? electricityCounter.trim() : null,
+    );
+    const addressNormalized = composeLegacyBuildingAddress({
+      address: typeof address === "string" ? address.trim() : "",
+      street: streetNormalized,
+      streetNumber: streetNumberNormalized,
+      municipality: municipalityNormalized,
+      cap: capNormalized,
+      location: locationNormalized,
+      country: countryNormalized,
+    });
+    const yearNormalized = deriveConstructionYearLabel(constructionYearValueNormalized, year);
+    const ventilationNormalized = firstNonEmpty(
+      typeof ventilation === "string" ? ventilation.trim() : null,
+    );
+    const autoLightingControlSystemNormalized = firstNonEmpty(
+      typeof autoLightingControlSystem === "string" ? autoLightingControlSystem.trim() : null,
+    );
+    const electricityAnalyzerNormalized = firstNonEmpty(
+      typeof electricityAnalyzer === "string" ? electricityAnalyzer.trim() : null,
+    );
+    const electricFornitureNormalized = firstNonEmpty(
+      typeof electricForniture === "string" ? electricForniture.trim() : null,
+    );
+    const energyControlNormalized = firstNonEmpty(
+      typeof energyControl === "string" ? energyControl.trim() : null,
+    );
+    const maintenanceNormalized = firstNonEmpty(
+      typeof maintenance === "string" ? maintenance.trim() : null,
+    );
+    const waterRecoveryNormalized = firstNonEmpty(
+      typeof waterRecovery === "string" ? waterRecovery.trim() : null,
+    );
+    const heatingNormalized = firstNonEmpty(
+      typeof heating === "string" ? heating.trim() : null,
+    );
+    const renovationNormalized = firstNonEmpty(
+      typeof renovation === "string" ? renovation.trim() : null,
+    );
+    const lightingNormalized =
+      lighting === undefined || lighting === null || lighting === "" ? 0 : Number(lighting);
+    const ledNormalized =
+      led === undefined || led === null || led === "" ? 0 : Number(led);
+    const gasLampNormalized =
+      gasLamp === undefined || gasLamp === null || gasLamp === "" ? 0 : Number(gasLamp);
     const atecoNormalized =
       ateco === null || ateco === undefined || String(ateco).trim() === ""
         ? null
@@ -3096,6 +3409,8 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       { value: nameNormalized, max: 255, message: "Il campo 'Nome' deve avere massimo 255 caratteri." },
       { value: addressNormalized, max: 255, message: "Il campo 'Indirizzo' deve avere massimo 255 caratteri." },
       { value: usageNormalized, max: 50, message: "Il campo 'Destinazione d'uso' deve avere massimo 50 caratteri." },
+      { value: municipalityNormalized, max: 255, message: "Il campo 'Comune' deve avere massimo 255 caratteri." },
+      { value: streetNormalized, max: 255, message: "Il campo 'Via/Piazza' deve avere massimo 255 caratteri." },
       { value: activityDescriptionNormalized, max: 300, message: "Il campo 'Descrizione attività' deve avere massimo 300 caratteri." },
       { value: prodProcessDescriptionNormalized, max: 300, message: "Il campo 'Descrizione processi produttivi' deve avere massimo 300 caratteri." },
     ];
@@ -3130,11 +3445,35 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       return res.status(400).json({ msg: "Il campo 'Fatturato annuo' deve essere un numero intero." });
     }
 
-    const lightsMissing =
-      lighting === undefined || lighting === null || lighting === "" ||
-      led === undefined || led === null || led === "" ||
-      gasLamp === undefined || gasLamp === null || gasLamp === "";
-    if (!nameNormalized || !addressNormalized || !usageNormalized || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || lightsMissing || !autoLightingControlSystem) {
+    if (capNormalized && !/^\d{5}$/.test(capNormalized)) {
+      return res.status(400).json({ msg: "Il campo 'CAP' deve contenere 5 cifre." });
+    }
+
+    if (constructionYearValueNormalized !== null) {
+      if (!Number.isInteger(constructionYearValueNormalized) || String(constructionYearValueNormalized).length !== 4) {
+        return res.status(400).json({ msg: "Il campo 'Anno di costruzione' deve contenere 4 cifre." });
+      }
+    }
+
+    if (
+      !nameNormalized ||
+      !addressNormalized ||
+      !usageNormalized ||
+      !yearNormalized ||
+      !area ||
+      !locationNormalized ||
+      !renovationNormalized ||
+      !heatingNormalized ||
+      !energyControlNormalized ||
+      !maintenanceNormalized ||
+      !waterRecoveryNormalized ||
+      !contractPowerClassNormalized ||
+      !electricityAnalyzerNormalized ||
+      !electricFornitureNormalized ||
+      !capNormalized ||
+      !municipalityNormalized ||
+      !streetNormalized
+    ) {
       logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "missing_fields" }, "warn");
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
@@ -3144,17 +3483,17 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       return res.status(400).json({ msg: "Il campo 'area' deve essere un numero." });
     }
 
-    if (isNaN(lighting)) {
+    if (isNaN(lightingNormalized)) {
       logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_lighting" }, "warn");
       return res.status(400).json({ msg: "Il campo 'illuminazione' deve essere un numero." });
     }
 
-    if (isNaN(led)) {
+    if (isNaN(ledNormalized)) {
       logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_led" }, "warn");
       return res.status(400).json({ msg: "Il campo 'LED' deve essere un numero." });
     }
 
-    if (isNaN(gasLamp)) {
+    if (isNaN(gasLampNormalized)) {
       logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "invalid_gas_lamp" }, "warn");
       return res.status(400).json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
     }
@@ -3165,36 +3504,41 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       return res.status(401).json({ msg: "Utente non autenticato" });
     }
 
-    if (!(await assertBuildingEditable(res, userId, id))) {
-      return;
-    }
-
     const values = [
       nameNormalized,
       userId,
       addressNormalized,
       usageNormalized,
-      location,
-      year,
+      locationNormalized,
+      yearNormalized,
       area,
-      renovation,
-      heating,
-      ventilation,
-      energyControl,
-      maintenance,
-      electricForniture,
-      waterRecovery,
-      electricityCounter,
-      lighting,
-      led,
-      gasLamp,
-      electricityAnalyzer,
-      autoLightingControlSystem,
+      renovationNormalized,
+      heatingNormalized,
+      ventilationNormalized,
+      energyControlNormalized,
+      maintenanceNormalized,
+      electricFornitureNormalized,
+      waterRecoveryNormalized,
+      contractPowerClassNormalized,
+      lightingNormalized,
+      ledNormalized,
+      gasLampNormalized,
+      electricityAnalyzerNormalized,
+      autoLightingControlSystemNormalized,
       atecoNormalized,
       activityDescriptionNormalized,
       annualTurnoverNormalized,
       employeesNormalized,
-      prodProcessDescriptionNormalized
+      prodProcessDescriptionNormalized,
+      countryNormalized,
+      locationNormalized,
+      capNormalized,
+      municipalityNormalized,
+      streetNormalized,
+      streetNumberNormalized,
+      climateZoneNormalized,
+      constructionYearValueNormalized,
+      contractPowerClassNormalized,
     ];
 
     const query = `
@@ -3224,9 +3568,18 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
         activity_description,
         annual_turnover,
         num_employees,
-        prodProcessDesc
+        prodProcessDesc,
+        country,
+        region,
+        cap,
+        municipality,
+        street,
+        street_number,
+        climate_zone,
+        construction_year_value,
+        contract_power_class
     ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34
     )
     RETURNING id
   `;
@@ -3269,32 +3622,130 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       activityDescription,
       annualTurnover,
       employees,
-      prodProcessDescription
-      //buildingScore
+      prodProcessDescription,
+      country,
+      region,
+      cap,
+      municipality,
+      street,
+      streetNumber,
+      climateZone,
+      constructionYearValue,
+      contractPowerClass,
     } = req.body;
 
-    const nameNormalized = typeof name === "string" ? name.trim() : "";
-    const addressNormalized = typeof address === "string" ? address.trim() : "";
-    const usageNormalized = typeof usage === "string" ? usage.trim() : "";
+    const userId = req.user.user_id;
+
+    if (!userId) {
+      return res.status(401).json({ msg: "Utente non autenticato" });
+    }
+
+    if (!(await assertBuildingEditable(res, userId, id))) {
+      return;
+    }
+
+    const existingBuildingResult = await pool.query(
+      "SELECT * FROM buildings WHERE id = $1 AND user_id = $2",
+      [id, userId]
+    );
+    const existingBuilding = existingBuildingResult.rows[0];
+
+    const nameNormalized = firstNonEmpty(
+      typeof name === "string" ? name.trim() : null,
+      existingBuilding?.name
+    ) || "";
+    const usageNormalized = firstNonEmpty(
+      typeof usage === "string" ? usage.trim() : null,
+      existingBuilding?.usage
+    ) || "";
+    const locationNormalized = firstNonEmpty(
+      typeof region === "string" ? region.trim() : null,
+      typeof location === "string" ? location.trim() : null,
+      existingBuilding?.region,
+      existingBuilding?.location
+    );
+    const countryNormalized = firstNonEmpty(
+      typeof country === "string" ? country.trim() : null,
+      existingBuilding?.country,
+      "Italia"
+    );
+    const capNormalized = firstNonEmpty(cap, existingBuilding?.cap);
+    const municipalityNormalized = firstNonEmpty(municipality, existingBuilding?.municipality);
+    const streetNormalized = firstNonEmpty(street, existingBuilding?.street);
+    const streetNumberNormalized = firstNonEmpty(streetNumber, existingBuilding?.street_number);
+    const climateZoneNormalized = firstNonEmpty(
+      typeof climateZone === "string" ? climateZone.trim().toUpperCase() : null,
+      existingBuilding?.climate_zone
+    );
+    const constructionYearValueNormalized =
+      constructionYearValue === null || constructionYearValue === undefined || String(constructionYearValue).trim() === ""
+        ? (existingBuilding?.construction_year_value ?? null)
+        : Number(constructionYearValue);
+    const contractPowerClassNormalized = firstNonEmpty(
+      typeof contractPowerClass === "string" ? contractPowerClass.trim() : null,
+      typeof electricityCounter === "string" ? electricityCounter.trim() : null,
+      existingBuilding?.contract_power_class,
+      existingBuilding?.electricity_meter
+    );
+    const yearNormalized = deriveConstructionYearLabel(
+      constructionYearValueNormalized,
+      firstNonEmpty(year, existingBuilding?.construction_year)
+    );
+    const addressNormalized = composeLegacyBuildingAddress({
+      address: firstNonEmpty(
+        typeof address === "string" ? address.trim() : null,
+        existingBuilding?.address,
+      ),
+      street: streetNormalized,
+      streetNumber: streetNumberNormalized,
+      municipality: municipalityNormalized,
+      cap: capNormalized,
+      location: locationNormalized,
+      country: countryNormalized,
+    });
+    const renovationNormalized = firstNonEmpty(renovation, existingBuilding?.renovation);
+    const heatingNormalized = firstNonEmpty(heating, existingBuilding?.heat_distribution);
+    const ventilationNormalized = firstNonEmpty(ventilation, existingBuilding?.ventilation);
+    const energyControlNormalized = firstNonEmpty(energyControl, existingBuilding?.energy_control);
+    const maintenanceNormalized = firstNonEmpty(maintenance, existingBuilding?.maintenance);
+    const waterRecoveryNormalized = firstNonEmpty(waterRecovery, existingBuilding?.water_recovery);
+    const electricityAnalyzerNormalized = firstNonEmpty(electricityAnalyzer, existingBuilding?.analyzers);
+    const electricFornitureNormalized = firstNonEmpty(electricForniture, existingBuilding?.electricity_forniture);
+    const autoLightingControlSystemNormalized = firstNonEmpty(
+      autoLightingControlSystem,
+      existingBuilding?.autolightingcontrolsystem
+    );
+    const lightingNormalized =
+      lighting === undefined || lighting === null || lighting === ""
+        ? Number(existingBuilding?.incandescent ?? 0)
+        : Number(lighting);
+    const ledNormalized =
+      led === undefined || led === null || led === ""
+        ? Number(existingBuilding?.led ?? 0)
+        : Number(led);
+    const gasLampNormalized =
+      gasLamp === undefined || gasLamp === null || gasLamp === ""
+        ? Number(existingBuilding?.gas_lamp ?? 0)
+        : Number(gasLamp);
     const atecoNormalized =
       ateco === null || ateco === undefined || String(ateco).trim() === ""
-        ? null
+        ? (existingBuilding?.ateco ?? null)
         : String(ateco).trim();
     const activityDescriptionNormalized =
       activityDescription === null || activityDescription === undefined || String(activityDescription).trim() === ""
-        ? null
+        ? (existingBuilding?.activity_description ?? null)
         : String(activityDescription).trim();
     const prodProcessDescriptionNormalized =
       prodProcessDescription === null || prodProcessDescription === undefined || String(prodProcessDescription).trim() === ""
-        ? null
+        ? (existingBuilding?.prodprocessdesc ?? null)
         : String(prodProcessDescription).trim();
     const annualTurnoverNormalized =
       annualTurnover === null || annualTurnover === undefined || String(annualTurnover).trim() === ""
-        ? null
+        ? (existingBuilding?.annual_turnover ?? null)
         : Number(annualTurnover);
     const employeesNormalized =
       employees === null || employees === undefined || String(employees).trim() === ""
-        ? null
+        ? (existingBuilding?.num_employees ?? null)
         : Number(employees);
 
     const overflowValidation = [
@@ -3335,13 +3786,36 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       return res.status(400).json({ msg: "Il campo 'Fatturato annuo' deve essere un numero intero." });
     }
 
-    //console.log(req.body);
+    if (capNormalized && !/^\d{5}$/.test(String(capNormalized))) {
+      return res.status(400).json({ msg: "Il campo 'CAP' deve contenere 5 cifre." });
+    }
 
-    const lightsMissingEdit =
-      lighting === undefined || lighting === null || lighting === "" ||
-      led === undefined || led === null || led === "" ||
-      gasLamp === undefined || gasLamp === null || gasLamp === "";
-    if (!id || !nameNormalized || !addressNormalized || !usageNormalized || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || lightsMissingEdit || !autoLightingControlSystem) {
+    if (constructionYearValueNormalized !== null) {
+      if (!Number.isInteger(constructionYearValueNormalized) || String(constructionYearValueNormalized).length !== 4) {
+        return res.status(400).json({ msg: "Il campo 'Anno di costruzione' deve contenere 4 cifre." });
+      }
+    }
+
+    if (
+      !id ||
+      !nameNormalized ||
+      !addressNormalized ||
+      !usageNormalized ||
+      !yearNormalized ||
+      !area ||
+      !locationNormalized ||
+      !renovationNormalized ||
+      !heatingNormalized ||
+      !energyControlNormalized ||
+      !maintenanceNormalized ||
+      !waterRecoveryNormalized ||
+      !contractPowerClassNormalized ||
+      !electricityAnalyzerNormalized ||
+      !electricFornitureNormalized ||
+      !capNormalized ||
+      !municipalityNormalized ||
+      !streetNormalized
+    ) {
       logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "missing_fields" }, "warn");
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
@@ -3351,25 +3825,19 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       return res.status(400).json({ msg: "Il campo 'area' deve essere un numero." });
     }
 
-    if (isNaN(lighting)) {
+    if (isNaN(lightingNormalized)) {
       logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_lighting" }, "warn");
       return res.status(400).json({ msg: "Il campo 'illuminazione' deve essere un numero." });
     }
 
-    if (isNaN(led)) {
+    if (isNaN(ledNormalized)) {
       logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_led" }, "warn");
       return res.status(400).json({ msg: "Il campo 'LED' deve essere un numero." });
     }
 
-    if (isNaN(gasLamp)) {
+    if (isNaN(gasLampNormalized)) {
       logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "invalid_gas_lamp" }, "warn");
       return res.status(400).json({ msg: "Il campo 'lampade a gas' deve essere un numero." });
-    }
-
-    const userId = req.user.user_id;
-
-    if (!userId) {
-      return res.status(401).json({ msg: "Utente non autenticato" });
     }
 
     const values = [
@@ -3377,27 +3845,36 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
       userId,
       addressNormalized,
       usageNormalized,
-      location,
-      year,
+      locationNormalized,
+      yearNormalized,
       area,
-      renovation,
-      heating,
-      ventilation,
-      energyControl,
-      maintenance,
-      electricForniture,
-      waterRecovery,
-      electricityCounter,
-      lighting,
-      led,
-      gasLamp,
-      electricityAnalyzer,
-      autoLightingControlSystem,
+      renovationNormalized,
+      heatingNormalized,
+      ventilationNormalized,
+      energyControlNormalized,
+      maintenanceNormalized,
+      electricFornitureNormalized,
+      waterRecoveryNormalized,
+      contractPowerClassNormalized,
+      lightingNormalized,
+      ledNormalized,
+      gasLampNormalized,
+      electricityAnalyzerNormalized,
+      autoLightingControlSystemNormalized,
       atecoNormalized,
       activityDescriptionNormalized,
       annualTurnoverNormalized,
       employeesNormalized,
       prodProcessDescriptionNormalized,
+      countryNormalized,
+      locationNormalized,
+      capNormalized,
+      municipalityNormalized,
+      streetNormalized,
+      streetNumberNormalized,
+      climateZoneNormalized,
+      constructionYearValueNormalized,
+      contractPowerClassNormalized,
       id
     ];
 
@@ -3428,8 +3905,17 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
         activity_description = $22,
         annual_turnover = $23,
         num_employees = $24,
-        prodProcessDesc = $25
-      WHERE id = $26
+        prodProcessDesc = $25,
+        country = $26,
+        region = $27,
+        cap = $28,
+        municipality = $29,
+        street = $30,
+        street_number = $31,
+        climate_zone = $32,
+        construction_year_value = $33,
+        contract_power_class = $34
+      WHERE id = $35
   `, values);
 
     logBuildingEvent(req, "building_updated", { user_id: userId, building_id: Number(id) });
@@ -3490,8 +3976,12 @@ app.get("/api/fetch-building/:id", authenticateJWT, async (req, res) => {
     const { id } = req.params;
     const { user_id } = req.user;
 
-    const rows = await pool.query(`SELECT * FROM buildings WHERE id = $1 AND user_id = $2`, [id, user_id]);
-    res.status(200).json({ building: rows.rows[0] });
+    const [rows, plantsRows] = await Promise.all([
+      pool.query(`SELECT * FROM buildings WHERE id = $1 AND user_id = $2`, [id, user_id]),
+      pool.query(`SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`, [id, user_id]),
+    ]);
+    const building = rows.rows[0] ? deriveLegacyBuildingFromPlants(rows.rows[0], plantsRows.rows) : null;
+    res.status(200).json({ building });
   } catch (error) {
     console.error('Error fetching building:', error.message);
     res.status(500).json({ msg: "Errore interno del server" });
@@ -3506,55 +3996,41 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
     if (!(await assertBuildingEditable(res, user_id, id))) {
       return;
     }
-    const {
-      description,
-      plantType,
-      serviceType,
-      generatorType,
-      generatorDescription,
-      fuelType,
-      hasGasLeak = false,
-      refrigerantGases = [],
-    } = req.body;
-
-    if (!description || !plantType || !serviceType || !generatorType || !fuelType) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
-    }
-
-    let validGases = [];
-    if (hasGasLeak) {
-      validGases = refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
-      if (validGases.length === 0) {
-        return res.status(400).json({ msg: "Devi inserire almeno un gas refrigerante" });
-      }
+    const payload = normalizePlantPayload(req.body);
+    const validationError = validatePlantPayload(payload);
+    if (validationError) {
+      return res.status(400).json({ msg: validationError });
     }
 
     const values = [
-      user_id, id,
-      description,
-      plantType,
-      serviceType,
-      generatorType,
-      generatorDescription,
-      fuelType,
-      //quantity, 
-      //electricitySupply, 
-      //plantScore
+      user_id,
+      id,
+      payload.systemType,
+      payload.plantType,
+      payload.generatorType,
+      payload.generatorDescription,
+      payload.fuelType,
+      payload.fuelConsumption,
+      payload.fuelUnit,
+      payload.hasHeatRecovery,
+      payload.incandescentCount,
+      payload.ledCount,
+      payload.gasLampCount,
+      payload.autoLightingControl,
     ];
 
     const insertPlantResult = await pool.query(`
       INSERT INTO plants (
-        user_id, building_id, description, plant_type, service_type, generator_type, generator_description, fuel_type
+        user_id, building_id, system_type, plant_type, generator_type, generator_description, fuel_type, fuel_consumption, fuel_unit, has_heat_recovery, incandescent_count, led_count, gas_lamp_count, auto_lighting_control
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
       ) RETURNING id
     `, values);
 
     const plant_id = insertPlantResult.rows[0].id;
 
-    if (hasGasLeak && refrigerantGases.length > 0) {
-
-      // Prepariamo query per inserire gas refrigeranti
+    if (payload.hasGasLeak && payload.refrigerantGases.length > 0) {
+      const validGases = payload.refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
       for (const gas of validGases) {
         const { type, quantity } = gas;
         await pool.query(`
@@ -3570,7 +4046,7 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
         ]);
       }
     }
-    if (hasGasLeak) {
+    if (payload.hasGasLeak) {
       res.status(200).json({ msg: "Impianto e gas refrigeranti aggiunti con successo" });
     } else {
       res.status(200).json({ msg: "Impianto aggiunto con successo" });
@@ -3590,56 +4066,43 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
     if (!(await assertBuildingEditable(res, user_id, id))) {
       return;
     }
-    const {
-      description,
-      plantType,
-      serviceType,
-      generatorType,
-      generatorDescription,
-      fuelType,
-      hasGasLeak = false,
-      refrigerantGases = [],
-    } = req.body;
-
-    if (!description || !plantType || !serviceType || !generatorType) {
-      return res.status(400).json({ msg: "Per favore, compilare tutti i campi" });
-    }
-
-    let validGases = [];
-    if (hasGasLeak) {
-      validGases = refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
-      if (validGases.length === 0) {
-        return res.status(400).json({ msg: "Devi inserire almeno un gas refrigerante" });
-      }
+    const payload = normalizePlantPayload(req.body);
+    const validationError = validatePlantPayload(payload);
+    if (validationError) {
+      return res.status(400).json({ msg: validationError });
     }
 
     const values = [
       user_id,
       id,
-      description,
-      plantType,
-      serviceType,
-      generatorType,
-      generatorDescription,
-      fuelType,
-      //quantity, 
-      //electricitySupply, 
-      //plantScore, 
+      payload.systemType,
+      payload.plantType,
+      payload.generatorType,
+      payload.generatorDescription,
+      payload.fuelType,
+      payload.fuelConsumption,
+      payload.fuelUnit,
+      payload.hasHeatRecovery,
+      payload.incandescentCount,
+      payload.ledCount,
+      payload.gasLampCount,
+      payload.autoLightingControl,
       plant_id
     ];
 
     const updatePlantResult = await pool.query(`
       UPDATE plants
-      SET description = $3, plant_type = $4, service_type = $5, generator_type = $6, generator_description = $7, fuel_type = $8
-      WHERE user_id = $1 AND building_id = $2 AND id = $9
+      SET system_type = $3, plant_type = $4, generator_type = $5, generator_description = $6, fuel_type = $7, fuel_consumption = $8, fuel_unit = $9, has_heat_recovery = $10, incandescent_count = $11, led_count = $12, gas_lamp_count = $13, auto_lighting_control = $14
+      WHERE user_id = $1 AND building_id = $2 AND id = $15
       RETURNING id
     `, values);
 
     const _plant_id = updatePlantResult.rows[0].id;
 
-    if (hasGasLeak && refrigerantGases.length > 0) {
+    await pool.query(`DELETE FROM refrigerant_gases WHERE plant_id = $1 AND building_id = $2 AND user_id = $3`, [plant_id, id, user_id]);
 
-      // Prepariamo query per inserire gas refrigeranti
+    if (payload.hasGasLeak && payload.refrigerantGases.length > 0) {
+      const validGases = payload.refrigerantGases.filter(gas => gas.type.trim() !== "" && gas.quantity !== "" && !isNaN(Number(gas.quantity)) && Number(gas.quantity) > 0);
       for (const gas of validGases) {
         const { type, quantity } = gas;
         await pool.query(`
@@ -3655,10 +4118,10 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
         ]);
       }
     }
-    if (hasGasLeak) {
-      res.status(200).json({ msg: "Impianto aggiornato con successo e aggiunti gas refrigeranti. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente" });
+    if (payload.hasGasLeak) {
+      res.status(200).json({ msg: "Impianto aggiornato con successo e gas refrigeranti riallineati" });
     } else {
-      res.status(200).json({ msg: "Impianto aggiornato con successo. Per un'eventuale modifica della fonte energetica, aggiungere il consumo nuovo e modificare quello precedente" });
+      res.status(200).json({ msg: "Impianto aggiornato con successo" });
     }
 
   } catch (error) {
@@ -3705,6 +4168,7 @@ app.delete("/api/delete-plant/:id", authenticateJWT, async (req, res) => {
       return;
     }
 
+    await pool.query(`DELETE FROM refrigerant_gases WHERE plant_id = $1 AND user_id = $2`, [id, user_id]);
     await pool.query(`DELETE FROM plants WHERE id = $1 AND user_id = $2`, [id, user_id]);
     res.status(200).json({ msg: "Impianto eliminato con successo" });
   } catch (error) {
@@ -3729,7 +4193,7 @@ app.get("/api/buildings/:id/fetch-gases", authenticateJWT, async (req, res) => {
     const rows = await pool.query(`
       SELECT 
         rg.*, 
-        p.description AS plant_name
+        p.system_type AS plant_name
       FROM refrigerant_gases rg
       LEFT JOIN plants p ON rg.plant_id = p.id
       WHERE rg.user_id = $1 AND rg.building_id = $2;
@@ -4209,44 +4673,39 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     const { buildingID } = req.params;
     const { user_id } = req.user;
 
-    //fetch building data
-    const buildingData = await pool.query(`SELECT * FROM buildings WHERE id = $1`, [buildingID]);
+    const [buildingData, plantRowsResult] = await Promise.all([
+      pool.query(`SELECT * FROM buildings WHERE id = $1`, [buildingID]),
+      pool.query(`SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`, [buildingID, user_id]),
+    ]);
 
     if (buildingData.rows.length === 0) {
       return res.status(404).json({ msg: "Edificio non trovato" });
     }
 
-    const building = buildingData.rows[0];
+    const rawPlants = plantRowsResult.rows;
+    const building = deriveLegacyBuildingFromPlants(buildingData.rows[0], rawPlants);
+    const consumptions = buildConsumptionsFromPlants(rawPlants);
+    const plants = mapPlantsForCalculator(rawPlants);
+
+    const totalLightingDevices =
+      Number(building.incandescent || 0) +
+      Number(building.led || 0) +
+      Number(building.gas_lamp || 0);
+
+    if (totalLightingDevices <= 0) {
+      return res.status(400).json({
+        error: "Completa la sottosezione Illuminazione nel blocco Impianti prima di calcolare le emissioni.",
+      });
+    }
 
     //Check if building has at least one plant
-    const hasPlants = await pool.query(`SELECT COUNT(*)::int AS count FROM plants WHERE building_id = $1 AND user_id = $2`, [buildingID, user_id]);
-    if (hasPlants.rows[0].count === 0) {
+    if (rawPlants.length === 0) {
       return res.status(400).json({ error: "Non hai inserito impianti nel tuo edificio. Almeno un impianto è richiesto" });
     }
 
-    // Check if user has consumption data for the building
-    const userHasConsumptionData = await pool.query(
-      "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2;",
-      [user_id, buildingID]
-    );
-    if (userHasConsumptionData.rows.length === 0) {
+    if (consumptions.length === 0) {
       return res.status(400).json({ error: "Non hai ancora dati di consumo per questo edificio" });
     }
-
-
-    // Recover the quantity and price of the product
-    const plantsConsumptions = await pool.query(
-      "SELECT fuel_type FROM plants WHERE user_id = $1 AND building_id = $2;",
-      [user_id, buildingID]
-    );
-    //console.log("consumptionCheck:", plantsConsumptions.rows);
-
-    // Recover the quantity and price of the product
-    const userConsumptions = await pool.query(
-      "SELECT energy_source FROM user_consumptions WHERE user_id = $1 AND building_id = $2;",
-      [user_id, buildingID]
-    );
-    //console.log("userConsumptions:", userConsumptions.rows);
 
     const userRefrigerantGasesResult = await pool.query(
       "SELECT gas_type, quantity_kg FROM refrigerant_gases WHERE user_id = $1 AND building_id = $2;",
@@ -4255,9 +4714,10 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
 
     const userRefrigerantGases = userRefrigerantGasesResult.rows;
 
-    // Extract the fuel types from the rows
-    const plantFuelTypes = plantsConsumptions.rows.map(row => row.fuel_type);
-    const userEnergySources = userConsumptions.rows.map(row => row.energy_source);
+    const plantFuelTypes = rawPlants
+      .map((row) => row.fuel_type)
+      .filter(Boolean);
+    const userEnergySources = consumptions.map((row) => row.energy_source);
 
     if (!userEnergySources.includes("Elettricità")) {
       return res.status(400).json({ error: "Il consumo di elettricità è richiesto." });
@@ -4306,12 +4766,6 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
     const result3 = await pool.query(query3, values3);
     const count2 = parseInt(result3.rows[0].count, 10); // Convert to integer for accuracy
 
-    //fetch building plants
-    const query = "SELECT * FROM plants WHERE building_id = $1 AND user_id = $2";
-    const values = [buildingID, user_id];
-    const result = await pool.query(query, values);
-    const plants = result.rows;
-
     const solaData = {
       solars: rows2.rows,
       count2: count2,
@@ -4323,12 +4777,6 @@ app.get("/api/:buildingID/fetch-emissions-data", authenticateJWT, async (req, re
       count: count,
       totalPower: totalPower.rows[0].sum
     };
-
-    //fetch user consumptions
-    const query4 = "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2";
-    const values4 = [user_id, buildingID];
-    const result4 = await pool.query(query4, values4);
-    const consumptions = result4.rows;
 
     res.status(200).json({ buildingData: building, plants: plants, solaData: solaData, photoData: photoData, consumptionsData: consumptions, refrigerantGases: userRefrigerantGases });
 
@@ -4358,6 +4806,8 @@ app.get("/api/fetch-report-data", authenticateJWT, async (req, res) => {
       // Fetch plants for the current building
       const plantsQuery = await pool.query(`SELECT * FROM plants WHERE building_id = $1 AND user_id = $2`, [buildingID, user_id]);
       const plants = plantsQuery.rows;
+      const buildingWithDerivedSystems = deriveLegacyBuildingFromPlants(building, plants);
+      const consumptions = buildConsumptionsFromPlants(plants);
 
       // Fetch photovoltaics data for the current building
       const photoQuery = await pool.query(`SELECT * FROM photovoltaics WHERE building_id = $1`, [buildingID]);
@@ -4377,13 +4827,9 @@ app.get("/api/fetch-report-data", authenticateJWT, async (req, res) => {
         totalInstalledArea: totalInstalledAreaQuery.rows[0].sum || 0  // In case there's no solar data
       };
 
-      // Fetch consumptions for the current building
-      const consumptionsQuery = await pool.query(`SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2`, [user_id, buildingID]);
-      const consumptions = consumptionsQuery.rows;
-
       // Store the data for the current building
       buildings.push({
-        building,
+        building: buildingWithDerivedSystems,
         plants,
         photoData,
         solaData,
@@ -4844,15 +5290,12 @@ app.get("/api/fetch-building-plants-solars-photos/:id/:buildingID", authenticate
     const values3 = [buildingID];
     const result3 = await pool.query(query3, values3);
 
-    //fetch user consumptions
-    const query4 = "SELECT * FROM user_consumptions WHERE user_id = $1 AND building_id = $2;";
-    const values4 = [id, buildingID];
-    const result4 = await pool.query(query4, values4);
+    const derivedConsumptions = buildConsumptionsFromPlants(result.rows);
 
     if (result.rows.length === 0) {
       return res.status(204).json({ error: 'Alcuni dati non trovati' });
     } else if (result.rows.length > 0) {
-      return res.status(200).json({ plants: result.rows, solars: result2.rows, photovoltaics: result3.rows, consumptions: result4.rows });
+      return res.status(200).json({ plants: result.rows, solars: result2.rows, photovoltaics: result3.rows, consumptions: derivedConsumptions });
     }
   } catch (err) {
     console.error("Errore nel fetch dei dati", err);
@@ -5107,6 +5550,8 @@ async function ensureAdminUser() {
 if (require.main === module) {
   app.listen(port, '0.0.0.0', async () => {
     //console.log(`Server in ascolto sulla porta ${port}`);
+    await ensureBuildingFormColumns();
+    await ensurePlantManagementColumns();
     await ensureAdminUser();
   });
 }

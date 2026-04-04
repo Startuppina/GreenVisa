@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useRecoveryContext } from "../provider/provider";
 import BuildingFrom from "./buildingFrom";
+import BuildingPlantManager from "./buildingPlantManager";
 import BuildingResults from "./buildingResults";
 import MessagePopUp from "./messagePopUp";
 
@@ -105,12 +106,24 @@ function Building() {
                                         <span id="building-name">{buildingData.name}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="font-semibold">locazione:</span>
-                                        <span id="construction-year">{buildingData.location}</span>
+                                        <span className="font-semibold">Regione:</span>
+                                        <span id="construction-year">{buildingData.region || buildingData.location}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="font-semibold">Indirizzo:</span>
-                                        <span id="description">{buildingData.address}</span>
+                                        <span className="font-semibold">Comune:</span>
+                                        <span id="description">{buildingData.municipality || "-"}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold">CAP:</span>
+                                        <span id="description">{buildingData.cap || "-"}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold">Via / Piazza:</span>
+                                        <span id="description">{buildingData.street || buildingData.address}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold">Numero civico:</span>
+                                        <span id="description">{buildingData.street_number || "-"}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="font-semibold">Destinazione d'uso:</span>
@@ -118,11 +131,15 @@ function Building() {
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="font-semibold">Anno di Costruzione:</span>
-                                        <span id="construction-year">{buildingData.construction_year}</span>
+                                        <span id="construction-year">{buildingData.construction_year_value || buildingData.construction_year}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="font-semibold">Superficie:</span>
                                         <span id="construction-year">{buildingData.area} m²</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold">Zona climatica:</span>
+                                        <span id="construction-year">{buildingData.climate_zone || "-"}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="font-semibold">Ristrutturazione:</span>
@@ -131,10 +148,6 @@ function Building() {
                                     <div className="flex justify-between">
                                         <span className="font-semibold">Distribuzione del Calore:</span>
                                         <span id="heat-distribution">{buildingData.heat_distribution}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold">Ventilazione Meccanica Controllata:</span>
-                                        <span id="ventilation">{buildingData.ventilation}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="font-semibold">Controllo Energetico:</span>
@@ -151,6 +164,10 @@ function Building() {
                                         <span id="maintenance">{buildingData.maintenance}</span>
                                     </div>
                                     <div className="flex justify-between">
+                                        <span className="font-semibold">Classe di potenza contrattuale:</span>
+                                        <span id="maintenance">{buildingData.contract_power_class || buildingData.electricity_meter}</span>
+                                    </div>
+                                    <div className="flex justify-between">
                                         <span className="font-semibold">Fornitura elettrica dell'edificio:</span>
                                         <span id="maintenance">{buildingData.electricity_forniture}</span>
                                     </div>
@@ -159,28 +176,8 @@ function Building() {
                                         <span id="water-recovery">{buildingData.water_recovery}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="font-semibold">Contatore Elettrico:</span>
-                                        <span id="electricity-counter">{buildingData.electricity_meter}</span>
-                                    </div>
-                                    <div className="flex justify-between">
                                         <span className="font-semibold">Analizzatori di rete per il controllo dei consumi elettrici:</span>
                                         <span id="electricity-analyzer">{buildingData.analyzers}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold">Numero dispositivi a incandescenza:</span>
-                                        <span id="lighting">{buildingData.incandescent}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold">Numero dispositivi a LED:</span>
-                                        <span id="led">{buildingData.led}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold">Numero dispositivi a gas:</span>
-                                        <span id="gas-lamp">{buildingData.gas_lamp}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-semibold">Sistemi di regolazione e controllo automatici dei corpi illuminanti:</span>
-                                        <span id="lighting">{buildingData.autolightingcontrolsystem}</span>
                                     </div>
                                 </div>
                             </div>
@@ -228,6 +225,9 @@ function Building() {
                         </div>
                     </>
                 )}
+            </div>
+            <div className="mx-2 md:mx-14">
+                <BuildingPlantManager />
             </div>
         </div>
     );

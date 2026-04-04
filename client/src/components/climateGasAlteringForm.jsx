@@ -298,7 +298,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
                     <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
-                            <span className="block mb-2">Consumo annuo</span>
+                            <span className="block mb-2">Quantità (kg)</span>
                             <input
                                 type="text"
                                 value={quantityKg}
