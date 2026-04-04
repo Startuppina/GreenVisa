@@ -53,7 +53,7 @@ describe('ocrService.processDocument', () => {
     expect(Object.keys(passed.document).sort()).toEqual(['entities', 'text']);
   });
 
-  it('persists processorVersion from Google service metadata (response-derived in production)', async () => {
+  it('createResult receives trimmed rawProviderOutput only (no duplicate processor metadata fields)', async () => {
     vi.spyOn(storage, 'readFileBytes').mockReturnValue(Buffer.from('%PDF'));
     vi.spyOn(repo, 'updateDocumentStatus').mockResolvedValue({});
     vi.spyOn(repo, 'deleteResultByDocumentId').mockResolvedValue(undefined);
@@ -75,13 +75,16 @@ describe('ocrService.processDocument', () => {
 
     expect(repo.createResult).toHaveBeenCalledWith(
       expect.objectContaining({
-        processorId: 'projects/x/locations/eu/processors/y',
-        processorVersion: 'deployed-from-response-7',
+        documentId: 101,
+        rawProviderOutput: { document: { text: '', entities: [] } },
       }),
     );
+    const payload = repo.createResult.mock.calls[0][0];
+    expect(payload).not.toHaveProperty('processorId');
+    expect(payload).not.toHaveProperty('processorVersion');
   });
 
-  it('persists null processorVersion when Google metadata has no version', async () => {
+  it('createResult shape unchanged when Google metadata omits processorVersion', async () => {
     vi.spyOn(storage, 'readFileBytes').mockReturnValue(Buffer.from('%PDF'));
     vi.spyOn(repo, 'updateDocumentStatus').mockResolvedValue({});
     vi.spyOn(repo, 'deleteResultByDocumentId').mockResolvedValue(undefined);
@@ -100,7 +103,8 @@ describe('ocrService.processDocument', () => {
 
     expect(repo.createResult).toHaveBeenCalledWith(
       expect.objectContaining({
-        processorVersion: null,
+        documentId: 102,
+        rawProviderOutput: { document: { text: '', entities: [] } },
       }),
     );
   });

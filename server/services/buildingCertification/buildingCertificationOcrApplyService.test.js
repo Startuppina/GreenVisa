@@ -1,5 +1,5 @@
 /**
- * Batch 4 — merge + apply helpers for APE OCR → buildings / user_consumptions.
+ * Building certification OCR apply — `applyBuildingCertificationOcrPatch` + pure helpers.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -10,88 +10,50 @@ const pool = dbModule.default ?? dbModule;
 
 const require = createRequire(import.meta.url);
 const {
-  mergeBuildingRowFromPrefill,
-  formatRegionForUi,
-  mapUseTypeToUsage,
-  applyBuildingCertificationOcrPrefill,
-  BuildingCertificationOcrApplyError,
+  applyBuildingCertificationOcrPatch,
+  BuildingCertificationOcrHttpError,
+  deriveConstructionYearLabel,
+  composeLegacyBuildingAddress,
 } = require('./buildingCertificationOcrApplyService.js');
 
-describe('mergeBuildingRowFromPrefill', () => {
-  const base = {
-    address: 'Old',
-    usage: 'Vecchio',
-    location: 'Lazio',
-    region: 'Lazio',
-    municipality: 'Roma',
-    street: 'Via Old',
-    street_number: '1',
-    climate_zone: 'E',
-    construction_year: 'Tra 1991 e 2004',
-    construction_year_value: 2000,
-    cap: '00100',
-    country: 'Italia',
-    name: 'HQ',
-  };
-
-  it('overwrites only keys present in the prefill patch', () => {
-    const { updates } = mergeBuildingRowFromPrefill(base, {
-      building: {
-        location: { region: 'TOSCANA', municipality: 'GROSSETO' },
-        details: {},
-      },
-    });
-    expect(updates.region).toBe('Toscana');
-    expect(updates.municipality).toBe('GROSSETO');
-    expect(updates.usage).toBeUndefined();
+describe('deriveConstructionYearLabel', () => {
+  it('buckets a valid year', () => {
+    expect(deriveConstructionYearLabel(1985)).toBe('Tra 1976 e 1991');
   });
 
-  it('maps useType and construction year bucket', () => {
-    const { updates } = mergeBuildingRowFromPrefill(base, {
-      building: {
-        location: {},
-        details: { useType: 'non_residential', constructionYear: 1985 },
-      },
-    });
-    expect(updates.usage).toBe('Non residenziale');
-    expect(updates.construction_year_value).toBe(1985);
-    expect(updates.construction_year).toBe('Tra 1976 e 1991');
-  });
-
-  it('rebuilds address when street components change', () => {
-    const { updates } = mergeBuildingRowFromPrefill(base, {
-      building: {
-        location: { street: 'via Bonghi', streetNumber: '7', municipality: 'GROSSETO' },
-        details: {},
-      },
-    });
-    expect(updates.street).toBe('via Bonghi');
-    expect(updates.address).toContain('via Bonghi');
-    expect(updates.address).toContain('GROSSETO');
+  it('returns null for invalid input', () => {
+    expect(deriveConstructionYearLabel(null)).toBe(null);
   });
 });
 
-describe('formatRegionForUi / mapUseTypeToUsage', () => {
-  it('title-cases region', () => {
-    expect(formatRegionForUi('TOSCANA')).toBe('Toscana');
-  });
-
-  it('maps canonical use types', () => {
-    expect(mapUseTypeToUsage('residential')).toBe('Residenziale');
-    expect(mapUseTypeToUsage('non_residential')).toBe('Non residenziale');
+describe('composeLegacyBuildingAddress', () => {
+  it('joins street components', () => {
+    const addr = composeLegacyBuildingAddress({
+      address: '',
+      street: 'Via Roma',
+      streetNumber: '1',
+      municipality: 'Roma',
+      cap: '00100',
+      location: 'Lazio',
+      country: 'Italia',
+    });
+    expect(addr).toContain('Via Roma');
+    expect(addr).toContain('Roma');
   });
 });
 
-describe('applyBuildingCertificationOcrPrefill (DB wiring)', () => {
+describe('applyBuildingCertificationOcrPatch', () => {
   afterEach(() => {
+    delete pool.connect;
     pool.resetPoolTestDouble?.();
+    vi.restoreAllMocks();
   });
 
   beforeEach(() => {
     pool.resetPoolTestDouble?.();
   });
 
-  it('upserts consumption by energy_source idempotently', async () => {
+  it('merges prefill into buildings and upserts consumptions (transaction path)', async () => {
     const buildingRow = {
       id: 9,
       user_id: 42,
@@ -111,50 +73,66 @@ describe('applyBuildingCertificationOcrPrefill (DB wiring)', () => {
       results_visible: false,
     };
 
-    let userConsumptionsSelectByEnergy = 0;
-    pool.query.mockImplementation(async (sql) => {
+    const client = {
+      query: vi.fn(async (sql) => {
+        const s = String(sql);
+        if (s === 'BEGIN') return {};
+        if (s.includes('FOR UPDATE')) return { rows: [buildingRow] };
+        if (s.startsWith('UPDATE buildings')) return { rowCount: 1, rows: [] };
+        if (s.startsWith('UPDATE user_consumptions')) return { rowCount: 1, rows: [] };
+        if (s.startsWith('INSERT INTO user_consumptions')) return { rowCount: 1, rows: [] };
+        if (s === 'COMMIT') return {};
+        if (s === 'ROLLBACK') return {};
+        return { rows: [] };
+      }),
+      release: vi.fn(),
+    };
+
+    pool.connect = vi.fn().mockResolvedValue(client);
+    vi.spyOn(pool, 'query').mockImplementation(async (sql) => {
       const s = String(sql);
-      if (s.includes('results_visible')) return { rows: [{ id: 9, results_visible: false }] };
       if (s.includes('SELECT * FROM buildings') && s.includes('AND user_id')) {
         return { rows: [buildingRow] };
       }
-      if (s.startsWith('UPDATE buildings')) return { rows: [] };
-      if (s.includes('SELECT id FROM user_consumptions')) {
-        userConsumptionsSelectByEnergy += 1;
-        return { rows: [{ id: 100 }] };
-      }
-      if (s.startsWith('UPDATE user_consumptions')) return { rows: [] };
-      if (s.startsWith('INSERT INTO user_consumptions')) return { rows: [] };
       if (s.includes('SELECT * FROM user_consumptions') && s.includes('ORDER BY')) {
-        return { rows: [{ id: 100, energy_source: 'Elettricità', consumption: '4130.84' }] };
+        return { rows: [{ id: 100, energy_source: 'Elettricità', consumption: 10 }] };
       }
       return { rows: [] };
     });
 
-    await applyBuildingCertificationOcrPrefill({
+    const result = await applyBuildingCertificationOcrPatch({
       userId: 42,
       buildingId: 9,
-      prefill: {
-        building: { location: {}, details: {} },
-        consumptions: [{ energySource: 'electricity', amount: 4130.84, plantId: null }],
+      prefillPatch: {
+        building: { location: { region: 'Toscana' }, details: {} },
+        consumptions: [{ energySource: 'Elettricità', consumption: 10, plantId: null }],
       },
     });
 
-    expect(userConsumptionsSelectByEnergy).toBeGreaterThanOrEqual(1);
+    expect(client.query).toHaveBeenCalled();
+    expect(result.buildingId).toBe(9);
+    expect(Array.isArray(result.consumptions)).toBe(true);
   });
 
-  it('throws when building not found', async () => {
-    pool.query.mockImplementation(async (sql) => {
-      const s = String(sql);
-      if (s.includes('results_visible')) return { rows: [] };
-      return { rows: [] };
-    });
+  it('throws BuildingCertificationOcrHttpError when building not found', async () => {
+    const client = {
+      query: vi.fn(async (sql) => {
+        const s = String(sql);
+        if (s === 'BEGIN') return {};
+        if (s.includes('FOR UPDATE')) return { rows: [] };
+        if (s === 'ROLLBACK') return {};
+        return { rows: [] };
+      }),
+      release: vi.fn(),
+    };
+    pool.connect = vi.fn().mockResolvedValue(client);
+
     await expect(
-      applyBuildingCertificationOcrPrefill({
+      applyBuildingCertificationOcrPatch({
         userId: 1,
         buildingId: 999,
-        prefill: { building: { location: {}, details: {} }, consumptions: [] },
+        prefillPatch: { building: { location: {}, details: {} }, consumptions: [] },
       }),
-    ).rejects.toBeInstanceOf(BuildingCertificationOcrApplyError);
+    ).rejects.toBeInstanceOf(BuildingCertificationOcrHttpError);
   });
 });

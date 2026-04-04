@@ -1,97 +1,73 @@
 /**
- * Batch 3 — APE module exports: envelope shapes and transport isolation.
+ * APE OCR shapes aligned with `ocrService.processDocument` (no legacy envelope builders).
  *
  * globals: true in vitest.config.js — describe/it/expect available globally.
  */
 
 import {
-  buildApeNormalizedOutput,
-  buildApeDerivedOutput,
-  buildApeReviewPayload,
-} from '../../services/ocr/apeFieldMapper.js';
-import {
   validateApeNormalizedOutput,
   applyApeNormalizations,
 } from '../../services/ocr/apeOcrOutputValidator.js';
+import {
+  normalizeApeProviderOutput,
+  markApeSuspiciousLpgFromOcr,
+} from '../../services/ocr/apeFieldMapper.js';
 import { buildBuildingCertificationPrefill } from '../../services/buildingCertification/buildingCertificationOcrPrefillService.js';
 
-describe('buildApeNormalizedOutput', () => {
-  it('returns an object with category=ape', () => {
-    expect(buildApeNormalizedOutput().category).toBe('ape');
+function emptyApePersistedShapes(documentId) {
+  const fields = markApeSuspiciousLpgFromOcr(normalizeApeProviderOutput({ entities: [] }).fields);
+  const normalizedFields = applyApeNormalizations(fields);
+  const buildingCertificationPrefill = buildBuildingCertificationPrefill({
+    documentId,
+    reviewFields: normalizedFields,
+    confirmPass: false,
+  });
+  const derivedOutput = { building_certification_prefill: buildingCertificationPrefill };
+  const normalizedOutput = {
+    fields: normalizedFields,
+    building_certification_prefill: buildingCertificationPrefill,
+  };
+  const reviewPayload = {
+    fields: normalizedFields,
+    validationIssues: validateApeNormalizedOutput(normalizedFields),
+    building_certification_prefill: buildingCertificationPrefill,
+    derivedSummary: derivedOutput,
+  };
+  return { normalizedOutput, reviewPayload, derivedOutput };
+}
+
+describe('APE persisted shapes (match ocrService.processDocument ape branch)', () => {
+  it('normalizedOutput has fields + building_certification_prefill, no transport prefill', () => {
+    const { normalizedOutput } = emptyApePersistedShapes(1);
+    expect(normalizedOutput).not.toHaveProperty('transport_v2_vehicle_prefill');
+    expect(normalizedOutput).toHaveProperty('fields');
+    expect(normalizedOutput).toHaveProperty('building_certification_prefill');
+    expect(normalizedOutput).not.toHaveProperty('category');
   });
 
-  it('returns version=1', () => {
-    expect(buildApeNormalizedOutput().version).toBe(1);
+  it('reviewPayload has no transport_v2_vehicle_prefill', () => {
+    const { reviewPayload } = emptyApePersistedShapes(2);
+    expect(reviewPayload).not.toHaveProperty('transport_v2_vehicle_prefill');
   });
 
-  it('defaults to empty fields and empty prefill object', () => {
-    const out = buildApeNormalizedOutput();
-    expect(out.fields).toEqual([]);
-    expect(out.building_certification_prefill).toEqual({});
-  });
-
-  it('does NOT include transport_v2_vehicle_prefill', () => {
-    expect(buildApeNormalizedOutput()).not.toHaveProperty('transport_v2_vehicle_prefill');
-  });
-
-  it('has stable top-level keys', () => {
-    expect(Object.keys(buildApeNormalizedOutput()).sort()).toEqual(
-      ['building_certification_prefill', 'category', 'fields', 'version'].sort(),
-    );
-  });
-});
-
-describe('buildApeDerivedOutput', () => {
-  it('returns category=ape', () => {
-    expect(buildApeDerivedOutput().category).toBe('ape');
-  });
-
-  it('returns version=1', () => {
-    expect(buildApeDerivedOutput().version).toBe(1);
-  });
-
-  it('defaults parsedConsumptions and suspiciousFields to empty arrays', () => {
-    const d = buildApeDerivedOutput();
-    expect(d.parsedConsumptions).toEqual([]);
-    expect(d.suspiciousFields).toEqual([]);
-  });
-
-  it('does NOT include transport_v2_vehicle_prefill', () => {
-    expect(buildApeDerivedOutput()).not.toHaveProperty('transport_v2_vehicle_prefill');
-  });
-});
-
-describe('buildApeReviewPayload', () => {
-  it('returns category=ape', () => {
-    expect(buildApeReviewPayload().category).toBe('ape');
-  });
-
-  it('returns version=1', () => {
-    expect(buildApeReviewPayload().version).toBe(1);
-  });
-
-  it('defaults empty fields and validationIssues', () => {
-    const p = buildApeReviewPayload();
-    expect(p.fields).toEqual([]);
-    expect(p.validationIssues).toEqual([]);
-  });
-
-  it('has building_certification_prefill and derivedSummary', () => {
-    const p = buildApeReviewPayload();
-    expect(p.building_certification_prefill).toEqual({});
-    expect(p.derivedSummary.category).toBe('ape');
-    expect(p.derivedSummary.parsedConsumptions).toEqual([]);
-  });
-
-  it('does NOT include transport_v2_vehicle_prefill', () => {
-    expect(buildApeReviewPayload()).not.toHaveProperty('transport_v2_vehicle_prefill');
-  });
-
-  it('has no transport-prefixed key names on review payload', () => {
-    const p = buildApeReviewPayload();
-    for (const key of Object.keys(p)) {
+  it('reviewPayload has no keys prefixed with transport_', () => {
+    const { reviewPayload } = emptyApePersistedShapes(3);
+    for (const key of Object.keys(reviewPayload)) {
       expect(key).not.toMatch(/^transport_/);
     }
+  });
+
+  it('derivedOutput is only building_certification_prefill wrapper', () => {
+    const { derivedOutput, normalizedOutput } = emptyApePersistedShapes(4);
+    expect(derivedOutput).toEqual({
+      building_certification_prefill: normalizedOutput.building_certification_prefill,
+    });
+    expect(derivedOutput).not.toHaveProperty('transport_v2_vehicle_prefill');
+  });
+
+  it('derivedSummary in reviewPayload mirrors derivedOutput', () => {
+    const { reviewPayload, derivedOutput } = emptyApePersistedShapes(5);
+    expect(reviewPayload.derivedSummary).toEqual(derivedOutput);
   });
 });
 
@@ -115,7 +91,7 @@ describe('buildBuildingCertificationPrefill', () => {
     expect(Array.isArray(result.consumptions)).toBe(true);
   });
 
-  it('is callable without arguments without throwing', () => {
-    expect(() => buildBuildingCertificationPrefill()).not.toThrow();
+  it('requires documentId and reviewFields', () => {
+    expect(() => buildBuildingCertificationPrefill()).toThrow();
   });
 });

@@ -15,10 +15,41 @@
 import { resolveProcessorConfig } from '../../services/ocr/ocrService.js';
 import { processDocument as googleProcessDocument } from '../../services/ocr/googleDocumentAiService.js';
 import {
-  buildApeNormalizedOutput,
-  buildApeDerivedOutput,
-  buildApeReviewPayload,
+  normalizeApeProviderOutput,
+  markApeSuspiciousLpgFromOcr,
 } from '../../services/ocr/apeFieldMapper.js';
+import { applyApeNormalizations, validateApeNormalizedOutput } from '../../services/ocr/apeOcrOutputValidator.js';
+import { buildBuildingCertificationPrefill } from '../../services/buildingCertification/buildingCertificationOcrPrefillService.js';
+
+function buildApeNormalizedOutputLike(documentId = 1) {
+  const fields = markApeSuspiciousLpgFromOcr(normalizeApeProviderOutput({ entities: [] }).fields);
+  const normalizedFields = applyApeNormalizations(fields);
+  const prefill = buildBuildingCertificationPrefill({
+    documentId,
+    reviewFields: normalizedFields,
+    confirmPass: false,
+  });
+  return {
+    fields: normalizedFields,
+    building_certification_prefill: prefill,
+  };
+}
+
+function buildApeDerivedOutputLike(documentId = 1) {
+  const normalized = buildApeNormalizedOutputLike(documentId);
+  return { building_certification_prefill: normalized.building_certification_prefill };
+}
+
+function buildApeReviewPayloadLike(documentId = 1) {
+  const normalized = buildApeNormalizedOutputLike(documentId);
+  const derived = buildApeDerivedOutputLike(documentId);
+  return {
+    fields: normalized.fields,
+    validationIssues: validateApeNormalizedOutput(normalized.fields),
+    building_certification_prefill: normalized.building_certification_prefill,
+    derivedSummary: derived,
+  };
+}
 
 // ── resolveProcessorConfig ────────────────────────────────────────────────────
 
@@ -92,49 +123,44 @@ describe('APE provider config — unconfigured processor guard', () => {
 
 describe('APE post-processing output contract', () => {
   it('normalized_output has no transport_v2_vehicle_prefill key', () => {
-    expect(buildApeNormalizedOutput()).not.toHaveProperty('transport_v2_vehicle_prefill');
+    expect(buildApeNormalizedOutputLike()).not.toHaveProperty('transport_v2_vehicle_prefill');
   });
 
   it('derived_output has no transport_v2_vehicle_prefill key', () => {
-    expect(buildApeDerivedOutput()).not.toHaveProperty('transport_v2_vehicle_prefill');
+    expect(buildApeDerivedOutputLike()).not.toHaveProperty('transport_v2_vehicle_prefill');
   });
 
   it('review_payload has no transport_v2_vehicle_prefill key', () => {
-    expect(buildApeReviewPayload()).not.toHaveProperty('transport_v2_vehicle_prefill');
+    expect(buildApeReviewPayloadLike()).not.toHaveProperty('transport_v2_vehicle_prefill');
   });
 
   it('review_payload has no keys prefixed with transport_', () => {
-    const payload = buildApeReviewPayload();
+    const payload = buildApeReviewPayloadLike();
     for (const key of Object.keys(payload)) {
       expect(key).not.toMatch(/^transport_/);
     }
   });
 
-  it('normalized_output default envelope (Batch 3)', () => {
-    expect(buildApeNormalizedOutput()).toEqual({
-      category: 'ape',
-      version: 1,
-      fields: [],
-      building_certification_prefill: {},
+  it('normalized_output default shape (empty provider entities)', () => {
+    const out = buildApeNormalizedOutputLike(99);
+    expect(out.fields.length).toBeGreaterThan(0);
+    expect(out.building_certification_prefill).toMatchObject({
+      ocr_document_id: 99,
+      building: {},
+      consumptions: [],
     });
   });
 
-  it('review_payload default envelope includes derivedSummary with consumptions arrays', () => {
-    const p = buildApeReviewPayload();
-    expect(p.category).toBe('ape');
-    expect(p.fields).toEqual([]);
-    expect(p.validationIssues).toEqual([]);
-    expect(p.building_certification_prefill).toEqual({});
-    expect(p.derivedSummary.parsedConsumptions).toEqual([]);
-    expect(p.derivedSummary.suspiciousFields).toEqual([]);
+  it('review_payload default includes derivedSummary mirroring derived_output', () => {
+    const p = buildApeReviewPayloadLike(7);
+    expect(p.fields).toEqual(buildApeNormalizedOutputLike(7).fields);
+    expect(p.validationIssues).toEqual(validateApeNormalizedOutput(p.fields));
+    expect(p.derivedSummary).toEqual(buildApeDerivedOutputLike(7));
   });
 
-  it('derived_output default includes parsedConsumptions and suspiciousFields', () => {
-    expect(buildApeDerivedOutput()).toEqual({
-      category: 'ape',
-      version: 1,
-      parsedConsumptions: [],
-      suspiciousFields: [],
+  it('derived_output default is building_certification_prefill only', () => {
+    expect(buildApeDerivedOutputLike(3)).toEqual({
+      building_certification_prefill: buildApeNormalizedOutputLike(3).building_certification_prefill,
     });
   });
 });

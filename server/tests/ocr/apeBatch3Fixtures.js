@@ -18,21 +18,21 @@ export function makeApeEntity(type, mentionText, overrides = {}) {
 /** Full happy-path APE extraction (simplified entities + raw document.entities for integer year). */
 export function realisticApeProviderResult(overrides = {}) {
   const entities = [
-    makeApeEntity('building_region', 'TOSCANA'),
-    makeApeEntity('building_municipality', 'GROSSETO'),
-    makeApeEntity('building_street_name', 'via Bonghi'),
-    makeApeEntity('building_street_number', '7'),
-    makeApeEntity('building_climate_zone', 'd', { normalizedValue: 'd' }),
-    makeApeEntity('building_construction_year', '1960'),
-    makeApeEntity('building_use_type', 'Non residenziale'),
-    makeApeEntity('grid_electricity_annual_consumption_raw', '4130.84 kWh'),
-    makeApeEntity('natural_gas_annual_consumption_raw', '2000 m3'),
-    makeApeEntity('lpg_annual_consumption_raw', '1000 m3', { confidence: 0.95 }),
+    makeApeEntity('region', 'TOSCANA'),
+    makeApeEntity('municipality', 'GROSSETO'),
+    makeApeEntity('street', 'via Bonghi'),
+    makeApeEntity('street_number', '7'),
+    makeApeEntity('climate_zone', 'd', { normalizedValue: 'd' }),
+    makeApeEntity('construction_year', '1960'),
+    makeApeEntity('use_type', 'Non residenziale'),
+    makeApeEntity('consumption_electricity', '4130.84 kWh'),
+    makeApeEntity('natural_gas_consumption', '2000 m3'),
+    makeApeEntity('lpg_consumption', '1000 m3', { confidence: 0.95 }),
   ];
 
   const rawDocumentEntities = [
     {
-      type: 'building_construction_year',
+      type: 'construction_year',
       mentionText: '1960',
       normalizedValue: { integerValue: 1960 },
     },
@@ -54,7 +54,7 @@ export function realisticApeProviderResult(overrides = {}) {
 export function lowConfidenceApeProviderResult() {
   const base = realisticApeProviderResult();
   base.entities = base.entities.map((e) =>
-    e.type === 'building_region' ? { ...e, confidence: 0.5 } : e,
+    e.type === 'region' ? { ...e, confidence: 0.5 } : e,
   );
   return base;
 }
@@ -62,7 +62,7 @@ export function lowConfidenceApeProviderResult() {
 export function invalidClimateZoneApeResult() {
   const base = realisticApeProviderResult();
   base.entities = base.entities.map((e) =>
-    e.type === 'building_climate_zone' ? { ...e, mentionText: 'Z', normalizedValue: 'Z' } : e,
+    e.type === 'climate_zone' ? { ...e, mentionText: 'Z', normalizedValue: 'Z' } : e,
   );
   return base;
 }
@@ -70,12 +70,12 @@ export function invalidClimateZoneApeResult() {
 export function invalidConstructionYearApeResult() {
   const base = realisticApeProviderResult();
   base.entities = base.entities.map((e) =>
-    e.type === 'building_construction_year'
+    e.type === 'construction_year'
       ? { ...e, mentionText: 'abc', normalizedValue: 'abc' }
       : e,
   );
   base.rawProviderOutput.document.entities = [
-    { type: 'building_construction_year', mentionText: 'abc', normalizedValue: {} },
+    { type: 'construction_year', mentionText: 'abc', normalizedValue: {} },
   ];
   return base;
 }
@@ -83,7 +83,7 @@ export function invalidConstructionYearApeResult() {
 export function badElectricityParseApeResult() {
   const base = realisticApeProviderResult();
   base.entities = base.entities.map((e) =>
-    e.type === 'grid_electricity_annual_consumption_raw'
+    e.type === 'consumption_electricity'
       ? { ...e, mentionText: 'abc kWh', normalizedValue: 'abc kWh' }
       : e,
   );
@@ -93,10 +93,7 @@ export function badElectricityParseApeResult() {
 export function missingOptionalFieldsApeResult() {
   return {
     rawProviderOutput: { document: { text: 'x', entities: [] } },
-    entities: [
-      makeApeEntity('building_region', 'TOSCANA'),
-      makeApeEntity('building_municipality', 'GROSSETO'),
-    ],
+    entities: [makeApeEntity('region', 'TOSCANA'), makeApeEntity('municipality', 'GROSSETO')],
     metadata: {},
   };
 }

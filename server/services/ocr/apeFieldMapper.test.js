@@ -1,5 +1,5 @@
 /**
- * Batch 3 — APE field mapper unit tests.
+ * APE field mapper — `normalizeApeProviderOutput` + `markApeSuspiciousLpgFromOcr`.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -7,78 +7,77 @@ import { createRequire } from 'node:module';
 import { makeApeEntity } from '../../tests/ocr/apeBatch3Fixtures.js';
 
 const require = createRequire(import.meta.url);
-const { mapApeProviderEntitiesToFields } = require('./apeFieldMapper.js');
+const {
+  normalizeApeProviderOutput,
+  markApeSuspiciousLpgFromOcr,
+  findEntityByProviderTypes,
+} = require('./apeFieldMapper.js');
 
-function fieldByKey(fields, key) {
-  return fields.find((f) => f.key === key);
-}
-
-describe('mapApeProviderEntitiesToFields', () => {
-  const cases = [
-    ['building_region', 'building.location.region'],
-    ['building_municipality', 'building.location.municipality'],
-    ['building_street_name', 'building.location.street'],
-    ['building_street_number', 'building.location.streetNumber'],
-    ['building_climate_zone', 'building.location.climateZone'],
-    ['building_construction_year', 'building.details.constructionYear'],
-    ['building_use_type', 'building.details.useType'],
-    ['grid_electricity_annual_consumption_raw', 'consumptions.electricity.amount'],
-    ['natural_gas_annual_consumption_raw', 'consumptions.natural_gas.amount'],
-    ['lpg_annual_consumption_raw', 'consumptions.gpl.amount'],
-  ];
-
-  it.each(cases)('maps %s → %s', (providerType, expectedKey) => {
-    const fields = mapApeProviderEntitiesToFields([makeApeEntity(providerType, 'x')], []);
-    expect(fieldByKey(fields, expectedKey)).toBeDefined();
-  });
-
-  it('preserves provider provenance metadata on mapped fields', () => {
-    const poly = { vertices: [{ x: 1, y: 2 }] };
-    const fields = mapApeProviderEntitiesToFields(
-      [makeApeEntity('building_region', 'TOSCANA', { confidence: 0.9123, pageNumber: 3, boundingPoly: poly })],
-      [],
-    );
-    const f = fieldByKey(fields, 'building.location.region');
-    expect(f.confidence).toBe(0.9123);
-    expect(f.sourceEntityType).toBe('building_region');
-    expect(f.sourcePage).toBe(3);
-    expect(f.boundingPoly).toEqual(poly);
+describe('normalizeApeProviderOutput', () => {
+  it('maps region entity to review field key region', () => {
+    const { fields } = normalizeApeProviderOutput({
+      entities: [makeApeEntity('region', 'Toscana')],
+    });
+    const f = fields.find((x) => x.key === 'region');
+    expect(f).toBeDefined();
+    expect(f.value).toBe('Toscana');
     expect(f.sourceMethod).toBe('EXTRACT');
   });
 
-  it('ignores unsupported Google entity types', () => {
-    const fields = mapApeProviderEntitiesToFields(
-      [makeApeEntity('unknown_custom_label', 'noise'), makeApeEntity('building_region', 'LAZIO')],
-      [],
-    );
-    expect(fields).toHaveLength(1);
-    expect(fieldByKey(fields, 'building.location.region')?.value).toBe('LAZIO');
+  it('maps electricity consumption entity to consumption_electricity', () => {
+    const { fields } = normalizeApeProviderOutput({
+      entities: [makeApeEntity('consumption_electricity', '100 kWh')],
+    });
+    const f = fields.find((x) => x.key === 'consumption_electricity');
+    expect(f?.value).toBe('100 kWh');
   });
 
-  it('does not emit placeholder fields when entities are absent', () => {
-    const fields = mapApeProviderEntitiesToFields([makeApeEntity('building_region', 'X')], []);
-    expect(fieldByKey(fields, 'building.location.municipality')).toBeUndefined();
-    expect(fieldByKey(fields, 'consumptions.electricity.amount')).toBeUndefined();
+  it('fills NOT_FOUND slots for missing entities', () => {
+    const { fields } = normalizeApeProviderOutput({ entities: [] });
+    expect(fields.length).toBeGreaterThan(0);
+    expect(fields.every((f) => f.key && f.label)).toBe(true);
+    expect(fields.filter((f) => f.sourceMethod === 'NOT_FOUND').length).toBeGreaterThan(0);
+  });
+});
+
+describe('markApeSuspiciousLpgFromOcr', () => {
+  it('marks extracted LPG consumption as suspicious', () => {
+    const fields = [
+      {
+        key: 'consumption_lpg',
+        label: 'GPL',
+        value: '10',
+        confidence: 0.9,
+        sourceMethod: 'EXTRACT',
+        sourcePage: 1,
+        boundingPoly: null,
+      },
+    ];
+    const out = markApeSuspiciousLpgFromOcr(fields);
+    expect(out[0].suspiciousLpg).toBe(true);
   });
 
-  it('uses provider integerValue for construction year when raw document entities provide it', () => {
-    const fields = mapApeProviderEntitiesToFields(
-      [makeApeEntity('building_construction_year', '1960')],
-      [{ type: 'building_construction_year', normalizedValue: { integerValue: 1960 } }],
-    );
-    const f = fieldByKey(fields, 'building.details.constructionYear');
-    expect(f.providerIntegerValue).toBe(1960);
+  it('does not mark NOT_FOUND LPG', () => {
+    const fields = [
+      {
+        key: 'consumption_lpg',
+        label: 'GPL',
+        value: null,
+        confidence: 0,
+        sourceMethod: 'NOT_FOUND',
+        sourcePage: null,
+        boundingPoly: null,
+      },
+    ];
+    const out = markApeSuspiciousLpgFromOcr(fields);
+    expect(out[0].suspiciousLpg).toBeUndefined();
   });
+});
 
-  it('dedupes by internal field key (first entity wins)', () => {
-    const fields = mapApeProviderEntitiesToFields(
-      [
-        makeApeEntity('building_region', 'FIRST'),
-        makeApeEntity('building_region', 'SECOND'),
-      ],
-      [],
-    );
-    expect(fields).toHaveLength(1);
-    expect(fields[0].value).toBe('FIRST');
+describe('findEntityByProviderTypes', () => {
+  it('returns first matching entity type', () => {
+    const entities = [makeApeEntity('noise', 'x'), makeApeEntity('municipality', 'Roma')];
+    const hit = findEntityByProviderTypes(entities, ['municipality', 'comune']);
+    expect(hit?.mentionText).toBe('Roma');
   });
 });

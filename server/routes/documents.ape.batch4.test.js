@@ -33,6 +33,24 @@ function authCookie(userId = 42) {
   return [`accessToken=${token}`];
 }
 
+function mockApeBatchMeta(overrides = {}) {
+  return vi.spyOn(repoMod, 'getDocumentBatchMeta').mockResolvedValue({
+    category: 'ape',
+    batch_id: 10,
+    building_id: null,
+    ...overrides,
+  });
+}
+
+function mockTransportBatchMeta(overrides = {}) {
+  return vi.spyOn(repoMod, 'getDocumentBatchMeta').mockResolvedValue({
+    category: 'transport',
+    batch_id: 12,
+    building_id: null,
+    ...overrides,
+  });
+}
+
 describe('POST /api/documents/:id/confirm — APE Batch 4', () => {
   const app = buildApp();
 
@@ -50,18 +68,17 @@ describe('POST /api/documents/:id/confirm — APE Batch 4', () => {
       batch_id: 10,
       ocr_status: 'needs_review',
     });
-    vi.spyOn(repoMod, 'getBatchById').mockResolvedValue({ id: 10, category: 'ape', user_id: 42 });
+    mockApeBatchMeta({ batch_id: 10 });
 
     const fields = [
       {
-        key: 'building.location.region',
+        key: 'region',
         label: 'Regione',
-        value: 'TOSCANA',
+        value: 'Toscana',
         confidence: 0.99,
         sourceMethod: 'EXTRACT',
         sourcePage: 1,
         boundingPoly: null,
-        sourceEntityType: 'building_region',
         required: false,
       },
     ];
@@ -76,7 +93,7 @@ describe('POST /api/documents/:id/confirm — APE Batch 4', () => {
     expect(updateConfirmed).toHaveBeenCalled();
     const payload = updateConfirmed.mock.calls[0][1];
     expect(payload.building_certification_prefill).toBeDefined();
-    expect(payload.fields[0].normalizedValue).toBe('TOSCANA');
+    expect(payload.fields[0].normalizedValue).toBe('Toscana');
     expect(payload).not.toHaveProperty('transport_v2_vehicle_prefill');
     expect(repoMod.updateDocumentStatus).toHaveBeenCalledWith(5, 'confirmed', { confirmedBy: 42 });
   });
@@ -91,18 +108,17 @@ describe('POST /api/documents/:id/confirm — APE Batch 4', () => {
       batch_id: 11,
       ocr_status: 'needs_review',
     });
-    vi.spyOn(repoMod, 'getBatchById').mockResolvedValue({ id: 11, category: 'ape' });
+    mockApeBatchMeta({ batch_id: 11 });
 
     const fields = [
       {
-        key: 'consumptions.electricity.amount',
+        key: 'consumption_electricity',
         label: 'E',
-        value: '10 kWh',
+        value: '10',
         confidence: 0.99,
         sourceMethod: 'EXTRACT',
         sourcePage: 1,
         boundingPoly: null,
-        sourceEntityType: 'grid_electricity_annual_consumption_raw',
         required: false,
       },
     ];
@@ -114,7 +130,7 @@ describe('POST /api/documents/:id/confirm — APE Batch 4', () => {
 
     expect(res.status).toBe(200);
     const prefill = updateConfirmed.mock.calls[0][1].building_certification_prefill;
-    expect(prefill.consumptions.some((c) => c.energySource === 'gpl')).toBe(false);
+    expect(prefill.consumptions.some((c) => c.energySource === 'GPL')).toBe(false);
   });
 
   it('transport confirm path unchanged (still uses transport_v2_vehicle_prefill)', async () => {
@@ -127,7 +143,7 @@ describe('POST /api/documents/:id/confirm — APE Batch 4', () => {
       batch_id: 12,
       ocr_status: 'needs_review',
     });
-    vi.spyOn(repoMod, 'getBatchById').mockResolvedValue({ id: 12, category: 'transport' });
+    mockTransportBatchMeta({ batch_id: 12 });
 
     const fields = [
       {
@@ -162,7 +178,8 @@ describe('POST /api/documents/:id/apply — APE Batch 4', () => {
   });
 
   it('prefers confirmed_output.building_certification_prefill and calls building apply', async () => {
-    const applySpy = vi.spyOn(buildingApplyMod, 'applyBuildingCertificationOcrPrefill').mockResolvedValue({
+    const applySpy = vi.spyOn(buildingApplyMod, 'applyBuildingCertificationOcrPatch').mockResolvedValue({
+      buildingId: 7,
       building: { id: 7, region: 'Toscana' },
       consumptions: [{ id: 1, energy_source: 'Elettricità', consumption: 10 }],
     });
@@ -176,12 +193,12 @@ describe('POST /api/documents/:id/apply — APE Batch 4', () => {
       ocr_status: 'confirmed',
       survey_response_id: null,
     });
-    vi.spyOn(repoMod, 'getBatchById').mockResolvedValue({ id: 30, category: 'ape' });
+    mockApeBatchMeta({ batch_id: 30 });
     vi.spyOn(repoMod, 'getResultByDocumentId').mockResolvedValue({
       confirmed_output: {
         building_certification_prefill: {
           building: { location: { region: 'Toscana' }, details: {} },
-          consumptions: [{ energySource: 'electricity', amount: 10, plantId: null }],
+          consumptions: [{ energySource: 'Elettricità', consumption: 10, plantId: null }],
         },
       },
       normalized_output: {
@@ -201,14 +218,14 @@ describe('POST /api/documents/:id/apply — APE Batch 4', () => {
       expect.objectContaining({
         userId: 42,
         buildingId: 7,
-        prefill: expect.objectContaining({
+        prefillPatch: expect.objectContaining({
           building: expect.objectContaining({ location: expect.objectContaining({ region: 'Toscana' }) }),
         }),
       }),
     );
   });
 
-  it('returns 400 when APE document has no building_id', async () => {
+  it('returns 400 when APE document has no buildingId', async () => {
     vi.spyOn(repoMod, 'getDocumentById').mockResolvedValue({
       id: 21,
       user_id: 42,
@@ -216,14 +233,14 @@ describe('POST /api/documents/:id/apply — APE Batch 4', () => {
       building_id: null,
       ocr_status: 'confirmed',
     });
-    vi.spyOn(repoMod, 'getBatchById').mockResolvedValue({ id: 31, category: 'ape' });
+    mockApeBatchMeta({ batch_id: 31 });
     vi.spyOn(repoMod, 'getResultByDocumentId').mockResolvedValue({
       confirmed_output: { building_certification_prefill: { building: { location: {}, details: {} }, consumptions: [] } },
     });
 
     const res = await request(app).post('/api/documents/21/apply').set('Cookie', authCookie()).send({});
     expect(res.status).toBe(400);
-    expect(res.body.msg).toMatch(/building_id/i);
+    expect(res.body.msg).toMatch(/buildingId/i);
   });
 
   it('transport apply still requires certificationId', async () => {
@@ -235,7 +252,7 @@ describe('POST /api/documents/:id/apply — APE Batch 4', () => {
       ocr_status: 'confirmed',
       survey_response_id: null,
     });
-    vi.spyOn(repoMod, 'getBatchById').mockResolvedValue({ id: 32, category: 'transport' });
+    mockTransportBatchMeta({ batch_id: 32 });
     vi.spyOn(repoMod, 'getResultByDocumentId').mockResolvedValue({
       confirmed_output: { fields: [], transport_v2_vehicle_prefill: { ocr_document_id: 22, vehicle_id: 'v' } },
     });
@@ -262,7 +279,7 @@ describe('POST /api/documents/:id/apply — APE Batch 4', () => {
       ocr_status: 'confirmed',
       survey_response_id: null,
     });
-    vi.spyOn(repoMod, 'getBatchById').mockResolvedValue({ id: 33, category: 'transport' });
+    mockTransportBatchMeta({ batch_id: 33 });
     vi.spyOn(repoMod, 'getResultByDocumentId').mockResolvedValue({
       confirmed_output: {
         fields: [],

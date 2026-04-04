@@ -1,7 +1,6 @@
 const googleDocAi = require('./googleDocumentAiService');
 const { normalizeProviderOutput } = require('./fieldMapper');
 const apeFieldMapper = require('./apeFieldMapper');
-const { normalizeApeProviderOutput, markApeSuspiciousLpgFromOcr } = apeFieldMapper;
 const {
   validateNormalizedOutput,
   applyNormalizations,
@@ -75,7 +74,9 @@ async function processDocument(documentRecord, options = {}) {
     let reviewPayload;
 
     if (category === 'ape') {
-      const rawApeFields = markApeSuspiciousLpgFromOcr(normalizeApeProviderOutput(providerResult).fields);
+      const rawApeFields = apeFieldMapper.markApeSuspiciousLpgFromOcr(
+        apeFieldMapper.normalizeApeProviderOutput(providerResult).fields,
+      );
       normalizedFields = applyApeNormalizations(rawApeFields);
       validationIssues = validateApeNormalizedOutput(normalizedFields);
       const buildingCertificationPrefill = buildBuildingCertificationPrefill({
@@ -161,52 +162,6 @@ async function processDocument(documentRecord, options = {}) {
 
     return { status: 'failed', error: err.message };
   }
-}
-
-// ── APE OCR post-processing (Batch 3: semantic layer) ─────────────────────────
-
-async function processApeDocument(docId, providerResult) {
-  const rawEntities = providerResult.rawProviderOutput?.document?.entities;
-  const rawFields = apeFieldMapper.mapApeProviderEntitiesToFields(providerResult.entities, rawEntities);
-  const normalizedFields = applyApeNormalizations(rawFields);
-  const validationIssues = validateApeNormalizedOutput(normalizedFields);
-  const derivedOutput = apeFieldMapper.buildApeDerivedOutputFromNormalizedFields(normalizedFields);
-  const prefill = buildBuildingCertificationPrefill({
-    documentId: docId,
-    reviewFields: normalizedFields,
-    validationIssues,
-  });
-
-  const normalizedOutput = apeFieldMapper.buildApeNormalizedOutput(normalizedFields, prefill);
-  const reviewPayload = apeFieldMapper.buildApeReviewPayload({
-    fields: normalizedFields,
-    validationIssues,
-    building_certification_prefill: prefill,
-    derivedSummary: derivedOutput,
-  });
-
-  await repo.deleteResultByDocumentId(docId);
-
-  await repo.createResult({
-    documentId: docId,
-    rawProviderOutput: providerResult.rawProviderOutput,
-    normalizedOutput,
-    derivedOutput,
-    reviewPayload,
-    validationIssues,
-  });
-
-  await repo.updateDocumentStatus(docId, 'needs_review', {
-    errorCode: null,
-    errorMessage: null,
-  });
-
-  logger.info(
-    { event: 'ocr_ape_result_persisted', document_id: docId },
-    'APE OCR result persisted',
-  );
-
-  return { status: 'needs_review', fields: normalizedFields, validationIssues };
 }
 
 function buildDerivedTransportDerivedOutput(transportV2VehiclePrefill) {

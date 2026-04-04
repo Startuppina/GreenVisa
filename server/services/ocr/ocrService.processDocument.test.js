@@ -100,16 +100,16 @@ afterAll(() => {
 });
 
 describe('ocrService.processDocument', () => {
-  let mapApeEntitiesSpy;
+  let normalizeApeProviderOutputSpy;
 
   beforeEach(() => {
     vi.clearAllMocks();
     wireSpies();
-    mapApeEntitiesSpy = vi.spyOn(apeFieldMapperMod, 'mapApeProviderEntitiesToFields');
+    normalizeApeProviderOutputSpy = vi.spyOn(apeFieldMapperMod, 'normalizeApeProviderOutput');
   });
 
   afterEach(() => {
-    mapApeEntitiesSpy?.mockRestore();
+    normalizeApeProviderOutputSpy?.mockRestore();
   });
 
   describe('processor selection (via Google client args)', () => {
@@ -134,15 +134,15 @@ describe('ocrService.processDocument', () => {
   });
 
   describe('category dispatch', () => {
-    it('transport path invokes normalizeProviderOutput, not APE stub builder', async () => {
+    it('transport path invokes normalizeProviderOutput, not APE provider normalizer', async () => {
       await processDocument(makeDocRecord(), { category: 'transport' });
       expect(fieldMapperMod.normalizeProviderOutput).toHaveBeenCalled();
-      expect(mapApeEntitiesSpy).not.toHaveBeenCalled();
+      expect(normalizeApeProviderOutputSpy).not.toHaveBeenCalled();
     });
 
-    it('APE path maps provider entities, not transport field mapper', async () => {
+    it('APE path normalizes provider output, not transport field mapper', async () => {
       await processDocument(makeDocRecord(), { category: 'ape' });
-      expect(mapApeEntitiesSpy).toHaveBeenCalled();
+      expect(normalizeApeProviderOutputSpy).toHaveBeenCalled();
       expect(fieldMapperMod.normalizeProviderOutput).not.toHaveBeenCalled();
     });
 
@@ -151,7 +151,7 @@ describe('ocrService.processDocument', () => {
       expect(result.status).toBe('failed');
       expect(result.error).toMatch(/No processor config found/i);
       expect(fieldMapperMod.normalizeProviderOutput).not.toHaveBeenCalled();
-      expect(mapApeEntitiesSpy).not.toHaveBeenCalled();
+      expect(normalizeApeProviderOutputSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -166,30 +166,29 @@ describe('ocrService.processDocument', () => {
       expect(normalizedOutput).not.toHaveProperty('building_certification_prefill');
     });
 
-    it('ape: normalized_output uses Batch 3 envelope with empty fields when provider has no entities', async () => {
+    it('ape: normalized_output has fields + prefill when provider has no entities', async () => {
       await processDocument(makeDocRecord(), { category: 'ape' });
       const { normalizedOutput } = lastCreateResultPayload();
-      expect(normalizedOutput.category).toBe('ape');
-      expect(normalizedOutput.version).toBe(1);
-      expect(normalizedOutput.fields).toEqual([]);
-      expect(normalizedOutput.building_certification_prefill).toEqual({
-        building: { location: {}, details: {} },
+      expect(normalizedOutput).not.toHaveProperty('category');
+      expect(Array.isArray(normalizedOutput.fields)).toBe(true);
+      expect(normalizedOutput.fields.length).toBeGreaterThan(0);
+      expect(normalizedOutput.building_certification_prefill).toMatchObject({
+        ocr_document_id: 42,
+        building: {},
         consumptions: [],
       });
     });
 
-    it('ape: review_payload mirrors normalized fields and empty derived summary when no entities', async () => {
+    it('ape: review_payload mirrors normalized fields and derivedSummary when no entities', async () => {
       await processDocument(makeDocRecord(), { category: 'ape' });
-      const { reviewPayload } = lastCreateResultPayload();
-      expect(reviewPayload.category).toBe('ape');
-      expect(reviewPayload.fields).toEqual([]);
-      expect(reviewPayload.validationIssues).toEqual([]);
-      expect(reviewPayload.building_certification_prefill).toEqual({
-        building: { location: {}, details: {} },
-        consumptions: [],
-      });
-      expect(reviewPayload.derivedSummary.parsedConsumptions).toEqual([]);
-      expect(reviewPayload.derivedSummary.suspiciousFields).toEqual([]);
+      const p = lastCreateResultPayload();
+      expect(p.reviewPayload).not.toHaveProperty('category');
+      expect(p.reviewPayload.fields).toEqual(p.normalizedOutput.fields);
+      expect(p.reviewPayload.validationIssues).toEqual(p.validationIssues);
+      expect(p.reviewPayload.building_certification_prefill).toEqual(
+        p.normalizedOutput.building_certification_prefill,
+      );
+      expect(p.reviewPayload.derivedSummary).toEqual(p.derivedOutput);
     });
 
     it('ape: validation_issues is empty when no extractable entities', async () => {
@@ -280,13 +279,11 @@ describe('ocrService.processDocument', () => {
         expect(rawProviderOutput.document).not.toHaveProperty('pages');
       });
 
-      it('APE: derived_output includes parsedConsumptions and suspiciousFields arrays', async () => {
+      it('APE: derived_output is building_certification_prefill wrapper only', async () => {
         await processDocument(makeDocRecord(), { category: 'ape' });
-        expect(lastCreateResultPayload().derivedOutput).toEqual({
-          category: 'ape',
-          version: 1,
-          parsedConsumptions: [],
-          suspiciousFields: [],
+        const p = lastCreateResultPayload();
+        expect(p.derivedOutput).toEqual({
+          building_certification_prefill: p.normalizedOutput.building_certification_prefill,
         });
       });
 
@@ -295,7 +292,7 @@ describe('ocrService.processDocument', () => {
         const { normalizedOutput, reviewPayload, derivedOutput } = lastCreateResultPayload();
         expect(normalizedOutput).not.toHaveProperty('transport_v2_vehicle_prefill');
         expect(reviewPayload).not.toHaveProperty('transport_v2_vehicle_prefill');
-        expect(reviewPayload.derivedSummary.category).toBe('ape');
+        expect(reviewPayload.derivedSummary).toEqual(derivedOutput);
         expect(derivedOutput).not.toHaveProperty('transport_v2_vehicle_prefill');
       });
     });
@@ -417,32 +414,33 @@ describe('ocrService.processDocument', () => {
       const keys = normalizedOutput.fields.map((f) => f.key);
       expect(keys).toEqual(
         expect.arrayContaining([
-          'building.location.region',
-          'building.location.municipality',
-          'consumptions.electricity.amount',
-          'consumptions.natural_gas.amount',
-          'consumptions.gpl.amount',
+          'region',
+          'municipality',
+          'consumption_electricity',
+          'consumption_natural_gas',
+          'consumption_lpg',
         ]),
       );
       const prefill = normalizedOutput.building_certification_prefill;
       expect(prefill.consumptions).toHaveLength(2);
       expect(prefill.consumptions).toContainEqual({
-        energySource: 'electricity',
-        amount: 4130.84,
+        energySource: 'Elettricità',
+        consumption: 4130.84,
         plantId: null,
       });
       expect(prefill.consumptions).toContainEqual({
-        energySource: 'natural_gas',
-        amount: 2000,
+        energySource: 'Gas naturale',
+        consumption: 2000,
         plantId: null,
       });
     });
 
-    it('45: persists validation issues including GPL suspicion and low-confidence paths', async () => {
+    it('45: flags suspicious LPG on field and low-confidence region', async () => {
       vi.mocked(googleDocumentAiMod.processDocument).mockResolvedValue(realisticApeProviderResult());
       await processDocument(makeDocRecord(), { category: 'ape' });
-      const first = lastCreateResultPayload().validationIssues;
-      expect(first.some((i) => i.type === 'suspected_false_positive')).toBe(true);
+      const first = lastCreateResultPayload();
+      const lpgField = first.normalizedOutput.fields.find((f) => f.key === 'consumption_lpg');
+      expect(lpgField?.suspiciousLpg).toBe(true);
 
       vi.mocked(googleDocumentAiMod.processDocument).mockResolvedValue(lowConfidenceApeProviderResult());
       await processDocument(makeDocRecord(), { category: 'ape' });
@@ -450,15 +448,16 @@ describe('ocrService.processDocument', () => {
       expect(second.some((i) => i.type === 'low_confidence')).toBe(true);
     });
 
-    it('46: derived_output lists parsed consumptions and flags suspicious GPL', async () => {
+    it('46: derived_output mirrors prefill; GPL omitted from prefill when suspicious', async () => {
       vi.mocked(googleDocumentAiMod.processDocument).mockResolvedValue(realisticApeProviderResult());
       await processDocument(makeDocRecord(), { category: 'ape' });
-      const { derivedOutput } = lastCreateResultPayload();
-      expect(derivedOutput.parsedConsumptions.length).toBeGreaterThanOrEqual(3);
-      expect(derivedOutput.parsedConsumptions.map((c) => c.energySource).sort()).toEqual(
-        ['electricity', 'gpl', 'natural_gas'].sort(),
-      );
-      expect(derivedOutput.suspiciousFields).toContain('consumptions.gpl.amount');
+      const { derivedOutput, normalizedOutput } = lastCreateResultPayload();
+      expect(derivedOutput).toEqual({
+        building_certification_prefill: normalizedOutput.building_certification_prefill,
+      });
+      expect(
+        normalizedOutput.building_certification_prefill.consumptions.some((c) => c.energySource === 'GPL'),
+      ).toBe(false);
     });
 
     it('47: review_payload is fully populated for APE', async () => {
@@ -475,7 +474,7 @@ describe('ocrService.processDocument', () => {
       vi.mocked(googleDocumentAiMod.processDocument).mockResolvedValue(realisticApeProviderResult());
       const result = await processDocument(makeDocRecord(), { category: 'ape' });
       expect(result.fields.length).toBeGreaterThan(0);
-      expect(result.fields.map((f) => f.key)).toContain('building.location.region');
+      expect(result.fields.map((f) => f.key)).toContain('region');
     });
 
     it('50–51: trimmed raw provider output and no transport keys on APE semantic payloads', async () => {

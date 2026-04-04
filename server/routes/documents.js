@@ -10,17 +10,9 @@ const { applyNormalizations, validateNormalizedOutput } = require('../services/o
 const { applyApeNormalizations, validateApeNormalizedOutput } = require('../services/ocr/apeOcrOutputValidator');
 const { buildTransportV2VehiclePrefill, normalizeTransportMode } = require('../services/transportV2/transportV2OcrPrefillService');
 const { buildBuildingCertificationPrefill } = require('../services/buildingCertification/buildingCertificationOcrPrefillService');
-const {
-  applyBuildingCertificationOcrPatch,
-  BuildingCertificationOcrHttpError,
-} = require('../services/buildingCertification/buildingCertificationOcrApplyService');
+const buildingCertificationOcrApplyService = require('../services/buildingCertification/buildingCertificationOcrApplyService');
 const { resolveBuildingCertificationPrefillForApply } = require('../services/buildingCertification/apeApplyPrefillResolve');
-const {
-  TransportV2HttpError,
-  parseCertificationId,
-  resolveTransportSurveyResponse,
-  upsertTransportV2OcrVehicle,
-} = require('../services/transportV2/transportV2DraftService');
+const transportV2DraftService = require('../services/transportV2/transportV2DraftService');
 const { logDocumentEvent, logUnexpectedError } = require('../lib/businessEvents');
 const { resolveUploadCategory } = require('../services/documents/uploadCategory');
 
@@ -436,10 +428,7 @@ router.post('/documents/:documentId/confirm', authenticateJWT, async (req, res) 
         : 'Dati OCR confermati. Il passaggio successivo puo prefilarli nel draft Transport V2.';
 
     res.json({
-      msg:
-        category === 'ape'
-          ? 'Dati OCR APE confermati. Puoi applicarli al profilo edificio.'
-          : 'Dati OCR confermati. Il passaggio successivo puo prefilarli nel draft Transport V2.',
+      msg: confirmMsg,
       documentId: docId,
       status: 'confirmed',
       confirmedOutput,
@@ -498,7 +487,7 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
         await repo.updateDocumentBuildingId(docId, buildingId);
       }
 
-      const applyResult = await applyBuildingCertificationOcrPatch({
+      const applyResult = await buildingCertificationOcrApplyService.applyBuildingCertificationOcrPatch({
         userId: req.user.user_id,
         buildingId,
         prefillPatch: prefill,
@@ -564,10 +553,10 @@ router.post('/documents/:documentId/apply', authenticateJWT, async (req, res) =>
       transport_v2: upsertResult.transportV2,
     });
   } catch (err) {
-    if (err instanceof BuildingCertificationOcrHttpError) {
+    if (err instanceof buildingCertificationOcrApplyService.BuildingCertificationOcrHttpError) {
       return res.status(err.statusCode).json({ msg: err.message, ...(err.extras.errors ? { errors: err.extras.errors } : {}) });
     }
-    if (err instanceof TransportV2HttpError) {
+    if (err instanceof transportV2DraftService.TransportV2HttpError) {
       return res.status(err.statusCode).json({ msg: err.message, ...(err.extras.errors ? { errors: err.extras.errors } : {}) });
     }
     logUnexpectedError(req, err, { flow: 'documents_apply' });
