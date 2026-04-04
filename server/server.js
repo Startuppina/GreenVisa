@@ -157,6 +157,38 @@ app.use((req, res, next) => {
 
 app.use(requestLoggingMiddleware);
 
+async function getBuildingLockState(userId, buildingId) {
+  const result = await pool.query(
+    "SELECT id, results_visible FROM buildings WHERE id = $1 AND user_id = $2",
+    [buildingId, userId]
+  );
+
+  if (result.rows.length === 0) {
+    return { found: false, locked: false };
+  }
+
+  return {
+    found: true,
+    locked: Boolean(result.rows[0].results_visible),
+  };
+}
+
+async function assertBuildingEditable(res, userId, buildingId) {
+  const state = await getBuildingLockState(userId, buildingId);
+
+  if (!state.found) {
+    res.status(404).json({ msg: "Edificio non trovato" });
+    return false;
+  }
+
+  if (state.locked) {
+    res.status(403).json({ msg: "Edificio finalizzato: modifiche non consentite" });
+    return false;
+  }
+
+  return true;
+}
+
 const cleanUpCart = async () => {
   const job = "cart_session_cleanup";
   logCronEvent("cron_started", { job_name: job });
@@ -3098,7 +3130,11 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
       return res.status(400).json({ msg: "Il campo 'Fatturato annuo' deve essere un numero intero." });
     }
 
-    if (!nameNormalized || !addressNormalized || !usageNormalized || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+    const lightsMissing =
+      lighting === undefined || lighting === null || lighting === "" ||
+      led === undefined || led === null || led === "" ||
+      gasLamp === undefined || gasLamp === null || gasLamp === "";
+    if (!nameNormalized || !addressNormalized || !usageNormalized || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || lightsMissing || !autoLightingControlSystem) {
       logBuildingEvent(req, "validation_failed", { flow: "building_create", reason: "missing_fields" }, "warn");
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
@@ -3127,6 +3163,10 @@ app.post("/api/upload-building", authenticateJWT, async (req, res) => {
 
     if (!userId) {
       return res.status(401).json({ msg: "Utente non autenticato" });
+    }
+
+    if (!(await assertBuildingEditable(res, userId, id))) {
+      return;
     }
 
     const values = [
@@ -3297,7 +3337,11 @@ app.put("/api/edit-building", authenticateJWT, async (req, res) => {
 
     //console.log(req.body);
 
-    if (!id || !nameNormalized || !addressNormalized || !usageNormalized || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || !lighting || !led || !gasLamp || !autoLightingControlSystem) {
+    const lightsMissingEdit =
+      lighting === undefined || lighting === null || lighting === "" ||
+      led === undefined || led === null || led === "" ||
+      gasLamp === undefined || gasLamp === null || gasLamp === "";
+    if (!id || !nameNormalized || !addressNormalized || !usageNormalized || !year || !area || !location || !renovation || !heating || !ventilation || !energyControl || !maintenance || !waterRecovery || !electricityCounter || !electricityAnalyzer || !electricForniture || lightsMissingEdit || !autoLightingControlSystem) {
       logBuildingEvent(req, "validation_failed", { flow: "building_update", reason: "missing_fields" }, "warn");
       return res.status(400).json({ msg: "Tutti i campi sono obbligatori" });
     }
@@ -3401,6 +3445,9 @@ app.delete("/api/delete-building/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const query = "DELETE FROM buildings WHERE user_id = $1 AND id = $2";
     const values = [user_id, id];
     await pool.query(query, values);
@@ -3456,6 +3503,9 @@ app.post("/api/buildings/:id/upload/plant", authenticateJWT, async (req, res) =>
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const {
       description,
       plantType,
@@ -3537,6 +3587,9 @@ app.put("/api/buildings/:id/update/plant/:plant_id", authenticateJWT, async (req
   try {
     const { id, plant_id } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const {
       description,
       plantType,
@@ -3640,8 +3693,19 @@ app.delete("/api/delete-plant/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    const plantLookup = await pool.query(
+      "SELECT building_id FROM plants WHERE id = $1 AND user_id = $2",
+      [id, user_id]
+    );
+    if (plantLookup.rows.length === 0) {
+      return res.status(404).json({ msg: "Impianto non trovato" });
+    }
+    const buildingId = plantLookup.rows[0].building_id;
+    if (!(await assertBuildingEditable(res, user_id, buildingId))) {
+      return;
+    }
 
-    await pool.query(`DELETE FROM plants WHERE id = $1`, [id]);
+    await pool.query(`DELETE FROM plants WHERE id = $1 AND user_id = $2`, [id, user_id]);
     res.status(200).json({ msg: "Impianto eliminato con successo" });
   } catch (error) {
     console.error('Error deleting plant:', error.message);
@@ -3683,6 +3747,9 @@ app.post("/api/buildings/:id/upload/gas", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const {
       type,
       quantityKg,
@@ -3717,6 +3784,9 @@ app.put("/api/buildings/:id/update/gas/:gas_id", authenticateJWT, async (req, re
   try {
     const { id, gas_id } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const {
       type,
       quantityKg,
@@ -3752,6 +3822,17 @@ app.delete("/api/delete-gas/:id", authenticateJWT, async (req, res) => {
     const { user_id } = req.user;
     console.log('user_id:', user_id);
     console.log('id:', id);
+    const gasLookup = await pool.query(
+      "SELECT building_id FROM refrigerant_gases WHERE id = $1 AND user_id = $2",
+      [id, user_id]
+    );
+    if (gasLookup.rows.length === 0) {
+      return res.status(404).json({ msg: "Gas non trovato" });
+    }
+    const buildingId = gasLookup.rows[0].building_id;
+    if (!(await assertBuildingEditable(res, user_id, buildingId))) {
+      return;
+    }
 
     await pool.query(`DELETE FROM refrigerant_gases WHERE id = $1 AND user_id = $2`, [id, user_id]);
     res.status(200).json({ msg: "Gas clima alterante eliminato con successo" });
@@ -3780,6 +3861,9 @@ app.post("/api/:buildingID/add-consumption", authenticateJWT, async (req, res) =
   try {
     const { user_id } = req.user;
     const { buildingID } = req.params;
+    if (!(await assertBuildingEditable(res, user_id, buildingID))) {
+      return;
+    }
     const { energy_source, consumption } = req.body;
 
 
@@ -3830,6 +3914,9 @@ app.put("/api/:buildingID/modify-consumption/:consumptionId", authenticateJWT, a
   try {
     const { user_id } = req.user;
     const { buildingID } = req.params;
+    if (!(await assertBuildingEditable(res, user_id, buildingID))) {
+      return;
+    }
     const { consumptionId } = req.params;
     const { energy_source, consumption } = req.body;
 
@@ -3854,6 +3941,9 @@ app.delete("/api/:buildingID/delete-consumption/:id", authenticateJWT, async (re
   try {
     const { user_id } = req.user;
     const { buildingID } = req.params;
+    if (!(await assertBuildingEditable(res, user_id, buildingID))) {
+      return;
+    }
     const { id } = req.params;
 
     //console.log('buildingID:', buildingID);
@@ -3872,6 +3962,9 @@ app.post("/api/buildings/:id/upload/solar", authenticateJWT, async (req, res) =>
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const { installedArea } = req.body;
 
     if (!installedArea) {
@@ -3908,6 +4001,9 @@ app.put("/api/buildings/:id/update/solar/:solarID", authenticateJWT, async (req,
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const { installedArea } = req.body;
     const { solarID } = req.params;
 
@@ -3942,6 +4038,20 @@ app.delete("/api/delete-solar/:id", authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    const solarLookup = await pool.query(
+      `SELECT s.building_id
+       FROM solars s
+       JOIN buildings b ON b.id = s.building_id
+       WHERE s.id = $1 AND b.user_id = $2`,
+      [id, user_id]
+    );
+    if (solarLookup.rows.length === 0) {
+      return res.status(404).json({ msg: "Impianto solare non trovato" });
+    }
+    const buildingId = solarLookup.rows[0].building_id;
+    if (!(await assertBuildingEditable(res, user_id, buildingId))) {
+      return;
+    }
     const values = [id];
     await pool.query("DELETE FROM solars WHERE id = $1", values);
     res.status(200).json({ msg: "Impianto solare eliminato con successo" });
@@ -3974,6 +4084,9 @@ app.post("/api/buildings/:id/upload/photovoltaic", authenticateJWT, async (req, 
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const { power } = req.body;
 
     if (!power) {
@@ -4010,6 +4123,20 @@ app.delete("/api/delete-photovoltaic/:id", authenticateJWT, async (req, res) => 
   try {
     const { id } = req.params;
     const { user_id } = req.user;
+    const photoLookup = await pool.query(
+      `SELECT p.building_id
+       FROM photovoltaics p
+       JOIN buildings b ON b.id = p.building_id
+       WHERE p.id = $1 AND b.user_id = $2`,
+      [id, user_id]
+    );
+    if (photoLookup.rows.length === 0) {
+      return res.status(404).json({ msg: "Impianto fotovoltaico non trovato" });
+    }
+    const buildingId = photoLookup.rows[0].building_id;
+    if (!(await assertBuildingEditable(res, user_id, buildingId))) {
+      return;
+    }
 
     const values = [id];
     await pool.query("DELETE FROM photovoltaics WHERE id = $1", values);
@@ -4026,6 +4153,9 @@ app.put("/api/buildings/:id/update-photovoltaic/:photoID", authenticateJWT, asyn
   try {
     const { id, photoID } = req.params;
     const { user_id } = req.user;
+    if (!(await assertBuildingEditable(res, user_id, id))) {
+      return;
+    }
     const { power } = req.body;
 
 
@@ -4742,6 +4872,14 @@ app.put("/api/insert-results/:buildingID", authenticateJWT, async (req, res) => 
 
 
   try {
+    const lockState = await getBuildingLockState(user_id, buildingID);
+    if (!lockState.found) {
+      return res.status(404).json({ msg: "Edificio non trovato" });
+    }
+    if (lockState.locked) {
+      return res.status(409).json({ msg: "Edificio già finalizzato. Non è possibile ricalcolare le emissioni." });
+    }
+
     await pool.query(`UPDATE buildings SET  emissionMark = $1, emissionCO2 = $2, areaEmissionCO2 = $3, results_visible = true WHERE id = $4 AND user_id = $5`, [finalVote, totalCO2Emissions, areaCO2Emissions, buildingID, user_id]);
     res.status(200).json({ msg: "Risultati inseriti con successo" });
   } catch (error) {

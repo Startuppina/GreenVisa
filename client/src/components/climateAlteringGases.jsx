@@ -19,7 +19,7 @@ function ClimateAlteringGases() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
-    const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
+    const { buildingID, refresh, triggerRefresh, buildingLocked } = useRecoveryContext();
 
     // Crea una ref per il form
     const formRef = useRef(null);
@@ -29,6 +29,13 @@ function ClimateAlteringGases() {
             formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     }, [showGasFrom]);
+
+    useEffect(() => {
+        if (buildingLocked) {
+            setShowGasFrom(false);
+            setShowGasFormModifier(null);
+        }
+    }, [buildingLocked]);
 
 
     useEffect(() => {
@@ -60,6 +67,11 @@ function ClimateAlteringGases() {
     }, [buildingID, refresh]); // Added buildingID as a dependency, also plantrigger as a dependency
 
     const deleteGas = async () => {
+        if (buildingLocked) {
+            setMessagePopup("Edificio finalizzato: modifiche non consentite.");
+            setButtonPopup(true);
+            return;
+        }
 
         const { id } = gasToDelete;
         try {
@@ -104,27 +116,34 @@ function ClimateAlteringGases() {
                 <div className="flex flex-row justify-between">
                     <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Gas clima alteranti utilizzati per la produzione</h1>
                     <div className="flex flex-col items-center justify-center m-2">
-                        <button
-                            className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                            onClick={() => setShowGasFrom(!showGasFrom)}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="2"
-                                stroke="currentColor"
-                                className="w-6 h-6"
+                        {!buildingLocked && (
+                            <button
+                                className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
+                                onClick={() => setShowGasFrom(!showGasFrom)}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M12 4.5v15m7.5-7.5h-15"
-                                />
-                            </svg>
-                        </button>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="2"
+                                    stroke="currentColor"
+                                    className="w-6 h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 4.5v15m7.5-7.5h-15"
+                                    />
+                                </svg>
+                            </button>
+                        )}
                     </div>
                 </div>
+                {buildingLocked && (
+                    <div className="px-4 pb-2 text-red-600 font-semibold">
+                        Edificio finalizzato: modifiche non consentite.
+                    </div>
+                )}
 
                 {numGases === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
@@ -155,25 +174,27 @@ function ClimateAlteringGases() {
                                     </div>
                                 )}
 
-                                <div className="flex justify-end gap-2">
-                                    <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
-                                        onClick={() => setShowGasFormModifier(showGasFormModifier === gas.id ? null : gas.id)}                                    >
-                                        {showGasFormModifier === gas.id ? 'Annulla' : 'Modifica'}
-                                    </button>
-                                    <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
-                                        onClick={() => {
-                                            setGasToDelete({
-                                                id: gas.id,
-                                            });
-                                            setMessageConfirm(
-                                                "Sei sicuro di voler eliminare questo gas?"
-                                            );
-                                            setPopupConfirmDelete(true);
-                                        }}>
-                                        Elimina
-                                    </button>
-                                </div>
-                                {showGasFormModifier === gas.id && <ClimateGasAlteringForm gas={gas} isEdit={true} onButtonClick={cancelEdit} />}
+                                {!buildingLocked && (
+                                    <div className="flex justify-end gap-2">
+                                        <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
+                                            onClick={() => setShowGasFormModifier(showGasFormModifier === gas.id ? null : gas.id)}                                    >
+                                            {showGasFormModifier === gas.id ? 'Annulla' : 'Modifica'}
+                                        </button>
+                                        <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
+                                            onClick={() => {
+                                                setGasToDelete({
+                                                    id: gas.id,
+                                                });
+                                                setMessageConfirm(
+                                                    "Sei sicuro di voler eliminare questo gas?"
+                                                );
+                                                setPopupConfirmDelete(true);
+                                            }}>
+                                            Elimina
+                                        </button>
+                                    </div>
+                                )}
+                                {!buildingLocked && showGasFormModifier === gas.id && <ClimateGasAlteringForm gas={gas} isEdit={true} onButtonClick={cancelEdit} />}
                             </div>
                         ))}
                     </div>
@@ -182,7 +203,7 @@ function ClimateAlteringGases() {
 
             </div>
             <div ref={formRef}>
-                {showGasFrom && (<div className="flex justify-center"><ClimateGasAlteringForm gas="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
+                {!buildingLocked && showGasFrom && (<div className="flex justify-center"><ClimateGasAlteringForm gas="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
             </div>
         </div >
     );
