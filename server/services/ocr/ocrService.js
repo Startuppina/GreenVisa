@@ -1,6 +1,7 @@
 const googleDocAi = require('./googleDocumentAiService');
 const { normalizeProviderOutput } = require('./fieldMapper');
-const { normalizeApeProviderOutput, markApeSuspiciousLpgFromOcr } = require('./apeFieldMapper');
+const apeFieldMapper = require('./apeFieldMapper');
+const { normalizeApeProviderOutput, markApeSuspiciousLpgFromOcr } = apeFieldMapper;
 const {
   validateNormalizedOutput,
   applyNormalizations,
@@ -12,11 +13,15 @@ const documentStorageService = require('../documents/documentStorageService');
 const { buildTransportV2VehiclePrefill } = require('../transportV2/transportV2OcrPrefillService');
 const { buildBuildingCertificationPrefill } = require('../buildingCertification/buildingCertificationOcrPrefillService');
 const logger = require('../../logger');
+const ocrConfig = require('../../config/ocr');
 
-// ── APE post-processing modules ───────────────────────────────────────────────
-const apeFieldMapper = require('./apeFieldMapper');
-const { validateApeNormalizedOutput, applyApeNormalizations } = require('./apeOcrOutputValidator');
-const { buildBuildingCertificationPrefill } = require('../buildingCertification/buildingCertificationOcrPrefillService');
+function resolveProcessorConfig(category) {
+  const config = ocrConfig.google.processors[category];
+  if (!config) {
+    throw new Error(`No processor config found for category: ${category}`);
+  }
+  return config;
+}
 
 /**
  * Run the full OCR pipeline for a stored document.
@@ -29,7 +34,7 @@ const { buildBuildingCertificationPrefill } = require('../buildingCertification/
  */
 async function processDocument(documentRecord, options = {}) {
   const docId = documentRecord.id;
-  const { skipMarkProcessing = false, category = 'transport' } = options;
+  const { skipMarkProcessing = false, category: optionCategory = 'transport' } = options;
 
   try {
     if (!skipMarkProcessing) {
@@ -39,9 +44,12 @@ async function processDocument(documentRecord, options = {}) {
       });
     }
 
+    const batchRow =
+      documentRecord.batch_id != null ? await repo.getBatchById(documentRecord.batch_id) : null;
+    const category = batchRow?.category || optionCategory;
+
     const fileBytes = documentStorageService.readFileBytes(documentRecord.storage_path);
 
-    // ── Resolve the correct Google processor for this category ────────────
     const processorConfig = resolveProcessorConfig(category);
 
     logger.info(
@@ -57,11 +65,8 @@ async function processDocument(documentRecord, options = {}) {
     const providerResult = await googleDocAi.processDocument(
       fileBytes,
       documentRecord.mime_type,
+      processorConfig,
     );
-
-    const batchRow =
-      documentRecord.batch_id != null ? await repo.getBatchById(documentRecord.batch_id) : null;
-    const category = batchRow?.category || 'transport';
 
     let normalizedFields;
     let validationIssues;
@@ -110,19 +115,8 @@ async function processDocument(documentRecord, options = {}) {
       };
     }
 
-  await repo.deleteResultByDocumentId(docId);
+    await repo.deleteResultByDocumentId(docId);
 
-  await repo.createResult({
-    documentId: docId,
-    rawProviderOutput: providerResult.rawProviderOutput,
-    normalizedOutput: {
-      fields: normalizedFields,
-      transport_v2_vehicle_prefill: transportV2VehiclePrefill,
-    },
-    derivedOutput,
-    reviewPayload,
-    validationIssues,
-  });
     await repo.createResult({
       documentId: docId,
       rawProviderOutput: providerResult.rawProviderOutput,
@@ -132,12 +126,41 @@ async function processDocument(documentRecord, options = {}) {
       validationIssues,
     });
 
-  await repo.updateDocumentStatus(docId, 'needs_review', {
-    errorCode: null,
-    errorMessage: null,
-  });
+    await repo.updateDocumentStatus(docId, 'needs_review', {
+      errorCode: null,
+      errorMessage: null,
+    });
 
-  return { status: 'needs_review', fields: normalizedFields, validationIssues };
+    return { status: 'needs_review', fields: normalizedFields, validationIssues };
+  } catch (err) {
+    if (err.code === 'OCR_PROVIDER_TIMEOUT') {
+      logger.warn(
+        {
+          event: 'ocr_provider_timeout',
+          document_id: docId,
+          retryable: err.retryable === true,
+          err: { message: err.message, code: err.code },
+        },
+        err.message || 'Google Document AI request timed out',
+      );
+    } else {
+      logger.error(
+        {
+          event: 'ocr_processing_failed',
+          document_id: docId,
+          err: { message: err.message, code: err.code },
+        },
+        'OCR provider or pipeline failed',
+      );
+    }
+
+    await repo.updateDocumentStatus(docId, 'failed', {
+      errorCode: err.code || 'PROCESSING_ERROR',
+      errorMessage: err.message || 'Unknown error during OCR processing',
+    });
+
+    return { status: 'failed', error: err.message };
+  }
 }
 
 // ── APE OCR post-processing (Batch 3: semantic layer) ─────────────────────────
@@ -184,36 +207,6 @@ async function processApeDocument(docId, providerResult) {
   );
 
   return { status: 'needs_review', fields: normalizedFields, validationIssues };
-    return { status: 'needs_review', fields: normalizedFields, validationIssues };
-  } catch (err) {
-    if (err.code === 'OCR_PROVIDER_TIMEOUT') {
-      logger.warn(
-        {
-          event: 'ocr_provider_timeout',
-          document_id: docId,
-          retryable: err.retryable === true,
-          err: { message: err.message, code: err.code },
-        },
-        err.message || 'Google Document AI request timed out',
-      );
-    } else {
-      logger.error(
-        {
-          event: 'ocr_processing_failed',
-          document_id: docId,
-          err: { message: err.message, code: err.code },
-        },
-        'OCR provider or pipeline failed',
-      );
-    }
-
-    await repo.updateDocumentStatus(docId, 'failed', {
-      errorCode: err.code || 'PROCESSING_ERROR',
-      errorMessage: err.message || 'Unknown error during OCR processing',
-    });
-
-    return { status: 'failed', error: err.message };
-  }
 }
 
 function buildDerivedTransportDerivedOutput(transportV2VehiclePrefill) {
