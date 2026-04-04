@@ -22,7 +22,7 @@ function ProductsForm() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/categories`);
+                const response = await axios.get(`/api/categories`);
                 setCategories(response.data);
             } catch (error) {
                 console.error('Error fetching categories:', error);
@@ -61,7 +61,7 @@ function ProductsForm() {
         console.log('Form data:', formData);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-product`, formData, {
+            const response = await axios.post(`/api/upload-product`, formData, {
                 withCredentials: true,
             });
 
@@ -79,7 +79,7 @@ function ProductsForm() {
                     setTag('');
                 }, 3000); // Caricamento finto di 2 secondi
 
-                navigate("/User");
+                navigate("/user");
             } else if (response.status === 400) {
                 setMessagePopup(response.data.msg);
                 setButtonPopup(true);

@@ -9,7 +9,7 @@ const VerifyAccountPage = () => {
     useEffect(() => {
         const verifyAccount = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/verify?token=${token}`);
+                const response = await fetch(`/api/verify?token=${token}`);
                 const data = await response.json();
 
                 if (response.ok && data.success) {

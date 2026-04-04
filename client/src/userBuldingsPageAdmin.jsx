@@ -18,7 +18,7 @@ function UserBuldingsPageAdmin() {
     useEffect(() => {
         const fetchUserBuildings = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-buildings/${id}`, {
+                const response = await axios.get(`/api/fetch-user-buildings/${id}`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -43,7 +43,7 @@ function UserBuldingsPageAdmin() {
         console.log("building solars", buildingSolars);
 
         try {
-            const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-building-plants-solars-photos/${id}/${buildingId}`, {
+            const response = await axios.get(`/api/fetch-building-plants-solars-photos/${id}/${buildingId}`, {
                 withCredentials: true
             });
             if (response.status === 200) {
@@ -198,8 +198,12 @@ function UserBuldingsPageAdmin() {
                                             <span id="building-name">{selectedBuilding.name}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="font-semibold">Locazione:</span>
-                                            <span id="construction-year">{selectedBuilding.location}</span>
+                                            <span className="font-semibold">Regione:</span>
+                                            <span id="construction-year">{selectedBuilding.region || selectedBuilding.location}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="font-semibold">Comune:</span>
+                                            <span id="description">{selectedBuilding.municipality || '-'}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="font-semibold">Indirizzo:</span>
@@ -211,7 +215,7 @@ function UserBuldingsPageAdmin() {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="font-semibold">Anno di Costruzione:</span>
-                                            <span id="construction-year">{selectedBuilding.construction_year}</span>
+                                            <span id="construction-year">{selectedBuilding.construction_year_value || selectedBuilding.construction_year}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="font-semibold">Superficie:</span>
@@ -226,8 +230,8 @@ function UserBuldingsPageAdmin() {
                                             <span id="heat-distribution">{selectedBuilding.heat_distribution}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="font-semibold">Ventilazione Meccanica Controllata:</span>
-                                            <span id="ventilation">{selectedBuilding.ventilation}</span>
+                                            <span className="font-semibold">Zona climatica:</span>
+                                            <span id="ventilation">{selectedBuilding.climate_zone || '-'}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="font-semibold">Controllo Energetico:</span>
@@ -252,8 +256,8 @@ function UserBuldingsPageAdmin() {
                                             <span id="water-recovery">{selectedBuilding.water_recovery}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="font-semibold">Contatore Elettrico:</span>
-                                            <span id="electricity-counter">{selectedBuilding.electricity_meter}</span>
+                                            <span className="font-semibold">Classe di potenza contrattuale:</span>
+                                            <span id="electricity-counter">{selectedBuilding.contract_power_class || selectedBuilding.electricity_meter}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="font-semibold">Analizzatori di rete per il controllo dei consumi elettrici:</span>
@@ -344,7 +348,7 @@ function UserBuldingsPageAdmin() {
                         <div className="bg-[#D9D9D9] rounded-xl md:mx-14 h-auto max-h-[65vh] overflow-y-auto w-full p-4">
                             <h1 className="text-2xl font-bold mb-2">Consumi annuali</h1>
                             {buildingConsumptions.map((consumption, index) => ( // Controllo per prevenire plants undefined
-                                <div key={consumption.id}
+                                <div key={`${consumption.energy_source}-${index}`}
                                     className="p-4 mb-4 bg-white rounded-lg"
                                 >
                                     <div className="">
@@ -366,13 +370,10 @@ function UserBuldingsPageAdmin() {
                                     className="p-4 mb-4 bg-white rounded-lg"
                                 >
                                     <div className="">
-                                        <strong>Descrizione:</strong> {plant.description}
+                                        <strong>Categoria:</strong> {plant.system_type || 'N/D'}
                                     </div>
                                     <div className="">
                                         <strong>Tipo di impianto:</strong> {plant.plant_type}
-                                    </div>
-                                    <div className="">
-                                        <strong>Tipo di servizio:</strong> {plant.service_type}
                                     </div>
                                     <div className="">
                                         <strong>Tipo di generatore:</strong> {plant.generator_type}
@@ -385,6 +386,9 @@ function UserBuldingsPageAdmin() {
                                     </div>
                                     <div className="">
                                         <strong>Elemento consumato dal generatore:</strong> {plant.fuel_type}
+                                    </div>
+                                    <div className="">
+                                        <strong>Quantità consumata:</strong> {plant.fuel_consumption ?? 'N/D'} {plant.fuel_unit || ''}
                                     </div>
                                 </div>
                             ))}

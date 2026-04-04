@@ -35,7 +35,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
 
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-username`, { username: newUsername }, {
+            const response = await axios.put(`/api/update-username`, { username: newUsername }, {
                 withCredentials: true,
             });
 
@@ -58,7 +58,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
 
         setNewPhone(`+${newPhone}`);
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-phone`, { phone_number: newPhone }, {
+            const response = await axios.put(`/api/update-phone`, { phone_number: newPhone }, {
                 withCredentials: true,
             });
 
@@ -80,7 +80,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
 
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-email`, { email: newEmail }, {
+            const response = await axios.put(`/api/update-email`, { email: newEmail }, {
                 withCredentials: true,
             });
 
@@ -102,7 +102,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
     //     e.preventDefault();
     //    
     //     try {
-    //         const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-company-name`, { company_name: newCompanyName }, {
+    //         const response = await axios.put(`/api/update-company-name`, { company_name: newCompanyName }, {
     //             headers: {
     //                 'Authorization': `Bearer ${token}`,
     //                 'Content-Type': 'application/json'
@@ -126,7 +126,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
     //    
 
     //     try {
-    //         const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-piva`, { piva: newPiva }, {
+    //         const response = await axios.put(`/api/update-piva`, { piva: newPiva }, {
     //             headers: {
     //                 'Authorization': `Bearer ${token}`,
     //                 'Content-Type': 'application/json'
@@ -150,7 +150,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
 
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-tax-code`, { tax_code: newTaxCode }, {
+            const response = await axios.put(`/api/update-tax-code`, { tax_code: newTaxCode }, {
                 withCredentials: true,
             });
             if (response.status === 200) {
@@ -170,7 +170,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
     //     e.preventDefault();
     //    
     //     try {
-    //         const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-legal-headquarter`, { legal_headquarter: newLegalHeadquarter }, {
+    //         const response = await axios.put(`/api/update-legal-headquarter`, { legal_headquarter: newLegalHeadquarter }, {
     //             headers: {
     //                 'Authorization': `Bearer ${token}`,
     //                 'Content-Type': 'application/json'
@@ -194,7 +194,7 @@ function UserDataModifier({ userInfo, setUserInfo, color = 'transparent' }) {
 
         console.log("newTurnover:", newTurnover);
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-turnover`, { turnover: newTurnover }, {
+            const response = await axios.put(`/api/update-turnover`, { turnover: newTurnover }, {
                 withCredentials: true,
             });
             if (response.status === 200) {

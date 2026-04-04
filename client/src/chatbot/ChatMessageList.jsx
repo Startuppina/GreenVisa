@@ -47,7 +47,7 @@ export default function ChatMessageList({ messages, isLoading, onRequestHandoff,
             className="text-xs text-[#2d7044] underline hover:text-[#245a37] transition-colors
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d7044] focus-visible:ring-offset-1 rounded"
           >
-            Hai bisogno di parlare con un operatore?
+            Genera una bozza di email di supporto
           </button>
         </div>
       )}

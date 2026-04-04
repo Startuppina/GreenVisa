@@ -1,0 +1,54 @@
+services:
+  nginx:
+    build:
+      context: ./client
+      dockerfile: dockerfile.prod
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+  server:
+    build:
+      context: ./server
+      dockerfile: dockerfile
+    command: ["node", "server"]
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - NODE_ENV=production
+      - CLIENT_URL=http://localhost
+      - SERVER_URL=http://localhost
+    volumes:
+      - ./server/uploaded_img:/app/uploaded_img
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    build:
+      context: .
+      dockerfile: dockerfile.database
+    ports:
+      - "5432:5432"
+    volumes:
+      - green-visa-local-prod-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d green-visa" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgweb:
+    image: sosedoff/pgweb
+    environment:
+      DATABASE_URL: postgres://admin:pass123@db:5432/green-visa?sslmode=disable
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  green-visa-local-prod-db:

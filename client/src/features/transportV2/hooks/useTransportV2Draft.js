@@ -113,7 +113,7 @@ export default function useTransportV2Draft(certificationId) {
       setUi((previous) => ({
         ...previous,
         isLoading: false,
-        loadError: extractApiErrorMessage(error, 'Unable to load Transport V2 draft.'),
+        loadError: extractApiErrorMessage(error, 'Impossibile caricare la bozza del questionario trasporti.'),
       }));
     }
   }, [numericCertificationId]);
@@ -123,7 +123,7 @@ export default function useTransportV2Draft(certificationId) {
       setUi((previous) => ({
         ...previous,
         isLoading: false,
-        loadError: 'A valid certification id is required.',
+        loadError: 'È richiesto un identificativo di certificazione valido.',
       }));
       return;
     }
@@ -280,7 +280,7 @@ export default function useTransportV2Draft(certificationId) {
     updateVehicle(vehicleId, () => nextVehicle, []);
   }, [updateVehicle]);
 
-  const saveDraft = useCallback(async ({ silentSuccess = false } = {}) => {
+  const saveDraft = useCallback(async () => {
     if (autosaveTimeoutRef.current) {
       clearTimeout(autosaveTimeoutRef.current);
       autosaveTimeoutRef.current = null;
@@ -308,7 +308,7 @@ export default function useTransportV2Draft(certificationId) {
         isDirty: false,
         saveError: null,
         submitError: null,
-        saveSuccessAt: silentSuccess ? previous.saveSuccessAt : new Date().toISOString(),
+        saveSuccessAt: new Date().toISOString(),
       }));
 
       return { ok: true, transportV2: normalized };
@@ -321,7 +321,7 @@ export default function useTransportV2Draft(certificationId) {
       setUi((previous) => ({
         ...previous,
         isSaving: false,
-        saveError: extractApiErrorMessage(error, 'Unable to save Transport V2 draft.'),
+        saveError: extractApiErrorMessage(error, 'Impossibile salvare la bozza del questionario trasporti.'),
       }));
       return { ok: false, fieldErrors: nextFieldErrors };
     }
@@ -352,7 +352,7 @@ export default function useTransportV2Draft(certificationId) {
         return;
       }
       lastAutosaveAttemptRevisionRef.current = draftRevision;
-      saveDraft({ silentSuccess: true });
+      saveDraft();
     }, AUTOSAVE_DEBOUNCE_MS);
 
     return () => {
@@ -370,17 +370,17 @@ export default function useTransportV2Draft(certificationId) {
       setFieldErrors(grouped);
       setUi((previous) => ({
         ...previous,
-        submitError: 'Complete the required fields before submitting.',
+        submitError: 'Compila i campi obbligatori prima di inviare.',
       }));
       return { ok: false, fieldErrors: grouped };
     }
 
     if (uiRef.current.isDirty) {
-      const saveResult = await saveDraft({ silentSuccess: true });
+      const saveResult = await saveDraft();
       if (!saveResult.ok) {
         setUi((previous) => ({
           ...previous,
-          submitError: 'Save failed, so submit was not attempted.',
+          submitError: 'Salvataggio non riuscito: invio non eseguito.',
         }));
         return { ok: false };
       }
@@ -413,7 +413,7 @@ export default function useTransportV2Draft(certificationId) {
       setUi((previous) => ({
         ...previous,
         isSubmitting: false,
-        submitError: extractApiErrorMessage(error, 'Unable to submit Transport V2 draft.'),
+        submitError: extractApiErrorMessage(error, 'Impossibile inviare il questionario trasporti.'),
       }));
       return { ok: false, fieldErrors: nextFieldErrors };
     }

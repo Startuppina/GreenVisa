@@ -162,7 +162,7 @@ function Payment() {
                     <div className="flex flex-col justify-center md:flex-row md:justify-between z-10">
                         <div className="text-2xl font-bold">Informazioni di contatto</div>
                         <div className='md:text-right'>
-                            Non hai fatto l'accesso? <span className='text-[#2d7044] font-bold'><Link to="/Login">Accedi</Link></span>
+                            Non hai fatto l'accesso? <span className='text-[#2d7044] font-bold'><Link to="/login">Accedi</Link></span>
                         </div>
                     </div>
                     <p className="mt-5 mb-5">Utilizzeremo questa email per inviare i dettagli e gli aggiornamenti relativi al tuo ordine.</p>

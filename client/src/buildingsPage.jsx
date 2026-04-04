@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import ScrollToTop from './components/scrollToTop';
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
-import BuildingFrom from "./components/buildingFrom";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import ConfirmPopUp from "./components/confirmPopUp";
@@ -12,7 +11,6 @@ import { useNavigate } from "react-router-dom";
 export default function Buildings() {
     const [buildings, setBuildings] = useState([]);
     const [numBuildings, setNumBuildings] = useState(0);
-    const [showBuildingForm, setShowBuildingForm] = useState(false);
     const [buildingToDelete, setBuildingToDelete] = useState(null);
     const [popupConfirmDelete, setPopupConfirmDelete] = useState(false);
     const [messageConfirm, setMessageConfirm] = useState('');
@@ -20,24 +18,16 @@ export default function Buildings() {
 
     const { addBuildingTrigger, setAddBuildingTrigger } = useRecoveryContext();
 
-    const { buildingID, setBuildingID } = useRecoveryContext();
+    const { setBuildingID } = useRecoveryContext();
 
     const navigate = useNavigate();
-
-    const formRef = useRef(null);
-    useEffect(() => {
-        if (showBuildingForm && formRef.current) {
-            formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-    }, [showBuildingForm]);
-
 
     useEffect(() => {
         const fetchBuildings = async () => {
             setBuildingID(0);
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-buildings`, {
+                const response = await axios.get(`/api/fetch-buildings`, {
                     withCredentials: true
                 });
 
@@ -53,7 +43,7 @@ export default function Buildings() {
         const fetchUserTotalQuantity = async () => {
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-all-user-quantity`, {
+                const response = await axios.get(`/api/fetch-all-user-quantity`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -74,7 +64,7 @@ export default function Buildings() {
 
         const { id } = buildingToDelete;
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-building/${id}`, {
+            const response = await axios.delete(`/api/delete-building/${id}`, {
                 withCredentials: true
             });
 
@@ -120,7 +110,7 @@ export default function Buildings() {
                         <div className="flex flex-col items-center justify-center m-2 mt-5">
                             <button
                                 className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                                onClick={() => setShowBuildingForm(!showBuildingForm)}
+                                onClick={() => navigate('/building/new')}
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -138,7 +128,6 @@ export default function Buildings() {
                                 </svg>
                             </button>
                         </div>
-                        {showBuildingForm && <BuildingFrom buildingData="empty" isEdit={false} />}
                     </div>
                 ) : (
                     <div className="text-center mt-10">
@@ -185,7 +174,7 @@ export default function Buildings() {
                             { /* dnumBuildings < totalQuantity ? (
                                 <button
                                     className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                                    onClick={() => setShowBuildingForm(!showBuildingForm)}
+                                    onClick={() => navigate('/building/new')}
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -211,7 +200,7 @@ export default function Buildings() {
 
                                 <button
                                     className="p-2 mb-4 w-20 h-20 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                                    onClick={() => setShowBuildingForm(!showBuildingForm)}
+                                    onClick={() => navigate('/building/new')}
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -229,8 +218,6 @@ export default function Buildings() {
                                     </svg>
                                 </button>}
                         </div>
-
-                        {showBuildingForm && <div ref={formRef}><BuildingFrom buildingData="empty" isEdit={false} /></div>}
                     </div>
                 )
                 }

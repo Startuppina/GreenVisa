@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRecoveryContext } from "../provider/provider";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MessagePopUp from "./messagePopUp";
+import axiosInstance from "../axiosInstance";
 
 export default function OTPInput() {
-  const { email, OTP } = useRecoveryContext();
+  const { email } = useRecoveryContext();
   const [timerCount, setTimer] = useState(300);
   const [OTPinput, setOTPinput] = useState(["", "", "", ""]);
   const [disable, setDisable] = useState(true);
@@ -40,30 +40,40 @@ export default function OTPInput() {
   function resendOTP() {
     if (disable) return;
 
-    axios
-      .post("http://localhost:5000/send_recovery_email", {
-        OTP: OTP,
-        recipient_email: email,
-      }, {
-        withCredentials: true
+    axiosInstance
+      .post("/send_recovery_email", {
+        email,
       })
       .then(() => {
         setDisable(true);
-        setTimer(60);
-        setMessagePopup("A new OTP has successfully been sent to your email.");
+        setTimer(300);
+        setMessagePopup("Abbiamo inviato un nuovo codice alla tua email.");
         setButtonPopup(true);
       })
       .catch(() => {
-        setMessagePopup("Failed to resend OTP");
+        setMessagePopup("Impossibile inviare un nuovo codice");
         setButtonPopup(true);
       });
   }
 
-  function verifyOTP() {
-    if (parseInt(OTPinput.join("")) === OTP) {
-      navigate("/Reset");
-    } else {
-      setMessagePopup("OTP non corretto");
+  async function verifyOTP() {
+    if (!email) {
+      setMessagePopup("Sessione di recupero non valida. Ripeti la procedura.");
+      setButtonPopup(true);
+      navigate("/insertemail");
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post("/verify-recovery-code", {
+        email,
+        code: OTPinput.join(""),
+      });
+      if (response.status === 200) {
+        navigate("/reset");
+      }
+    } catch (error) {
+      setMessagePopup(error.response?.data?.msg || "OTP non corretto");
       setButtonPopup(true);
     }
   }

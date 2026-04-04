@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
-import QuantitySelector from "./quantitySelector";
+import { useEffect, useState } from "react";
 import MessagePopUp from "./messagePopUp";
-import axios from "axios";
 import { useRecoveryContext } from "../provider/provider";
 import { MutatingDots } from 'react-loader-spinner';
 import { useNavigate } from 'react-router-dom';
 import { isAuthenticated } from "./isAuthenticated";
+import axiosInstance from "../axiosInstance";
 
 function Carrello() {
     const [buttonPopup, setButtonPopup] = useState(false);
@@ -15,18 +14,22 @@ function Carrello() {
     const [promoCode, setPromoCode] = useState('');
     const [discount, setDiscount] = useState(0);
     const [promoCategory, setPromoCategory] = useState('');
+    const [authenticated, setAuthenticated] = useState(false);
 
     const navigate = useNavigate();
 
     useEffect(() => {
+        const fetchAuthentication = async () => {
+            const result = await isAuthenticated();
+            setAuthenticated(result);
+        };
+        fetchAuthentication();
+    }, []);
+
+    useEffect(() => {
         const getCartProducts = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-user-cart`, {
-                    headers: {
-                        'Content-Type': 'application/json',  // Aggiungi l'Authorization header se il token esiste
-                    },
-                    withCredentials: true,
-                });
+                const response = await axiosInstance.get('/fetch-user-cart');
 
 
                 if (response.status === 200) {
@@ -52,35 +55,9 @@ function Carrello() {
         getCartProducts();
     }, [setCartProducts, setQuantities, setIsEmpty]);
 
-    const handleQuantityChange = async (productId, newQuantity) => {
-
-        try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/update-quantity/${productId}`, { quantity: newQuantity }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true
-            });
-            if (response.status === 200) {
-                setQuantities(prevQuantities => ({
-                    ...prevQuantities,
-                    [productId]: newQuantity
-                }));
-            }
-        } catch (error) {
-            setMessagePopUp(error.response?.data?.msg || error.message);
-            setButtonPopup(true);
-        }
-    }
-
     const handleRemoveProduct = async (productId) => {
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/remove-from-cart/${productId}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true
-            });
+            const response = await axiosInstance.delete(`/remove-from-cart/${productId}`);
             if (response.status === 200) {
                 setCartProducts(prevProducts => {
                     const updatedProducts = prevProducts.filter(product => product.product_id !== productId);
@@ -88,8 +65,9 @@ function Carrello() {
                     return updatedProducts;
                 });
                 setQuantities(prevQuantities => {
-                    const { [productId]: _, ...rest } = prevQuantities;
-                    return rest;
+                    const nextQuantities = { ...prevQuantities };
+                    delete nextQuantities[productId];
+                    return nextQuantities;
                 });
             }
         } catch (error) {
@@ -115,9 +93,7 @@ function Carrello() {
         };
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/checkout-session`, checkoutData, {
-                withCredentials: true
-            });
+            const response = await axiosInstance.post('/checkout-session', checkoutData);
 
             if (response.status === 200) {
                 window.location.href = response.data.url;
@@ -132,9 +108,7 @@ function Carrello() {
 
     const applyPromoCode = async () => {
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/apply-promo-code`, { code: promoCode }, {
-                withCredentials: true,
-            });
+            const response = await axiosInstance.post('/apply-promo-code', { code: promoCode });
             if (response.status === 200) {
                 setMessagePopUp(response.data.msg);
                 setButtonPopup(true);
@@ -225,7 +199,7 @@ function Carrello() {
                             <div className="w-full h-auto flex flex-col md:flex-row items-center justify-center px-5 mx-auto gap-5 transition-all duration-500 ease-out">
                                 <div className="w-[250px] h-[200px] overflow-hidden mt-3 mb-3">
                                     <img
-                                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${product.image}`}
+                                        src={`/uploaded_img/${product.image}`}
                                         alt={product.name}
                                         className="w-full h-full object-cover rounded-lg"
                                     />
@@ -262,7 +236,7 @@ function Carrello() {
             </div>
             {isEmpty ? null : (
                 <div className="w-[90%] md:w-[70%] h-auto p-5 text-arial text-xl mx-auto">
-                    {isAuthenticated() && (
+                    {authenticated && (
                         <>
                             <p>Codice Promozionale</p>
                             <div className="w-full h-auto flex flex-col md:flex-row gap-4 md:gap-12 items-center justify-between mb-10">

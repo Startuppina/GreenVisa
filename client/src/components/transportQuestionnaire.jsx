@@ -186,7 +186,7 @@ function TransportQuestionnaire({ certification_id }) {
 
   const secondLevelCertification = async (userInfo, certification_id) => {
     try {
-      await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/second-level-certification`, { userInfo, certification_id }, {
+      await axios.post(`/api/second-level-certification`, { userInfo, certification_id }, {
         withCredentials: true,
       });
       //console.log("Second Level Certification completed successfully");
@@ -590,7 +590,7 @@ function TransportQuestionnaire({ certification_id }) {
             </p>
           </div>
           <button
-            onClick={() => window.location.href = "/User"}
+            onClick={() => window.location.href = "/user"}
             className="mt-6 px-6 py-3 text-white bg-[#2d7044] hover:bg-white hover:text-[#2d7044] border-2 border-[#2d7044] font-semibold rounded-lg transition-colors duration-300"
           >
             Torna alla pagina utente

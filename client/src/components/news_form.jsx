@@ -55,7 +55,7 @@ const NewsForm = () => {
         console.log('FormData:', formData);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/upload-news`, formData, {
+            const response = await axios.post(`/api/upload-news`, formData, {
                 withCredentials: true,
             })
 
@@ -68,7 +68,7 @@ const NewsForm = () => {
                     setContent('');
                     setImage(null);
                 }, 3000);
-                navigate("/User");
+                navigate("/user");
             }
 
             /*const contentType = response.headers.get('Content-Type');

@@ -19,7 +19,7 @@ export default function UsersGeneratorTypes({ sendDataToParent }) {
 
         try {
             // Richiesta HTTP al backend per inviare il punteggio e i dati aggiuntivi
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/users-assign-score`, {
+            const response = await axios.post(`/api/users-assign-score`, {
                 score,
                 requestor_id,
                 plant_id,
@@ -46,7 +46,7 @@ export default function UsersGeneratorTypes({ sendDataToParent }) {
     useEffect(() => {
         const fetchUsersGeneratorData = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/users-generator-types`, {
+                const response = await axios.get(`/api/users-generator-types`, {
                     withCredentials: true,
                 });
 

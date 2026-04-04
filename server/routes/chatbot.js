@@ -9,7 +9,7 @@ const router = express.Router();
 const GREETING = 'Ciao, sono qui per aiutarti a compilare il questionario. Puoi farmi domande su questa sezione.';
 
 function optionalAuth(req, res, next) {
-  const token = req.cookies.accessToken || req.cookies.recoveryToken || null;
+  const token = req.cookies.accessToken || null;
   if (!token) {
     req.user = null;
     return next();

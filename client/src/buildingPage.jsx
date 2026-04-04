@@ -2,37 +2,32 @@ import React, { useState, useEffect } from "react";
 import ScrollToTop from './components/scrollToTop';
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Building from "./components/building";
-import Plants from "./components/plants";
-import Solars from "./components/solars";
-import Photovoltaics from "./components/photovoltaics";
-import Consumption from "./components/comsumption";
 import ClimateAlteringGases from "./components/climateAlteringGases";
 import { EmissionsCalculator } from "./components/emissionsCalculator";
 import { useRecoveryContext } from "./provider/provider";
 import { MutatingDots } from "react-loader-spinner";
 import MessagePopUp from "./components/messagePopUp";
-import BuildingResults from "./components/buildingResults";
 import ChatWidget from "./chatbot/ChatWidget";
+import BuildingSubmitConfirmDialog from "./components/buildingSubmitConfirmDialog";
 
 
 function BuildingPage() {
-    const [activeSection, setActiveSection] = useState(null);
+    const { id } = useParams();
     const [isLoading, setIsLoading] = useState(false);
-    const { buildingID, triggerRefreshResults } = useRecoveryContext();
-    const [results, setResults] = useState(null);
+    const { buildingID, triggerRefreshResults, buildingLocked, setBuildingLocked } = useRecoveryContext();
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     const [buttonPopUp, setButtonPopUp] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
 
-    const toggleSection = (section) => {
-        setActiveSection(activeSection === section ? null : section);
-    };
-
     const handleEmissionsResult = async () => {
+        if (!buildingID || id === 'new' || buildingLocked) {
+            return;
+        }
+
         setIsLoading(true);
 
         setTimeout(async () => {
@@ -47,6 +42,7 @@ function BuildingPage() {
                 } else {
                     // Successo: puoi gestire la logica per il successo qui
                     console.log("Emissioni calcolate con successo");
+                    setBuildingLocked(true);
                 }
 
                 setIsLoading(false);
@@ -60,18 +56,13 @@ function BuildingPage() {
             }
         }, 1000); // Ritarda di 1 secondo prima di eseguire il calcolo
     };
-
-
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth); // Stato per tenere traccia della larghezza della finestra per mostrare o meno userData modifier in un certo modo
-
     useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
+        if (id === 'new') {
+            setBuildingLocked(false);
+        }
+    }, [id, setBuildingLocked]);
 
-        window.addEventListener('resize', handleResize);
-
-        // Cleanup the event listener on component unmount
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    const canSubmitEmissions = !buildingLocked && id !== 'new' && Boolean(buildingID);
 
 
 
@@ -83,119 +74,24 @@ function BuildingPage() {
             <MessagePopUp trigger={buttonPopUp} setTrigger={setButtonPopUp}>
                 {messagePopup}
             </MessagePopUp>
+            {showConfirmDialog && (
+                <BuildingSubmitConfirmDialog
+                    onCancel={() => setShowConfirmDialog(false)}
+                    onConfirm={() => {
+                        setShowConfirmDialog(false);
+                        handleEmissionsResult();
+                    }}
+                />
+            )}
             <Building />
-
-            {
-                windowWidth >= 1024 ? (
-                    <div className="flex flex-wrap justify-center items-center gap-4 mt-10">
-                        <button
-                            className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'impianti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                            onClick={() => {
-                                toggleSection("impianti");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Impianti</span>
-                        </button>
-
-                        <button
-                            className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'consumi' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                            onClick={() => {
-                                toggleSection("consumi");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Consumi annui</span>
-                        </button>
-
-                        <button
-                            className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'gasAlteranti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                            onClick={() => {
-                                toggleSection("gasAlteranti");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Gas clima alteranti</span>
-                        </button>
-
-                        <button
-                            className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'solari' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-
-                            onClick={() => {
-                                toggleSection("solari");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Impianti solari termici</span>
-                        </button>
-
-                        <button
-                            className={`w-[300px] h-[100px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'fotovoltaici' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                            onClick={() => {
-                                toggleSection("fotovoltaici");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Impianti fotovoltaici</span>
-                        </button>
-                    </div>
-
-                ) : (
-                    <div className={`flex flex-wrap justify-center items-center gap-4 mt-10 ${window.innerWidth < 1024 ? 'block' : 'hidden'}`}>
-                        <button
-                            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'impianti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                            onClick={() => {
-                                toggleSection("impianti");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Impianti</span>
-                        </button>
-
-                        <button
-                            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'consumi' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                            onClick={() => {
-                                toggleSection("consumi");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Consumi annui</span>
-                        </button>
-
-                        {true && (
-                            <button
-                                className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'gasAlteranti' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                                onClick={() => {
-                                    toggleSection("gasAlteranti");
-                                }}
-                            >
-                                <span className="text-arial text-xl">Gas clima alteranti</span>
-                            </button>
-                        )}
-
-
-                        <button
-                            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'solari' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-
-                            onClick={() => {
-                                toggleSection("solari");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Impianti solari termici</span>
-                        </button>
-
-                        <button
-                            className={`w-[150px] h-[60px] mb-4 rounded-lg border-[#2d7044] border-2 ${activeSection === 'fotovoltaici' ? 'bg-[#2d7044] text-white' : 'bg-white text-[#2d7044]'} flex justify-center items-center gap-2 hover:bg-[#2d7044] hover:text-white transition-colors duration-300 ease-in-out`}
-                            onClick={() => {
-                                toggleSection("fotovoltaici");
-                            }}
-                        >
-                            <span className="text-arial text-xl">Impianti fotovoltaici</span>
-                        </button>
-                    </div>
-
-                )
-            }
-
-
-            {activeSection === "impianti" && <Plants />}
-            {activeSection === "consumi" && <Consumption />}
-            {activeSection === "gasAlteranti" && <ClimateAlteringGases />}
-            {activeSection === "solari" && <Solars />}
-            {activeSection === "fotovoltaici" && <Photovoltaics />}
+            {id !== 'new' && (
+                <ClimateAlteringGases
+                    scope="building"
+                    title="Gas clima alteranti"
+                    description="Sottosezione dell'edificio dedicata ai gas clima alteranti archiviati direttamente sulla scheda edificio."
+                    emptyMessage="Nessun gas clima alterante associato direttamente all'edificio"
+                />
+            )}
             {
                 isLoading ? (
                     <div className="flex justify-center items-center mt-5">
@@ -215,17 +111,24 @@ function BuildingPage() {
                             type="submit"
                             className="mt-7 font-arial text-xl w-[50%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700"
                             onClick={() => {
-                                handleEmissionsResult();
+                                if (canSubmitEmissions) {
+                                    setShowConfirmDialog(true);
+                                }
                             }}
+                            disabled={!canSubmitEmissions}
                         >
                             Calcola le emissioni
                         </button>
-                        <div className="w-full text-arial text-xl text-center">Ad ogni aggiornamento dei dati ricalcola le emissioni</div>
+                        <div className="w-full text-arial text-xl text-center">
+                            {buildingLocked
+                                ? "Dati finalizzati: non sono più consentite modifiche."
+                                : "Confermando il calcolo, i dati non saranno più modificabili."}
+                        </div>
                     </div>
                 )
             }
             <Footer />
-            <ChatWidget questionnaireType="buildings" buildingId={buildingID} />
+            <ChatWidget questionnaireType="buildings" buildingId={id === 'new' ? null : (id || null)} />
         </div >
     )
 }

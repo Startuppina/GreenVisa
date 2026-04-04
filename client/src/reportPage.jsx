@@ -175,11 +175,13 @@ function ReportPage() {
                 ];
 
                 const buildingTableBody = [
-                    [{ content: 'Locazione', styles: { halign: 'left' } }, { content: buildingData.building.location, styles: { halign: 'left' } }],
+                    [{ content: 'Regione', styles: { halign: 'left' } }, { content: buildingData.building.region || buildingData.building.location, styles: { halign: 'left' } }],
+                    [{ content: 'Comune', styles: { halign: 'left' } }, { content: buildingData.building.municipality || 'N/D', styles: { halign: 'left' } }],
                     [{ content: 'Indirizzo', styles: { halign: 'left' } }, { content: buildingData.building.address, styles: { halign: 'left' } }],
                     [{ content: 'Destinazione d\'uso', styles: { halign: 'left' } }, { content: buildingData.building.usage, styles: { halign: 'left' } }],
-                    [{ content: 'Anno di Costruzione', styles: { halign: 'left' } }, { content: buildingData.building.construction_year, styles: { halign: 'left' } }],
+                    [{ content: 'Anno di Costruzione', styles: { halign: 'left' } }, { content: buildingData.building.construction_year_value || buildingData.building.construction_year, styles: { halign: 'left' } }],
                     [{ content: 'Superficie', styles: { halign: 'left' } }, { content: `${buildingData.building.area} m²`, styles: { halign: 'left' } }],
+                    [{ content: 'Zona climatica', styles: { halign: 'left' } }, { content: buildingData.building.climate_zone || 'N/D', styles: { halign: 'left' } }],
                     [{ content: 'Ristrutturazioni', styles: { halign: 'left' } }, { content: buildingData.building.renovation, styles: { halign: 'left' } }],
                     [{ content: 'Distribuzione Calore', styles: { halign: 'left' } }, { content: buildingData.building.heat_distribution, styles: { halign: 'left' } }],
                     [{ content: 'Ventilazione', styles: { halign: 'left' } }, { content: buildingData.building.ventilation, styles: { halign: 'left' } }],
@@ -187,7 +189,7 @@ function ReportPage() {
                     [{ content: 'Manutenzione', styles: { halign: 'left' } }, { content: buildingData.building.maintenance, styles: { halign: 'left' } }],
                     [{ content: 'Fornitura Elettrica', styles: { halign: 'left' } }, { content: buildingData.building.electricity_forniture, styles: { halign: 'left' } }],
                     [{ content: 'Recupero Acqua', styles: { halign: 'left' } }, { content: buildingData.building.water_recovery, styles: { halign: 'left' } }],
-                    [{ content: 'Contatore Elettrico', styles: { halign: 'left' } }, { content: buildingData.building.electricity_meter, styles: { halign: 'left' } }],
+                    [{ content: 'Classe di Potenza Contrattuale', styles: { halign: 'left' } }, { content: buildingData.building.contract_power_class || buildingData.building.electricity_meter, styles: { halign: 'left' } }],
                     [{ content: 'Dispositivi a Incandescenza', styles: { halign: 'left' } }, { content: `${buildingData.building.incandescent}`, styles: { halign: 'left' } }],
                     [{ content: 'Dispositivi a LED', styles: { halign: 'left' } }, { content: `${buildingData.building.led}`, styles: { halign: 'left' } }],
                     [{ content: 'Dispositivi a Scarica di Gas', styles: { halign: 'left' } }, { content: `${buildingData.building.gas_lamp}`, styles: { halign: 'left' } }],
@@ -314,16 +316,12 @@ function ReportPage() {
                 const plantTableBody = building.plants.length > 0
                     ? building.plants.flatMap((plant) => [
                         [
-                            { content: 'Descrizione', styles: { halign: 'left' } },
-                            { content: plant.description || 'N/D', styles: { halign: 'left' } },
+                            { content: 'Categoria', styles: { halign: 'left' } },
+                            { content: plant.system_type || 'N/D', styles: { halign: 'left' } },
                         ],
                         [
                             { content: 'Tipo di Impianto', styles: { halign: 'left' } },
                             { content: plant.plant_type || 'N/D', styles: { halign: 'left' } },
-                        ],
-                        [
-                            { content: 'Tipo di Servizio', styles: { halign: 'left' } },
-                            { content: plant.service_type || 'N/D', styles: { halign: 'left' } },
                         ],
                         [
                             { content: 'Tipo di Generatore', styles: { halign: 'left' } },
@@ -332,6 +330,10 @@ function ReportPage() {
                         [
                             { content: 'Fonte utilizzata', styles: { halign: 'left' } },
                             { content: plant.fuel_type || 'N/D', styles: { halign: 'left' } },
+                        ],
+                        [
+                            { content: 'Quantità consumata', styles: { halign: 'left' } },
+                            { content: plant.fuel_consumption ? `${plant.fuel_consumption} ${plant.fuel_unit || ''}` : 'N/D', styles: { halign: 'left' } },
                         ],
                         [
                             {
@@ -438,7 +440,7 @@ function ReportPage() {
     useEffect(() => {
         const fetchBuildings = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-report-data`, {
+                const response = await axios.get(`/api/fetch-report-data`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -685,16 +687,12 @@ function ReportPage() {
                                     building.plants.map((plant, index) => (
                                         <React.Fragment key={index}>
                                             <tr className="p-2">
-                                                <td className="py-2 px-4 border-2">Descrizione</td>
-                                                <td className="py-2 px-4 border-2">{plant.description || 'N/D'}</td>
+                                                <td className="py-2 px-4 border-2">Categoria</td>
+                                                <td className="py-2 px-4 border-2">{plant.system_type || 'N/D'}</td>
                                             </tr>
                                             <tr className="p-2">
                                                 <td className="py-2 px-4 border-2">Tipo di Impianto</td>
-                                                <td className="py-2 px-4 border-2">{plant.type || 'N/D'}</td>
-                                            </tr>
-                                            <tr className="p-2">
-                                                <td className="py-2 px-4 border-2">Tipo di Servizio</td>
-                                                <td className="py-2 px-4 border-2">{plant.service_type || 'N/D'}</td>
+                                                <td className="py-2 px-4 border-2">{plant.plant_type || 'N/D'}</td>
                                             </tr>
                                             <tr className="p-2">
                                                 <td className="py-2 px-4 border-2">Tipo di Generatore</td>
@@ -707,6 +705,10 @@ function ReportPage() {
                                             <tr className="border-2-1 ">
                                                 <td className="py-2 px-4 border-2">Fonte utilizzata</td>
                                                 <td className="py-2 px-4 border-2">{plant.fuel_type || 'N/D'}</td>
+                                            </tr>
+                                            <tr className="border-2-1 ">
+                                                <td className="py-2 px-4 border-2">Quantità consumata</td>
+                                                <td className="py-2 px-4 border-2">{plant.fuel_consumption ? `${plant.fuel_consumption} ${plant.fuel_unit || ''}` : 'N/D'}</td>
                                             </tr>
                                             <tr className="border-2-1 ">
                                                 <td className="py-6 px-4 border-2"></td>

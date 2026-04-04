@@ -33,46 +33,47 @@ Now the folder `nome-cartella` is created
 
 ## Docker e Docker Compose
 
-Quickstart:
+Il progetto usa tre compose file:
+
+| File | Scopo | Servizi |
+|------|-------|---------|
+| `docker-compose.dev.yml` | Sviluppo locale (solo DB) | db, pgweb |
+| `docker-compose.prod.yml` | Produzione (VPS) | server, db |
+| `docker-compose.local-prod.yml` | Test stack prod in locale | nginx, server, db, pgweb |
+
+### Sviluppo locale
+
+Solo il database gira in Docker; server e client girano nativamente con `npm run dev`:
 
 ```
-docker compose down -v && docker compose up --build
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-Per creare l'immagine dell'appplicazione:
+### Test locale dello stack di produzione
+
+Simula l'architettura di produzione (nginx + server + db) su `http://localhost`:
 
 ```
-sudo docker build -t text-learn-app .
+docker compose -f docker-compose.local-prod.yml up --build
 ```
 
-Per avviarla:
+### Produzione
+
+Sul VPS, con nginx configurato come reverse proxy:
 
 ```
-sudo docker-compose up
+cd client && npm install && npm run build
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Docker si basa su molte dinamiche di caching per creare l'immagine.
-Può essere necessario rimuoverla e ricrearla.
-Per rimuovere tutti le possibili immagini cachate:
+### Comandi utili
 
 ```
-sudo docker system prune
-```
-
-Alcuni comandi utili:
-
-```
-docker-compose up --build
-```
-
-ricostruisce e avvia i container.
-
-```
-docker-compose down -v
+docker compose -f docker-compose.dev.yml down -v
 docker volume prune
 ```
 
-il primo comando ferma ed elimina tutti i volumi e container.
+il primo comando ferma ed elimina tutti i volumi e container dello stack dev.
 il secondo comando rimuove tutti i volumi rimasti non utilizzati.
 
 # Publication Pipeline

@@ -18,7 +18,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
         const fetchRequests = async () => {
             ;
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-second-level-requests`, {
+                const response = await axios.get(`/api/fetch-second-level-requests`, {
                     withCredentials: true,
                 });
 
@@ -38,7 +38,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
         ;
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/approve-second-level-request`, {
+            const response = await axios.post(`/api/approve-second-level-request`, {
                 request_id,
                 user_requestor_id
             }, {
@@ -70,7 +70,7 @@ export default function SecondLevelCerts({ sendDataToParent }) {
         console.log("token :", token);
 
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-second-level-request`, {
+            const response = await axios.delete(`/api/delete-second-level-request`, {
                 withCredentials: true,
                 params: {
                     request_id: requestToDelete.request_id,

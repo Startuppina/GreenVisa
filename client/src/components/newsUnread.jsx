@@ -48,7 +48,7 @@ function NewsUnread() {
         const fetchNews = async () => {
             ;
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/news-unread`, {
+                const response = await axios.get(`/api/news-unread`, {
                     withCredentials: true
                 });
                 if (response.status === 200) {
@@ -115,7 +115,7 @@ function NewsUnread() {
                                     >
                                         <div className="w-full h-full border-gray-300 border-2 rounded-lg">
                                             <img
-                                                src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${item.image}`}
+                                                src={`/uploaded_img/${item.image}`}
                                                 alt={item.title}
                                                 className="w-full h-full object-fill rounded-lg"
                                             />

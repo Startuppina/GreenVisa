@@ -22,7 +22,7 @@ function SolarForm({ solar = 'empty', isEdit, onButtonClick = "empty" }) {
         };
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/solar/${solar.id}`, formData, {
+            const response = await axios.put(`/api/buildings/${id}/update/solar/${solar.id}`, formData, {
                 withCredentials: true,
             });
 
@@ -73,7 +73,7 @@ function SolarForm({ solar = 'empty', isEdit, onButtonClick = "empty" }) {
         };
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/solar`, formData, {
+            const response = await axios.post(`/api/buildings/${id}/upload/solar`, formData, {
                 withCredentials: true,
             });
 

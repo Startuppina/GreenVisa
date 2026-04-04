@@ -3,10 +3,10 @@ import Slider from "react-slick";
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { Link } from "react-router-dom";
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import MessagePopUp from './messagePopUp';
 import ConfirmPopUp from './confirmPopUp';
+import axiosInstance from '../axiosInstance';
 
 const NextArrow = (props) => {
     const { onClick } = props;
@@ -54,7 +54,7 @@ const NewsCarousel = () => {
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/news`);
+                const response = await axiosInstance.get('/news');
                 if (response.status === 200) {
                     setNews(response.data);
                     if (response.data.length > 0) {
@@ -105,17 +105,8 @@ const NewsCarousel = () => {
     };
 
     const deleteNews = async () => {
-
-        if (!token) {
-            setMessagePopup('Token non trovato');
-            setButtonPopup(true);
-            return;
-        }
-
         try {
-            const response = await axios.delete(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/delete-news/${newToDelete}`, {
-                withCredentials: true
-            });
+            const response = await axiosInstance.delete(`/delete-news/${newToDelete}`);
 
             if (response.status === 200) {
                 navigate(0);
@@ -166,7 +157,7 @@ const NewsCarousel = () => {
                                     >
                                         <div className="w-full h-full border-gray-300 border-2 rounded-lg">
                                             <img
-                                                src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${item.image}`}
+                                                src={`/uploaded_img/${item.image}`}
                                                 alt={item.title}
                                                 className="w-full h-full object-fill rounded-lg"
                                             />

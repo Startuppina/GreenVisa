@@ -5,6 +5,7 @@ Install npm 20
 ## install root deps
 ```bash
 npm install
+```
 
 ## install backend deps
 ```bash
@@ -20,9 +21,9 @@ cd client
 npm install
 ```
 
-## build docker image
+## build docker image (development — DB only)
 ```bash
-docker compose -f docker-compose.db.yml up -d --build
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 This starts:
@@ -32,21 +33,17 @@ This starts:
 # Run app
 
 ## run docker compose (after first time no need to rebuild)
-docker compose -f docker-compose.db.yml up -d
-
-## stop and wipe the local database
-
-Removes containers and the Postgres volume so the next `up` reapplies `server/init.sql` from scratch.
-
 ```bash
-docker compose -f docker-compose.db.yml down -v
+docker compose -f docker-compose.dev.yml up -d
 ```
 
-For local backend development, make sure `server/.env` uses:
+## reset database
 
-```bash
-DB_HOST=localhost
-DB_PORT=5432
+`down -v` removes the Postgres volume; next `up` reapplies `server/init.sql`. Run from repo root (where `docker-compose.dev.yml` lives).
+
+
+```powershell
+docker compose -f docker-compose.dev.yml down -v; docker compose -f docker-compose.dev.yml up -d
 ```
 
 ## open pgweb
@@ -70,6 +67,113 @@ cd server; npm run dev
 ```bash
 cd client; npm run dev
 ```
+
+## frontend proxy behavior (dev and remote LAN)
+
+The frontend now calls relative paths:
+- API: `/api/...`
+- Uploaded images: `/uploaded_img/...`
+
+In development, Vite proxies these paths to the backend on `http://localhost:8080`.
+This means a browser opened from another PC must point to the frontend host (for example `http://<server-ip>:5173`) and will not call its own `localhost:8080`.
+
+Quick check from browser DevTools Network:
+- requests must go to `http://<frontend-host>:5173/api/...`
+- requests must not go directly to `http://localhost:8080/...`
+
+# Test locale stack completo (local-prod)
+
+Per testare l'intera architettura di produzione in locale (nginx + server + db + pgweb) senza bisogno del VPS:
+
+```bash
+docker compose -f docker-compose.local-prod.yml up --build
+```
+
+Questo avvia:
+- **nginx** su `http://localhost` (porta 80) — serve il client built e fa da reverse proxy per `/api/` e `/uploaded_img/`
+- **server** con `node server` (non nodemon) e `NODE_ENV=production`
+- **db** PostgreSQL su `localhost:5432`
+- **pgweb** su `http://localhost:8081`
+
+Per fermare e rimuovere i dati:
+```powershell
+docker compose -f docker-compose.local-prod.yml down -v
+```
+
+Il volume DB (`green-visa-local-prod-db`) e separato da quello di sviluppo e produzione.
+
+# Deploy produzione (VPS)
+
+## 1. Build del frontend
+
+```bash
+cd client
+npm install
+npm run build
+```
+
+Questo genera `client/dist/` con i file statici ottimizzati.
+
+## 2. Copia dei file statici sul VPS
+
+Copiare il contenuto di `client/dist/` dove nginx sul VPS lo serve (es. `/var/www/greenvisa-client/`).
+
+## 3. Avvio server + database
+
+Sul VPS, dalla root del repo:
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Questo usa `docker-compose.prod.yml` (compose di produzione) che avvia solo `server` + `db`:
+- Il server gira con `node server` (non nodemon) e `NODE_ENV=production`
+- Il DB PostgreSQL con volume persistente
+- `init.sql` è montato come bind mount in `/docker-entrypoint-initdb.d/init.sql` perché il servizio DB usa l'immagine ufficiale `postgres:16` direttamente nel compose: così il bootstrap del database resta semplice e non richiede una build dedicata dell'immagine DB
+- `nginx` non è nel compose prod perché sul VPS il reverse proxy vive fuori da Docker e serve direttamente i file statici del frontend, oltre a inoltrare `/api/` e `/uploaded_img/` al backend
+
+## 4. Configurazione nginx sul VPS
+
+Il reverse proxy nginx sul VPS deve essere configurato per servire i file statici e fare da proxy all'API:
+
+```nginx
+server {
+  listen 80;
+  server_name your-domain.example;
+
+  # Frontend static build
+  location / {
+    root /var/www/greenvisa-client;
+    try_files $uri /index.html;
+  }
+
+  # Backend API
+  location /api/ {
+    proxy_pass http://127.0.0.1:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # Uploaded images served by backend
+  location /uploaded_img/ {
+    proxy_pass http://127.0.0.1:8080/uploaded_img/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+## 5. Note .env per produzione
+
+In `server/.env` sul VPS, assicurarsi che:
+- `CLIENT_URL` punti all'URL del reverse proxy (es. `http://vps-0fde778b.vps.ovh.net` senza `:5173`)
+- `SERVER_URL` idem (senza `:8080`)
+- `DB_HOST` puo restare `localhost` perche il compose di produzione fa override con `DB_HOST=db`
+
+If you deploy on HTTPS, keep backend cookies in production mode (`NODE_ENV=production`) so `secure` cookies are enabled.
 
 
 # google cloud for ocr
@@ -107,11 +211,11 @@ node .\scripts\seedTransportV2Access.js
 
 Operazione distruttiva: rimuove tutte le righe in `users` con `administrator = false` (gli account con `administrator = true` restano). Prima controlla cosa verrebbe cancellato, poi esegui la `DELETE`.
 
-Su Windows spesso **non** c’è `psql` nel PATH (`psql` non riconosciuto): in quel caso non serve installare nulla se usi Postgres da Docker Compose (questo repo).
+Su Windows spesso **non** c'è `psql` nel PATH (`psql` non riconosciuto): in quel caso non serve installare nulla se usi Postgres da Docker Compose (questo repo).
 
-## Se il DB gira in Docker (`docker compose -f docker-compose.db.yml up`)
+## Se il DB gira in Docker (`docker compose -f docker-compose.dev.yml up`)
 
-`psql` è **dentro** il container `greenvisa-db`. Password e utente coincidono con `Dockerfile.db` (`admin` / `pass123`), non con `server/.env` a meno che non le allinei tu.
+`psql` è **dentro** il container `greenvisa-db`. Password e utente coincidono con `dockerfile.database` (`admin` / `pass123`), non con `server/.env` a meno che non le allinei tu.
 
 Da PowerShell, da qualsiasi cartella (Docker deve essere avviato):
 
@@ -119,18 +223,3 @@ Da PowerShell, da qualsiasi cartella (Docker deve essere avviato):
 docker exec -e PGPASSWORD=pass123 greenvisa-db psql -U admin -d green-visa -c "SELECT id, email, username FROM users WHERE administrator IS NOT TRUE;"
 docker exec -e PGPASSWORD=pass123 greenvisa-db psql -U admin -d green-visa -c "DELETE FROM users WHERE administrator IS NOT TRUE;"
 ```
-
-## Se hai installato il client PostgreSQL sul PC
-
-Allora puoi usare `psql` verso `localhost` e la password in `server/.env` (`DB_PASSWORD`):
-
-```powershell
-cd server
-$env:PGPASSWORD = ((Get-Content .env) | Where-Object { $_ -match '^DB_PASSWORD=' }) -replace '^DB_PASSWORD=',''
-psql -h localhost -p 5432 -U admin -d "green-visa" -c "SELECT id, email, username FROM users WHERE administrator IS NOT TRUE;"
-psql -h localhost -p 5432 -U admin -d "green-visa" -c "DELETE FROM users WHERE administrator IS NOT TRUE;"
-```
-
-Se `DB_HOST`, `DB_PORT`, `DB_USER` o `DB_NAME` nel tuo `.env` differiscono, sostituiscili nel comando `psql`.
-
-Se un `DELETE` fallisce per vincoli FK (es. righe in `buildings` legate a quell’utente), va gestita prima la catena di dipendenze o gli FK nel database.

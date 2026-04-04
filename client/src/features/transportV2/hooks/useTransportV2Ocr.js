@@ -18,7 +18,6 @@ function createUploadItem(seed = {}) {
     selectedTransportMode: '',
     isFetchingResult: false,
     isApplying: false,
-    appliedVehicleId: null,
     ...seed,
   };
 }
@@ -56,7 +55,7 @@ export default function useTransportV2Ocr({ certificationId, onApplied, isSubmit
     } catch (error) {
       updateUpload(documentId, {
         isFetchingResult: false,
-        error: extractApiErrorMessage(error, 'Unable to load OCR result.'),
+        error: extractApiErrorMessage(error, 'Impossibile caricare il risultato OCR.'),
       });
     }
   }, [updateUpload]);
@@ -95,7 +94,7 @@ export default function useTransportV2Ocr({ certificationId, onApplied, isSubmit
       );
     } catch (error) {
       setIsUploading(false);
-      setUploadError(extractApiErrorMessage(error, 'Unable to upload OCR documents.'));
+      setUploadError(extractApiErrorMessage(error, 'Impossibile caricare i documenti OCR.'));
     }
   }, [certificationId, isSubmitted, loadDocumentResult]);
 
@@ -126,18 +125,15 @@ export default function useTransportV2Ocr({ certificationId, onApplied, isSubmit
         ...(upload.selectedTransportMode ? { transportMode: upload.selectedTransportMode } : {}),
       });
 
-      updateUpload(documentId, {
-        isApplying: false,
-        status: response.status || 'applied',
-        appliedVehicleId: response.vehicle?.vehicle_id || null,
-      });
-
       onApplied?.(response);
+
+      setUploads((previous) => previous.filter((item) => item.documentId !== documentId));
+
       return { ok: true, response };
     } catch (error) {
       updateUpload(documentId, {
         isApplying: false,
-        error: extractApiErrorMessage(error, 'Unable to apply OCR result.'),
+        error: extractApiErrorMessage(error, 'Impossibile applicare il risultato OCR.'),
       });
       return { ok: false };
     }

@@ -30,7 +30,7 @@ function ProductDetails() {
         const getProductDetails = async () => {
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/product-details/${id}`, {
+                const response = await axios.get(`/api/product-details/${id}`, {
                     withCredentials: true
                 });
 
@@ -62,7 +62,7 @@ function ProductDetails() {
         console.log("Dati del carrello:", cartData);
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/cart-insertion/${id}`, cartData, {
+            const response = await axios.post(`/api/cart-insertion/${id}`, cartData, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -96,7 +96,7 @@ function ProductDetails() {
                 {/* Sezione immagine prodotto */}
                 <div className="w-full max-w-lg lg:max-w-xl h-[250px] sm:h-[300px] lg:h-[400px] overflow-hidden">
                     <img
-                        src={`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/uploaded_img/${product.image}`}
+                        src={`/uploaded_img/${product.image}`}
                         alt={product.name}
                         className="w-full h-full object-cover rounded-lg"
                     />
@@ -135,10 +135,6 @@ function ProductDetails() {
                         Tag: {product.tag}
                     </div>
                 </div>
-            </div>
-            <div className="w-full h-auto md:p-8 text-arial text-xl text-black text-center flex flex-col gap-5 items-center">
-                <h1 className="text-2xl font-bold">Info</h1>
-                <p className="p-4 w-full lg:w-[40%] text-justify">Dopo l’acquisto riceverai sulla tua mail un link univoco e privato che ti darà accesso al questionario che ci consentirà di calcolare in tempo reale le emissioni di CO2 della tua struttura/azienda.</p>
             </div>
             <h1 className="text-3xl font-bold text-center">Altri prodotti</h1>
 

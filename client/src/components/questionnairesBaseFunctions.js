@@ -2,7 +2,7 @@ import axios from "axios";
 
 export async function fetchInfo() {
     try {
-    const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/user-info`, {
+    const response = await axios.get(`/api/user-info`, {
         withCredentials: true,
     });
 
@@ -20,7 +20,7 @@ export async function fetchInfo() {
 
 export async function restoreSurveyData(certification_id) {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses-fetch`, {
+      const response = await axios.get(`/api/responses-fetch`, {
         withCredentials: true,
         params: {
           certification_id: certification_id
@@ -52,7 +52,7 @@ export async function restoreSurveyData(certification_id) {
 
 export async function submitSurveyData(data) {
     try {
-        const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/responses`, data, {
+        const response = await axios.post(`/api/responses`, data, {
             withCredentials: true,
         });
         if (response.status === 200) {

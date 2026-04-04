@@ -8,7 +8,7 @@ _Generated: 2026-03-27 | Repo: GreenVisa-main_
 
 **Stack:** This is a full-stack JavaScript web application built with React 18 + Vite (frontend) and Express.js + Node.js (backend), backed by PostgreSQL. The frontend uses TailwindCSS for styling, SurveyJS for questionnaires, jsPDF for client-side PDF generation, and Stripe for payments. The backend is a single monolithic `server.js` file (~4,456 lines) handling all API routes, authentication, email, payments, and business logic.
 
-**Architecture:** The repo is a two-folder monorepo: `client/` (Vite React SPA) and `server/` (Express API). They communicate over HTTP, with the frontend making authenticated API calls via Axios. Authentication uses JWT tokens stored in cookies. The database is PostgreSQL, seeded via `init.sql`. Docker Compose orchestrates all four services (client, server, db, pgweb) for deployment, but the repo was clearly developed against a remote VPS (`vps-0fde778b.vps.ovh.net`) rather than localhost.
+**Architecture:** The repo is a two-folder monorepo: `client/` (Vite React SPA) and `server/` (Express API). They communicate over HTTP, with the frontend making authenticated API calls via Axios. Authentication uses JWT tokens stored in cookies. The database is PostgreSQL, seeded via `init.sql`. Docker Compose is split into three files: production (server + db), development (db + pgweb), and local prod test (nginx + server + db + pgweb). The production VPS uses an external nginx reverse proxy.
 
 **Recommended dev setup for Windows:** Run the frontend and backend natively (Node.js on Windows) and use Docker only for PostgreSQL. This avoids Docker volume/polling issues on Windows while keeping the database easy to manage. You'll need to fix the `.env` files and `db.js` to point to `localhost` instead of the VPS / Docker service name. This is the fastest path to a working local setup.
 
@@ -34,6 +34,7 @@ GreenVisa-main/
 │   │   └── index.css                # Tailwind directives
 │   ├── .env                         # VITE_REACT_SERVER_ADDRESS
 │   ├── dockerfile                   # Docker build for client
+│   ├── dockerfile.prod              # nginx multi-stage production image
 │   ├── vite.config.js               # Vite dev server config
 │   ├── tailwind.config.mjs          # Tailwind configuration
 │   ├── wait-for-server.sh           # Bash script (Docker only)
@@ -41,7 +42,7 @@ GreenVisa-main/
 ├── server/                          # Express.js backend
 │   ├── img/                         # Static logo images for emails
 │   ├── .env                         # All server env vars (DB, email, Stripe, etc.)
-│   ├── db.js                        # PostgreSQL pool (HARDCODED to Docker host)
+│   ├── db.js                        # PostgreSQL pool (reads DB_HOST from env, defaults to 'db')
 │   ├── init.sql                     # Full DB schema (20+ tables)
 │   ├── priceCalculator.js           # Pricing logic per certification category
 │   ├── server.js                    # MONOLITH: all routes, middleware, cron, email (~4456 lines)
@@ -50,7 +51,10 @@ GreenVisa-main/
 │   └── package.json
 ├── patches/                         # patch-package fixes
 │   └── buffer-equal-constant-time+1.0.1.patch
-├── docker-compose.yml               # 4 services: server, client, db, pgweb
+├── docker-compose.prod.yml          # Production: server, db
+├── docker-compose.dev.yml           # Development: db, pgweb
+├── docker-compose.local-prod.yml    # Local prod test: nginx, server, db, pgweb
+├── dockerfile.database              # Postgres image for docker-compose.dev
 ├── .dockerignore
 ├── .gitignore
 ├── package.json                     # Root package (minimal, mostly metadata)
@@ -110,7 +114,7 @@ GreenVisa-main/
 ### Infrastructure / Dev tooling
 | Tool | Purpose | Status |
 |------|---------|--------|
-| Docker Compose | Orchestrate 4 services | **Confirmed** |
+| Docker Compose | 3 compose files: prod (server+db), dev (db+pgweb), local-prod (nginx+server+db+pgweb) | **Confirmed** |
 | patch-package | Fix `buffer-equal-constant-time` | **Confirmed** (patch file exists) |
 | ESLint | Client linting | **Confirmed** |
 | PostCSS + Autoprefixer | CSS processing | **Confirmed** |
@@ -151,27 +155,17 @@ _(The committed file has `DB_HOST=db` (Docker service name) and both URLs pointi
 
 > **WARNING:** The `server/.env` file contains real secrets (SMTP password, Stripe test key, admin password, JWT secret). Do NOT commit changes to this file. Consider adding it to `.gitignore`.
 
-#### `server/db.js` — this is HARDCODED and ignores .env:
-The file `server/db.js` has hardcoded connection params pointing to Docker:
+#### `server/db.js` — reads from env vars (already fixed):
 ```js
 const pool = new Pool({
-  host: 'db',       // <-- Docker service name, not from .env!
-  port: '5432',
-  user: 'admin',
-  password: 'pass123',
-  database: 'green-visa'
-});
-```
-**For local dev, it must be changed to use env vars:**
-```js
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || '5432',
+  host: process.env.DB_HOST || 'db',
+  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
   user: process.env.DB_USER || 'admin',
   password: process.env.DB_PASSWORD || 'pass123',
-  database: process.env.DB_NAME || 'green-visa'
+  database: process.env.DB_NAME || 'green-visa',
 });
 ```
+For native dev, `server/.env` sets `DB_HOST=localhost`. In Docker Compose, the `environment` section overrides with `DB_HOST=db`.
 
 ### Step 2: Start PostgreSQL
 
@@ -256,51 +250,62 @@ The admin user is auto-created on server startup if no admin exists.
 
 ## 5. How to run with Docker
 
-### Services in `docker-compose.yml`
+### Compose file layout
 
-| Service | Image | Port | Depends on |
-|---------|-------|------|-----------|
-| `server` | Built from `./server/Dockerfile` | 8080:8080 | `db` (healthy) |
-| `client` | Built from `./client/Dockerfile` | 5173:5173 | `server` |
-| `db` | `postgres` (latest) | 5432:5432 | — |
-| `pgweb` | `sosedoff/pgweb` | 8081:8081 | `db` |
+| File | Purpose | Services |
+|------|---------|----------|
+| `docker-compose.prod.yml` | **Production** (VPS with external nginx) | `server`, `db` |
+| `docker-compose.dev.yml` | **Development** (DB only, app runs natively) | `db`, `pgweb` |
+| `docker-compose.local-prod.yml` | **Local prod test** (full stack on localhost) | `nginx`, `server`, `db`, `pgweb` |
 
-### Volumes
-- `green-visa-db` — persists PostgreSQL data at `/var/lib/postgresql`
-- `./server/uploaded_img:/app/uploaded_img` — persists uploaded images
-- `./client/src:/app/src` — live-reloads client code (dev convenience)
-- `/app/node_modules` — anonymous volume to avoid overwriting container node_modules
-- `./server/init.sql:/docker-entrypoint-initdb.d/init.sql` — auto-seeds the database
+### Production compose (`docker-compose.prod.yml`)
+
+| Service | Image | Port | Notes |
+|---------|-------|------|-------|
+| `server` | Built from `./server/dockerfile` | 8080:8080 | `command: node server`, `NODE_ENV=production`, `DB_HOST=db` |
+| `db` | `postgres:16` | 5432:5432 | Volume `green-visa-db` at `/var/lib/postgresql` |
+
+Nginx on the VPS host serves the built client static files and proxies `/api/` and `/uploaded_img/` to the server container.
+
+### Development compose (`docker-compose.dev.yml`)
+
+| Service | Image | Port | Notes |
+|---------|-------|------|-------|
+| `db` | Built from `dockerfile.database` | 5432:5432 | `container_name: greenvisa-db` |
+| `pgweb` | `sosedoff/pgweb` | 8081:8081 | |
+
+Server and client run natively with `npm run dev`.
+
+### Local prod test compose (`docker-compose.local-prod.yml`)
+
+| Service | Image | Port | Notes |
+|---------|-------|------|-------|
+| `nginx` | Built from `client/dockerfile.prod` (multi-stage: node build + nginx) | 80:80 | SPA fallback + API proxy |
+| `server` | Built from `./server/dockerfile` | — | `command: node server`, `NODE_ENV=production` |
+| `db` | `postgres:16` | 5432:5432 | Separate volume `green-visa-local-prod-db` |
+| `pgweb` | `sosedoff/pgweb` | 8081:8081 | |
 
 ### Commands
 ```powershell
-# Full rebuild
-docker compose down -v; docker compose up --build
+# Development (DB only)
+docker compose -f docker-compose.dev.yml up -d --build
 
-# Normal start
-docker compose up
+# Local prod test (full stack on http://localhost)
+docker compose -f docker-compose.local-prod.yml up --build
+
+# Production (on VPS)
+docker compose up -d --build
 ```
 
-### Expected URLs
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8080/api/* |
-| pgweb (DB admin) | http://localhost:8081 |
+### Known considerations
 
-### What may break even if containers start
+1. **Dockerfile casing:** Compose files reference `dockerfile` (lowercase) matching the actual filenames on disk. This works on both Windows and Linux.
 
-1. **Dockerfile casing mismatch:** `docker-compose.yml` references `dockerfile: Dockerfile` (capital D) but actual files are `dockerfile` (lowercase). On Windows this works (case-insensitive filesystem) but will **fail on Linux CI/CD or Mac with case-sensitive FS**. — **Severity: Medium**
+2. **Server `.env` vs compose environment:** `server/.env` has `DB_HOST=localhost` for native dev. The production and local-prod compose files override this with `DB_HOST=db` via the `environment` section.
 
-2. **Client `.env` points to VPS, not localhost:** Inside the Docker container, the client still loads `VITE_REACT_SERVER_ADDRESS=http://vps-0fde778b.vps.ovh.net:8080`. The browser (on your machine) will try to hit the VPS, not the local Docker server. — **Severity: High**
+3. **`db.js` defaults:** `server/db.js` uses `process.env.DB_HOST || 'db'`, so it works both natively (reads `.env`) and in Docker (compose overrides).
 
-3. **Server `.env` points to VPS for CLIENT_URL and SERVER_URL:** Stripe success/cancel URLs and email verification links will redirect to the VPS, not localhost. — **Severity: High**
-
-4. **`db.js` is hardcoded to `host: 'db'`:** This actually works inside Docker Compose (service name resolution), but breaks outside Docker. — **Severity: N/A for Docker, High for native**
-
-5. **`wait-for-server.sh` is a bash script:** It won't run on Windows natively. It's only used inside the Docker client container (Alpine Linux), so it's fine for Docker. — **Severity: N/A**
-
-6. **`CHOKIDAR_USEPOLLING=true`:** Set in compose for the client. This enables file polling inside Docker — correct for Docker, but causes high CPU. Native dev doesn't need this.
+4. **`wait-for-server.sh`:** Only used by the old dev client container (no longer in any compose). Kept for reference.
 
 ---
 
@@ -318,11 +323,9 @@ docker compose up
 - **Severity:** **HIGH**
 - **Fix:** Change both to `http://localhost:5173` and `http://localhost:8080`.
 
-### Blocker 3: `db.js` hardcodes Docker hostname `db`
-- **Evidence:** `server/db.js` line 3: `host: 'db'`
-- **Impact:** Server cannot connect to PostgreSQL when running natively. Immediate crash on startup.
-- **Severity:** **HIGH** (for native dev)
-- **Fix:** Change to `host: process.env.DB_HOST || 'localhost'` and use the env vars from `server/.env`.
+### Blocker 3: `db.js` hardcodes Docker hostname `db` — **RESOLVED**
+- **Evidence:** `server/db.js` now uses `process.env.DB_HOST || 'db'` and reads from `server/.env` via dotenv.
+- **Status:** Fixed. Works both natively (`DB_HOST=localhost` from `.env`) and in Docker (compose sets `DB_HOST=db` via environment).
 
 ### Blocker 4: `server/node_modules` is committed to git
 - **Evidence:** `server/node_modules/` directory is present with 130+ packages; `.gitignore` lists `node_modules` but only for the root (or client).
@@ -336,11 +339,9 @@ docker compose up
 - **Severity:** **MEDIUM**
 - **Fix:** Delete `server/node_modules` and run `npm install` on Windows. If issues persist: `npm rebuild sharp`.
 
-### Blocker 6: Dockerfile casing mismatch
-- **Evidence:** `docker-compose.yml` line 7: `dockerfile: Dockerfile`; actual file: `server/dockerfile` (lowercase).
-- **Impact:** Breaks on case-sensitive filesystems (Linux, some macOS). Works on Windows.
-- **Severity:** **LOW** (Windows) / **HIGH** (Linux CI/CD)
-- **Fix:** Rename `server/dockerfile` → `server/Dockerfile` and `client/dockerfile` → `client/Dockerfile`.
+### Blocker 6: Dockerfile casing mismatch — **RESOLVED**
+- **Evidence:** Compose files now reference `dockerfile: dockerfile` (lowercase), matching the actual filenames on disk.
+- **Status:** Fixed. No action needed.
 
 ### Blocker 7: CORS only allows two origins
 - **Evidence:** `server/server.js` line 60: `origin: ['http://localhost:5173', 'http://vps-0fde778b.vps.ovh.net:5173']`
@@ -766,8 +767,8 @@ OCR output can map to these existing entities:
 
 - **Database management:** Keep PostgreSQL in Docker rather than installing natively on Windows.
 - **pgweb:** Run `docker run -d --name pgweb --link greenvisa-db:db -e DATABASE_URL=postgres://admin:pass123@db:5432/green-visa -p 8081:8081 sosedoff/pgweb` for a nice DB admin UI.
-- **Full integration testing:** Before deploying, test with full `docker compose up --build` to catch environment mismatches.
-- **Reproducing production issues:** The VPS likely runs Docker, so compose is the closest match.
+- **Full integration testing:** Before deploying, test with `docker compose -f docker-compose.local-prod.yml up --build` to simulate the production stack locally.
+- **Reproducing production issues:** The VPS runs Docker, so `docker-compose.local-prod.yml` is the closest match to the production architecture.
 
 ### First files to read (in order)
 
@@ -802,7 +803,7 @@ OCR output can map to these existing entities:
 | 5 | Are there other questionnaire types beyond transport and wellness? | Only two questionnaire JSON files exist, but the `category_type` enum has 6 categories. **Inferred: the other 4 questionnaires are not yet implemented.** |
 | 6 | Why is `credit_cards` table storing raw card numbers? | Stripe handles actual payments, so this table may be unused or for display purposes only. **Cannot verify without running the app.** |
 | 7 | Is the Stripe key still in test mode? | The key starts with `sk_test_` which confirms test mode. **Confirmed.** |
-| 8 | What deployment pipeline is used for the VPS? | No CI/CD config found (no `.github/workflows`, no Dockerfile-based CD). **Inferred: manual `docker compose up` on the VPS.** |
+| 8 | What deployment pipeline is used for the VPS? | No CI/CD config found (no `.github/workflows`, no Dockerfile-based CD). **Inferred: manual `cd client && npm run build` + copy dist to nginx + `docker compose up -d --build` on the VPS.** |
 | 9 | Is the `patches/` directory still needed? | It fixes a `SlowBuffer` deprecation. Modern Node.js (20+) may not need it. **Inferred: probably still needed if `jwa` hasn't been updated.** |
 | 10 | Are there any integration tests? | `server/package.json` has `"test": "echo \"Error: no test specified\""`. **Confirmed: no tests exist.** |
 | 11 | What OCR service does the team prefer (Tesseract, Azure, Google, AWS)? | The choice significantly affects the implementation. **Unknown — needs team input.** |

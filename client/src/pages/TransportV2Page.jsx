@@ -38,7 +38,6 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
     updateVehicleTransportMode,
     updateVehicleField,
     updateVehicleNotes,
-    saveDraft,
     submitDraft,
   } = useTransportV2Draft(certificationId);
 
@@ -108,6 +107,7 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
       <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
         <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           Caricamento bozza questionario trasporti…
+          Caricamento bozza questionario trasporti…
         </div>
       </main>,
     );
@@ -126,6 +126,7 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
             type="button"
             onClick={loadTransportV2}
           >
+            Riprova
             Riprova
           </button>
         </div>
@@ -151,7 +152,6 @@ export default function TransportV2Page({ certificationIdOverride = null }) {
             saveError={ui.saveError}
             submitError={ui.submitError}
             saveSuccessAt={ui.saveSuccessAt}
-            onSave={() => saveDraft()}
             onSubmit={() => submitDraft()}
           />
 

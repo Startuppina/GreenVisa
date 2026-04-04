@@ -33,142 +33,6 @@ export const json = {
                 },
                 {
                     "type": "radiogroup",
-                    "name": "question3",
-                    "title": "Nella struttura si effettua regolarmente la raccolta differenziata secondo quanto previsto dal Regolamento Comunale vigente ?",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 5
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question4",
-                    "title": "Le stanze da bagno degli Ospiti/clienti sono dotate di rubinetti e docce a flusso d’acqua medio non superiore a 8,5 litri/minuto ?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 5
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question5",
-                    "title": "L’attività porta avanti attività volte alla promozione dell’utilizzo dei mezzi pubblici o inerenti l’affitto di mezzi, preferibili sotto il profilo ambientale, quali ad esempio le biciclette, le biciclette elettriche e le automobili elettriche?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 4
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question6",
-                    "title": "Il personale effettua corsi di formazione sulla tutela ambientale e la lotta agli sprechi energetici ed ambientali all’interno dell’attività?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 4
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question7",
-                    "title": "Il personale effettua corsi di formazione sull’ EPIGENETICA con particolare riferimento all’impatto scientifico che il contesto ambientale ha sul DNA e quindi sul benessere della persona?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 2
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question8",
-                    "title": "Gli abiti da lavoro, comprese le divise per il personale che opera in cabina o in sala, prevede un abbigliamento privo di sostanze tossiche con tessuti certificati OEKO-TEST®?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question9",
-                    "title": "Nell’attività vengono utilizzati prodotti detergenti e/o per l’igiene del corpo (riferimento: prodotti per la pulizia, detersivi per lavare piatti/bucato/lavastoviglie, detergenti sanitari, saponi e shampoo) che hanno ottenuto il marchio Ecolabel EU o hanno ottenuto altri marchi ISO di tipo I ?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 5
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question10",
-                    "title": "Nell’attività vengono utilizzati e venduti solo cosmetici green, privi di materie prime di sintesi, come i derivati del petrolio, siliconi e tensioattivi, e prodotti a base di ingredienti naturali o di origine naturale come fitoestratti con Certificazione Cosmos Organic del disciplinare Cosmos Standard (unico standard riconosciuto a livello internazionale)?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 5
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
                     "name": "wellness_has_food_service",
                     "title": "Nella struttura sono presenti Bar e/o attività di Ristorazione?",
                     "choices": [
@@ -247,13 +111,14 @@ export const json = {
                 },
                 {
                     "type": "radiogroup",
-                    "name": "question35",
-                    "title": "Non viene permesso di fumare nei locali del centro, compresi gli spogliatoi, e sono presenti appositi cartelli?\n",
+                    "name": "question34",
+                    "title": "Il compostaggio degli scarti alimentari (riferimento: scarti alimentari provenienti dai servizi di ristorazione) avviene all’interno del proprio giardino o nelle aree verdi di pertinenza della struttura ? \n",
+                    "visibleIf": "{wellness_has_food_service} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",
                             "text": "SI",
-                            "score": 3
+                            "score": 100
                         },
                         {
                             "value": "Item 2",
@@ -264,13 +129,48 @@ export const json = {
                 },
                 {
                     "type": "radiogroup",
-                    "name": "question12",
-                    "title": "Viene effettuato periodicamente (almeno bimensilmente) il monitoraggio dei consumi di energia elettrica, gas e acqua ?\n",
+                    "name": "question3",
+                    "title": "Nella struttura si effettua regolarmente la raccolta differenziata secondo quanto previsto dal Regolamento Comunale vigente ?",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 5
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question33",
+                    "title": "La vostra raccolta differenziata viene ulteriormente frazionata ( alluminio, sughero, tappi, ecc)?\n",
+                    "visibleIf": "{question3} = 'Item 1'",
                     "choices": [
                         {
                             "value": "Item 1",
                             "text": "SI",
                             "score": 4
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question4",
+                    "title": "Le stanze da bagno degli Ospiti/clienti sono dotate di rubinetti e docce a flusso d’acqua medio non superiore a 8,5 litri/minuto ?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 5
                         },
                         {
                             "value": "Item 2",
@@ -298,13 +198,13 @@ export const json = {
                 },
                 {
                     "type": "radiogroup",
-                    "name": "question14",
-                    "title": "Nelle toilette è presente un cestino per i rifiuti ed uno per gli assorbenti?\n",
+                    "name": "question32",
+                    "title": "I rubinetti sono dotati di riduttori di flusso e di sistemi di controllo automatizzati?\n",
                     "choices": [
                         {
                             "value": "Item 1",
                             "text": "SI",
-                            "score": 3
+                            "score": 5
                         },
                         {
                             "value": "Item 2",
@@ -315,185 +215,13 @@ export const json = {
                 },
                 {
                     "type": "radiogroup",
-                    "name": "question15",
-                    "title": "Nella vostra attività si presta attenzione alla riduzione degli imballaggi e alla limitazione dell’utilizzo delle confezioni monodose?\n",
+                    "name": "question12",
+                    "title": "Viene effettuato periodicamente (almeno bimensilmente) il monitoraggio dei consumi di energia elettrica, gas e acqua ?\n",
                     "choices": [
                         {
                             "value": "Item 1",
                             "text": "SI",
                             "score": 4
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question16",
-                    "title": "Le iniziative volte al risparmio energetico e al rispetto dell’ambiente promosse e portate avanti dalla struttura vengono adeguatamente comunicate agli ospiti / clienti?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 4
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question17",
-                    "title": "La vostra attività porta avanti politiche volte all’incentivazione della riduzione dell’utilizzo dei mezzi privati da parte del personale dipendente?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 4
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question18",
-                    "title": "Nella vostra attività è stato creato e promosso un “programma fitness green”?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question19",
-                    "title": "Nella vostra attività è stato creato e promosso un “programma beauty green”?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question20",
-                    "title": "Nella vostra attività è stato creato e promosso un “programma relax green”?",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question21",
-                    "title": "Gli articoli usa e getta che utilizza sono in linea con la norma EN 13432 e quindi biodegradabili?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 4
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question22",
-                    "title": "La lavastoviglie è dotata di un dosatore automatico per il detersivo?\n",
-                    "visibleIf": "{wellness_has_dishwasher} = 'Item 1'",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question23",
-                    "title": "Più in generale vengono utilizzati i dosatori per i prodotti per le pulizie?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question24",
-                    "title": "La cabine sono attrezzate con dispenser per rotoli di carta, asciugamani ecc.?\n",
-                    "visibleIf": "{wellness_has_cabins} = 'Item 1'",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 3
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question25",
-                    "title": "I bagni sono attrezzati con dispenser?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 2
                         },
                         {
                             "value": "Item 2",
@@ -613,26 +341,8 @@ export const json = {
                 },
                 {
                     "type": "radiogroup",
-                    "name": "question32",
-                    "title": "I rubinetti sono dotati di riduttori di flusso e di sistemi di controllo automatizzati?\n",
-                    "choices": [
-                        {
-                            "value": "Item 1",
-                            "text": "SI",
-                            "score": 5
-                        },
-                        {
-                            "value": "Item 2",
-                            "text": "NO",
-                            "score": 0
-                        }
-                    ]
-                },
-                {
-                    "type": "radiogroup",
-                    "name": "question33",
-                    "title": "La vostra raccolta differenziata viene ulteriormente frazionata ( alluminio, sughero, tappi, ecc)?\n",
-                    "visibleIf": "{question3} = 'Item 1'",
+                    "name": "question5",
+                    "title": "L’attività porta avanti attività volte alla promozione dell’utilizzo dei mezzi pubblici o inerenti l’affitto di mezzi, preferibili sotto il profilo ambientale, quali ad esempio le biciclette, le biciclette elettriche e le automobili elettriche?\n",
                     "choices": [
                         {
                             "value": "Item 1",
@@ -648,14 +358,13 @@ export const json = {
                 },
                 {
                     "type": "radiogroup",
-                    "name": "question34",
-                    "title": "Il compostaggio degli scarti alimentari (riferimento: scarti alimentari provenienti dai servizi di ristorazione) avviene all’interno del proprio giardino o nelle aree verdi di pertinenza della struttura ? \n",
-                    "visibleIf": "{wellness_has_food_service} = 'Item 1'",
+                    "name": "question17",
+                    "title": "La vostra attività porta avanti politiche volte all’incentivazione della riduzione dell’utilizzo dei mezzi privati da parte del personale dipendente?\n",
                     "choices": [
                         {
                             "value": "Item 1",
                             "text": "SI",
-                            "score": 100
+                            "score": 4
                         },
                         {
                             "value": "Item 2",
@@ -663,7 +372,299 @@ export const json = {
                             "score": 0
                         }
                     ]
-                }
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question6",
+                    "title": "Il personale effettua corsi di formazione sulla tutela ambientale e la lotta agli sprechi energetici ed ambientali all’interno dell’attività?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 4
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question7",
+                    "title": "Il personale effettua corsi di formazione sull’ EPIGENETICA con particolare riferimento all’impatto scientifico che il contesto ambientale ha sul DNA e quindi sul benessere della persona?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 2
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question9",
+                    "title": "Nell’attività vengono utilizzati prodotti detergenti e/o per l’igiene del corpo (riferimento: prodotti per la pulizia, detersivi per lavare piatti/bucato/lavastoviglie, detergenti sanitari, saponi e shampoo) che hanno ottenuto il marchio Ecolabel EU o hanno ottenuto altri marchi ISO di tipo I ?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 5
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question10",
+                    "title": "Nell’attività vengono utilizzati e venduti solo cosmetici green, privi di materie prime di sintesi, come i derivati del petrolio, siliconi e tensioattivi, e prodotti a base di ingredienti naturali o di origine naturale come fitoestratti con Certificazione Cosmos Organic del disciplinare Cosmos Standard (unico standard riconosciuto a livello internazionale)?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 5
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question8",
+                    "title": "Gli abiti da lavoro, comprese le divise per il personale che opera in cabina o in sala, prevede un abbigliamento privo di sostanze tossiche con tessuti certificati OEKO-TEST®?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question22",
+                    "title": "La lavastoviglie è dotata di un dosatore automatico per il detersivo?\n",
+                    "visibleIf": "{wellness_has_dishwasher} = 'Item 1'",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question23",
+                    "title": "Più in generale vengono utilizzati i dosatori per i prodotti per le pulizie?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question24",
+                    "title": "La cabine sono attrezzate con dispenser per rotoli di carta, asciugamani ecc.?\n",
+                    "visibleIf": "{wellness_has_cabins} = 'Item 1'",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question25",
+                    "title": "I bagni sono attrezzati con dispenser?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 2
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question15",
+                    "title": "Nella vostra attività si presta attenzione alla riduzione degli imballaggi e alla limitazione dell’utilizzo delle confezioni monodose?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 4
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question21",
+                    "title": "Gli articoli usa e getta che utilizza sono in linea con la norma EN 13432 e quindi biodegradabili?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 4
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question16",
+                    "title": "Le iniziative volte al risparmio energetico e al rispetto dell’ambiente promosse e portate avanti dalla struttura vengono adeguatamente comunicate agli ospiti / clienti?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 4
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question18",
+                    "title": "Nella vostra attività è stato creato e promosso un “programma fitness green”?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question19",
+                    "title": "Nella vostra attività è stato creato e promosso un “programma beauty green”?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question20",
+                    "title": "Nella vostra attività è stato creato e promosso un “programma relax green”?",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question14",
+                    "title": "Nelle toilette è presente un cestino per i rifiuti ed uno per gli assorbenti?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "question35",
+                    "title": "Non viene permesso di fumare nei locali del centro, compresi gli spogliatoi, e sono presenti appositi cartelli?\n",
+                    "choices": [
+                        {
+                            "value": "Item 1",
+                            "text": "SI",
+                            "score": 3
+                        },
+                        {
+                            "value": "Item 2",
+                            "text": "NO",
+                            "score": 0
+                        }
+                    ]
+                },
+                
             ]
         }
     ],

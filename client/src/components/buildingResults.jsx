@@ -16,7 +16,7 @@ function BuildingResults() {
         // fetch results from server
         const fetchResults = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/fetch-results/${buildingID}`, {
+                const response = await axios.get(`/api/fetch-results/${buildingID}`, {
                     withCredentials: true
                 });
 

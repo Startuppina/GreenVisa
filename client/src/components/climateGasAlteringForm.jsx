@@ -28,7 +28,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
         };
 
         try {
-            const response = await axios.put(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/update/gas/${gas.id}`, formData, {
+            const response = await axios.put(`/api/buildings/${id}/update/gas/${gas.id}`, formData, {
                 withCredentials: true
             });
 
@@ -71,7 +71,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/buildings/${id}/upload/gas`, formData, {
+            const response = await axios.post(`/api/buildings/${id}/upload/gas`, formData, {
                 withCredentials: true
             });
 
@@ -298,7 +298,7 @@ function ClimateGasAlteringForm({ gas = 'empty', isEdit, onButtonClick }) {
 
                     <div className="flex flex-col md:flex-row md:gap-4 mb-6">
                         <label className="flex flex-col w-full md:w-1/2">
-                            <span className="block mb-2">Consumo annuo</span>
+                            <span className="block mb-2">Quantità (kg)</span>
                             <input
                                 type="text"
                                 value={quantityKg}

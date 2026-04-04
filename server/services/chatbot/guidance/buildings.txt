@@ -2,6 +2,69 @@ GUIDA APPROVATA — QUESTIONARIO EDIFICI
 
 Questa guida contiene le informazioni approvate per aiutare l'utente a compilare il questionario edifici GreenVisa.
 
+== SEZIONE: OBBLIGATORIETÀ DEI CAMPI (VALIDAZIONE PIATTAFORMA) ==
+
+Riferimento: creazione/aggiornamento edificio via API (campi controllati dal server alla salvataggio della scheda edificio).
+
+OBBLIGATORI (scheda edificio — creazione nuovo edificio)
+- Nome edificio
+- Indirizzo
+- Destinazione d'uso
+- Regione
+- Anno di costruzione (fascia selezionata nel modulo)
+- Superficie (area, valore numerico)
+- Ristrutturazione (tipo)
+- Distribuzione del calore / tipo di distribuzione termica
+- Ventilazione
+- Controllo energetico
+- Manutenzione
+- Recupero acque
+- Contatore elettrico (fascia di potenza)
+- Analizzatori
+- Fornitura elettrica (tipo)
+- Numero punti luce a incandescenza
+- Numero punti luce LED
+- Numero lampade a gas
+- Sistema di controllo automatico dell'illuminazione
+
+FACOLTATIVI (scheda edificio — il server accetta valore vuoto/null; se compilati devono rispettare formato e limiti)
+- Codice Ateco (massimo 8 caratteri)
+- Numero dipendenti (intero, se indicato)
+- Descrizione dell'attività (massimo 300 caratteri)
+- Descrizione dei processi produttivi (massimo 300 caratteri)
+- Fatturato annuo (intero, se indicato; spesso precompilato dal profilo utente)
+
+OBBLIGATORI (nuovo impianto termico/tecnico — salvataggio impianto)
+- Descrizione impianto
+- Tipo impianto
+- Tipo servizio
+- Tipo generatore
+- Tipo di combustibile / alimentazione
+FACOLTATIVO
+- Descrizione del generatore (testo libero aggiuntivo)
+CONDIZIONALE
+- Se si indica presenza di gas refrigeranti / perdite (hasGasLeak): obbligatorio almeno un gas con tipo e quantità (kg) valida.
+
+MODIFICA IMPIANTO (aggiornamento riga esistente)
+- Obbligatori: descrizione, tipo impianto, tipo servizio, tipo generatore (controllo minimo lato server sulla PUT).
+- Stesse regole sui gas refrigeranti se si segnala presenza/perdita: almeno un gas valido se richiesto dal flusso.
+
+OBBLIGATORI (gas refrigerante registrato per edificio, voce dedicata)
+- Tipo gas
+- Quantità (kg)
+
+OBBLIGATORI (ogni riga consumi energetici inserita)
+- Fonte energetica
+- Consumo (valore numerico)
+
+OBBLIGATORI (solare termico)
+- Superficie installata (valore numerico positivo)
+
+OBBLIGATORI (fotovoltaico)
+- Potenza (valore numerico positivo)
+
+NOTA: La piattaforma può richiedere altri passaggi di compilazione (report, certificazione) oltre a questi salvataggi; qui sono elencate solo le obbligatorietà verificate dalle API di salvataggio dei dati edificio.
+
 == SEZIONE: DATI GENERALI DELL'EDIFICIO ==
 
 - "Nome edificio": inserire un nome identificativo per l'edificio (es. "Sede centrale", "Stabilimento Nord").
@@ -41,16 +104,13 @@ Questa guida contiene le informazioni approvate per aiutare l'utente a compilare
 == DOMANDE FREQUENTI ==
 
 D: Dove trovo i dati dei consumi energetici?
-R: I consumi si trovano sulle bollette di energia elettrica e gas. Sommare i valori di tutte le bollette dell'anno di riferimento. Molti fornitori offrono un riepilogo annuale sul loro portale online.
+R: I consumi si trovano sulle bollette di energia elettrica e gas. Somma i valori di tutte le bollette dell'anno di riferimento. Molti fornitori mettono a disposizione anche un riepilogo annuale nel portale online.
 
 D: Cos'è un attestato APE?
-R: L'Attestato di Prestazione Energetica è un documento che classifica l'efficienza energetica dell'edificio. È obbligatorio per legge in caso di vendita, affitto o ristrutturazione importante.
+R: L'Attestato di Prestazione Energetica è il documento che classifica l'efficienza energetica dell'edificio, da A4 a G. La classe energetica è riportata nella prima pagina dell'APE.
 
 D: Quali informazioni servono sugli impianti?
-R: Per ogni impianto servono: tipo, potenza nominale (kW), anno di installazione e combustibile utilizzato. Queste informazioni si trovano sul libretto di impianto o sulla targa tecnica.
+R: Per ogni impianto servono almeno tipo, potenza nominale in kW e anno di installazione. Per gli impianti di climatizzazione possono servire anche tipo di gas refrigerante e quantità di carica.
 
 D: Come inserisco i dati delle bollette?
-R: Dalle bollette estrarre il consumo in kWh (elettricità) o Smc (gas). Non inserire l'importo in euro, ma solo le quantità fisiche consumate. Sommare i consumi di tutte le bollette dell'anno di riferimento.
-
----
-NOTA: Questo file contiene contenuto segnaposto. Il team GreenVisa deve sostituirlo con la guida approvata ufficiale.
+R: Dalle bollette devi estrarre i consumi, non gli importi in euro. Inserisci i kWh per l'elettricità, gli Smc per il gas naturale e, se presente, i litri di gasolio per riscaldamento, sommando i consumi dell'anno di riferimento.

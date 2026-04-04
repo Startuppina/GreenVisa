@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MutatingDots } from 'react-loader-spinner'
 import { useRecoveryContext } from './provider/provider';
-import axios from 'axios';
+import axiosInstance from './axiosInstance';
 
 function PaySuccessPage() {
   const { setCartProducts, setQuantities, setIsEmpty } = useRecoveryContext();
@@ -17,11 +17,7 @@ function PaySuccessPage() {
       }
 
       try {
-        await axios.post(
-          `${import.meta.env.VITE_REACT_SERVER_ADDRESS}/api/finalize-checkout-session`,
-          { sessionId },
-          { withCredentials: true },
-        );
+        await axiosInstance.post('/finalize-checkout-session', { sessionId });
         setCartProducts([]);
         setQuantities({});
         setIsEmpty(true);
@@ -33,7 +29,7 @@ function PaySuccessPage() {
     finalizePurchase();
 
     const timer = setTimeout(() => {
-      navigate('/User');
+      navigate('/user');
     }, 5000);
     return () => {
       clearTimeout(timer);
