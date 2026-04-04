@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import ScrollToTop from './components/scrollToTop';
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Building from "./components/building";
 import Plants from "./components/plants";
 import Solars from "./components/solars";
@@ -13,16 +13,16 @@ import { EmissionsCalculator } from "./components/emissionsCalculator";
 import { useRecoveryContext } from "./provider/provider";
 import { MutatingDots } from "react-loader-spinner";
 import MessagePopUp from "./components/messagePopUp";
-import BuildingResults from "./components/buildingResults";
 import ChatWidget from "./chatbot/ChatWidget";
+import BuildingSubmitConfirmDialog from "./components/buildingSubmitConfirmDialog";
 
 
 function BuildingPage() {
     const { id } = useParams();
     const [activeSection, setActiveSection] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const { buildingID, triggerRefreshResults } = useRecoveryContext();
-    const [results, setResults] = useState(null);
+    const { buildingID, triggerRefreshResults, buildingLocked, setBuildingLocked } = useRecoveryContext();
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     const [buttonPopUp, setButtonPopUp] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
@@ -33,6 +33,10 @@ function BuildingPage() {
     };
 
     const handleEmissionsResult = async () => {
+        if (!buildingID || id === 'new' || buildingLocked) {
+            return;
+        }
+
         setIsLoading(true);
 
         setTimeout(async () => {
@@ -47,6 +51,7 @@ function BuildingPage() {
                 } else {
                     // Successo: puoi gestire la logica per il successo qui
                     console.log("Emissioni calcolate con successo");
+                    setBuildingLocked(true);
                 }
 
                 setIsLoading(false);
@@ -73,6 +78,14 @@ function BuildingPage() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    useEffect(() => {
+        if (id === 'new') {
+            setBuildingLocked(false);
+        }
+    }, [id, setBuildingLocked]);
+
+    const canSubmitEmissions = !buildingLocked && id !== 'new' && Boolean(buildingID);
+
 
 
 
@@ -83,6 +96,15 @@ function BuildingPage() {
             <MessagePopUp trigger={buttonPopUp} setTrigger={setButtonPopUp}>
                 {messagePopup}
             </MessagePopUp>
+            {showConfirmDialog && (
+                <BuildingSubmitConfirmDialog
+                    onCancel={() => setShowConfirmDialog(false)}
+                    onConfirm={() => {
+                        setShowConfirmDialog(false);
+                        handleEmissionsResult();
+                    }}
+                />
+            )}
             <Building />
 
             {
@@ -215,12 +237,19 @@ function BuildingPage() {
                             type="submit"
                             className="mt-7 font-arial text-xl w-[50%] md:text-2xl md:w-[30%] lg:text-2xl lg:w-[20%] p-1 bg-blue-700 text-white rounded-lg border-2 border-transparent hover:border-blue-700 transition-colors duration-300 ease-in-out hover:bg-white hover:text-blue-700"
                             onClick={() => {
-                                handleEmissionsResult();
+                                if (canSubmitEmissions) {
+                                    setShowConfirmDialog(true);
+                                }
                             }}
+                            disabled={!canSubmitEmissions}
                         >
                             Calcola le emissioni
                         </button>
-                        <div className="w-full text-arial text-xl text-center">Ad ogni aggiornamento dei dati ricalcola le emissioni</div>
+                        <div className="w-full text-arial text-xl text-center">
+                            {buildingLocked
+                                ? "Dati finalizzati: non sono più consentite modifiche."
+                                : "Confermando il calcolo, i dati non saranno più modificabili."}
+                        </div>
                     </div>
                 )
             }

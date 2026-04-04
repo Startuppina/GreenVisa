@@ -18,7 +18,7 @@ function Plants() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
-    const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
+    const { buildingID, refresh, triggerRefresh, buildingLocked } = useRecoveryContext();
 
 
     // Crea una ref per il form
@@ -29,6 +29,13 @@ function Plants() {
             formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     }, [showPlantForm]);
+
+    useEffect(() => {
+        if (buildingLocked) {
+            setShowPlantForm(false);
+            setShowPlantFormModifier(null);
+        }
+    }, [buildingLocked]);
 
 
     useEffect(() => {
@@ -60,6 +67,11 @@ function Plants() {
     }, [buildingID, refresh]); // Added buildingID as a dependency, also plantrigger as a dependency
 
     const deletePlant = async () => {
+        if (buildingLocked) {
+            setMessagePopup("Edificio finalizzato: modifiche non consentite.");
+            setButtonPopup(true);
+            return;
+        }
 
         const { id } = plantsToDelete;
         try {
@@ -104,27 +116,34 @@ function Plants() {
                 <div className="flex flex-row justify-between">
                     <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti</h1>
                     <div className="flex flex-col items-center justify-center m-2">
-                        <button
-                            className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                            onClick={() => setShowPlantForm(!showPlantForm)}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="2"
-                                stroke="currentColor"
-                                className="w-6 h-6"
+                        {!buildingLocked && (
+                            <button
+                                className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
+                                onClick={() => setShowPlantForm(!showPlantForm)}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M12 4.5v15m7.5-7.5h-15"
-                                />
-                            </svg>
-                        </button>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="2"
+                                    stroke="currentColor"
+                                    className="w-6 h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 4.5v15m7.5-7.5h-15"
+                                    />
+                                </svg>
+                            </button>
+                        )}
                     </div>
                 </div>
+                {buildingLocked && (
+                    <div className="px-4 pb-2 text-red-600 font-semibold">
+                        Edificio finalizzato: modifiche non consentite.
+                    </div>
+                )}
 
                 {numPlants === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
@@ -168,25 +187,27 @@ function Plants() {
                                 <div className="mt-10">
                                     <strong className="text-red-500">PUNTEGGIO DI ECOSOSTENIBILITA:</strong> {parseFloat(plant.plantscore) + parseFloat(plant.generator_assigned_score)}
                                 </div>*/}
-                                <div className="flex justify-end gap-2">
-                                    <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
-                                        onClick={() => setShowPlantFormModifier(showPlantFormModifier === plant.id ? null : plant.id)}                                    >
-                                        {showPlantFormModifier === plant.id ? 'Annulla' : 'Modifica'}
-                                    </button>
-                                    <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
-                                        onClick={() => {
-                                            setPlantsToDelete({
-                                                id: plant.id,
-                                            });
-                                            setMessageConfirm(
-                                                "Sei sicuro di voler eliminare questo impianto solare?"
-                                            );
-                                            setPopupConfirmDelete(true);
-                                        }}>
-                                        Elimina
-                                    </button>
-                                </div>
-                                {showPlantFormModifier === plant.id && <PlantForm plant={plant} isEdit={true} onButtonClick={cancelEdit} />}
+                                {!buildingLocked && (
+                                    <div className="flex justify-end gap-2">
+                                        <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
+                                            onClick={() => setShowPlantFormModifier(showPlantFormModifier === plant.id ? null : plant.id)}                                    >
+                                            {showPlantFormModifier === plant.id ? 'Annulla' : 'Modifica'}
+                                        </button>
+                                        <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
+                                            onClick={() => {
+                                                setPlantsToDelete({
+                                                    id: plant.id,
+                                                });
+                                                setMessageConfirm(
+                                                    "Sei sicuro di voler eliminare questo impianto solare?"
+                                                );
+                                                setPopupConfirmDelete(true);
+                                            }}>
+                                            Elimina
+                                        </button>
+                                    </div>
+                                )}
+                                {!buildingLocked && showPlantFormModifier === plant.id && <PlantForm plant={plant} isEdit={true} onButtonClick={cancelEdit} />}
                             </div>
                         ))}
                     </div>
@@ -195,7 +216,7 @@ function Plants() {
 
             </div>
             <div ref={formRef}>
-                {showPlantForm && (<div className="flex justify-center"><PlantForm plant="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
+                {!buildingLocked && showPlantForm && (<div className="flex justify-center"><PlantForm plant="empty" isEdit={false} onButtonClick={cancelEdit} /></div>)}
             </div>
         </div >
     );

@@ -4,7 +4,7 @@ const storage = require('./chatStorageService');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const MODEL = 'gpt-4o-mini';
+const MODEL = 'gpt-5.4-mini';
 
 async function handleMessage({ conversationId, content, faqKey }) {
   const conversation = await storage.getConversation(conversationId);
@@ -32,7 +32,7 @@ async function handleMessage({ conversationId, content, faqKey }) {
   const completion = await openai.chat.completions.create({
     model: MODEL,
     temperature: 0.3,
-    max_tokens: 800,
+    max_completion_tokens: 800,
     messages: openaiMessages,
   });
 

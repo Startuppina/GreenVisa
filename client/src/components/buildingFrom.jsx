@@ -5,7 +5,7 @@ import { MutatingDots } from "react-loader-spinner";
 import { useNavigate } from "react-router-dom";
 import { useRecoveryContext } from "../provider/provider";
 
-function BuildingFrom({ buildingData = 'empty', isEdit }) {
+function BuildingFrom({ buildingData = 'empty', isEdit, onEditSuccess }) {
     const [buildingID, setBuildingID] = useState(buildingData.id || 0);
     const [name, setName] = useState(buildingData.name || "");
     const [address, setAddress] = useState(buildingData.address || "");
@@ -71,57 +71,51 @@ function BuildingFrom({ buildingData = 'empty', isEdit }) {
         e.preventDefault();
         setIsLoading(true);
 
-        ;
-
-        const formData = new FormData();
-        formData.append('id', buildingID);
-        formData.append('name', name);
-        //formData.append('description', description);
-        formData.append('address', address);
-        formData.append('usage', usage);
-        formData.append('location', location);
-        formData.append('year', year);
-        formData.append('area', area);
-        formData.append('renovation', renovation);
-        formData.append('heating', heating);
-        formData.append('ventilation', ventilation);
-        formData.append('energyControl', energyControl);
-        formData.append('maintenance', maintenance);
-        formData.append('waterRecovery', waterRecovery);
-        formData.append('electricityCounter', electricityCounter);
-        formData.append('electricityAnalyzer', electricityAnalyzer);
-        formData.append('autoLightingControlSystem', autoLightingControlSystem);
-        formData.append('electricForniture', electricForniture);
-        formData.append('lighting', lighting);
-        formData.append('led', led);
-        formData.append('gasLamp', gasLamp);
-
-        formData.append('ateco', ateco || null); // Se vuoto, invia null
-        formData.append('activityDescription', activityDescription || null); // Se vuoto, invia null
-        formData.append('annualTurnover', annualTurnover || 0); // Se vuoto, invia 0
-        formData.append('employees', employees || 0); // Se vuoto, invia 0
-        formData.append('prodProcessDescription', prodProcessDescription || null); // Se vuoto, invia null
-
-
-        console.log('Form data:', formData);
+        const payload = {
+            id: buildingID,
+            name,
+            address,
+            usage,
+            location,
+            year,
+            area,
+            renovation,
+            heating,
+            ventilation,
+            energyControl,
+            maintenance,
+            waterRecovery,
+            electricityCounter,
+            electricityAnalyzer,
+            autoLightingControlSystem,
+            electricForniture,
+            lighting,
+            led,
+            gasLamp,
+            ateco: ateco || null,
+            activityDescription: activityDescription || null,
+            annualTurnover: annualTurnover ?? 0,
+            employees: employees ?? 0,
+            prodProcessDescription: prodProcessDescription || null,
+        };
 
         try {
-            const response = await axios.put(`/api/edit-building`, formData, {
+            const response = await axios.put(`/api/edit-building`, payload, {
+                headers: { 'Content-Type': 'application/json' },
                 withCredentials: true
             });
 
             if (response.status === 200) {
-                setTimeout(() => {
-                    setMessagePopup(response.data.msg);
-                    setButtonPopup(true);
-                    setIsLoading(false);
-                    // Reset dei campi e aggiornamento dello stato
-                    triggerRefresh();
-
-                    setMessagePopup("Edificio aggiornato con successo");
-                    setButtonPopup(true);
-                }, 3000); // Caricamento finto di 3 secondi
-
+                setIsLoading(false);
+                triggerRefresh();
+                if (typeof onEditSuccess === 'function') {
+                    onEditSuccess();
+                } else {
+                    setTimeout(() => {
+                        setMessagePopup("Edificio aggiornato con successo");
+                        setButtonPopup(true);
+                    }, 3000);
+                }
                 return;
             } else {
                 console.log('Error:', response.data.msg);

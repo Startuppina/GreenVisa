@@ -18,7 +18,7 @@ function Solars() {
     const [buttonPopup, setButtonPopup] = useState(false);
     const [messagePopup, setMessagePopup] = useState("");
 
-    const { buildingID, refresh, triggerRefresh } = useRecoveryContext();
+    const { buildingID, refresh, triggerRefresh, buildingLocked } = useRecoveryContext();
 
 
     // Crea una ref per il form
@@ -29,6 +29,13 @@ function Solars() {
             formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     }, [showSolarForm]);
+
+    useEffect(() => {
+        if (buildingLocked) {
+            setShowSolarForm(false);
+            setShowSolarFormModifier(null);
+        }
+    }, [buildingLocked]);
 
     useEffect(() => {
         const fetchSolars = async () => {
@@ -57,6 +64,11 @@ function Solars() {
 
 
     const deleteSolar = async () => {
+        if (buildingLocked) {
+            setMessagePopup("Edificio finalizzato: modifiche non consentite.");
+            setButtonPopup(true);
+            return;
+        }
 
         const { id } = solarToDelete;
         try {
@@ -99,28 +111,35 @@ function Solars() {
                 <div className="flex flex-row justify-between">
                     <h1 className="text-2xl font-bold mb-2 text-center lg:text-left p-4">Impianti Solari termici</h1>
                     <div className="flex flex-col items-center justify-center m-2">
-                        <button
-                            className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
-                            onClick={() => setShowSolarForm(!showSolarForm)}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="2"
-                                stroke="currentColor"
-                                className="w-6 h-6"
+                        {!buildingLocked && (
+                            <button
+                                className="p-2 mb-4 w-12 h-12 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044] flex items-center justify-center"
+                                onClick={() => setShowSolarForm(!showSolarForm)}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M12 4.5v15m7.5-7.5h-15"
-                                />
-                            </svg>
-                        </button>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="2"
+                                    stroke="currentColor"
+                                    className="w-6 h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 4.5v15m7.5-7.5h-15"
+                                    />
+                                </svg>
+                            </button>
+                        )}
                     </div>
 
                 </div>
+                {buildingLocked && (
+                    <div className="px-4 pb-2 text-red-600 font-semibold">
+                        Edificio finalizzato: modifiche non consentite.
+                    </div>
+                )}
 
                 {numSolars === 0 ? (
                     <div className="flex flex-col items-center justify-center pb-4">
@@ -138,26 +157,28 @@ function Solars() {
                                     <div className="">
                                         <strong>Quantita installata:</strong> {solar.installed_area} m²
                                     </div>
-                                    <div className="flex justify-end gap-2">
-                                        <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
-                                            onClick={() => setShowSolarFormModifier(showSolarFormModifier === solar.id ? null : solar.id)}                                    >
-                                            {showSolarFormModifier === solar.id ? 'Annulla' : 'Modifica'}
-                                        </button>
-                                        <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
-                                            onClick={() => {
-                                                setSolarToDelete({
-                                                    id: solar.id,
-                                                });
-                                                setMessageConfirm(
-                                                    "Sei sicuro di voler eliminare questo impianto solare?"
-                                                );
-                                                setPopupConfirmDelete(true);
-                                            }}>
-                                            Elimina
-                                        </button>
-                                    </div>
+                                    {!buildingLocked && (
+                                        <div className="flex justify-end gap-2">
+                                            <button className='p-2 w-24 z-10 mt-3 bg-[#2d7044] text-white rounded-lg border-2 border-transparent hover:border-[#2d7044] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#2d7044]'
+                                                onClick={() => setShowSolarFormModifier(showSolarFormModifier === solar.id ? null : solar.id)}                                    >
+                                                {showSolarFormModifier === solar.id ? 'Annulla' : 'Modifica'}
+                                            </button>
+                                            <button className='p-2 w-24 z-10 mt-3 bg-red-500 text-white rounded-lg border-2 border-transparent hover:border-red-500 transition-colors duration-300 ease-in-out hover:bg-white hover:text-red-500'
+                                                onClick={() => {
+                                                    setSolarToDelete({
+                                                        id: solar.id,
+                                                    });
+                                                    setMessageConfirm(
+                                                        "Sei sicuro di voler eliminare questo impianto solare?"
+                                                    );
+                                                    setPopupConfirmDelete(true);
+                                                }}>
+                                                Elimina
+                                            </button>
+                                        </div>
+                                    )}
 
-                                    {showSolarFormModifier === solar.id && <SolarForm solar={solar} isEdit={true} onButtonClick={cancelEdit} />}
+                                    {!buildingLocked && showSolarFormModifier === solar.id && <SolarForm solar={solar} isEdit={true} onButtonClick={cancelEdit} />}
 
                                 </div>
                             ))}
@@ -166,7 +187,7 @@ function Solars() {
                 )}
             </div>
 
-            {showSolarForm && <div className="pb-1" ref={formRef}><SolarForm solar="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
+            {!buildingLocked && showSolarForm && <div className="pb-1" ref={formRef}><SolarForm solar="empty" isEdit={false} onButtonClick={cancelEdit} /></div>}
 
         </div>
     );
